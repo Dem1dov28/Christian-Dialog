@@ -1,0 +1,485 @@
+/**
+ * CSS Variables - Цветовые переменные и темы
+ * Определяет все CSS переменные для светлой и темной темы
+ */
+
+:root {
+  color-scheme: light dark;
+  
+  /* Light theme (default) - White + Turquoise */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f1f3f5;
+  --text-white: #1f2937;
+  --text-gray: #4b5563;
+  --text-dim: #6b7280;
+  /* Более серый фон наведения для сообщений и интерактивных элементов */
+  --hover-bg: #e5e7eb;
+  /* Фон для поля поиска в хедере: совпадает с цветом наведения на сообщение */
+  --search-bg: var(--hover-bg);
+  /* Фон для хедера и сайдбара: по умолчанию совпадает с bg-primary */
+  --header-bg: var(--bg-primary);
+  --sidebar-bg: var(--bg-primary);
+  --active-bg: #e5e7eb;
+  --button-hover-bg: #e5e7eb;
+  --active-bg-chat: #40E0D0;
+  --accent: #40E0D0;
+  --accent-hover: #2BC4B0;
+  --badge-red: #ff4d5a;
+  --badge-bg: var(--badge-red);
+  --badge-fg: #ffffff;
+  --badge-ring: rgba(0, 0, 0, 0.1);
+  --icon-color: #6b7280;
+  --border-color: #e5e7eb;
+  --text-black-for-folder: #000000;
+
+  /* Message colors */
+  --msg-left-time-color: #6b7280;
+  --msg-right-time-color: #ffffff;
+  --msg-out-bg: #2BC4B0;
+  --msg-in-bg: #f3f4f6;
+  --msg-forwarded-chat-color: #ffffff;
+  --msg-left-text-color: #000000;
+  --msg-reply-bg: rgba(0, 0, 0, 0.05);
+  --msg-reply-border: rgba(0, 0, 0, 0.1);
+  --msg-reply-author-color: #00f7d6;
+  --msg-reply-text-color: #e1e1e1;
+  --msg-reply-hover-bg: rgba(0, 0, 0, 0.08);
+  --msg-reply-hover-border: rgba(0, 0, 0, 0.15);
+  --reply-bg-light: #f3f4f6;
+  --reply-hover-bg-light: #e5e7eb;
+  --reply-active-bg-light: #d1d5db;
+  --panel-info-bg: #f3f4f6;
+  --panel-settings-bg: #f3f4f6;
+
+  /* Light theme - Neomorphic/Tailwind variables */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 174 89% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 20% 98%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent-hsl: 174 89% 48%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 174 89% 48%;
+  --radius: 1rem;
+
+  /* Neomorphic specific tokens */
+  --glass: 255 255 255 / 0.8;
+  --glass-border: 0 0 0 / 0.1;
+  --shadow-neumorphic: 0px 2px 8px rgba(0, 0, 0, 0.1),
+    0px -1px 4px rgba(255, 255, 255, 0.8);
+  --gradient-bg: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f8f9fa 50%,
+    #ffffff 100%
+  );
+  --shape-glow: 64 224 208 / 0.3;
+
+  /* Фоновое изображение по умолчанию (светлая бирюзово-белая тема) */
+  --bg-image: url("/turquoisewhitetheme.png");
+
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 174 89% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 20% 98%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-border: 214 32% 91%;
+  --sidebar-ring: 174 89% 48%;
+}
+
+.dark {
+  /* Dark theme variables */
+  --bg-primary: #2d283e;
+  --bg-secondary: #4c495d;
+  --bg-tertiary: #564f6f;
+  --text-white: rgba(209, 215, 224, 0.98);
+  --text-gray: rgba(209, 215, 224, 0.8);
+  --text-dim: rgba(209, 215, 224, 0.55);
+  --hover-bg: rgba(86, 79, 111, 0.9);
+  --search-bg: var(--hover-bg);
+  /* Фон для хедера и сайдбара: по умолчанию совпадает с bg-primary */
+  --header-bg: var(--bg-primary);
+  --sidebar-bg: var(--bg-primary);
+  --active-bg: rgba(76, 73, 93, 0.95);
+  --button-hover-bg: #564f6f;
+  --active-bg-chat: #802bb1;
+  --accent: #802bb1;
+  --accent-hover: #9d4fd8;
+  --border-color: rgba(209, 215, 224, 0.28);
+  --icon-color: #d1d7e0;
+  --msg-left-time-color: #b5bbc8;
+  --msg-right-time-color: #e4e7f0;
+  --msg-out-bg: #802bb1;
+  --msg-in-bg: #4c495d;
+  --msg-forwarded-chat-color: #d1d7e0;
+  --msg-left-text-color: rgba(209, 215, 224, 0.98);
+  --msg-reply-bg: rgba(0, 0, 0, 0.28);
+  --msg-reply-border: rgba(209, 215, 224, 0.35);
+  --msg-reply-author-color: #c792ea;
+  --msg-reply-text-color: #d1d7e0;
+  --msg-reply-hover-bg: rgba(0, 0, 0, 0.35);
+  --msg-reply-hover-border: rgba(209, 215, 224, 0.45);
+  --reply-bg-light: rgba(76, 73, 93, 0.7);
+  --reply-hover-bg-light: rgba(86, 79, 111, 0.8);
+  --reply-active-bg-light: rgba(86, 79, 111, 0.9);
+  --panel-info-bg: rgba(45, 40, 62, 0.7);
+  --panel-settings-bg: rgba(45, 40, 62, 0.5);
+
+  /* Dark theme - Neomorphic/Tailwind variables */
+  --background: 262 22% 20%;
+  --foreground: 220 27% 88%;
+  --card: 262 22% 22%;
+  --card-foreground: 220 27% 88%;
+  --popover: 262 22% 22%;
+  --popover-foreground: 220 27% 88%;
+  --primary: 277 36% 44%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 262 22% 28%;
+  --secondary-foreground: 220 27% 88%;
+  --muted: 262 22% 24%;
+  --muted-foreground: 220 15% 70%;
+  --accent-hsl: 277 36% 44%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 210 40% 98%;
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+  --border: 262 20% 32%;
+  --input: 262 20% 30%;
+  --ring: 277 36% 50%;
+  --sidebar-background: 262 22% 18%;
+  --sidebar-foreground: 220 27% 88%;
+  --sidebar-primary: 277 36% 44%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 262 22% 26%;
+  --sidebar-accent-foreground: 220 27% 88%;
+  --sidebar-border: 262 22% 28%;
+  --sidebar-ring: 277 36% 50%;
+  --glass: 262 22% 22% / 0.45;
+  --glass-border: 220 27% 88% / 0.12;
+  --shadow-neumorphic: 0px 8px 24px rgba(0, 0, 0, 0.45),
+    0px -2px 16px rgba(255, 255, 255, 0.04);
+  --gradient-bg: linear-gradient(
+    135deg,
+    #2d283e 0%,
+    #564f6f 50%,
+    #2d283e 100%
+  );
+  --shape-glow: 277 36% 50% / 0.35;
+
+  /* Фоновое изображение для базовой тёмной темы (фиолетовый дарк) */
+  --bg-image: url("/purpledarktheme.png");
+}
+
+/* Дополнительная тема (blue theme) поверх темной
+ * Палитра:
+ *   - #2F4454, #2E151B, #DA7B93, #376E6F, #1C3334
+ * Используется через класс .theme-blue (совместно с .dark)
+ */
+.theme-blue {
+  /* Базовые фоны */
+  --bg-primary: #1c3334;
+  --bg-secondary: #2f4454;
+  --bg-tertiary: #376e6f;
+
+  /* Текст и иконки */
+  --text-white: rgba(240, 246, 247, 0.98);
+  --text-gray: rgba(214, 225, 226, 0.82);
+  --text-dim: rgba(180, 195, 196, 0.7);
+  --icon-color: #e3eaeb;
+
+  /* Ховеры и панели */
+  --hover-bg: rgba(55, 110, 111, 0.5);
+  --search-bg: var(--hover-bg);
+  /* Фон для хедера и сайдбара: по умолчанию совпадает с bg-primary */
+  --header-bg: var(--bg-primary);
+  --sidebar-bg: var(--bg-primary);
+  --active-bg: rgba(47, 68, 84, 0.85);
+  --button-hover-bg: #376e6f;
+  --border-color: rgba(144, 167, 171, 0.8);
+
+  /* Акцент и сообщения */
+  --active-bg-chat: #da7b93;
+  --accent: #da7b93;
+  --accent-hover: #e493aa;
+
+  --msg-left-time-color: #a8b6b8;
+  --msg-right-time-color: #f8dde3;
+  --msg-out-bg: #da7b93;
+  --msg-in-bg: #2f4454;
+  --msg-forwarded-chat-color: #f3c4cf;
+  --msg-left-text-color: rgba(248, 236, 239, 0.96);
+  --msg-reply-bg: rgba(0, 0, 0, 0.25);
+  --msg-reply-border: rgba(218, 123, 147, 0.45);
+  --msg-reply-author-color: #da7b93;
+  --msg-reply-text-color: #fbe3ea;
+  --msg-reply-hover-bg: rgba(0, 0, 0, 0.35);
+  --msg-reply-hover-border: rgba(218, 123, 147, 0.65);
+
+  --reply-bg-light: rgba(55, 110, 111, 0.7);
+  --reply-hover-bg-light: rgba(55, 110, 111, 0.85);
+  --reply-active-bg-light: rgba(55, 110, 111, 0.95);
+
+  --panel-info-bg: rgba(55, 110, 111, 0.6);
+  --panel-settings-bg: rgba(47, 68, 84, 0.7);
+
+  /* HSL токены под новую тему */
+  --background: 186 43% 16%; /* ~#1C3334 */
+  --foreground: 180 17% 93%;
+  --card: 200 32% 24%;       /* ~#2F4454 */
+  --card-foreground: 180 17% 93%;
+  --popover: 200 32% 24%;
+  --popover-foreground: 180 17% 93%;
+  --primary: 342 57% 65%;    /* ~#DA7B93 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 185 33% 32%;  /* ~#376E6F */
+  --secondary-foreground: 180 17% 93%;
+  --muted: 190 23% 28%;
+  --muted-foreground: 180 12% 75%;
+  --accent-hsl: 342 57% 65%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 352 58% 26%; /* ~#2E151B */
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+  --border: 192 20% 40%;
+  --input: 192 20% 38%;
+  --ring: 342 57% 65%;
+
+  --sidebar-background: 186 43% 16%;
+  --sidebar-foreground: 180 17% 93%;
+  --sidebar-primary: 342 57% 65%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 185 33% 32%;
+  --sidebar-accent-foreground: 180 17% 93%;
+  --sidebar-border: 192 20% 40%;
+  --sidebar-ring: 342 57% 65%;
+
+  --glass: 186 43% 16% / 0.45;
+  --glass-border: 190 22% 60% / 0.4;
+  --shadow-neumorphic: 0px 8px 24px rgba(8, 16, 18, 0.6),
+    0px -2px 16px rgba(255, 255, 255, 0.06);
+  --gradient-bg: linear-gradient(
+    135deg,
+    #2f4454 0%,
+    #376e6f 40%,
+    #2e151b 70%,
+    #da7b93 100%
+  );
+  --shape-glow: 342 57% 65% / 0.35;
+
+  /* Фоновое изображение для blue-темы (тёмный розовый фон) */
+  --bg-image: url("/pinkdarktheme.png");
+}
+
+/* Пастельная светлая тема поверх базовой (root)
+ * Палитра:
+ *   - #FAFAFA, #A8E6CF, #FFD3B6, #FFAAA5, #5D707F
+ * Используется через класс .theme-pastel при отсутствии .dark
+ */
+.theme-pastel {
+  /* Базовые фоны */
+  --bg-primary: #fafafa;
+  --bg-secondary: #a8e6cf;
+  --bg-tertiary: #ffd3b6;
+
+  /* Текст и иконки */
+  --text-white: #374151;
+  --text-gray: #6B7280;
+  --text-dim: #6B7280;
+  --icon-color: #6B7280;
+
+  /* Ховеры и панели */
+  --hover-bg: rgba(255, 170, 165, 0.25);
+  /* Фон для поля поиска: более яркий вариант для пастельной темы */
+  --search-bg: rgba(255, 170, 165, 0.35);
+  /* Фон для хедера и сайдбара: в пастельной теме используем более темный оттенок мятного */
+  --header-bg: #8dd4b8;
+  --sidebar-bg: #8dd4b8;
+  --active-bg: rgba(255, 211, 182, 0.6);
+  --button-hover-bg: #ffaaa5;
+  --border-color: rgba(93, 112, 127, 0.25);
+
+  /* Акцент и сообщения */
+  --active-bg-chat: #ffaaa5;
+  --accent: #ffaaa5;
+  --accent-hover: #ffbfc0;
+
+  --msg-left-time-color: #6B7280;
+  --msg-right-time-color: #374151;
+  --msg-out-bg: #ffaaa5;
+  --msg-in-bg: #ffffff;
+  --msg-forwarded-chat-color: #374151;
+  --msg-left-text-color: #374151;
+  --msg-reply-bg: rgba(255, 170, 165, 0.15);
+  --msg-reply-border: rgba(255, 170, 165, 0.4);
+  --msg-reply-author-color: #ff7b87;
+  --msg-reply-text-color: #374151;
+  --msg-reply-hover-bg: rgba(255, 170, 165, 0.25);
+  --msg-reply-hover-border: rgba(255, 170, 165, 0.6);
+
+  --reply-bg-light: rgba(168, 230, 207, 0.7);
+  --reply-hover-bg-light: rgba(168, 230, 207, 0.85);
+  --reply-active-bg-light: rgba(168, 230, 207, 0.95);
+
+  --panel-info-bg: rgba(168, 230, 207, 0.6);
+  --panel-settings-bg: rgba(255, 211, 182, 0.6);
+
+  /* HSL токены под пастельную тему */
+  --background: 0 0% 98%;
+  --foreground: 215 16% 22%;   /* ~#374151 */
+  --card: 24 100% 92%;         /* ~#FFD3B6 */
+  --card-foreground: 215 16% 22%;
+  --popover: 24 100% 92%;
+  --popover-foreground: 215 16% 22%;
+  --primary: 4 100% 82%;       /* ~#FFAAA5 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 152 52% 79%;    /* ~#A8E6CF */
+  --secondary-foreground: 215 16% 22%;
+  --muted: 200 18% 90%;        /* soft grey */
+  --muted-foreground: 215 13% 34%;  /* ~#6B7280 */
+  --accent-hsl: 4 100% 82%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 2 65% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+  --border: 200 18% 86%;
+  --input: 200 18% 86%;
+  --ring: 4 100% 78%;
+
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 215 16% 22%;
+  --sidebar-primary: 4 100% 82%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 152 52% 79%;
+  --sidebar-accent-foreground: 215 16% 22%;
+  --sidebar-border: 200 18% 86%;
+  --sidebar-ring: 4 100% 78%;
+
+  --glass: 0 0% 98% / 0.8;
+  --glass-border: 200 18% 86% / 0.6;
+  --shadow-neumorphic: 0px 8px 24px rgba(15, 23, 42, 0.06),
+    0px -2px 16px rgba(255, 255, 255, 0.7);
+  --gradient-bg: linear-gradient(
+    135deg,
+    #fafafa 0%,
+    #a8e6cf 25%,
+    #ffd3b6 55%,
+    #ffaaa5 85%
+  );
+  --shape-glow: 4 100% 82% / 0.4;
+
+  /* Фоновое изображение для пастельной темы (mint + peach) */
+  --bg-image: url("/mintpeachtheme.png");
+}
+
+/* Принудительная темная тема для страниц авторизации */
+.dark-theme-locked,
+.dark-theme-locked * {
+  --bg-primary: #2d283e !important;
+  --bg-secondary: #4c495d !important;
+  --bg-tertiary: #564f6f !important;
+  --text-white: rgba(209, 215, 224, 0.98) !important;
+  --text-gray: rgba(209, 215, 224, 0.8) !important;
+  --text-dim: rgba(209, 215, 224, 0.55) !important;
+  --hover-bg: rgba(86, 79, 111, 0.9) !important;
+  --active-bg: rgba(76, 73, 93, 0.95) !important;
+  --button-hover-bg: #564f6f !important;
+  --active-bg-chat: #802bb1 !important;
+  --accent: #802bb1 !important;
+  --accent-hover: #9d4fd8 !important;
+  --border-color: rgba(209, 215, 224, 0.28) !important;
+  --icon-color: #d1d7e0 !important;
+  --msg-left-time-color: #b5bbc8 !important;
+  --msg-right-time-color: #e4e7f0 !important;
+  --msg-out-bg: #802bb1 !important;
+  --msg-in-bg: #4c495d !important;
+  
+  /* Tailwind/Neomorphic переменные для темной темы */
+  --background: 262 22% 20% !important;
+  --foreground: 220 27% 88% !important;
+  --card: 262 22% 22% !important;
+  --card-foreground: 220 27% 88% !important;
+  --popover: 262 22% 22% !important;
+  --popover-foreground: 220 27% 88% !important;
+  --primary: 277 36% 44% !important;
+  --primary-foreground: 0 0% 100% !important;
+  --secondary: 262 22% 28% !important;
+  --secondary-foreground: 220 27% 88% !important;
+  --muted: 262 22% 24% !important;
+  --muted-foreground: 220 15% 70% !important;
+  --accent-hsl: 277 36% 44% !important;
+  --accent-foreground: 0 0% 100% !important;
+  --destructive: 0 84% 60% !important;
+  --destructive-foreground: 0 0% 100% !important;
+  --success: 142 76% 36% !important;
+  --success-foreground: 0 0% 100% !important;
+  --warning: 38 92% 50% !important;
+  --warning-foreground: 0 0% 100% !important;
+  --info: 199 89% 48% !important;
+  --info-foreground: 0 0% 100% !important;
+  --border: 262 20% 32% !important;
+  --input: 262 20% 30% !important;
+  --ring: 277 36% 50% !important;
+  --sidebar-background: 262 22% 18% !important;
+  --sidebar-foreground: 220 27% 88% !important;
+  --sidebar-primary: 277 36% 44% !important;
+  --sidebar-primary-foreground: 0 0% 100% !important;
+  --sidebar-accent: 262 22% 26% !important;
+  --sidebar-accent-foreground: 220 27% 88% !important;
+  --sidebar-border: 262 22% 28% !important;
+  --sidebar-ring: 277 36% 50% !important;
+  --glass: 262 22% 22% / 0.45 !important;
+  --glass-border: 220 27% 88% / 0.12 !important;
+  --shadow-neumorphic: 0px 8px 24px rgba(0, 0, 0, 0.45),
+    0px -2px 16px rgba(255, 255, 255, 0.04) !important;
+  --gradient-bg: linear-gradient(
+    135deg,
+    #2d283e 0%,
+    #564f6f 50%,
+    #2d283e 100%
+  ) !important;
+  --shape-glow: 277 36% 50% / 0.35 !important;
+
+  /* Заблокированная тёмная тема (логин/регистрация) — тот же фон, что и у dark */
+  --bg-image: url("/purpledarktheme.png") !important;
+}
+
+.dark-theme-locked {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-white) !important;
+}
+
+

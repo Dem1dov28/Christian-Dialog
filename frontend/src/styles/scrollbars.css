@@ -1,0 +1,271 @@
+/**
+ * Scrollbar Styles - Кастомные стили скроллбаров
+ * Поддержка WebKit и Firefox для всех типов скроллбаров
+ */
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* Light theme: show and style scrollbars even if element uses scrollbar-hide */
+html:not(.dark) .scrollbar-hide {
+  -ms-overflow-style: auto; /* Re-enable in IE/Edge */
+  scrollbar-width: thin;    /* Re-enable in Firefox */
+}
+
+html:not(.dark) .scrollbar-hide::-webkit-scrollbar {
+  display: block;           /* Re-enable in WebKit */
+  width: 8px;
+}
+
+html:not(.dark) .scrollbar-hide::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html:not(.dark) .scrollbar-hide::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 4px;
+}
+
+html:not(.dark) .scrollbar-hide::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Generic scrollbar styles */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Firefox scrollbar colors for generic scroll areas */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+html:not(.dark) .overflow-y-auto {
+  scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
+}
+
+.dark .overflow-y-auto {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* Enhanced scrollbar for chat container */
+.chat-bg.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-bg.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+/* Light theme scrollbar for chat */
+.chat-bg.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.chat-bg.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.chat-bg.overflow-y-auto::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark theme scrollbar for chat */
+.dark .chat-bg.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    hsla(var(--accent-hsl) / 0.4) 0%,
+    hsla(var(--accent-hsl) / 0.2) 50%,
+    hsla(var(--accent-hsl) / 0.1) 100%
+  );
+  border: 1px solid hsla(var(--accent-hsl) / 0.1);
+}
+
+.dark .chat-bg.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    hsla(var(--accent-hsl) / 0.6) 0%,
+    hsla(var(--accent-hsl) / 0.4) 50%,
+    hsla(var(--accent-hsl) / 0.2) 100%
+  );
+  border: 1px solid hsla(var(--accent-hsl) / 0.2);
+  box-shadow: 0 0 12px hsla(var(--accent-hsl) / 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark .chat-bg.overflow-y-auto::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(
+    180deg,
+    hsla(var(--accent-hsl) / 0.8) 0%,
+    hsla(var(--accent-hsl) / 0.6) 50%,
+    hsla(var(--accent-hsl) / 0.3) 100%
+  );
+  border: 1px solid hsla(var(--accent-hsl) / 0.3);
+  box-shadow: 0 0 16px hsla(var(--accent-hsl) / 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Universal chat scrollbar class */
+.chat-scrollbar.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-scrollbar.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+/* Light theme scrollbar for chat-scrollbar */
+html:not(.dark) .chat-scrollbar.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+html:not(.dark) .chat-scrollbar.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.dark) .chat-scrollbar.overflow-y-auto::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark theme scrollbar for chat-scrollbar */
+.dark .chat-scrollbar.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    hsla(var(--accent-hsl) / 0.4) 0%,
+    hsla(var(--accent-hsl) / 0.2) 50%,
+    hsla(var(--accent-hsl) / 0.1) 100%
+  );
+  border: 1px solid hsla(var(--accent-hsl) / 0.1);
+}
+
+.dark .chat-scrollbar.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    hsla(var(--accent-hsl) / 0.6) 0%,
+    hsla(var(--accent-hsl) / 0.4) 50%,
+    hsla(var(--accent-hsl) / 0.2) 100%
+  );
+  border: 1px solid hsla(var(--accent-hsl) / 0.2);
+  box-shadow: 0 0 12px hsla(var(--accent-hsl) / 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark .chat-scrollbar.overflow-y-auto::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(
+    180deg,
+    hsla(var(--accent-hsl) / 0.8) 0%,
+    hsla(var(--accent-hsl) / 0.6) 50%,
+    hsla(var(--accent-hsl) / 0.3) 100%
+  );
+  border: 1px solid hsla(var(--accent-hsl) / 0.3);
+  box-shadow: 0 0 16px hsla(var(--accent-hsl) / 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Firefox scrollbar for chat-scrollbar */
+.chat-scrollbar.overflow-y-auto {
+  scrollbar-width: thin;
+}
+
+html:not(.dark) .chat-scrollbar.overflow-y-auto {
+  scrollbar-color: hsla(var(--accent-hsl) / 0.5) transparent;
+}
+
+.dark .chat-scrollbar.overflow-y-auto {
+  scrollbar-color: hsla(var(--accent-hsl) / 0.4) transparent;
+}
+
+/* Custom scrollbar for library */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-hover);
+  opacity: 0.8;
+}
+
+/* Chat container specific - disable smooth scroll */
+.chat-container {
+  scroll-behavior: auto !important;
+}
+
+/* Chat background scroll */
+.chat-bg.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Firefox scrollbar for chat-bg */
+.chat-bg {
+  scrollbar-width: thin;
+}
+
+html:not(.dark) .chat-bg {
+  scrollbar-color: hsla(var(--accent-hsl) / 0.5) transparent;
+}
+
+.dark .chat-bg {
+  scrollbar-color: hsla(var(--accent-hsl) / 0.4) transparent;
+}
+
+/* Alias for no-scrollbar */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+

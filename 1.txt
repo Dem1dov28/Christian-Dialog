@@ -1,0 +1,8 @@
+cd backend
+py main.py
+
+cd frontend
+npm run dev
+
+cd backend
+python scripts/sync_agents_from_config.py

@@ -1,0 +1,51 @@
+/* FeatureList.module.css */
+
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.featureItem:last-child {
+  margin-bottom: 0;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: #4ade80;
+}
+
+.featureText {
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.5;
+  flex: 1;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .featureItem {
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+
+  .featureText {
+    font-size: 13px;
+  }
+
+  .icon {
+    width: 14px;
+    height: 14px;
+    margin-top: 1px;
+  }
+}

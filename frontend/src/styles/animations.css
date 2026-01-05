@@ -1,0 +1,510 @@
+/**
+ * Animations - Все анимации приложения
+ * Включает keyframes и классы для анимаций
+ */
+
+/* Toast animations */
+@keyframes toast-glow {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes toast-icon-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes toast-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-leave {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-reduced-motion,
+  .toast-motion {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Ripple effect */
+@keyframes ripple-expand {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Background gradient animations */
+@keyframes bgGradientMove {
+  0%, 100% {
+    background-position: 
+      0 0,
+      0 0,
+      20% 50%,
+      80% 80%,
+      50% 20%,
+      60% 70%,
+      30% 30%;
+  }
+  25% {
+    background-position: 
+      0 0,
+      0 0,
+      22% 52%,
+      78% 82%,
+      52% 22%,
+      62% 72%,
+      32% 32%;
+  }
+  50% {
+    background-position: 
+      0 0,
+      0 0,
+      18% 48%,
+      82% 78%,
+      48% 18%,
+      58% 68%,
+      28% 28%;
+  }
+  75% {
+    background-position: 
+      0 0,
+      0 0,
+      21% 51%,
+      79% 81%,
+      51% 21%,
+      61% 71%,
+      31% 31%;
+  }
+}
+
+@keyframes dotsBreath {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+/* Library animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Progress bar animation */
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width, 0%);
+  }
+}
+
+/* Badge animations */
+@keyframes badge-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes unread-badge-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+
+@keyframes unread-badge-appear {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Copy success animation */
+@keyframes copySuccess {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Bio editing animation */
+@keyframes bioEditEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Profile screen slide-in animation */
+@keyframes profileSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* AI Panel animations */
+@keyframes aiPanelSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes aiPanelSlideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes aiPanelModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes aiPanelBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aiPanelBackdropOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes aiPanelModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aiPanelModalFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Notification animations */
+@keyframes notificationSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes notificationSlideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Message highlight animation */
+@keyframes highlightMessage {
+  0% {
+    background-color: rgba(255, 255, 0, 0.3);
+    transform: scale(1.02);
+  }
+  50% {
+    background-color: rgba(255, 255, 0, 0.2);
+    transform: scale(1.01);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+/* Loader animation */
+@keyframes l13 { 
+  100% { transform: rotate(1turn); }
+}
+
+/* Animation classes */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  opacity: 0.6;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.25) 40%,
+    rgba(255, 255, 255, 0.15) 60%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  animation: ripple-expand 550ms ease-out forwards;
+}
+
+.persona-card-enter {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.modal-enter {
+  animation: slideInFromBottom 0.3s ease-out;
+}
+
+.progress-bar {
+  animation: progress-fill 0.5s ease-out;
+}
+
+.badge-pulse {
+  animation: badge-pulse 2s infinite;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.copy-success {
+  color: #10b981;
+  animation: copySuccess 0.6s ease;
+}
+
+.bio-edit-enter {
+  animation: bioEditEnter 0.3s ease-out;
+}
+
+.profile-slide-in {
+  animation: profileSlideIn 0.3s ease-out;
+}
+
+.ai-panel-slide-in {
+  animation: aiPanelSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ai-panel-slide-out {
+  animation: aiPanelSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ai-panel-modal {
+  animation: aiPanelModalIn 0.25s ease-out;
+}
+
+.ai-panel-backdrop {
+  animation: aiPanelBackdropIn 0.25s ease-out;
+}
+
+.ai-panel-backdrop-closing {
+  animation: aiPanelBackdropOut 0.3s ease-out;
+}
+
+.ai-panel-modal-fade-in {
+  animation: aiPanelModalFadeIn 0.3s ease-out;
+}
+
+.ai-panel-modal-fade-out {
+  animation: aiPanelModalFadeOut 0.3s ease-out;
+}
+
+.notification-slide-in {
+  animation: notificationSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+.notification-slide-out {
+  animation: notificationSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+.highlight-message {
+  animation: highlightMessage 2s ease-in-out;
+}
+
+.chat-item .icon-box {
+  animation: unread-badge-appear 0.3s ease-out;
+}
+
+.chat-item:not(.selected) .icon-box:hover {
+  animation: unread-badge-pulse 2s ease-in-out infinite;
+}
+
+/* Tool desktop animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-bottom-4 {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+.slide-in-from-bottom-4 {
+  animation: slide-in-from-bottom-4 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .persona-card-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  
+  .animate-in,
+  .fade-in,
+  .slide-in-from-bottom-4 {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+

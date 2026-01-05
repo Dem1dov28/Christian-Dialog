@@ -1,0 +1,849 @@
+/* Стили для правой панели AIgram */
+
+/* Стили для слайдеров */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-track {
+  background: var(--tg-bg);
+  height: 8px;
+  border-radius: 4px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--tg-accent);
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(var(--tg-accent-rgb), 0.2);
+}
+
+.slider::-moz-range-track {
+  background: var(--tg-bg);
+  height: 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+.slider::-moz-range-thumb {
+  background: var(--tg-accent);
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(var(--tg-accent-rgb), 0.2);
+}
+
+/* Стили для переключателей */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--tg-border);
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--tg-accent);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Стили для анимаций */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Анимации для компонентов */
+.panel-section {
+  animation: slideIn 0.3s ease-out;
+}
+
+.panel-content {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Стили для скроллбара */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Стили для красивых границ */
+.gradient-border {
+  position: relative;
+  background: var(--tg-panel);
+  border-radius: 12px;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: linear-gradient(
+    45deg,
+    var(--tg-accent),
+    transparent,
+    var(--tg-accent)
+  );
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+}
+
+/* Стили для кнопок */
+.btn-primary {
+  background: linear-gradient(135deg, var(--tg-accent), var(--tg-accent-dark));
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+  background: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: 8px;
+  color: var(--tg-text);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--tg-bg-hover);
+  border-color: var(--tg-accent);
+}
+
+.btn-danger {
+  background: hsl(var(--destructive));
+  border: none;
+  border-radius: 8px;
+  color: hsl(var(--destructive-foreground));
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px hsla(var(--destructive) / 0.2);
+}
+
+.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px hsla(var(--destructive) / 0.3);
+  background: hsl(var(--destructive) / 0.9);
+}
+
+/* Стили для карточек */
+.card {
+  background: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--tg-accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-elevated {
+  background: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card-elevated:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Стили для уведомлений */
+.notification-success {
+  background: hsl(var(--success));
+  color: hsl(var(--success-foreground));
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px hsla(var(--success) / 0.2);
+}
+
+.notification-error {
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px hsla(var(--destructive) / 0.2);
+}
+
+.notification-warning {
+  background: hsl(var(--warning));
+  color: hsl(var(--warning-foreground));
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px hsla(var(--warning) / 0.2);
+}
+
+/* Стили для форм */
+.form-input {
+  background: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--tg-text);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--tg-accent);
+  box-shadow: 0 0 0 3px rgba(var(--tg-accent-rgb), 0.1);
+}
+
+.form-textarea {
+  background: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--tg-text);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--tg-accent);
+  box-shadow: 0 0 0 3px rgba(var(--tg-accent-rgb), 0.1);
+}
+
+.form-select {
+  background: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--tg-text);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  width: 100%;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--tg-accent);
+  box-shadow: 0 0 0 3px rgba(var(--tg-accent-rgb), 0.1);
+}
+
+/* Стили для иконок */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--tg-text-secondary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: var(--tg-bg);
+  color: var(--tg-text);
+}
+
+.icon-button:active {
+  transform: scale(0.95);
+}
+
+/* Стили для статистики */
+.stat-card {
+  background: linear-gradient(135deg, var(--tg-bg), var(--tg-bg-hover));
+  border: 1px solid var(--tg-border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--tg-accent);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--tg-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Стили для прогресс-баров */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--tg-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--tg-accent), var(--tg-accent-light));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Стили для тегов */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--tg-accent);
+  color: white;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tag-secondary {
+  background: var(--tg-bg);
+  color: var(--tg-text-secondary);
+  border: 1px solid var(--tg-border);
+}
+
+.tag-success {
+  background: hsl(var(--success));
+  color: hsl(var(--success-foreground));
+}
+
+.tag-warning {
+  background: hsl(var(--warning));
+  color: hsl(var(--warning-foreground));
+}
+
+.tag-error {
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+/* Стили для разделителей */
+.divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--tg-border),
+    transparent
+  );
+  margin: 16px 0;
+}
+
+.divider-thick {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--tg-accent),
+    transparent
+  );
+  margin: 20px 0;
+}
+
+/* Стили для модальных окон */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--tg-panel);
+  border: 1px solid var(--tg-border);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Стили для тултипов */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  text-align: center;
+  border-radius: 8px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+  border: 1px solid var(--tg-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    padding: 16px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-number {
+    font-size: 20px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: var(--tg-bg-dark);
+    border-color: var(--tg-border-dark);
+  }
+
+  .form-input,
+  .form-textarea,
+  .form-select {
+    background: var(--tg-bg-dark);
+    border-color: var(--tg-border-dark);
+    color: var(--tg-text-dark);
+  }
+
+  .tooltip .tooltip-text {
+    background: var(--tg-bg-dark);
+    border-color: var(--tg-border-dark);
+    color: var(--tg-text-dark);
+  }
+}
+
+/* Стили для компонентов профиля */
+.subscription-status-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.subscription-status-card:hover {
+  border-color: var(--accent-color, #8b5cf6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.subscription-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.subscription-icon:hover {
+  transform: scale(1.05);
+}
+
+.subscription-tier-free {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: white;
+}
+
+.subscription-tier-pro {
+  background: linear-gradient(135deg, #802bb1, #5e3fb3);
+  color: white;
+}
+
+.subscription-tier-enterprise {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.subscription-tier-api {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.upgrade-button {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.upgrade-button:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+.upgrade-button:active {
+  transform: translateY(0);
+}
+
+.usage-stats-bar {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.usage-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.usage-progress-low {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.usage-progress-medium {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.usage-progress-high {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.usage-stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.usage-stat-card:hover {
+  border-color: var(--accent-color, #8b5cf6);
+  transform: translateY(-1px);
+}
+
+.usage-stat-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-dim);
+}
+
+.usage-stat-number {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-white);
+  margin-top: 4px;
+}
+
+.usage-stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chat-export-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.chat-export-section:hover {
+  border-color: var(--accent-color, #8b5cf6);
+}
+
+.export-format-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.export-format-button.active {
+  background: var(--accent-color, #8b5cf6);
+  color: white;
+  border-color: var(--accent-color, #8b5cf6);
+}
+
+.export-format-button:not(.active) {
+  background: var(--bg-tertiary);
+  color: var(--text-white);
+}
+
+.export-format-button:not(.active):hover {
+  background: var(--hover-bg);
+  border-color: var(--accent-color, #8b5cf6);
+}
+
+.export-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.export-button:disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+.export-button:not(:disabled) {
+  background: var(--accent-color, #8b5cf6);
+  color: white;
+}
+
+.export-button:not(:disabled):hover {
+  background: var(--accent-hover, #7c3aed);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+.export-button.success {
+  background: #10b981;
+  color: white;
+}
+
+.export-button.success:hover {
+  background: #059669;
+}
+
+.export-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Адаптивные стили для компонентов профиля */
+@media (max-width: 768px) {
+  .subscription-status-card {
+    padding: 12px;
+  }
+
+  .subscription-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .usage-stat-card {
+    padding: 10px;
+  }
+
+  .usage-stat-number {
+    font-size: 16px;
+  }
+
+  .chat-export-section {
+    padding: 12px;
+  }
+
+  .export-format-button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .export-button {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subscription-status-card {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .usage-stats-bar {
+    height: 6px;
+  }
+
+  .usage-stat-card {
+    padding: 8px;
+  }
+
+  .usage-stat-number {
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,289 @@
+import { useEffect } from "react";
+
+/**
+ * Хук для обработки скролла в чате
+ * Включает логику обновления позиций, показа даты, загрузки старых сообщений
+ */
+export function useChatScrollHandlers({
+  containerRef,
+  isInlineLibraryOpen,
+  inputValue,
+  activeConversation,
+  visibleMessages,
+  isChannelChat,
+  windowedMessages,
+  messages,
+  updateDatePosition,
+  topVisibleDate,
+  setTopVisibleDate,
+  setIsDateVisible,
+  dateHideTimeoutRef,
+  setShowScrollButton,
+  getScrollPosition,
+  prevScrollTopRef,
+  isUserScrollingUpRef,
+  scrollUpTimeoutRef,
+  messageRefs,
+  formatDateHeader,
+  language,
+  suppressTopLoadRef,
+  topLoadCooldownRef,
+  prevScrollHeightRef,
+  pendingTopAdjustRef,
+  loadOlderChannelMessages,
+  loadOlderMessages,
+  chatWindowSizes,
+  setChatWindowSizes,
+}) {
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // Используем requestAnimationFrame для более точного отслеживания позиции скролла
+    let rafId = null;
+    const onScroll = () => {
+      // Отменяем предыдущий кадр, если он еще не выполнен
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+
+      // Используем requestAnimationFrame для синхронизации с рендерингом браузера
+      rafId = requestAnimationFrame(() => {
+        // Получаем актуальную позицию скролла с принудительным обновлением
+        const scrollPos = getScrollPosition(true);
+
+        const threshold = 120; // px from bottom to hide button (для flex-col-reverse)
+        const shouldShowScrollButton =
+          scrollPos.distanceFromBottom > threshold && inputValue.trim() === "";
+        setShowScrollButton(shouldShowScrollButton);
+
+        // Определяем направление скролла
+        const currentScrollTop = scrollPos.scrollTop;
+        const prevScrollTop = prevScrollTopRef.current;
+
+        // Если скроллим вверх (scrollTop уменьшается), устанавливаем флаг
+        if (currentScrollTop < prevScrollTop) {
+          isUserScrollingUpRef.current = true;
+          // Сбрасываем флаг через небольшую задержку после остановки скролла
+          if (scrollUpTimeoutRef.current) {
+            clearTimeout(scrollUpTimeoutRef.current);
+          }
+          scrollUpTimeoutRef.current = setTimeout(() => {
+            isUserScrollingUpRef.current = false;
+          }, 500);
+        } else if (currentScrollTop > prevScrollTop) {
+          // Если скроллим вниз, сбрасываем флаг сразу
+          isUserScrollingUpRef.current = false;
+          if (scrollUpTimeoutRef.current) {
+            clearTimeout(scrollUpTimeoutRef.current);
+            scrollUpTimeoutRef.current = null;
+          }
+        }
+
+        prevScrollTopRef.current = currentScrollTop;
+
+        // Обновляем позицию даты при скролле
+        updateDatePosition();
+
+        // Показываем дату при скролле (для любого типа скролла - колесо мыши, scrollbar, touch)
+        if (topVisibleDate && !isInlineLibraryOpen && windowedMessages.length > 0) {
+          setIsDateVisible(true);
+
+          // Очищаем предыдущий таймер скрытия
+          if (dateHideTimeoutRef.current) {
+            clearTimeout(dateHideTimeoutRef.current);
+          }
+
+          // Устанавливаем таймер для скрытия даты после остановки скролла
+          dateHideTimeoutRef.current = setTimeout(() => {
+            // Даем анимации завершиться перед скрытием
+            setIsDateVisible(false);
+            // Удаляем элемент из DOM после завершения анимации
+            setTimeout(() => {
+              // Элемент будет скрыт через visibility: hidden
+            }, 400); // Время анимации
+          }, 1500); // Задержка 1.5 секунды после остановки скролла
+        }
+
+        // Определяем верхнее видимое сообщение для отображения даты (без debounce для мгновенного обновления)
+        if (windowedMessages.length > 0 && !isInlineLibraryOpen && messages?.length > 0) {
+          // Используем requestAnimationFrame для плавного обновления без задержки
+          requestAnimationFrame(() => {
+            const containerRect = el.getBoundingClientRect();
+            const viewportTop = containerRect.top;
+            const viewportTopOffset = 150; // Отступ от верха для определения "верхнего" сообщения
+
+            // Ищем первое сообщение, которое видно в верхней части экрана
+            let topVisibleMessage = null;
+            let minDistance = Infinity;
+
+            // Проходим по сообщениям в обратном порядке (так как они в flex-col-reverse)
+            const reversedMessages = [...windowedMessages].reverse();
+            for (const message of reversedMessages) {
+              const messageEl = messageRefs.current[message.id];
+              if (!messageEl) continue;
+
+              const messageRect = messageEl.getBoundingClientRect();
+
+              // Проверяем, пересекается ли сообщение с верхней частью viewport
+              const messageTop = messageRect.top;
+              const messageBottom = messageRect.bottom;
+
+              // Проверяем, видно ли сообщение в верхней части контейнера
+              if (
+                messageTop <= viewportTop + viewportTopOffset &&
+                messageBottom >= viewportTop
+              ) {
+                const distanceFromTop = Math.abs(messageTop - viewportTop);
+                if (distanceFromTop < minDistance) {
+                  minDistance = distanceFromTop;
+                  topVisibleMessage = message;
+                }
+              }
+            }
+
+            // Если нашли видимое сообщение, обновляем дату
+            if (topVisibleMessage) {
+              // Находим оригинальное сообщение с датой
+              const originalMessage = messages.find(
+                (msg) => msg.id === topVisibleMessage.id
+              );
+              if (originalMessage?.created_at) {
+                const formattedDate = formatDateHeader(
+                  originalMessage.created_at,
+                  language
+                );
+                setTopVisibleDate(formattedDate);
+              }
+            } else if (windowedMessages.length > 0) {
+              // Если не нашли видимое сообщение (например, при первой загрузке), берем первое из списка
+              const firstMessage = windowedMessages[0];
+              const originalMessage = messages.find(
+                (msg) => msg.id === firstMessage.id
+              );
+              if (originalMessage?.created_at) {
+                const formattedDate = formatDateHeader(
+                  originalMessage.created_at,
+                  language
+                );
+                setTopVisibleDate(formattedDate);
+              }
+            }
+          });
+        }
+
+        // Подгрузка предыдущих сообщений при прокрутке вверх (с защитами)
+        if (activeConversation?.id) {
+          // Проверяем, находится ли скролл в пределах 20% от верха контейнера
+          const nearTop = scrollPos.scrollTop <= scrollPos.scrollHeight * 0.2;
+          if (nearTop) {
+            if (suppressTopLoadRef.current) return;
+            if (topLoadCooldownRef.current) return;
+            // Не даём подгружать слишком часто при быстром скролле
+            topLoadCooldownRef.current = true;
+            setTimeout(() => {
+              topLoadCooldownRef.current = false;
+            }, 250);
+
+            // Сохраняем предыдущую высоту скролла, чтобы компенсировать смещение
+            prevScrollHeightRef.current = scrollPos.scrollHeight;
+            pendingTopAdjustRef.current = true;
+
+            // Подгружаем старые сообщения с backend при достижении начала загруженных
+            if (activeConversation?.id) {
+              const currentWindowSize =
+                chatWindowSizes[activeConversation.id] || 10;
+              const totalLoaded = visibleMessages.length;
+
+              // Если достигли 80% загруженных сообщений, подгружаем еще старые
+              if (currentWindowSize >= totalLoaded * 0.8) {
+                if (isChannelChat) {
+                  console.log(
+                    `[Chat] Подгружаем старые сообщения канала ${activeConversation.id}`
+                  );
+                  loadOlderChannelMessages(activeConversation.id, {
+                    maxChars: 10000,
+                  }).catch((err) => {
+                    console.error("Failed to load older channel messages:", err);
+                  });
+                } else {
+                  // Для обычных чатов, групп и Saved Messages
+                  console.log(
+                    `[Chat] Подгружаем старые сообщения чата ${activeConversation.id}`
+                  );
+                  loadOlderMessages(activeConversation.id, {
+                    maxChars: 10000,
+                  }).catch((err) => {
+                    console.error("Failed to load older messages:", err);
+                  });
+                }
+              }
+            }
+
+            setChatWindowSizes((prev) => {
+              // Для каналов дефолтный размер окна 20, для остальных - 75
+              const defaultSize = isChannelChat ? 20 : 75;
+              // Для каналов увеличиваем окно на 15 сообщений, для остальных - на 75
+              const incrementStep = isChannelChat ? 15 : 75;
+              const current = prev[activeConversation.id] || defaultSize;
+              const canGrow = current < visibleMessages.length;
+              if (!canGrow) return prev;
+              const next = Math.min(visibleMessages.length, current + incrementStep);
+              if (next === current) return prev;
+              return { ...prev, [activeConversation.id]: next };
+            });
+          }
+        }
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      // Отменяем pending requestAnimationFrame
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      // Очищаем таймеры при размонтировании
+      if (dateHideTimeoutRef.current) {
+        clearTimeout(dateHideTimeoutRef.current);
+      }
+      if (dateHideTimeoutRef.current) {
+        clearTimeout(dateHideTimeoutRef.current);
+      }
+      if (scrollUpTimeoutRef.current) {
+        clearTimeout(scrollUpTimeoutRef.current);
+      }
+    };
+  }, [
+    containerRef,
+    isInlineLibraryOpen,
+    inputValue,
+    activeConversation?.id,
+    visibleMessages.length,
+    isChannelChat,
+    windowedMessages,
+    messages,
+    updateDatePosition,
+    topVisibleDate,
+    setTopVisibleDate,
+    setIsDateVisible,
+    dateHideTimeoutRef,
+    setShowScrollButton,
+    getScrollPosition,
+    prevScrollTopRef,
+    isUserScrollingUpRef,
+    scrollUpTimeoutRef,
+    messageRefs,
+    formatDateHeader,
+    language,
+    suppressTopLoadRef,
+    topLoadCooldownRef,
+    prevScrollHeightRef,
+    pendingTopAdjustRef,
+    loadOlderChannelMessages,
+    loadOlderMessages,
+    chatWindowSizes,
+    setChatWindowSizes,
+  ]);
+}
+

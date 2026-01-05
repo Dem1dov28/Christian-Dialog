@@ -1,0 +1,620 @@
+/**
+ * Component Styles - Стили компонентов
+ * Кнопки, чаты, модальные окна, панели и другие компоненты
+ */
+
+/* Drag and Drop стили для инструментов */
+[data-tool-item].drag-target {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+[data-tool-item].drag-shift-left {
+  transform: translateX(-10px);
+  transition: transform 0.2s ease;
+}
+
+[data-tool-item].drag-shift-right {
+  transform: translateX(10px);
+  transition: transform 0.2s ease;
+}
+
+/* Sidebar buttons */
+button[data-id="chats"] {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+}
+
+button[data-id="chats"]:hover {
+  background-color: var(--hover-bg) !important;
+  opacity: 0.9;
+}
+
+button[data-id="chats"][aria-current="page"] {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+}
+
+button[data-id] {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+  transition: background-color 0.2s ease !important;
+}
+
+button[data-id]:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+button[data-id]:active {
+  background-color: var(--active-bg) !important;
+}
+
+button[data-id].selected {
+  background-color: var(--active-bg-chat) !important;
+}
+
+button[data-id].selected:hover {
+  background-color: var(--active-bg-chat) !important;
+  opacity: 0.9;
+}
+
+/* Hover highlight for top menu icon */
+svg.text-3xl {
+  transition: color 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+}
+
+button:hover svg.text-3xl {
+  color: var(--accent);
+  filter: drop-shadow(0 0 8px hsla(var(--accent-hsl) / 0.5));
+}
+
+/* Search input styles */
+.search-input {
+  transition: box-shadow 0.3s ease;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.material-icons-outlined {
+  transition: color 0.3s ease, filter 0.3s ease;
+}
+
+input:focus + .material-icons-outlined,
+input:focus ~ .material-icons-outlined,
+.relative:focus-within .material-icons-outlined {
+  color: var(--accent);
+  filter: drop-shadow(0 0 8px hsla(var(--accent-hsl) / 0.5));
+}
+
+.search-input:focus + svg,
+.search-input:focus ~ svg,
+.relative:focus-within .search-icon {
+  color: var(--accent) !important;
+  filter: drop-shadow(0 0 12px hsla(var(--accent-hsl) / 0.8)) !important;
+  transition: all 0.3s ease !important;
+}
+
+.relative:focus-within .search-close-btn {
+  color: var(--accent) !important;
+  filter: drop-shadow(0 0 12px hsla(var(--accent-hsl) / 0.8)) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Active SidebarItem icon highlight */
+.icon-box svg {
+  transition: color 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+  transform: scale(0.8);
+}
+
+button[aria-current="page"] .icon-box svg {
+  color: var(--accent);
+  transform: scale(0.88);
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.5));
+}
+
+/* Chat item styles */
+.chat-item {
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  background-color: transparent !important;
+}
+
+.chat-item:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+.chat-item:active {
+  background-color: var(--active-bg-chat) !important;
+}
+
+.chat-item.selected {
+  background-color: var(--active-bg-chat) !important;
+}
+
+.chat-item.selected:hover {
+  background-color: var(--active-bg-chat) !important;
+  opacity: 0.9;
+}
+
+/* Badge hover effect */
+button[data-id]:hover .badge {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4), 0 0 0 2px var(--accent) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Message text wrapper and time */
+.message-text-wrapper {
+  line-height: 1.5em;
+  font-size: 1rem;
+}
+
+.message-time {
+  float: right;
+  margin-left: 8px;
+  line-height: 0;
+  user-select: none;
+  white-space: nowrap;
+  height: 0;
+  padding-top: 1.5em;
+  box-sizing: border-box;
+  display: block;
+}
+
+.message-text-wrapper::after {
+  content: "";
+  display: table;
+  clear: both;
+  height: 0;
+}
+
+.message-with-time {
+  display: inline;
+}
+
+/* Reply block styles */
+.reply-block {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer !important;
+}
+
+.reply-block:hover {
+  background-color: var(--msg-reply-hover-bg) !important;
+  border-color: var(--msg-reply-hover-border) !important;
+}
+
+/* Ripple effect */
+.has-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Chat background */
+.chat-bg {
+  position: relative;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  /* Важно для корректного drag-and-drop: отключаем smooth-scroll,
+     чтобы расчёт позиций элементов не искажался анимацией прокрутки */
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: hsla(var(--accent-hsl) / 0.5) transparent;
+  background-color: var(--bg-primary);
+  /* Используем PNG-фон из текущей темы */
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  /* Привязываем фон к контейнеру, чтобы не ломать DnD */
+  background-attachment: scroll;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.dark .chat-bg {
+  scrollbar-color: hsla(var(--accent-hsl) / 0.4) transparent;
+  background-color: var(--bg-primary);
+  /* В тёмных темах тоже используем PNG-фон из переменной темы */
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+}
+
+.chat-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Прозрачный фон для chat-bg когда показывается панель инструментов */
+.chat-bg.tools-bar-active {
+  background-color: transparent !important;
+  background-image: none !important;
+  z-index: 1 !important;
+  position: relative;
+}
+
+/* Прозрачный фон для main элемента когда показывается панель инструментов */
+main.tools-bar-main-transparent,
+main.tools-bar-main-transparent.bg-tg-panel {
+  
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Убираем все возможные фоны у элементов внутри main когда показывается панель инструментов */
+main.tools-bar-main-transparent > *:not(.tools-bar-container) {
+  background-color: transparent !important;
+}
+
+/* Scroll button */
+.scroll-button {
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.scroll-button:hover {
+  transform: scale(1.1);
+  background-color: rgba(168, 85, 247, 0.9);
+}
+
+/* Контейнер панели инструментов должен быть полностью прозрачным */
+.tools-bar-container {
+  background-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Когда панель инструментов sticky, делаем её полупрозрачной и матовой (как chat-input-frosted) */
+.tools-bar-container.tools-bar-sticky {
+  background: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: none !important;
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.15) !important;
+}
+
+.tools-bar-container > * {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Sidebar container */
+.sidebar-container {
+  background-color: var(--bg-secondary) !important;
+}
+
+.sidebar-container button {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.sidebar-container button:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+.sidebar-container button[aria-current="page"] {
+  background-color: transparent !important;
+}
+
+.sidebar-container svg {
+  color: var(--icon-color) !important;
+}
+
+.sidebar-container button:hover svg {
+  color: var(--accent) !important;
+}
+
+.sidebar-container button[aria-current="page"] svg {
+  color: var(--accent) !important;
+}
+
+/* Persona card effects */
+.persona-card {
+  position: relative;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.persona-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(64, 224, 208, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.persona-card:hover::before {
+  left: 100%;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff, var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effect */
+.glow-effect {
+  box-shadow: 0 0 20px hsla(var(--accent-hsl) / 0.3);
+}
+
+.glow-effect:hover {
+  box-shadow: 0 0 30px hsla(var(--accent-hsl) / 0.5);
+}
+
+/* Press effect */
+.press-effect:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Slider styles */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-track {
+  background: var(--bg-tertiary);
+  height: 8px;
+  border-radius: 4px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--accent);
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: var(--accent-hover);
+  transform: scale(1.1);
+}
+
+.slider::-moz-range-track {
+  background: var(--bg-tertiary);
+  height: 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+.slider::-moz-range-thumb {
+  background: var(--accent);
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider::-moz-range-thumb:hover {
+  background: var(--accent-hover);
+  transform: scale(1.1);
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-tertiary);
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--accent);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* AI Panel styles */
+.ai-panel-wrapper {
+  min-width: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.ai-panel-closing {
+  pointer-events: none;
+}
+
+main[class*="flex-col"] {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              flex-basis 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+div.flex.flex-1.overflow-hidden {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+main.flex.flex-col {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              flex-basis 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* AI Panel item hover */
+.ai-panel-item {
+  transition: all 0.2s ease;
+}
+
+.ai-panel-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Loader */
+.loader {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: 
+    radial-gradient(farthest-side, var(--accent) 70%, #0000) 50% top/8px 8px no-repeat,
+    conic-gradient(#0000 30%, var(--accent));
+  -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 4px), #000 0);
+  mask: radial-gradient(farthest-side, #0000 calc(100% - 4px), #000 0);
+  animation: l13 1s infinite linear;
+}
+
+/* Search modal */
+.search-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
+  background-color: var(--bg-primary) !important;
+}
+
+.search-modal * {
+  box-sizing: border-box;
+}
+
+.search-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 9998;
+}
+
+.search-backdrop {
+  display: none !important;
+}
+
+.search-panel {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: transparent !important;
+  pointer-events: auto !important;
+}
+
+/* Mask for horizontal scroll */
+.mask-linear-gradient {
+  mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+}
+
+/* Todo task card fix */
+.todo-task-card {
+  background-color: var(--bg-tertiary) !important;
+  transition: none !important;
+}
+
+.dark .todo-task-card {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Оптимизация для drag-and-drop элементов */
+[data-rbd-draggable-id],
+[data-rbd-drag-handle-draggable-id] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Отключаем все transitions и animations для draggable элементов во время драга */
+[data-rbd-draggable-context-id] [style*="transform"] *,
+[data-rbd-draggable-context-id] [style*="transform"] *::before,
+[data-rbd-draggable-context-id] [style*="transform"] *::after {
+  transition: none !important;
+  animation: none !important;
+  -webkit-transition: none !important;
+  -webkit-animation: none !important;
+}
+
+/* КРИТИЧЕСКИ ВАЖНО: НЕ устанавливаем transition на draggable элементы */
+/* Библиотека @hello-pangea/dnd сама управляет transitions для правильной работы */
+/* Мы только обеспечиваем видимость placeholder */
+[data-rbd-placeholder-context-id] {
+  background: var(--hover-bg) !important;
+  border-radius: 0.5rem !important;
+  min-height: 4px !important;
+  opacity: 0.3 !important;
+  /* Убеждаемся, что placeholder виден и не перекрывается */
+  position: relative !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+/* Улучшаем видимость перетаскиваемых элементов */
+/* ВАЖНО: Библиотека сама управляет transform и transition, мы только добавляем z-index */
+[data-rbd-draggable-context-id][style*="transform"] {
+  z-index: 50 !important;
+}
+
+/* Дополнительная оптимизация для элементов внутри draggable во время драга */
+/* ВАЖНО: Эти стили применяются ТОЛЬКО во время драга (когда есть transform) */
+[data-rbd-draggable-context-id][style*="transform"] button,
+[data-rbd-draggable-context-id][style*="transform"] input,
+[data-rbd-draggable-context-id][style*="transform"] textarea,
+[data-rbd-draggable-context-id][style*="transform"] a {
+  pointer-events: none !important;
+}
+
+/* После завершения драга все должно вернуться в нормальное состояние */
+/* Библиотека сама убирает transform, поэтому эти стили автоматически перестают применяться */
+
+

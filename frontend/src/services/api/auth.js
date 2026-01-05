@@ -1,0 +1,300 @@
+/**
+ * API методы для аутентификации и управления пользователями
+ */
+
+export class AuthAPI {
+  constructor(client) {
+    this.client = client;
+  }
+
+  // Регистрация пользователя
+  async register(userData) {
+    return this.client.post("/auth/register", userData);
+  }
+
+  // Вход пользователя
+  // OAuth2PasswordRequestForm требует form-urlencoded формат (не JSON)
+  // Используем поле username для передачи email
+  async login(credentials) {
+    const formData = new URLSearchParams();
+    formData.append('username', credentials.email || credentials.username); // Поддержка обоих вариантов для обратной совместимости
+    formData.append('password', credentials.password);
+    
+    const url = `${this.client.baseURL}/auth/login`;
+    const config = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorData = {};
+        try {
+          const text = await response.text();
+          if (text.trim()) {
+            errorData = JSON.parse(text);
+          }
+        } catch (e) {
+          errorData = {};
+        }
+        
+        // Извлекаем сообщение об ошибке из различных форматов ответа
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        
+        if (errorData.detail) {
+          if (typeof errorData.detail === "string") {
+            errorMessage = errorData.detail;
+          } else if (Array.isArray(errorData.detail)) {
+            // FastAPI validation errors
+            const validationErrors = errorData.detail
+              .map(err => {
+                const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : err.loc?.[0] || "field";
+                return `${field}: ${err.msg}`;
+              })
+              .join("; ");
+            errorMessage = validationErrors || "Ошибка валидации данных";
+          } else if (typeof errorData.detail === "object") {
+            errorMessage = errorData.detail.message || JSON.stringify(errorData.detail);
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        // Если токен истек, очищаем его
+        if (response.status === 401) {
+          this.client.setToken(null);
+        }
+        
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.response = errorData;
+        throw error;
+      }
+
+      const data = await response.json();
+      if (data.access_token) {
+        this.client.setToken(data.access_token);
+      }
+      return data;
+    } catch (error) {
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        throw new Error("Network error - please check your connection");
+      } else if (error.status === 401) {
+        // Для 401 ошибок не логируем дополнительно - уже обработано выше
+        throw error;
+      } else {
+        console.error("Login failed:", error);
+        throw error;
+      }
+    }
+  }
+
+  // Вход через Google OAuth
+  async loginWithGoogle(credential, clientId = null) {
+    const payload = {
+      credential,
+    };
+
+    if (clientId) {
+      payload.client_id = clientId;
+    }
+
+    const response = await this.client.post("/auth/google", payload);
+    if (response.access_token) {
+      this.client.setToken(response.access_token);
+    }
+    return response;
+  }
+
+  // Выход пользователя
+  async logout() {
+    try {
+      await this.client.post("/auth/logout");
+    } finally {
+      this.client.setToken(null);
+    }
+  }
+
+  // Получить информацию о текущем пользователе
+  async getCurrentUser() {
+    // Добавляем уникальный параметр для предотвращения кэширования
+    const timestamp = Date.now();
+    return this.client.get(`/auth/me?t=${timestamp}`);
+  }
+
+  // Проверить лимит сообщений перед отправкой
+  async checkMessageLimit() {
+    return this.client.get("/auth/check-message-limit");
+  }
+
+  // Обновить информацию о пользователе
+  async updateUser(userData) {
+    return this.client.put("/auth/me", userData);
+  }
+
+  // Загрузить аватар пользователя
+  async uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const url = `${this.client.baseURL}/auth/me/avatar`;
+    const config = {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.client.token}`,
+        // НЕ устанавливаем Content-Type - браузер сделает это автоматически с boundary для multipart/form-data
+      },
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorData = {};
+        try {
+          const text = await response.text();
+          if (text.trim()) {
+            errorData = JSON.parse(text);
+          }
+        } catch (e) {
+          errorData = {};
+        }
+        
+        // Извлекаем сообщение об ошибке из различных форматов ответа
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        
+        if (errorData.detail) {
+          if (typeof errorData.detail === "string") {
+            errorMessage = errorData.detail;
+          } else if (Array.isArray(errorData.detail)) {
+            // FastAPI validation errors
+            const validationErrors = errorData.detail
+              .map(err => {
+                const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : err.loc?.[0] || "field";
+                return `${field}: ${err.msg}`;
+              })
+              .join("; ");
+            errorMessage = validationErrors || "Ошибка валидации данных";
+          } else if (typeof errorData.detail === "object") {
+            errorMessage = errorData.detail.message || JSON.stringify(errorData.detail);
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.response = errorData;
+        throw error;
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        throw new Error("Network error - please check your connection");
+      }
+      throw error;
+    }
+  }
+
+  // Проверить валидность токена
+  async verifyToken() {
+    return this.client.get("/auth/verify-token");
+  }
+
+  // Проверить соединение с сервером
+  async checkServerConnection() {
+    try {
+      const response = await fetch(`${this.client.baseURL}/auth/test`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      return response.ok;
+    } catch (error) {
+      console.error("Server connection check failed:", error);
+      return false;
+    }
+  }
+
+  // Получить статистику использования пользователя
+  async getUsageStats() {
+    return this.client.get("/auth/usage-stats");
+  }
+
+  // Экспортировать данные чата
+  async exportChatData(conversationId, format = "txt") {
+    return this.client.post("/auth/export-chat-data", {
+      conversation_id: conversationId,
+      format: format,
+    });
+  }
+
+  // Обновить до API доступа
+  async upgradeToAPI(apiKey) {
+    return this.client.post("/auth/upgrade-to-api", {
+      api_key: apiKey,
+    });
+  }
+
+  // Обновить подписку на любой тариф
+  async upgradeSubscription(subscriptionTier, apiKey = null) {
+
+    const requestData = {
+      subscription_tier: subscriptionTier,
+    };
+
+    if (apiKey) {
+      requestData.api_key = apiKey;
+    }
+
+    try {
+      const response = await this.client.post(
+        "/auth/upgrade-subscription-real",
+        requestData
+      );
+      return response;
+    } catch (error) {
+      console.error("Failed to upgrade subscription:", error);
+      throw error;
+    }
+  }
+
+  // Вспомогательная функция для получения лимита сообщений
+  getMessagesLimit(tier) {
+    const limits = {
+      free: 50,
+      plus: 500,
+      pro: 2000,
+      api: 10000,
+    };
+    return limits[tier] || limits.free;
+  }
+
+  // Получить статус подписки
+  async getSubscriptionStatus() {
+    const t = Date.now();
+    // Используем /auth/me вместо /auth/subscription-status так как он работает
+    const userData = await this.client.get(`/auth/me?t=${t}`);
+
+    // Преобразуем данные пользователя в формат статуса подписки
+    return {
+      subscription_tier: userData.subscription_tier || "free",
+      is_expired: false,
+      expires_at: userData.expires_at || null, // Используем реальную дату истечения
+      days_remaining: null,
+      messages_used: userData.messages_used || 0,
+      messages_limit: userData.messages_limit || 50,
+      api_access: userData.api_access || false,
+      can_upgrade: (userData.subscription_tier || "free") !== "premium",
+      can_downgrade: (userData.subscription_tier || "free") !== "free",
+    };
+  }
+}
+

@@ -1,0 +1,73 @@
+{
+  "agents": {
+    "Владимир Путин": {
+      "name": "Vladimir Putin",
+      "description": "President of Russia, responds in an official style"
+    },
+    "Платон": {
+      "name": "Plato",
+      "description": "Ancient Greek philosopher, founder of the Academy"
+    },
+    "Фридрих Ницше": {
+      "name": "Friedrich Nietzsche",
+      "description": "German philosopher, author of the concept of the Übermensch"
+    },
+    "Учитель английского": {
+      "name": "English Teacher",
+      "description": "Corrects English and briefly explains grammar rules."
+    },
+    "Владимир Зеленский": {
+      "name": "Volodymyr Zelenskyy",
+      "description": "President of Ukraine; statesman and politician, former actor and producer."
+    },
+    "Дональд Трамп": {
+      "name": "Donald Trump",
+      "description": "45th and 47th President of the USA, entrepreneur and billionaire."
+    },
+    "Илон Маск": {
+      "name": "Elon Musk",
+      "description": "Entrepreneur; founder of SpaceX, head of Tesla and X (Twitter)."
+    },
+    "Павел Дуров": {
+      "name": "Pavel Durov",
+      "description": "Founder of Telegram and VKontakte; entrepreneur, product manager, privacy advocate."
+    },
+    "Марк Аврелий": {
+      "name": "Marcus Aurelius",
+      "description": "Roman emperor and Stoic philosopher; author of 'Meditations'."
+    },
+    "Толкователь сновидений": {
+      "name": "Dream Interpreter",
+      "description": "Experienced specialist in dream interpretation combining classic dream books and modern psychology."
+    },
+    "Поиск в интернете": {
+      "name": "Web Search",
+      "description": "Searches for current information on the internet using DuckDuckGo."
+    },
+    "Таймер и напоминания": {
+      "name": "Timer & Reminders",
+      "description": "Sets timers and creates reminders."
+    },
+    "Конвертер валют": {
+      "name": "Currency Converter",
+      "description": "Converts currencies using current exchange rates."
+    },
+    "Учет покупок": {
+      "name": "Purchase Tracker",
+      "description": "Records expenses, shows recent purchases and summary by categories."
+    },
+    "Создатель тестов": {
+      "name": "Test Creator",
+      "description": "Creates interactive tests on any topic to check knowledge."
+    },
+    "Ту-ду лист": {
+      "name": "Todo List",
+      "description": "Helps plan tasks by analyzing the task journal."
+    },
+    "Кулинарный советник": {
+      "name": "Culinary Advisor",
+      "description": "Provides recipes, cooking tips and information about preparing dishes."
+    }
+  }
+}
+

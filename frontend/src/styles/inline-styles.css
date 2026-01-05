@@ -1,0 +1,350 @@
+/* Inline стили для AIgram */
+body { 
+  background-color: var(--bg-primary);
+  color: var(--text-white);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none; 
+}
+
+.scrollbar-hide { 
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+
+/* Стили для chat-bg теперь в index.css для фиксированного фона */
+
+/* Стили для ChatLibrary */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-library-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-library-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.chat-library-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+.chat-library-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent)/80;
+}
+
+/* Стили для drag & drop */
+.draggable-item {
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+.draggable-item:hover {
+  transform: scale(1.02);
+}
+
+.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  cursor: move;
+}
+
+.drag-over {
+  transform: scale(1.05);
+  ring: 2px solid var(--accent);
+  background-color: hsla(var(--accent-hsl) / 0.12); /* основано на accent темы */
+}
+
+/* Адаптивные стили для закрепленного сообщения */
+.pinned-message-responsive {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 640px) {
+  .pinned-message-responsive {
+    padding: 0.5rem;
+  }
+  
+  .pinned-message-responsive .text-responsive {
+    font-size: 0.75rem;
+  }
+  
+  .pinned-message-responsive .icon-responsive {
+    font-size: 1.125rem;
+  }
+}
+
+/* Адаптивные стили для формы отправки */
+.message-input-responsive {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 640px) {
+  .message-input-responsive {
+    min-height: 48px;
+    border-radius: 24px;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .message-input-responsive textarea {
+    font-size: 0.875rem;
+    margin: 0 0.5rem;
+  }
+  
+  .message-input-responsive button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Прозрачный блок ввода сообщения - перекрывает фон main */
+.chat-input-transparent {
+  /* Полностью прозрачный фон */
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  /* position управляется через inline стили, не переопределяем */
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  pointer-events: auto !important;
+  isolation: isolate !important;
+  /* Убираем все возможные эффекты */
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Убираем все фоны у всех элементов внутри */
+.chat-input-transparent *,
+.chat-input-transparent *::before,
+.chat-input-transparent *::after {
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Исключение для кнопки отправки - она должна быть видимой */
+.chat-input-transparent button[aria-label*="Отправить"],
+.chat-input-transparent button[aria-label*="Отменить"],
+.chat-input-transparent button[aria-label*="Send"],
+.chat-input-transparent button[aria-label*="Cancel"],
+.chat-input-transparent .chat-input-button-visible {
+  background: var(--accent) !important;
+  background-color: var(--accent) !important;
+}
+
+/* Кнопка прикрепления файла - видимая с полупрозрачным фоном при hover */
+.chat-input-transparent button[aria-label*="Прикрепить"],
+.chat-input-transparent button[aria-label*="attachFile"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.chat-input-transparent button[aria-label*="Прикрепить"]:hover,
+.chat-input-transparent button[aria-label*="attachFile"]:hover {
+  background: var(--bg-secondary) !important;
+  background-color: rgba(var(--bg-secondary-rgb, 0, 0, 0), 0.3) !important;
+}
+
+/* Убираем все фоны у всех дочерних элементов, включая div с flex */
+.chat-input-transparent > *,
+.chat-input-transparent div,
+.chat-input-transparent .flex,
+.chat-input-transparent .flex.items-end {
+  background-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+}
+
+.chat-input-transparent textarea {
+  background-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Убираем все возможные фоны */
+.chat-input-transparent .bg-transparent,
+.chat-input-transparent .bg-\[var\(--bg-primary\)\],
+.chat-input-transparent .bg-\[var\(--bg-secondary\)\],
+.chat-input-transparent [class*="bg-"],
+.chat-input-transparent [class*="bg-tg"] {
+  background-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Убираем тени и границы у всех элементов, кроме кнопки отправки */
+.chat-input-transparent *:not(button[aria-label*="Отправить"]):not(button[aria-label*="Отменить"]):not(button[aria-label*="Send"]):not(button[aria-label*="Cancel"]):not(button.bg-\[var\(--accent\)\]) {
+  box-shadow: none !important;
+}
+
+/* Специально для flex контейнера с элементами управления */
+.chat-input-transparent .flex.items-end.gap-2,
+.chat-input-transparent .flex.items-end.gap-3 {
+  background-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Универсальный класс для матового прозрачного эффекта */
+.frosted-glass {
+  background: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Матовый фон для блока ввода - переопределяем правила прозрачности */
+.chat-input-transparent .chat-input-frosted,
+.chat-input-frosted {
+  background: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border-radius: 20px !important;
+  border: none !important;
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.15) !important;
+  padding: 0.4rem 0.6rem !important;
+  margin: 8px auto 12px auto !important;
+  width: calc(100% - 120px) !important;
+  max-width: 600px !important;
+}
+
+/* Матовый прозрачный фон для поля поиска */
+.search-input {
+  background: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.search-input:focus {
+  background: rgba(0, 0, 0, 0.2) !important;
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(var(--accent-rgb, 64, 224, 208), 0.5) !important;
+  box-shadow: 0 0 20px hsla(var(--accent-hsl) / 0.4) !important;
+}
+
+/* Адаптивные стили для заголовка чата */
+.chat-header-responsive {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 640px) {
+  .chat-header-responsive {
+    padding: 0.5rem;
+  }
+  
+  .chat-header-responsive .avatar-responsive {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 0.5rem;
+  }
+  
+  .chat-header-responsive .title-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .chat-header-responsive .description-responsive {
+    font-size: 0.75rem;
+  }
+  
+  .chat-header-responsive .button-responsive {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+/* Специальные стили для мятной темы (theme-pastel) - более темные цвета для текста и иконок */
+.theme-pastel #header-search,
+.theme-pastel .search-input {
+  color: #1f2937 !important; /* Более темный серый для лучшей видимости */
+}
+
+.theme-pastel #header-search::placeholder,
+.theme-pastel .search-input::placeholder {
+  color: #4b5563 !important; /* Более темный placeholder */
+}
+
+.theme-pastel .search-icon,
+.theme-pastel .search-close-btn {
+  color: #1f2937 !important; /* Более темный цвет для иконок поиска */
+}
+
+/* Стили для чат-инпута в мятной теме */
+.theme-pastel .chat-input-frosted textarea {
+  color: #1f2937 !important; /* Более темный цвет для текста в чат-инпуте */
+}
+
+.theme-pastel .chat-input-frosted textarea::placeholder {
+  color: #4b5563 !important; /* Более темный placeholder */
+}
+
+/* Иконки и кнопки в чат-инпуте */
+.theme-pastel .chat-input-frosted button[aria-label*="Прикрепить"],
+.theme-pastel .chat-input-frosted button[aria-label*="attachFile"],
+.theme-pastel .chat-input-frosted svg {
+  color: #1f2937 !important; /* Более темный цвет для иконок в чат-инпуте */
+}
+
+/* Переопределение CSS переменных для чат-инпута в мятной теме */
+.theme-pastel .chat-input-frosted {
+  --text-white: #1f2937 !important;
+  --text-gray: #1f2937 !important;
+  --text-dim: #1f2937 !important;
+  --icon-color: #1f2937 !important;
+}
+
+/* Дополнительные правила для всех элементов внутри чат-инпута */
+.theme-pastel .chat-input-frosted * {
+  color: inherit;
+}
+
+.theme-pastel .chat-input-frosted button:not([class*="bg-[var(--accent)"]) {
+  color: #1f2937 !important;
+}
+
+.theme-pastel .chat-input-frosted button:not([class*="bg-[var(--accent)"]) svg {
+  color: #1f2937 !important;
+}
+
+/* Hover состояния для кнопок в чат-инпуте */
+.theme-pastel .chat-input-frosted button:not([class*="bg-[var(--accent)"]):hover {
+  color: #111827 !important; /* Еще более темный при наведении */
+}
+
+.theme-pastel .chat-input-frosted button:not([class*="bg-[var(--accent)"]):hover svg {
+  color: #111827 !important;
+}
+
+/* Hover для иконок поиска */
+.theme-pastel .search-icon:hover,
+.theme-pastel .search-close-btn:hover {
+  color: #111827 !important;
+}

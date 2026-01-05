@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Theme initialization script - MUST be first to prevent FOUC -->
+    <script>
+      (function () {
+        try {
+          const stored =
+            localStorage.getItem("theme") ||
+            sessionStorage.getItem("theme") ||
+            "dark";
+
+          // Нормализуем старое значение "violet" к новой тёмной теме
+          let theme = stored === "violet" ? "dark" : stored;
+          if (!["light", "dark", "blue", "pastel"].includes(theme)) {
+            theme = "dark";
+          }
+
+          if (stored !== theme) {
+            try {
+              localStorage.setItem("theme", theme);
+            } catch (_) {}
+          }
+
+          const isDarkLike = theme === "dark" || theme === "blue";
+          if (isDarkLike) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+
+          if (theme === "blue") {
+            document.documentElement.classList.add("theme-blue");
+          } else {
+            document.documentElement.classList.remove("theme-blue");
+          }
+
+          if (theme === "pastel") {
+            document.documentElement.classList.add("theme-pastel");
+          } else {
+            document.documentElement.classList.remove("theme-pastel");
+          }
+        } catch (e) {
+          // Fallback to тёмной теме
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/AI-gram-icon.png" />
+    <title>AIgram</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/styles/inline-styles.css" />
+  </head>
+  <body style="background-color: var(--bg-primary); color: var(--text-white);" class="font-sans">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+  </html>
+
+
+
+

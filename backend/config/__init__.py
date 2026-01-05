@@ -1,0 +1,28 @@
+"""Конфигурация приложения"""
+from .config import (
+    ALLOWED_ORIGINS,
+    SECRET_KEY,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    DATABASE_URL,
+    OPENROUTER_API_KEY,
+    DEBUG,
+    PORT,
+    GOOGLE_ALLOWED_CLIENT_IDS,
+    GOOGLE_CLIENT_ID,
+    NYT_RSS_URL,
+    RIA_RSS_URL,
+)
+
+__all__ = [
+    "ALLOWED_ORIGINS",
+    "SECRET_KEY",
+    "ACCESS_TOKEN_EXPIRE_MINUTES",
+    "DATABASE_URL",
+    "OPENROUTER_API_KEY",
+    "DEBUG",
+    "PORT",
+    "GOOGLE_ALLOWED_CLIENT_IDS",
+    "GOOGLE_CLIENT_ID",
+    "NYT_RSS_URL",
+    "RIA_RSS_URL",
+]

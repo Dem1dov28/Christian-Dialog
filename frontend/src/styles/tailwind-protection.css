@@ -1,0 +1,116 @@
+/* Защита от Tailwind CSS сброса стилей для AIgram */
+
+/* Восстановление стилей для кнопки чатов */
+button[data-id="chats"] {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+  border: none !important;
+  outline: none !important;
+  transition: background-color 0.2s ease !important;
+}
+
+button[data-id="chats"]:hover {
+  background-color: var(--hover-bg) !important;
+  opacity: 0.9;
+}
+
+button[data-id="chats"][aria-current="page"] {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+}
+
+/* Восстановление стилей для всех кнопок сайдбара */
+button[data-id] {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+  border: none !important;
+  outline: none !important;
+  transition: background-color 0.2s ease !important;
+}
+
+button[data-id]:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+button[data-id]:active {
+  background-color: var(--active-bg) !important;
+}
+
+button[data-id].selected {
+  background-color: var(--active-bg-chat) !important;
+}
+
+button[data-id].selected:hover {
+  background-color: var(--active-bg-chat) !important;
+  opacity: 0.9;
+}
+
+/* Восстановление стилей для элементов чата */
+.chat-item {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.chat-item:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+.chat-item:active {
+  background-color: var(--active-bg-chat) !important;
+}
+
+.chat-item.selected {
+  background-color: var(--active-bg-chat) !important;
+}
+
+.chat-item.selected:hover {
+  background-color: var(--active-bg-chat) !important;
+  opacity: 0.9;
+}
+
+/* Восстановление стилей для сайдбара */
+.sidebar-container {
+  background-color: var(--bg-secondary) !important;
+}
+
+.sidebar-container button {
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.sidebar-container button:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+.sidebar-container button[aria-current="page"] {
+  background-color: transparent !important;
+}
+
+/* Восстановление стилей для иконок */
+.sidebar-container svg {
+  color: var(--icon-color) !important;
+}
+
+.sidebar-container button:hover svg {
+  color: var(--accent) !important;
+}
+
+.sidebar-container button[aria-current="page"] svg {
+  color: var(--accent) !important;
+}
+
+/* Восстановление стилей для текста */
+.sidebar-container .text-white {
+  color: var(--text-white) !important;
+}
+
+.sidebar-container .text-gray {
+  color: var(--text-gray) !important;
+}
+
+.sidebar-container .text-dim {
+  color: var(--text-dim) !important;
+}

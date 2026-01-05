@@ -1,0 +1,59 @@
+# FastAPI и веб-сервер
+fastapi==0.117.1
+uvicorn[standard]==0.36.0
+
+# База данных и модели
+sqlmodel>=0.0.25
+pydantic>=2.11.9
+
+# LangChain - основной фреймворк для работы с LLM
+langchain==0.3.7
+langchain-openai==0.2.8
+langchain-community==0.3.7
+langchain-core==0.3.17
+langsmith==0.1.147
+
+# OpenAI клиент (используется LangChain)
+openai==1.108.2
+
+# Аутентификация и безопасность
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+google-auth==2.37.0
+
+# Валидация и формы
+python-dotenv==1.0.0
+python-multipart>=0.0.9  # Обновлено для совместимости с mcp
+email-validator==2.1.0
+python-dateutil==2.8.2
+
+# Шаблоны
+jinja2==3.1.2
+
+# File attachments - text extraction
+pdfplumber>=0.9.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+python-docx>=1.1.0
+odfpy>=1.0.0
+Pillow>=10.0.0
+
+# File attachments - virus scanning
+clamd==1.0.2
+vt-py==0.22.0  # Optional: for VirusTotal fallback
+
+# Language detection
+langdetect>=1.0.9
+
+# YAML для конфигурации агентов
+PyYAML>=6.0
+
+# HTTP клиент для инструментов
+httpx>=0.24.0
+
+# Web search для актуального поиска в интернете
+ddgs>=0.1.0  # Новое название пакета (было duckduckgo-search)
+# duckduckgo-search>=6.0.0  # Старое название (deprecated, но оставляем для совместимости)
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
