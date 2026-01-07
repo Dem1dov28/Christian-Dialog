@@ -54,7 +54,7 @@ agents:
       Многострочный промпт
       с поддержкой форматирования
     model: "deepseek/deepseek-chat"
-    category: "tools"  # или "chats"
+    category: "chats"  # персонажи (tool/model агенты удалены из проекта)
     description: "Описание агента"
     icon_name: "nightlight"
     color_class: "bg-indigo-600"

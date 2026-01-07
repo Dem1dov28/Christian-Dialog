@@ -1,8 +1,12 @@
 from typing import Annotated, Optional
-from fastapi import Depends, HTTPException, Query, Path, status, Request
+from fastapi import Depends, HTTPException, Query, Path, status, Request, UploadFile, File, Form, Body
 from sqlmodel import Session
 import logging
 from pydantic import BaseModel
+import os
+import uuid
+import json
+from pathlib import Path as PathLib
 
 from models.multi_agent_conversation import (
     MultiAgentConversationCreate, 
@@ -17,6 +21,9 @@ from services.subscription_service import SubscriptionService
 from services.conversation_service import ConversationService
 
 logger = logging.getLogger(__name__)
+
+# Директория для хранения аватаров групповых чатов
+GROUP_CHATS_AVATARS_DIR = PathLib("static/group_chats")
 
 
 def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentChatService):
@@ -36,29 +43,87 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.post("/multi-agent-chat/new", status_code=status.HTTP_201_CREATED)
     async def create_multi_agent_conversation(
-        conversation_data: MultiAgentConversationCreate, 
+        title: str = Form(...),
+        description: Optional[str] = Form(None),
+        agent_ids: str = Form(...),  # JSON строка со списком ID агентов
+        group_avatar: Optional[str] = Form("group"),
+        avatar: Optional[UploadFile] = File(None),
+        conversation_type: Optional[str] = Form("agents_only"),
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Создать новый многопользовательский чат
         
         Примечание: Этот эндпоинт только для чатов с агентами (agents_only).
+        Загрузка аватара доступна только для пользователей с подпиской Plus или Pro.
         """
         try:
-            # Проверяем, что тип чата agents_only (по умолчанию или явно указан)
-            conversation_type = conversation_data.conversation_type or "agents_only"
+            # Проверяем, что тип чата agents_only
             if conversation_type != "agents_only":
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="This endpoint is for agents-only chats."
                 )
             
+            # Обрабатываем загрузку аватара (только для Plus/Pro)
+            group_avatar_url = None
+            if avatar and avatar.filename:
+                # Проверяем подписку Plus или Pro
+                subscription_status = SubscriptionService.check_subscription_status(current_user, session)
+                if subscription_status["subscription_tier"] not in ["plus", "pro"] or subscription_status["is_expired"]:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Загрузка аватаров для групповых чатов доступна только для пользователей с подпиской Plus или Pro."
+                    )
+                
+                # Создаем директорию, если не существует
+                GROUP_CHATS_AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+                
+                # Генерируем уникальное имя файла
+                file_ext = os.path.splitext(avatar.filename)[1].lower()
+                if file_ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Неподдерживаемый формат изображения. Используйте JPG, PNG, GIF или WebP"
+                    )
+                
+                unique_filename = f"{current_user.id}_{uuid.uuid4().hex}{file_ext}"
+                file_path = GROUP_CHATS_AVATARS_DIR / unique_filename
+                
+                # Сохраняем файл
+                content = await avatar.read()
+                with open(file_path, "wb") as f:
+                    f.write(content)
+                
+                group_avatar_url = f"/static/group_chats/{unique_filename}"
+                logger.info(f"Group chat avatar saved: {group_avatar_url}")
+            
+            # Парсим список ID агентов
+            try:
+                agent_ids_list = json.loads(agent_ids) if isinstance(agent_ids, str) else agent_ids
+            except (json.JSONDecodeError, TypeError):
+                agent_ids_list = []
+            
+            # Создаем объект для создания разговора
+            # Если загружен файл аватара, используем дефолтную иконку "group", иначе используем выбранную иконку
+            final_group_avatar = "group" if group_avatar_url else (group_avatar or "group")
+            conversation_data = MultiAgentConversationCreate(
+                title=title,
+                description=description,
+                agent_ids=agent_ids_list,
+                group_avatar=final_group_avatar,
+                group_avatar_url=group_avatar_url,
+                conversation_type=conversation_type
+            )
+            
             result = multi_agent_chat_service.create_conversation(conversation_data, current_user.id)
             logger.info(
                 f"Multi-agent conversation created: id={result.get('conversation_id')}, "
-                f"title='{conversation_data.title}', user_id={current_user.id}"
+                f"title='{title}', user_id={current_user.id}"
             )
             return result
+        except HTTPException:
+            raise
         except ValueError as e:
             logger.warning(f"Validation error creating multi-agent conversation: {e}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -156,6 +221,153 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Не удалось получить список агентов"
+            )
+    
+    @app.put("/multi-agent-chat/{conversation_id}/title")
+    def update_conversation_title(
+        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        request: Annotated[dict, Body()],
+        session: Session = Depends(get_session),
+        current_user: User = Depends(get_current_active_user)
+    ):
+        """Обновить название группового чата"""
+        try:
+            verify_conversation_access(conversation_id, current_user)
+            
+            title = request.get("title", "").strip()
+            if not title:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Название не может быть пустым"
+                )
+            
+            if len(title) > 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Название не может быть длиннее 200 символов"
+                )
+            
+            success = multi_agent_chat_service.update_conversation_title(conversation_id, title)
+            if not success:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Conversation not found"
+                )
+            
+            logger.info(f"Title updated for conversation {conversation_id} by user {current_user.id}")
+            return {"ok": True, "title": title}
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error updating title for conversation {conversation_id}: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Не удалось обновить название"
+            )
+    
+    @app.put("/multi-agent-chat/{conversation_id}")
+    def update_conversation(
+        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        request: dict,
+        session: Session = Depends(get_session),
+        current_user: User = Depends(get_current_active_user)
+    ):
+        """Обновить параметры группового чата (например, group_avatar)"""
+        try:
+            verify_conversation_access(conversation_id, current_user)
+            
+            group_avatar = request.get("group_avatar")
+            if group_avatar:
+                # Валидируем аватар
+                allowed_group_avatars = {
+                    "group", "groups", "group_add", "group_work", "diversity",
+                    "people_alt", "emoji_people", "connect", "interpreter",
+                    "chat", "comedy", "star", "fire", "diamond", "star_border",
+                    "fa_people_group", "team_fill",
+                }
+                if group_avatar not in allowed_group_avatars:
+                    group_avatar = "group"
+                
+                success = multi_agent_chat_service.update_conversation_avatar(conversation_id, group_avatar)
+                if not success:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Conversation not found"
+                    )
+            
+            logger.info(f"Conversation {conversation_id} updated by user {current_user.id}")
+            return {"ok": True}
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error updating conversation {conversation_id}: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Не удалось обновить чат"
+            )
+    
+    @app.put("/multi-agent-chat/{conversation_id}/avatar")
+    async def update_conversation_avatar(
+        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        avatar: Optional[UploadFile] = File(None),
+        group_avatar: Optional[str] = Form("group"),
+        session: Session = Depends(get_session),
+        current_user: User = Depends(get_current_active_user)
+    ):
+        """Обновить аватар группового чата"""
+        try:
+            verify_conversation_access(conversation_id, current_user)
+            
+            # Проверяем подписку Plus или Pro
+            subscription_status = SubscriptionService.check_subscription_status(current_user, session)
+            if subscription_status["subscription_tier"] not in ["plus", "pro"] or subscription_status["is_expired"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Загрузка аватаров для групповых чатов доступна только для пользователей с подпиской Plus или Pro."
+                )
+            
+            group_avatar_url = None
+            if avatar and avatar.filename:
+                # Создаем директорию, если не существует
+                GROUP_CHATS_AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+                
+                # Генерируем уникальное имя файла
+                file_ext = os.path.splitext(avatar.filename)[1].lower()
+                if file_ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Неподдерживаемый формат изображения. Используйте JPG, PNG, GIF или WebP"
+                    )
+                
+                unique_filename = f"{current_user.id}_{uuid.uuid4().hex}{file_ext}"
+                file_path = GROUP_CHATS_AVATARS_DIR / unique_filename
+                
+                # Сохраняем файл
+                content = await avatar.read()
+                with open(file_path, "wb") as f:
+                    f.write(content)
+                
+                group_avatar_url = f"/static/group_chats/{unique_filename}"
+                logger.info(f"Group chat avatar updated: {group_avatar_url}")
+            
+            # Обновляем в БД
+            final_group_avatar = "group" if group_avatar_url else (group_avatar or "group")
+            success = multi_agent_chat_service.update_conversation_avatar_url(conversation_id, final_group_avatar, group_avatar_url)
+            if not success:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Conversation not found"
+                )
+            
+            logger.info(f"Avatar updated for conversation {conversation_id} by user {current_user.id}")
+            return {"ok": True, "group_avatar": final_group_avatar, "group_avatar_url": group_avatar_url}
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error updating avatar for conversation {conversation_id}: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Не удалось обновить аватар"
             )
     
     @app.post("/multi-agent-chat/send")

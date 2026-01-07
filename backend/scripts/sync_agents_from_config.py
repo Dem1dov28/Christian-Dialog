@@ -7,6 +7,7 @@
 import os
 import sys
 import yaml
+from dotenv import load_dotenv
 from sqlmodel import Session, select
 
 # Настройка кодировки для вывода в Windows
@@ -25,6 +26,13 @@ CURRENT_DIR = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
+
+# Load .env (needed because core.database requires DATABASE_URL)
+try:
+    load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+except Exception:
+    # If dotenv isn't available or .env missing, continue; core.database will raise a clear error.
+    pass
 
 from core.database import engine, create_db_and_tables
 from models.agent import Agent

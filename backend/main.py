@@ -4,9 +4,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import os
+from pathlib import Path
 from sqlmodel import Session, select
 from urllib.parse import unquote
 import logging
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения из .env файла ДО импорта core.database
+backend_dir = Path(__file__).parent
+env_path = backend_dir / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+    logging.info(f"Загружены переменные окружения из {env_path}")
+else:
+    # Пробуем загрузить из текущей директории
+    load_dotenv()
 
 from core.database import create_db_and_tables, get_session
 from core.dependencies import get_current_user
@@ -30,6 +42,7 @@ from api.attraction_visits import create_attraction_visit_endpoints
 from api.geocoding import create_geocoding_endpoints
 from api.wikipedia_attractions import create_wikipedia_attractions_endpoints
 from services.agent_service import AgentService
+from services.user_agent_service import UserAgentService
 from services.budget_service import BudgetService
 from services.savings_goal_service import SavingsGoalService
 from services.recurring_payment_service import RecurringPaymentService
@@ -59,6 +72,7 @@ from config import ALLOWED_ORIGINS
 
 # Создаем экземпляры сервисов
 agent_service = AgentService()
+user_agent_service = UserAgentService(agent_service=agent_service)
 conversation_service = ConversationService()
 multi_agent_chat_service = MultiAgentChatService(agent_service)
 folder_service = FolderService()
@@ -94,6 +108,7 @@ async def lifespan(app: FastAPI):
     Path("uploads/avatars").mkdir(parents=True, exist_ok=True)
     Path("uploads/files").mkdir(parents=True, exist_ok=True)
     Path("exports").mkdir(parents=True, exist_ok=True)
+    Path("static/user_agents").mkdir(parents=True, exist_ok=True)
     
     
     yield
@@ -132,7 +147,7 @@ app.add_middleware(
 # Подключаем эндпоинты
 app.include_router(auth_router)
 app.include_router(search_router)
-create_agent_endpoints(app, agent_service)
+create_agent_endpoints(app, agent_service, user_agent_service)
 create_chat_endpoints(app, agent_service, conversation_service, folder_service)
 create_multi_agent_chat_endpoints(app, multi_agent_chat_service)
 create_folder_endpoints(app, folder_service)
@@ -221,6 +236,76 @@ def get_avatar(filename: str):
     # Проверка path traversal
     if not validate_path_traversal(filepath, base_dir):
         logger.warning(f"Path traversal attempt detected in avatar: {filename}")
+        raise HTTPException(status_code=400, detail="Недопустимое имя файла")
+    
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Аватар не найден")
+    
+    # Определяем MIME тип по расширению
+    ext = os.path.splitext(filename)[1].lower()
+    media_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }
+    media_type = media_types.get(ext, "image/jpeg")
+    
+    return FileResponse(
+        path=filepath,
+        media_type=media_type
+    )
+
+
+@app.get("/static/user_agents/{filename:path}")
+def get_user_agent_avatar(filename: str):
+    """Получение аватара пользовательского персонажа"""
+    # Санитизация имени файла
+    sanitized_filename = sanitize_filename(filename)
+    
+    # Защита от path traversal
+    base_dir = os.path.abspath("static/user_agents")
+    filepath = os.path.join(base_dir, sanitized_filename)
+    
+    # Проверка path traversal
+    if not validate_path_traversal(filepath, base_dir):
+        logger.warning(f"Path traversal attempt detected in user agent avatar: {filename}")
+        raise HTTPException(status_code=400, detail="Недопустимое имя файла")
+    
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Аватар не найден")
+    
+    # Определяем MIME тип по расширению
+    ext = os.path.splitext(filename)[1].lower()
+    media_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }
+    media_type = media_types.get(ext, "image/jpeg")
+    
+    return FileResponse(
+        path=filepath,
+        media_type=media_type
+    )
+
+
+@app.get("/static/group_chats/{filename:path}")
+def get_group_chat_avatar(filename: str):
+    """Получение аватара группового чата"""
+    # Санитизация имени файла
+    sanitized_filename = sanitize_filename(filename)
+    
+    # Защита от path traversal
+    base_dir = os.path.abspath("static/group_chats")
+    filepath = os.path.join(base_dir, sanitized_filename)
+    
+    # Проверка path traversal
+    if not validate_path_traversal(filepath, base_dir):
+        logger.warning(f"Path traversal attempt detected in group chat avatar: {filename}")
         raise HTTPException(status_code=400, detail="Недопустимое имя файла")
     
     if not os.path.exists(filepath):

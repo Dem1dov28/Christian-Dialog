@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 import {
   MdClose,
   MdCheck,
@@ -186,6 +187,13 @@ const ChatSelector = ({
 
     // Проверяем, является ли это группой
     if (chat.is_group || chat.isGroup) {
+      // Проверяем, есть ли загруженный аватар
+      const groupAvatarUrl = getGroupChatAvatarUrl(chat.group_avatar_url);
+      if (groupAvatarUrl) {
+        return { type: "image", src: groupAvatarUrl };
+      }
+      
+      // Иначе используем иконку
       const allowedIcons = [
         "group",
         "groups",
@@ -214,7 +222,7 @@ const ChatSelector = ({
 
     // Обычный чат с агентом
     const agent = agents.find((a) => a.id === chat.agent_id);
-    const agentImage = agent?.image_url || agent?.avatar_url;
+    const agentImage = getAgentAvatarUrl(agent?.image_url, agent?.avatar_url);
     if (agentImage) {
       return { type: "image", src: agentImage };
     }

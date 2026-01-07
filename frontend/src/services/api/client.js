@@ -298,6 +298,115 @@ class ApiClient {
   async delete(endpoint) {
     return this.request(endpoint, { method: "DELETE" });
   }
+
+  // POST запрос с FormData (для загрузки файлов)
+  async postFormData(endpoint, formData) {
+    const url = `${this.baseURL}${endpoint}`;
+    const headers = {};
+    
+    if (this.token) {
+      headers["Authorization"] = `Bearer ${this.token}`;
+    }
+    // НЕ устанавливаем Content-Type - браузер сам установит multipart/form-data с boundary
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+
+      if (response.status === 401) {
+        this.setToken(null);
+        throw new Error("Not authenticated");
+      }
+
+      if (response.status === 204) {
+        return {};
+      }
+
+      if (!response.ok) {
+        let errorData = {};
+        try {
+          const text = await response.text();
+          if (text.trim()) {
+            errorData = JSON.parse(text);
+          }
+        } catch (e) {
+          errorData = {};
+        }
+        
+        const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.response = errorData;
+        throw error;
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+      }
+      return {};
+    } catch (error) {
+      console.error("FormData POST request failed:", error);
+      throw error;
+    }
+  }
+
+  // PUT запрос с FormData (для обновления с файлами)
+  async putFormData(endpoint, formData) {
+    const url = `${this.baseURL}${endpoint}`;
+    const headers = {};
+    
+    if (this.token) {
+      headers["Authorization"] = `Bearer ${this.token}`;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers,
+        body: formData,
+      });
+
+      if (response.status === 401) {
+        this.setToken(null);
+        throw new Error("Not authenticated");
+      }
+
+      if (response.status === 204) {
+        return {};
+      }
+
+      if (!response.ok) {
+        let errorData = {};
+        try {
+          const text = await response.text();
+          if (text.trim()) {
+            errorData = JSON.parse(text);
+          }
+        } catch (e) {
+          errorData = {};
+        }
+        
+        const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.response = errorData;
+        throw error;
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+      }
+      return {};
+    } catch (error) {
+      console.error("FormData PUT request failed:", error);
+      throw error;
+    }
+  }
 }
 
 export default ApiClient;

@@ -19,6 +19,8 @@ class AgentBase(SQLModel):
     max_tokens: Optional[int] = Field(default=None, description="Максимальное количество токенов")
     is_active: bool = Field(default=True, description="Активен ли агент")
     available_models: Optional[List[str]] = Field(default=None, sa_column=Column(JSON), description="Список доступных моделей для этого агента")
+    # Поле для пользовательских персонажей (NULL = глобальный агент, ID = персональный агент пользователя)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", description="ID пользователя-создателя (NULL для глобальных агентов)")
 
 
 class Agent(AgentBase, table=True):
@@ -35,6 +37,7 @@ class Agent(AgentBase, table=True):
 class AgentPublic(AgentBase):
     id: int
     created_at: datetime
+    user_id: Optional[int] = None
 
 
 class AgentCreate(AgentBase):
@@ -57,3 +60,11 @@ class AgentUpdate(SQLModel):
     max_tokens: Optional[int] = None
     is_active: Optional[bool] = None
     available_models: Optional[List[str]] = None
+
+
+class UserAgentCreate(SQLModel):
+    """Модель для создания пользовательского персонажа"""
+    name: str = Field(min_length=1, max_length=100, description="Имя персонажа")
+    description: Optional[str] = Field(default=None, max_length=500, description="Описание персонажа")
+    instructions: str = Field(min_length=1, description="Промпт/инструкции для персонажа")
+    avatar_url: Optional[str] = Field(default=None, description="URL аватара персонажа")

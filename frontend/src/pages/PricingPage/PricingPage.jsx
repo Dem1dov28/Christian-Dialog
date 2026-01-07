@@ -10,8 +10,6 @@ const PricingPage = ({ isVisible, onClose }) => {
   const { user, upgradeSubscription } = useAuth();
   const { t } = useLanguage();
   const [isClosing, setIsClosing] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState(null);
@@ -34,13 +32,6 @@ const PricingPage = ({ isVisible, onClose }) => {
     }, 300);
   };
 
-  const handleApiKeyToggle = () => {
-    setIsAnimating(true);
-    setTimeout(() => {
-      setShowApiKey(!showApiKey);
-      setIsAnimating(false);
-    }, 150);
-  };
 
   const handleUpgrade = async (subscriptionTier, apiKey = null) => {
     try {
@@ -92,103 +83,59 @@ const PricingPage = ({ isVisible, onClose }) => {
           <h1 className={styles.title}>{t("pricing.title")}</h1>
 
           {/* Pricing cards container */}
-          <div
-            className={`${styles.cardsContainer} ${
-              isAnimating ? styles.animating : ""
-            }`}
-          >
-            {!showApiKey ? (
-              <>
-                <PricingCard
-                  title={pricingData.free.title}
-                  price={pricingData.free.price}
-                  description={pricingData.free.description}
-                  features={pricingData.free.features}
-                  buttonText={
-                    isCurrentPlan("free")
-                      ? t("pricing.currentPlan")
-                      : t("pricing.switchToFree")
-                  }
-                  buttonAction={() => {
-                    if (!isCurrentPlan("free")) {
-                      handleUpgrade("free");
-                    }
-                  }}
-                  isCurrentPlan={isCurrentPlan("free")}
-                  isDisabled={isUpgrading}
-                />
-                <PricingCard
-                  title={pricingData.plus.title}
-                  price={pricingData.plus.price}
-                  description={pricingData.plus.description}
-                  features={pricingData.plus.features}
-                  buttonText={
-                    isCurrentPlan("plus")
-                      ? t("pricing.currentPlan")
-                      : t("pricing.switchToPlus")
-                  }
-                  buttonAction={() => {
-                    if (!isCurrentPlan("plus")) {
-                      handleUpgrade("plus");
-                    }
-                  }}
-                  isCurrentPlan={isCurrentPlan("plus")}
-                  isDisabled={isUpgrading}
-                />
-                <PricingCard
-                  title={pricingData.pro.title}
-                  price={pricingData.pro.price}
-                  description={pricingData.pro.description}
-                  features={pricingData.pro.features}
-                  buttonText={
-                    isCurrentPlan("pro") ? t("pricing.currentPlan") : t("pricing.switchToPro")
-                  }
-                  buttonAction={() => {
-                    if (!isCurrentPlan("pro")) {
-                      handleUpgrade("pro");
-                    }
-                  }}
-                  isCurrentPlan={isCurrentPlan("pro")}
-                  isDisabled={isUpgrading}
-                />
-              </>
-            ) : (
-              <PricingCard
-                title={pricingData.apiKey.title}
-                price={pricingData.apiKey.price}
-                description={pricingData.apiKey.description}
-                features={pricingData.apiKey.features}
-                buttonText={
-                  isCurrentPlan("api")
-                    ? t("pricing.currentPlan")
-                    : t("pricing.switchToAPI")
+          <div className={styles.cardsContainer}>
+            <PricingCard
+              title={pricingData.free.title}
+              price={pricingData.free.price}
+              description={pricingData.free.description}
+              features={pricingData.free.features}
+              buttonText={
+                isCurrentPlan("free")
+                  ? t("pricing.currentPlan")
+                  : t("pricing.switchToFree")
+              }
+              buttonAction={() => {
+                if (!isCurrentPlan("free")) {
+                  handleUpgrade("free");
                 }
-                buttonAction={() => {
-                  if (!isCurrentPlan("api")) {
-                    // Для API тарифа нужен API ключ
-                    const apiKey = prompt(t("pricing.enterApiKey"));
-                    if (apiKey) {
-                      handleUpgrade("api", apiKey);
-                    }
-                  }
-                }}
-                isCurrentPlan={isCurrentPlan("api")}
-                isDisabled={isUpgrading}
-              />
-            )}
-          </div>
-
-          {/* API Key toggle */}
-          <div className={styles.apiKeyToggle}>
-            <button
-              className={styles.apiKeyButton}
-              onClick={handleApiKeyToggle}
-              disabled={isUpgrading}
-            >
-              {showApiKey
-                ? t("pricing.showStandardPlans")
-                : t("pricing.useOwnKey")}
-            </button>
+              }}
+              isCurrentPlan={isCurrentPlan("free")}
+              isDisabled={isUpgrading}
+            />
+            <PricingCard
+              title={pricingData.plus.title}
+              price={pricingData.plus.price}
+              description={pricingData.plus.description}
+              features={pricingData.plus.features}
+              buttonText={
+                isCurrentPlan("plus")
+                  ? t("pricing.currentPlan")
+                  : t("pricing.switchToPlus")
+              }
+              buttonAction={() => {
+                if (!isCurrentPlan("plus")) {
+                  handleUpgrade("plus");
+                }
+              }}
+              isCurrentPlan={isCurrentPlan("plus")}
+              isDisabled={isUpgrading}
+            />
+            <PricingCard
+              title={pricingData.pro.title}
+              price={pricingData.pro.price}
+              description={pricingData.pro.description}
+              features={pricingData.pro.features}
+              buttonText={
+                isCurrentPlan("pro") ? t("pricing.currentPlan") : t("pricing.switchToPro")
+              }
+              buttonAction={() => {
+                if (!isCurrentPlan("pro")) {
+                  handleUpgrade("pro");
+                }
+              }}
+              isCurrentPlan={isCurrentPlan("pro")}
+              isDisabled={isUpgrading}
+            />
           </div>
 
           {/* Success/Error Messages */}

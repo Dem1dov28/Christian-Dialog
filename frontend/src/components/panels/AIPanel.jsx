@@ -32,6 +32,7 @@ import savedMessagesImage from "../../assets/images/Saved_Messages.png";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 import PinnedMessagesSection from "./PinnedMessagesSection";
 import InformationSection from "./InformationSection";
 import ExportChatSection from "./ExportChatSection";
@@ -249,9 +250,7 @@ export default function AIPanel({
           imageSrc:
             activeConversation.imageSrc ||
             activeConversation.channel_avatar_url ||
-            currentAgent?.image_url ||
-            currentAgent?.avatar_url ||
-            null,
+            getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url),
           ChatInfo:
             activeConversation.channel_description ||
             activeConversation.preview ||
@@ -270,7 +269,7 @@ export default function AIPanel({
           name: activeConversation.title || t("chat.groupChat"),
           colorClass: "bg-purple-500",
           iconName: activeConversation.group_avatar || "group",
-          imageSrc: null,
+          imageSrc: getGroupChatAvatarUrl(activeConversation.group_avatar_url), // Используем загруженный аватар, если есть
           ChatInfo:
             groupAgentNames ||
             t("chat.groupChatWith", {
@@ -290,7 +289,7 @@ export default function AIPanel({
           name: activeConversation.title || t("chat.groupChat"),
           colorClass: "bg-purple-500",
           iconName: activeConversation.group_avatar || "group",
-          imageSrc: null,
+          imageSrc: getGroupChatAvatarUrl(activeConversation.group_avatar_url), // Используем загруженный аватар, если есть
           ChatInfo:
             groupAgentNames ||
             t("chat.groupChatWith", {
@@ -328,7 +327,7 @@ export default function AIPanel({
           name: translatedAgent.name,
           colorClass: translatedAgent.color_class || "bg-purple-500",
           iconName: translatedAgent.icon_name || "psychology",
-          imageSrc: translatedAgent.image_url || translatedAgent.avatar_url,
+          imageSrc: getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url),
           ChatInfo:
             translatedAgent.description || t("chat.startNewChat"),
           model: translatedAgent.model,
@@ -567,22 +566,58 @@ export default function AIPanel({
         <div className="flex flex-col items-center">
           {isGroupChat ? (
             // Отображение аватарки для группового чата
-            <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-md select-none mb-3">
-              <div
-                className="absolute inset-0 bg-center bg-cover"
-                style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
-                aria-hidden="true"
-              />
-              <div className="absolute inset-0 flex items-center justify-center text-white">
-                {getIconComponent(iconName)}
-              </div>
-            </div>
+            (() => {
+              // Проверяем, есть ли загруженный аватар
+              const groupAvatarUrl = getGroupChatAvatarUrl(activeConversation?.group_avatar_url);
+              
+              if (groupAvatarUrl) {
+                // Отображаем загруженное изображение
+                return (
+                  <img
+                    src={groupAvatarUrl}
+                    alt={name}
+                    className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
+                    onError={(e) => {
+                      console.warn("Failed to load group chat avatar in AI Panel:", groupAvatarUrl);
+                      e.target.style.display = "none";
+                      const fallback = e.target.nextElementSibling;
+                      if (fallback) {
+                        fallback.style.display = "flex";
+                      }
+                    }}
+                  />
+                );
+              }
+              
+              // Иначе показываем иконку
+              return (
+                <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-md select-none mb-3">
+                  <div
+                    className="absolute inset-0 bg-center bg-cover"
+                    style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-white">
+                    {getIconComponent(iconName)}
+                  </div>
+                </div>
+              );
+            })()
           ) : isChannelChat ? (
             imageSrc ? (
               <img
                 src={imageSrc}
                 alt={name}
                 className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
+                onError={(e) => {
+                  // Если изображение не загрузилось, скрываем его и показываем fallback
+                  console.warn("Failed to load agent avatar in AI Panel:", imageSrc);
+                  e.target.style.display = "none";
+                  const fallback = e.target.nextElementSibling;
+                  if (fallback) {
+                    fallback.style.display = "flex";
+                  }
+                }}
               />
             ) : (
               <div
@@ -606,6 +641,15 @@ export default function AIPanel({
                 // Открываем модальное окно только для чатов с агентами (не групп и не системных)
                 if (!activeConversation?.is_system_chat && !isGroupChat && currentAgent && imageSrc) {
                   setIsImageModalOpen(true);
+                }
+              }}
+              onError={(e) => {
+                // Если изображение не загрузилось, скрываем его и показываем fallback
+                console.warn("Failed to load agent avatar in AI Panel:", imageSrc);
+                e.target.style.display = "none";
+                const fallback = e.target.parentElement?.querySelector(".avatar-fallback");
+                if (fallback) {
+                  fallback.style.display = "flex";
                 }
               }}
             />

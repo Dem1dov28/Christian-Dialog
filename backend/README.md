@@ -63,22 +63,60 @@ pip install -r requirements.txt
 
 ### 2. Настройка переменных окружения
 
-Создайте файл `.env` в корне проекта:
+Создайте файл `.env` в корне проекта (см. `env.example`):
 
 ```env
 SECRET_KEY=your-super-secret-key
 OPENROUTER_API_KEY=your-openrouter-api-key
-DATABASE_URL=sqlite:///./database.db
 ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-### 3. Инициализация базы данных
+**Настройка базы данных (PostgreSQL обязателен):**
 
-```bash
-python scripts/init_db.py
+Приложение требует PostgreSQL для работы. Установите `DATABASE_URL`:
+
+```env
+DATABASE_URL=postgresql://username:password@localhost:5432/timetalk
 ```
 
-### 4. Запуск сервера
+### 3. Настройка PostgreSQL
+
+**Вариант A: Через Docker (рекомендуется для разработки)**
+
+```bash
+# Запустить PostgreSQL в Docker
+docker-compose up -d postgresql
+
+# Проверить статус
+docker-compose ps
+```
+
+Подробнее: см. [DOCKER_SETUP.md](../DOCKER_SETUP.md)
+
+**Вариант B: Локальная установка (для продакшена)**
+
+```bash
+# Установка PostgreSQL (Ubuntu/Debian)
+sudo apt-get install postgresql postgresql-contrib
+
+# Создание базы данных
+sudo -u postgres psql
+CREATE DATABASE timetalk;
+CREATE USER timetalk_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE timetalk TO timetalk_user;
+\q
+
+# (Опционально) оптимизация индексов/ANALYZE — используйте свои миграции/SQL при необходимости
+```
+
+### 4. Инициализация базы данных
+
+```bash
+# Создание таблиц (для новой базы)
+python -c "from core.database import create_db_and_tables; create_db_and_tables()"
+```
+
+### 5. Запуск сервера
 
 ```bash
 python main.py
@@ -97,38 +135,13 @@ uvicorn main:app --reload
 ### Инициализация
 
 ```bash
-# Создание базы данных и агентов
-python scripts/init_db.py
-
-# Добавление новых агентов
-python scripts/add_new_agents.py
-
-# Создание тестового пользователя
-python scripts/create_user.py
+# Синхронизация агентов из backend/config/agents.yaml в БД
+python scripts/sync_agents_from_config.py
 ```
 
-### Миграции
+### Миграции / обновления данных
 
-```bash
-# Миграция папок
-python scripts/migrate_folders.py
-
-# Миграция видимости системных чатов
-python scripts/migrate_system_chat_visibility.py
-```
-
-### Обновление данных
-
-```bash
-# Обновление агентов
-python scripts/update_agents.py
-
-# Обновление категорий
-python scripts/update_categories.py
-
-# Обновление изображений агентов
-python scripts/update_agent_images.py
-```
+Миграции и массовые апдейты выполняйте через ваши миграции (Alembic/SQL) или админ-скрипты по необходимости.
 
 ### Тестирование
 
@@ -214,11 +227,28 @@ python tests/test_message_functions.py
 
 - **FastAPI** - веб-фреймворк
 - **SQLModel** - ORM
-- **SQLite** - база данных
+- **PostgreSQL** - база данных (обязательно)
 - **LangChain** - работа с LLM
 - **OpenRouter** - API для LLM
 - **Pydantic** - валидация данных
 - **JWT** - аутентификация
+
+## 🗄️ База данных
+
+Проект использует **PostgreSQL** (обязательно).
+
+**Преимущества PostgreSQL:**
+- ✅ Отличная производительность при больших объемах данных
+- ✅ Полнотекстовый поиск встроен
+- ✅ Поддержка множественных одновременных записей
+- ✅ Масштабируемость
+- ✅ JSONB для гибкой работы с JSON данными
+
+**Настройка:**
+1. Установите PostgreSQL или используйте Docker (см. [DOCKER_SETUP.md](../DOCKER_SETUP.md))
+2. Создайте базу данных
+3. Установите `DATABASE_URL` в переменных окружения (`.env` файл)
+4. (Опционально) выполните свои SQL-оптимизации/индексацию при необходимости
 
 ## 📝 API Документация
 

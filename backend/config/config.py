@@ -23,8 +23,14 @@ elif len(SECRET_KEY) < 32:
         "Рекомендуется минимум 32 символа для безопасности."
     )
 
-# Настройки базы данных
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
+# Настройки базы данных - PostgreSQL обязателен
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL не установлена в переменных окружения!\n"
+        "Установите DATABASE_URL в .env файле или переменных окружения:\n"
+        "  DATABASE_URL=postgresql://user:password@localhost:5432/timetalk"
+    )
 
 # Google OAuth
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")

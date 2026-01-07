@@ -58,6 +58,7 @@ function MainLayout({
   isCompactChatOpen,
   isMediumScreen,
   activeChatId: activeChatIdForChat,
+  onShowUpgradeModal,
 }) {
   return (
     <div className="flex flex-1 overflow-hidden relative">
@@ -148,6 +149,7 @@ function MainLayout({
                 showBackButton={showBackButton}
                 onBack={onBack}
                 activeFolder={activeFolder}
+                onShowUpgradeModal={onShowUpgradeModal}
                 // УДАЛЕНО - selectedToolId (инструменты были удалены)
               />
               {isRightPanelOpen && activeChatIdForChat && !isInlineLibraryOpen && (

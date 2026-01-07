@@ -25,13 +25,13 @@ class SubscriptionService:
         "plus": {
             "messages_limit": 250,  # 250 сообщений в день (сброс через 24 часа)
             "api_access": False,
-            "price": 25,
+            "price": 2,
             "duration_days": 30,
         },
         "pro": {
             "messages_limit": 500,  # 500 сообщений в день (сброс через 24 часа)
             "api_access": True,
-            "price": 75,
+            "price": 5,
             "duration_days": 30,  # Pro версия истекает через месяц (подписка)
         },
         "api": {

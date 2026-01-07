@@ -272,6 +272,13 @@ function MainApp() {
     handleConfirmDeleteChatBase(deleteChatData, handleDeleteChat);
   }, [handleConfirmDeleteChatBase, deleteChatData, handleDeleteChat]);
 
+  // Обработчик отписки от канала
+  const handleUnsubscribeChannel = useCallback(() => {
+    if (activeConversation?.id && activeConversation?.is_channel) {
+      unsubscribeFromChannel(activeConversation.id);
+    }
+  }, [activeConversation, unsubscribeFromChannel]);
+
   // Используем хуки для обработчиков папок
   const folderHandlers = useFolderHandlers({
     createFolder,
@@ -411,6 +418,7 @@ function MainApp() {
         onAddToCollection={handleAddToCollection}
         onPinToTop={handlePinToTop}
         onDeleteAgent={handleDeleteAgent}
+        onUnsubscribeChannel={handleUnsubscribeChannel}
         onHideChat={handleHideChat}
         showProfile={isProfileVisible}
         profileScreenProps={{
@@ -453,6 +461,7 @@ function MainApp() {
         isCompactChatOpen={isCompactChatOpen}
         isMediumScreen={isMediumScreen}
         activeChatIdForChat={activeChatId}
+        onShowUpgradeModal={() => setShowUpgradeModal(true)}
       />
 
       {/* Modals */}

@@ -64,6 +64,55 @@ class MultiAgentChatService(BaseService):
         """Получить список агентов в разговоре"""
         return self.conversation_service.get_conversation_agents(conversation_id)
     
+    def update_conversation_title(self, conversation_id: int, title: str) -> bool:
+        """Обновить название группового чата
+        
+        Args:
+            conversation_id: ID разговора
+            title: Новое название
+            
+        Returns:
+            True, если успешно, False в противном случае
+        """
+        try:
+            return self.conversation_service.update_conversation_title(conversation_id, title)
+        except Exception as e:
+            logger.error(f"Error updating title for conversation {conversation_id}: {e}", exc_info=True)
+            return False
+    
+    def update_conversation_avatar(self, conversation_id: int, group_avatar: str) -> bool:
+        """Обновить иконку аватара группового чата
+        
+        Args:
+            conversation_id: ID разговора
+            group_avatar: Название иконки аватара
+            
+        Returns:
+            True, если успешно, False в противном случае
+        """
+        try:
+            return self.conversation_service.update_conversation_avatar(conversation_id, group_avatar)
+        except Exception as e:
+            logger.error(f"Error updating avatar for conversation {conversation_id}: {e}", exc_info=True)
+            return False
+    
+    def update_conversation_avatar_url(self, conversation_id: int, group_avatar: str, group_avatar_url: Optional[str]) -> bool:
+        """Обновить аватар группового чата (иконку и URL)
+        
+        Args:
+            conversation_id: ID разговора
+            group_avatar: Название иконки аватара
+            group_avatar_url: URL загруженного изображения (может быть None)
+            
+        Returns:
+            True, если успешно, False в противном случае
+        """
+        try:
+            return self.conversation_service.update_conversation_avatar_url(conversation_id, group_avatar, group_avatar_url)
+        except Exception as e:
+            logger.error(f"Error updating avatar URL for conversation {conversation_id}: {e}", exc_info=True)
+            return False
+    
     async def send_message(self, message_data: MultiAgentChatMessage) -> Dict[str, Any]:
         """Отправить сообщение в многопользовательский чат
         

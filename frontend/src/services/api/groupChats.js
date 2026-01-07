@@ -12,6 +12,20 @@ export class GroupChatsAPI {
     return this.client.post("/multi-agent-chat/new", groupData);
   }
 
+  // Создать новый групповой чат с загрузкой файла (аватар)
+  async createGroupChatWithAvatar(groupData, avatarFile) {
+    const formData = new FormData();
+    formData.append("title", groupData.title);
+    formData.append("description", groupData.description || "");
+    formData.append("agent_ids", JSON.stringify(groupData.agent_ids));
+    formData.append("group_avatar", groupData.group_avatar || "group");
+    formData.append("conversation_type", groupData.conversation_type || "agents_only");
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+    return this.client.postFormData("/multi-agent-chat/new", formData);
+  }
+
   // Получить список групповых чатов
   async getGroupChats() {
     return this.client.get("/multi-agent-chat/");

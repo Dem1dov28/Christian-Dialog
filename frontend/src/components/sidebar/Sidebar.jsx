@@ -61,6 +61,7 @@ import ProfileScreen from "../profile/ProfileScreen";
 import CreateFolderForm from "../chat/CreateFolderForm";
 import DeleteFolderModal from "../chat/DeleteFolderModal";
 import apiClient from "../../services/api";
+import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 const Sidebar = ({
   onMenuClick,
@@ -102,10 +103,11 @@ const Sidebar = ({
   const [previousFolder, setPreviousFolder] = useState("religion");
 
   // Получаем данные из контекстов ДО определения обработчиков, которые их используют
-  const { agents, getAgentsByCategory, getAgent } = useAgents();
+  const { agents, getAgentsByCategory, getAgent, getUserAgents } = useAgents();
   const {
     conversations,
     systemChat,
+    activeConversation,
     pinnedChats,
     pinChatInFolder,
     unpinChatFromFolder,
@@ -464,6 +466,7 @@ const Sidebar = ({
   const handlePinInFolder = async ({ chatId, agentId, conversationId, folderId: explicitFolderId }) => {
     const systemFolders = [
       "all",
+      "chats",
       "characters",
       "tools",
       "models",
@@ -496,10 +499,10 @@ const Sidebar = ({
       await loadPinnedChatsInFolder(targetFolderId);
     } else {
       // Для пользовательских папок (числовой ID или числовая строка) используем API
-      const folderId = typeof activeFolder === 'number' ? activeFolder : Number(activeFolder);
+      const folderId = typeof targetFolderId === 'number' ? targetFolderId : Number(targetFolderId);
       
       if (isNaN(folderId)) {
-        console.error("handlePinInFolder: Invalid folder ID", { activeFolder, folderId });
+        console.error("handlePinInFolder: Invalid folder ID", { targetFolderId, folderId });
         return;
       }
 
@@ -545,6 +548,7 @@ const Sidebar = ({
   const handleUnpinFromFolder = async ({ chatId, agentId, conversationId, folderId: explicitFolderId }) => {
     const systemFolders = [
       "all",
+      "chats",
       "characters",
       "tools",
       "models",
@@ -577,10 +581,10 @@ const Sidebar = ({
       await loadPinnedChatsInFolder(targetFolderId);
     } else {
       // Для пользовательских папок (числовой ID или числовая строка) используем API
-      const folderId = typeof activeFolder === 'number' ? activeFolder : Number(activeFolder);
+      const folderId = typeof targetFolderId === 'number' ? targetFolderId : Number(targetFolderId);
       
       if (isNaN(folderId)) {
-        console.error("handleUnpinFromFolder: Invalid folder ID", { activeFolder, folderId });
+        console.error("handleUnpinFromFolder: Invalid folder ID", { targetFolderId, folderId });
         return;
       }
 
@@ -821,10 +825,16 @@ const Sidebar = ({
   };
 
   const buildListItems = (agent, category = null) => {
+    // Получаем ID активного чата
+    const activeConversationId = activeConversation?.id;
 
     const agentConversations = conversations.filter(
       (conv) => {
-        // Фильтруем новые пустые чаты - они не должны показываться в списке
+        // Показываем активный чат даже если он новый пустой
+        if (conv.id === activeConversationId) {
+          return conv.agent_id === agent.id;
+        }
+        // Фильтруем новые пустые чаты - они не должны показываться в списке (кроме активного)
         if (isNewlyCreatedEmptyChat(conv.id)) {
           return false;
         }
@@ -888,7 +898,7 @@ const Sidebar = ({
           : t("chat.chatWith", { name: translatedAgent.name }),
         colorClass: agent.color_class || "bg-purple-500",
         iconName: agent.icon_name || "psychology",
-        imageSrc: agent.image_url || agent.avatar_url,
+        imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url),
         unreadCount: getUnreadCount(conversation.id),
         agentId: agent.id,
         conversationId: conversation.id,
@@ -1048,6 +1058,9 @@ const Sidebar = ({
 
   const chatData = useMemo(() => {
     const charactersAgents = getAgentsByCategory("characters"); // Все персонажи
+    const createdAgents = getUserAgents(); // Пользовательские созданные агенты
+    // Объединяем персонажей и созданных агентов для отображения чатов
+    const allCharacterAgents = [...charactersAgents, ...createdAgents];
 
     // Получаем групповые чаты, отсортированные по времени последнего сообщения
     const groupChats = conversations.filter((conv) => conv.is_group);
@@ -1058,8 +1071,8 @@ const Sidebar = ({
     );
     
     // Фильтруем групповые чаты с персонажами
-    // Используем charactersAgents для проверки, является ли агент персонажем
-    const charactersAgentIds = new Set(charactersAgents.map((agent) => agent.id));
+    // Используем allCharacterAgents для проверки, является ли агент персонажем
+    const charactersAgentIds = new Set(allCharacterAgents.map((agent) => agent.id));
     const characterGroupChats = sortedGroupChats.filter((conversation) => {
       if (!conversation.group_agent_ids || conversation.group_agent_ids.length === 0) {
         return false;
@@ -1095,7 +1108,7 @@ const Sidebar = ({
           } участниками`,
         colorClass: "bg-purple-500",
         iconName: conversation.group_avatar || "group",
-        imageSrc: null,
+        imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
         unreadCount: getUnreadCount(conversation.id),
         agentId: null,
         conversationId: conversation.id,
@@ -1119,9 +1132,7 @@ const Sidebar = ({
       const channelAvatar =
         conversation.imageSrc ||
         conversation.channel_avatar_url ||
-        resolvedAgent?.image_url ||
-        resolvedAgent?.avatar_url ||
-        null;
+        getAgentAvatarUrl(resolvedAgent?.image_url, resolvedAgent?.avatar_url);
       const colorClass =
         conversation.colorClass ||
         resolvedAgent?.color_class ||
@@ -1155,7 +1166,7 @@ const Sidebar = ({
 
     // Для папки "Все чаты" объединяем все чаты с персонажами и сортируем по времени последнего сообщения
     const allChatItems = [
-      ...charactersAgents.flatMap((agent) => buildListItems(agent, "all")),
+      ...allCharacterAgents.flatMap((agent) => buildListItems(agent, "all")),
       ...groupChatItems,
       // Добавляем системный чат в общий список для сортировки
       ...(systemChat && !isSystemChatHidden
@@ -1265,7 +1276,7 @@ const Sidebar = ({
               } участниками`,
             colorClass: "bg-purple-500",
             iconName: conversation.group_avatar || "group",
-            imageSrc: null,
+            imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
             unreadCount: getUnreadCount(conversation.id),
             agentId: null,
             conversationId: conversation.id,
@@ -1421,7 +1432,7 @@ const Sidebar = ({
                   } участниками`,
               colorClass: "bg-purple-500",
               iconName: conversation.group_avatar || "group",
-              imageSrc: null,
+              imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
               unreadCount: getUnreadCount(conversation.id),
               agentId: null,
               conversationId: conversation.id,
@@ -1433,8 +1444,9 @@ const Sidebar = ({
 
           const agent = agents.find((a) => a.id === conversation.agent_id);
 
+          // Показываем активный чат даже если он новый пустой
           // Фильтруем новые пустые чаты - они не должны показываться в списке до отправки сообщения
-          if (isNewlyCreatedEmptyChat(conversation.id)) {
+          if (conversation.id !== activeConversation?.id && isNewlyCreatedEmptyChat(conversation.id)) {
             return null;
           }
 
@@ -1482,7 +1494,7 @@ const Sidebar = ({
             colorClass:
               agent?.color_class || "bg-purple-500 dark:bg-purple-600",
             iconName: agent?.icon_name || "psychology",
-            imageSrc: agent?.image_url || agent?.avatar_url,
+            imageSrc: getAgentAvatarUrl(agent?.image_url, agent?.avatar_url),
             unreadCount: getUnreadCount(conversation.id),
             agentId: agent?.id,
             conversationId: conversation.id,

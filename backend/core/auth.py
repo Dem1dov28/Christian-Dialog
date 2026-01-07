@@ -213,21 +213,6 @@ def create_user(db: Session, user_create) -> User:
         # Логируем ошибку, но не прерываем регистрацию
         logger.error(f"Error creating system folders for user {db_user.id}: {e}", exc_info=True)
     
-    # Добавляем инструмент "Заметки" по умолчанию для нового пользователя
-    try:
-        # Ищем агента "Заметки" по имени (активный или с is_active=None)
-        notes_agent = db.exec(
-            select(Agent)
-            .where(Agent.name == "Заметки")
-            .where((Agent.is_active == True) | (Agent.is_active.is_(None)))  # noqa: E712
-        ).first()
-        
-        # Инструменты удалены - код для добавления UserTool удален
-        pass
-    except Exception as e:
-        # Логируем ошибку, но не прерываем регистрацию
-        logger.error(f"Error in default tool addition (removed): {e}", exc_info=True)
-    
     return db_user
 
 

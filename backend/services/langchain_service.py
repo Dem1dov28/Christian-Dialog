@@ -1,10 +1,19 @@
 from typing import Dict, Any, Optional, List
 from dotenv import load_dotenv
 import logging
+import warnings
 
 from langchain_openai import ChatOpenAI
-from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage, ToolMessage
+
+# Импортируем ConversationBufferWindowMemory с подавлением предупреждений о deprecated API
+# TODO: Мигрировать на новое API LangChain в будущем
+from langchain.memory import ConversationBufferWindowMemory
+
+# Подавляем предупреждения о deprecated API для ConversationBufferWindowMemory
+# LangChainDeprecationWarning может отсутствовать в некоторых версиях, поэтому подавляем все предупреждения LangChain
+warnings.filterwarnings("ignore", message=".*deprecated.*", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*DeprecationWarning.*")
 
 from langchain_config import config
 from core.language_detector import LanguageDetector
@@ -35,22 +44,10 @@ class LangChainService:
     """
     
     @staticmethod
-    def _is_test_creator_agent(agent_name: str, instructions: str) -> bool:
-        """Проверяет, является ли агент создателем тестов"""
-        return (
-            "Создатель тестов" in agent_name or 
-            "exam_preparation" in instructions.lower() or
-            "создатель тестов" in instructions.lower()
-        )
-    
-    @staticmethod
     def _should_skip_briefness_limit(agent_name: str, instructions: str, has_tools: bool) -> bool:
         """Определяет, нужно ли пропустить ограничение на краткость"""
         # Агенты с инструментами не должны иметь ограничение на краткость
         if has_tools:
-            return True
-        # Создатель тестов не должен иметь ограничение на краткость
-        if LangChainService._is_test_creator_agent(agent_name, instructions):
             return True
         return False
     
@@ -62,24 +59,15 @@ class LangChainService:
         language_instruction: str = ""
     ) -> str:
         """Формирует системное сообщение с учетом типа агента"""
+        # Гарантируем, что instructions не None
+        if not instructions:
+            instructions = ""
+        
         # Базовые инструкции для всех агентов
         base_instruction = "Веди диалог естественно, как будто это реальная беседа. Будь живым и отзывчивым собеседником."
-        
-        # Специальные инструкции для создателя тестов
-        if LangChainService._is_test_creator_agent(agent_name, instructions):
-            test_creator_instruction = (
-                "\n\nКРИТИЧЕСКИ ВАЖНО: Когда нужно создать тест, ВСЕГДА генерируй полный HTML код "
-                "с интерактивным тестом на РОВНО 10 вопросов. НЕ возвращай пустой ответ. "
-                "НЕ возвращай только текст. НЕ ограничивай количество вопросов. "
-                "ТВОЙ ОТВЕТ ДОЛЖЕН БЫТЬ ПОЛНЫМ HTML КОДОМ с 10 вопросами."
-            )
-            system_message = f"""{language_instruction}
-
-{instructions}
-
-{base_instruction}{test_creator_instruction}"""
+ 
         # Для агентов с инструментами - без ограничения на краткость
-        elif has_tools:
+        if has_tools:
             system_message = f"""{language_instruction}
 
 {instructions}
@@ -91,6 +79,7 @@ class LangChainService:
                 " Отвечай от первого лица, используя характерные фразы и манеру речи этого персонажа. "
                 "ОТВЕЧАЙ КРАТКО - максимум 2-3 предложения. Избегай длинных рассуждений и философских диалогов."
             )
+            # Важно: инструкции пользователя идут ПЕРЕД базовыми инструкциями, чтобы они имели приоритет
             system_message = f"""{language_instruction}
 
 {instructions}
@@ -99,6 +88,7 @@ class LangChainService:
 
 Всегда опирайся на релевантные части предыдущих сообщений и продолжай беседу, пока пользователь явно не попросит начать заново."""
         
+        logger.debug(f"🔧 [SYSTEM MESSAGE] Для агента '{agent_name}': инструкции длиной {len(instructions)} символов, итоговое сообщение длиной {len(system_message)} символов")
         return system_message
     
     def __init__(self):
@@ -335,10 +325,7 @@ class LangChainService:
         openrouter_config = config.get_openrouter_config()
         model_config = config.get_model_config()
         
-        # Для создателя тестов увеличиваем max_tokens для генерации полного HTML теста
         max_tokens = model_config["max_tokens"]
-        if agent_name and LangChainService._is_test_creator_agent(agent_name, instructions or ""):
-            max_tokens = 4000  # Увеличиваем для генерации 10 вопросов с HTML
         
         if model:
             # Создаем новый LLM с указанной моделью агента
@@ -1146,42 +1133,6 @@ class LangChainService:
                                     messages_with_results.append(tool_msg)
                                     logger.debug(f"📤 ToolMessage создан: type={type(tool_msg)}, content_length={len(tool_result)}")
                                 
-                                # Для инструмента exam_preparation добавляем явное указание на генерацию HTML
-                                if any('exam_preparation' in str(tool_result) or 'practice_test' in str(tool_result) for tool_result in tool_results):
-                                    # Извлекаем количество вопросов из контекста инструмента
-                                    import re
-                                    questions_count = 10  # По умолчанию
-                                    for tool_result in tool_results:
-                                        if isinstance(tool_result, str):
-                                            # Ищем паттерн "N вопросов" в результате инструмента
-                                            match = re.search(r'(\d+)\s*вопросов?', tool_result.lower())
-                                            if match:
-                                                questions_count = min(int(match.group(1)), 30)  # Максимум 30
-                                                break
-                                    
-                                    html_instruction = HumanMessage(content=(
-                                        "КРИТИЧЕСКИ ВАЖНО: Ты получил результат от инструмента exam_preparation. "
-                                        "ТЕПЕРЬ ТЫ ДОЛЖЕН НЕМЕДЛЕННО сгенерировать интерактивный тест в HTML формате. "
-                                        "НЕ возвращай результат инструмента. НЕ пиши объяснения. НЕ возвращай пустой ответ. "
-                                        "ТВОЙ ОТВЕТ ДОЛЖЕН БЫТЬ ТОЛЬКО HTML КОД, начиная с <div class=\"interactive-test\" data-test-id=\"test-123\">. "
-                                        f"\n\nОБЯЗАТЕЛЬНО СОЗДАЙ РОВНО {questions_count} ВОПРОСОВ. НЕ меньше, НЕ больше - РОВНО {questions_count} ВОПРОСОВ! "
-                                        f"ТЫ ДОЛЖЕН СОЗДАТЬ ВСЕ {questions_count} ВОПРОСОВ ОТ ВОПРОСА 1 ДО ВОПРОСА {questions_count}. "
-                                        "Каждый вопрос должен быть в формате: "
-                                        "<div class=\"test-question\" data-question-id=\"1\">"
-                                        "<p><strong>Вопрос 1:</strong> текст вопроса</p>"
-                                        "<input type=\"text\" class=\"test-answer-input\" data-question-id=\"1\" placeholder=\"Введите ваш ответ\" />"
-                                        "<span class=\"test-result-icon\" data-question-id=\"1\"></span>"
-                                        "</div>"
-                                        "ВАЖНО: НЕ используй data-correct-answer - проверка будет выполняться через LLM. "
-                                        f"После ВСЕХ {questions_count} вопросов (после вопроса {questions_count}) ОБЯЗАТЕЛЬНО добавь кнопку: "
-                                        "<button class=\"test-check-button\" data-test-id=\"test-123\">Проверить</button>"
-                                        f"\n\nСТРОГАЯ ИНСТРУКЦИЯ: Твой ответ должен содержать РОВНО {questions_count} блоков <div class=\"test-question\" data-question-id=\"...\"> "
-                                        f"от data-question-id=\"1\" до data-question-id=\"{questions_count}\", и ОДНУ кнопку <button class=\"test-check-button\"> в конце. "
-                                        f"НЕ останавливайся раньше времени. СОЗДАЙ ВСЕ {questions_count} ВОПРОСОВ."
-                                    ))
-                                    messages_with_results.append(html_instruction)
-                                    logger.info(f"✅ Добавлено явное указание на генерацию HTML теста для exam_preparation ({questions_count} вопросов)")
-                                
                                 # Получаем финальный ответ от LLM с результатами инструментов
                                 logger.debug(f"🔄 Запрашиваем финальный ответ от LLM с результатами инструментов...")
                                 logger.debug(f"🔄 Всего сообщений для финального запроса: {len(messages_with_results)}")
@@ -1204,41 +1155,11 @@ class LangChainService:
                                 # Проверка на пустой ответ
                                 if not response_text or (isinstance(response_text, str) and not response_text.strip()):
                                     logger.warning(f"⚠️ LLM вернул пустой ответ. Используем fallback.")
-                                    # Для exam_preparation не используем fallback, а повторяем запрос с более строгими инструкциями
-                                    if any('exam_preparation' in str(tool_result) or 'practice_test' in str(tool_result) for tool_result in tool_results):
-                                        logger.warning(f"⚠️ LLM вернул пустой ответ для exam_preparation. Повторяем запрос с усиленными инструкциями.")
-                                        # Добавляем еще более строгое указание
-                                        strict_instruction = HumanMessage(content=(
-                                            "ТЫ ДОЛЖЕН ВЕРНУТЬ HTML КОД ПРЯМО СЕЙЧАС. "
-                                            "НЕ возвращай пустой ответ. НЕ возвращай текст. "
-                                            "ТОЛЬКО HTML, начиная с <div class=\"interactive-test\" data-test-id=\"test-123\">. "
-                                            "Создай 10 вопросов по теме из предыдущего результата инструмента. "
-                                            "Начни с первого вопроса прямо сейчас."
-                                        ))
-                                        messages_with_results.append(strict_instruction)
-                                        final_response = await llm_with_tools.ainvoke(messages_with_results)
-                                        response_text = final_response.content
-                                        
-                                        # Удаляем markdown-блоки ```html ... ``` если они есть
-                                        if isinstance(response_text, str):
-                                            response_text = response_text.strip()
-                                            if response_text.lower().startswith("```html"):
-                                                response_text = re.sub(r"^```html\s*", "", response_text, flags=re.IGNORECASE)
-                                                response_text = re.sub(r"\s*```$", "", response_text)
-                                            # Удаляем оставшиеся блоки ``` в начале и конце
-                                            response_text = re.sub(r"^```\s*", "", response_text)
-                                            response_text = re.sub(r"\s*```$", "", response_text)
-                                        
-                                        # Если все еще пусто, используем fallback
-                                        if not response_text or (isinstance(response_text, str) and not response_text.strip()):
-                                            logger.error(f"❌ LLM все еще вернул пустой ответ после повторного запроса.")
-                                            response_text = f"Создан тест по теме. Пожалуйста, сгенерируй интерактивный тест в HTML формате согласно инструкциям.\n\nРезультат инструмента: {tool_results[0]}"
+                                    # Fallback для инструментов: если результата нет/пусто — возвращаем понятное сообщение
+                                    if tool_results:
+                                        response_text = f"Результат инструмента: {tool_results[0]}"
                                     else:
-                                        # Fallback для других инструментов
-                                        if tool_results:
-                                            response_text = f"Создан тест по теме. Пожалуйста, сгенерируй интерактивный тест в HTML формате согласно инструкциям.\n\nРезультат инструмента: {tool_results[0]}"
-                                        else:
-                                            response_text = "Извините, не удалось сгенерировать ответ. Попробуйте переформулировать запрос."
+                                        response_text = "Извините, не удалось сгенерировать ответ. Попробуйте переформулировать запрос."
                                 
                                 logger.info(f"✅ Получен финальный ответ от LLM (первые 500 символов): {response_text[:500] if response_text else 'ПУСТОЙ ОТВЕТ'}...")
                         else:

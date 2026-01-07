@@ -120,9 +120,9 @@ class ConversationService(BaseService):
                 return self._format_conversation_dict(existing_chat)
             
             # Создаем системный чат
-            # Для системного чата используем agent_id = 1 (первый агент) как заглушку
+            # Системный чат не имеет агента (agent_id=None)
             conversation = Conversation(
-                agent_id=1,  # Заглушка для системного чата
+                agent_id=None,  # Системный чат без агента
                 title="Saved Messages",
                 user_id=user_id,
                 is_system_chat=True

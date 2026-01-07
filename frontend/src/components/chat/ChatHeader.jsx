@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { MdArrowBack, MdSearch, MdMenuBook, MdMoreVert, MdPlayArrow, MdGroup, MdNotifications } from "react-icons/md";
 import savedMessagesImage from "../../assets/images/Saved_Messages.png";
+import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 /**
  * Компонент заголовка чата
@@ -71,25 +72,48 @@ function ChatHeader({
             className="w-10 h-10 rounded-full object-cover shadow-md mr-4 select-none flex-shrink-0"
           />
         ) : isGroupChat ? (
-          <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-md mr-4 select-none flex-shrink-0">
-            <div
-              className="absolute inset-0 bg-center bg-cover"
-              style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
-              aria-hidden="true"
-            />
-            <div className="absolute inset-0 flex items-center justify-center text-white">
-              {activeConversation.group_avatar ? (
-                (() => {
-                  const GroupIconComponent = getIconComponent(activeConversation.group_avatar);
-                  return (
-                    <GroupIconComponent className="text-xl" style={{ transform: "scale(0.8)" }} />
-                  );
-                })()
-              ) : (
-                <MdGroup className="text-xl" style={{ transform: "scale(0.8)" }} />
-              )}
-            </div>
-          </div>
+          (() => {
+            // Проверяем, есть ли загруженный аватар
+            const groupAvatarUrl = getGroupChatAvatarUrl(activeConversation.group_avatar_url);
+            
+            if (groupAvatarUrl) {
+              // Отображаем загруженное изображение
+              return (
+                <img
+                  src={groupAvatarUrl}
+                  alt={chatTitle}
+                  className="w-10 h-10 rounded-full object-cover shadow-md mr-4 select-none flex-shrink-0"
+                  onError={(e) => {
+                    console.warn("Failed to load group chat avatar:", groupAvatarUrl);
+                    e.target.style.display = "none";
+                  }}
+                />
+              );
+            }
+            
+            // Иначе показываем иконку
+            return (
+              <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-md mr-4 select-none flex-shrink-0">
+                <div
+                  className="absolute inset-0 bg-center bg-cover"
+                  style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                  aria-hidden="true"
+                />
+                <div className="absolute inset-0 flex items-center justify-center text-white">
+                  {activeConversation.group_avatar ? (
+                    (() => {
+                      const GroupIconComponent = getIconComponent(activeConversation.group_avatar);
+                      return (
+                        <GroupIconComponent className="text-xl" style={{ transform: "scale(0.8)" }} />
+                      );
+                    })()
+                  ) : (
+                    <MdGroup className="text-xl" style={{ transform: "scale(0.8)" }} />
+                  )}
+                </div>
+              </div>
+            );
+          })()
         ) : isChannelChat ? (
           channelAvatar ? (
             <img
@@ -110,13 +134,22 @@ function ChatHeader({
               )}
             </div>
           )
-        ) : currentAgent?.image_url || currentAgent?.avatar_url ? (
-          <img
-            src={currentAgent.image_url || currentAgent.avatar_url}
-            alt={currentAgent ? translateAgent(currentAgent).name : "Agent"}
-            className="w-10 h-10 rounded-full object-cover shadow-md mr-4 select-none flex-shrink-0"
-          />
-        ) : (
+        ) : (() => {
+          const agentAvatarUrl = getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url);
+          return agentAvatarUrl ? (
+            <img
+              key={agentAvatarUrl}
+              src={agentAvatarUrl}
+              alt={currentAgent ? translateAgent(currentAgent).name : "Agent"}
+              className="w-10 h-10 rounded-full object-cover shadow-md mr-4 select-none flex-shrink-0"
+              onError={(e) => {
+                // Если изображение не загрузилось, скрываем его
+                console.warn("Failed to load agent avatar:", agentAvatarUrl);
+                e.target.style.display = "none";
+              }}
+            />
+          ) : null;
+        })() || (
           <div
             className={`w-10 h-10 rounded-full ${
               isChannelChat

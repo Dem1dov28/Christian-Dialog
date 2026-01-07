@@ -18,6 +18,7 @@ import ReplyMessage from "./ReplyMessage";
 import HeaderMenu from "./HeaderMenu";
 import ReportModal from "./ReportModal";
 import ClearChatModal from "./ClearChatModal";
+import EditGroupChatModal from "./EditGroupChatModal";
 // УДАЛЕНО - импорты удаленных компонентов для инструментов
 import ChatHeader from "./ChatHeader";
 import ChatSelectionHeader from "./ChatSelectionHeader";
@@ -166,6 +167,7 @@ export default function Chat({
   showBackButton = false,
   onBack,
   activeFolder = "characters",
+  onShowUpgradeModal,
 }) {
   const containerRef = useRef(null);
   const textareaRef = useRef(null);
@@ -182,6 +184,7 @@ export default function Chat({
   // Функции для работы с draft сообщениями теперь в useChatInput
 
   const [isDialogueLoading, setIsDialogueLoading] = useState(false);
+  const [isEditGroupChatModalOpen, setIsEditGroupChatModalOpen] = useState(false);
 
   // Интеграция хука useChatModals для управления модальными окнами
   const chatModalsHook = useChatModals();
@@ -1138,6 +1141,7 @@ export default function Chat({
             onCloseInlineLibrary={onCloseInlineLibrary}
             onLibraryBackButton={onLibraryBackButton}
             isLibraryWithSidebar={isLibraryWithSidebar}
+            onShowUpgradeModal={onShowUpgradeModal}
           />
         ) : isChatSelected ? (
           // Показываем сообщения чата только когда чат готов (закрепленные -> история -> агент)
@@ -1265,6 +1269,7 @@ export default function Chat({
             onClearHistory={handleClearHistory}
             onDeleteChat={handleDeleteChat}
             onSavedMessages={handleSavedMessages}
+            onEditGroupChat={() => setIsEditGroupChatModalOpen(true)}
             isRightPanelOpen={isRightPanelOpen}
             onExited={() => {
               setHeaderMenuRendered(false);
@@ -1339,6 +1344,26 @@ export default function Chat({
         onClose={handleCloseReportModal}
         onSubmit={handleSubmitReport}
       />
+
+      {/* Модальное окно редактирования группового чата */}
+      {activeConversation?.is_group && (
+        <EditGroupChatModal
+          isOpen={isEditGroupChatModalOpen}
+          onClose={() => setIsEditGroupChatModalOpen(false)}
+          conversationId={activeConversation.id}
+          currentTitle={activeConversation.title}
+          currentAgentIds={activeConversation.group_agent_ids || []}
+          currentGroupAvatar={activeConversation.group_avatar || "group"}
+          currentGroupAvatarUrl={activeConversation.group_avatar_url || null}
+          onUpdate={async (updatedData) => {
+            // Перезагружаем список чатов для обновления данных
+            if (selectConversation) {
+              await selectConversation(activeConversation.id);
+            }
+            setIsEditGroupChatModalOpen(false);
+          }}
+        />
+      )}
 
       {/* УДАЛЕНО - модальные окна для удаленных инструментов */}
 

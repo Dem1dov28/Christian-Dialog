@@ -29,8 +29,9 @@ class AgentService(BaseService):
         """Инициализация агентов из базы данных"""
         try:
             with self.get_session() as session:
-                agents = session.exec(select(Agent)).all()
-                logger.info(f"Найдено {len(agents)} агентов в базе данных")
+                # Загружаем только активных агентов
+                agents = session.exec(select(Agent).where(Agent.is_active == True)).all()  # noqa: E712
+                logger.info(f"Найдено {len(agents)} активных агентов в базе данных")
                 
                 for agent in agents:
                     self.active_agents[agent.id] = {
@@ -39,9 +40,9 @@ class AgentService(BaseService):
                         "model": agent.model,
                         "category": agent.category or ""
                     }
-                    logger.debug(f"Активирован агент: {agent.name} (ID: {agent.id}), категория: {agent.category}")
+                    logger.debug(f"Активирован агент: {agent.name} (ID: {agent.id}), категория: {agent.category}, модель: {agent.model}")
                 
-                logger.info(f"Всего активных агентов: {len(self.active_agents)}")
+                logger.info(f"Всего активных агентов загружено в кэш: {len(self.active_agents)}")
         except Exception as e:
             logger.error(f"Ошибка при инициализации агентов: {e}", exc_info=True)
             raise
@@ -98,7 +99,7 @@ class AgentService(BaseService):
             logger.error(f"Ошибка при получении агента {agent_id}: {e}", exc_info=True)
             return None
     
-    def get_all_agents(self, category: Optional[str] = None) -> List[AgentPublic]:
+    def get_all_agents(self, category: Optional[str] = None, user_id: Optional[int] = None) -> List[AgentPublic]:
         """Получить всех агентов, опционально отфильтрованных по категории
         
         Args:
@@ -106,16 +107,24 @@ class AgentService(BaseService):
                      Поддерживает фильтрацию по категориям, разделенным запятыми.
                      Например, если категория агента "персонаж, политик", 
                      то фильтрация по "персонаж" или "политик" найдет этого агента.
+            user_id: ID пользователя для включения его персональных агентов
             
         Returns:
-            Список активных агентов (is_active=True или NULL)
+            Список активных агентов (is_active=True или NULL) - глобальных и персональных пользователя
         """
         try:
             with self.get_session() as session:
+                from sqlmodel import or_
+                
                 # КРИТИЧНО: Фильтруем только активных агентов
                 # Агенты каналов имеют is_active=False и не должны показываться в библиотеке
+                # Включаем глобальных агентов (user_id=NULL) и персональных агентов текущего пользователя
                 query = select(Agent).where(
-                    (Agent.is_active == True) | (Agent.is_active.is_(None))  # noqa: E712
+                    (Agent.is_active == True) | (Agent.is_active.is_(None)),  # noqa: E712
+                    or_(
+                        Agent.user_id.is_(None),  # Глобальные агенты
+                        Agent.user_id == user_id if user_id else False  # Персональные агенты пользователя
+                    )
                 )
                 
                 if category:
@@ -130,16 +139,22 @@ class AgentService(BaseService):
                 agents = session.exec(query).all()
                 
                 # Дополнительная дедупликация по названию (на случай если есть дубликаты в БД)
+                # НО: пользовательские агенты могут иметь такие же имена как глобальные
                 unique_agents_map = {}
                 for agent in agents:
-                    agent_name_lower = agent.name.lower().strip()
-                    if agent_name_lower not in unique_agents_map:
-                        unique_agents_map[agent_name_lower] = agent
+                    # Для пользовательских агентов используем уникальный ключ с user_id
+                    if agent.user_id:
+                        key = f"user_{agent.user_id}_{agent.name.lower().strip()}"
+                    else:
+                        key = f"global_{agent.name.lower().strip()}"
+                    
+                    if key not in unique_agents_map:
+                        unique_agents_map[key] = agent
                     else:
                         # Если есть дубликат, оставляем агента с меньшим ID (старше)
-                        existing = unique_agents_map[agent_name_lower]
+                        existing = unique_agents_map[key]
                         if agent.id < existing.id:
-                            unique_agents_map[agent_name_lower] = agent
+                            unique_agents_map[key] = agent
                             logger.warning(
                                 f"Дубликат агента по названию '{agent.name}': оставляем ID={agent.id}, удаляем ID={existing.id}"
                             )
@@ -148,6 +163,81 @@ class AgentService(BaseService):
         except Exception as e:
             logger.error(f"Ошибка при получении агентов: {e}", exc_info=True)
             return []
+    
+    def get_user_agents(self, user_id: int) -> List[AgentPublic]:
+        """Получить персональных агентов пользователя
+        
+        Args:
+            user_id: ID пользователя
+            
+        Returns:
+            Список персональных агентов пользователя
+        """
+        try:
+            with self.get_session() as session:
+                query = select(Agent).where(
+                    Agent.user_id == user_id,
+                    (Agent.is_active == True) | (Agent.is_active.is_(None))  # noqa: E712
+                )
+                agents = session.exec(query).all()
+                return [AgentPublic.model_validate(agent) for agent in agents]
+        except Exception as e:
+            logger.error(f"Ошибка при получении персональных агентов пользователя {user_id}: {e}", exc_info=True)
+            return []
+    
+    def create_user_agent(
+        self, 
+        user_id: int, 
+        name: str, 
+        instructions: str,
+        description: Optional[str] = None,
+        avatar_url: Optional[str] = None
+    ) -> AgentPublic:
+        """Создать персонального агента пользователя
+        
+        Args:
+            user_id: ID пользователя-создателя
+            name: Имя персонажа
+            instructions: Промпт/инструкции для персонажа
+            description: Описание персонажа
+            avatar_url: URL аватара
+            
+        Returns:
+            Созданный агент
+        """
+        try:
+            with self.get_session() as session:
+                # Используем стандартную модель для всех персонажей
+                default_model = "openrouter/google/gemini-2.0-flash-001"
+                
+                db_agent = Agent(
+                    name=name,
+                    instructions=instructions,
+                    description=description,
+                    model=default_model,
+                    category="created",  # Специальная категория для созданных персонажей
+                    avatar_url=avatar_url,
+                    user_id=user_id,
+                    is_active=True,
+                    temperature=0.7
+                )
+                session.add(db_agent)
+                session.commit()
+                session.refresh(db_agent)
+                
+                # Добавляем в активные агенты
+                self.active_agents[db_agent.id] = {
+                    "name": db_agent.name,
+                    "instructions": db_agent.instructions,
+                    "model": db_agent.model,
+                    "category": db_agent.category or ""
+                }
+                
+                logger.info(f"Создан персональный агент: {db_agent.name} (ID: {db_agent.id}) для пользователя {user_id}")
+                return AgentPublic.model_validate(db_agent)
+        except Exception as e:
+            logger.error(f"Ошибка при создании персонального агента: {e}", exc_info=True)
+            raise
     
     def get_all_categories(self) -> List[str]:
         """Получить список всех уникальных категорий агентов
@@ -194,8 +284,13 @@ class AgentService(BaseService):
                     return None
                 
                 # Обновляем только переданные поля
+                # Для пользовательских агентов (category="created") модель не может быть изменена
                 for key, value in agent_update.items():
                     if value is not None and hasattr(agent, key):
+                        # Защита: пользовательские агенты не могут изменять модель
+                        if key == "model" and agent.category == "created":
+                            logger.warning(f"Попытка изменить модель пользовательского агента {agent_id} отклонена")
+                            continue
                         setattr(agent, key, value)
                 
                 # Обновляем кэш активных агентов
@@ -254,7 +349,30 @@ class AgentService(BaseService):
         Returns:
             True, если агент активен
         """
-        return agent_id in self.active_agents
+        # Сначала проверяем кэш
+        if agent_id in self.active_agents:
+            return True
+        
+        # Если агента нет в кэше, проверяем базу данных
+        # Это может произойти, если агент был создан после инициализации сервера
+        # или если сервер был перезапущен
+        try:
+            with self.get_session() as session:
+                agent = session.get(Agent, agent_id)
+                if agent and agent.is_active:
+                    # Добавляем агента в кэш
+                    self.active_agents[agent_id] = {
+                        "name": agent.name,
+                        "instructions": agent.instructions or "",  # Гарантируем, что instructions не None
+                        "model": agent.model,
+                        "category": agent.category or ""
+                    }
+                    logger.debug(f"Агент {agent_id} ({agent.name}) добавлен в кэш активных агентов, instructions длиной: {len(self.active_agents[agent_id]['instructions'])}")
+                    return True
+        except Exception as e:
+            logger.error(f"Ошибка при проверке активности агента {agent_id}: {e}", exc_info=True)
+        
+        return False
     
     def get_active_agent(self, agent_id: int) -> Optional[Dict[str, Any]]:
         """Получить активного агента
@@ -265,7 +383,29 @@ class AgentService(BaseService):
         Returns:
             Словарь с данными агента или None, если агент не активен
         """
-        return self.active_agents.get(agent_id)
+        # Сначала проверяем кэш
+        if agent_id in self.active_agents:
+            return self.active_agents[agent_id]
+        
+        # Если агента нет в кэше, проверяем базу данных
+        try:
+            with self.get_session() as session:
+                agent = session.get(Agent, agent_id)
+                if agent and agent.is_active:
+                    # Добавляем агента в кэш
+                    agent_data = {
+                        "name": agent.name,
+                        "instructions": agent.instructions or "",  # Гарантируем, что instructions не None
+                        "model": agent.model,
+                        "category": agent.category or ""
+                    }
+                    self.active_agents[agent_id] = agent_data
+                    logger.debug(f"Агент {agent_id} ({agent.name}) добавлен в кэш активных агентов, instructions длиной: {len(agent_data['instructions'])}")
+                    return agent_data
+        except Exception as e:
+            logger.error(f"Ошибка при получении агента {agent_id}: {e}", exc_info=True)
+        
+        return None
     
     def _is_image_generation_request(self, message: str) -> bool:
         """Проверяет, является ли запрос запросом на генерацию изображения"""
@@ -432,250 +572,117 @@ class AgentService(BaseService):
                 except Exception as e:
                     logger.warning(f"⚠️ [TOOLS DEBUG] Ошибка при загрузке категории из БД для агента {agent_id}: {e}")
             
-            # Fallback: если категория не заполнена в БД, но это агент "Таймер и напоминания"
-            if (not agent_category or ("timer" not in agent_category or "reminder" not in agent_category)) and agent.get("name", "").lower().strip() == "таймер и напоминания":
-                agent_category = "tools, timer, reminder"
-                logger.warning(f"[TOOLS DEBUG] Категория агента '{agent.get('name')}' была пустой, установлена fallback: {agent_category}")
-            
-            # Fallback: если категория не заполнена в БД, но это агент "Конвертер валют"
-            if (not agent_category or ("currency" not in agent_category and "converter" not in agent_category)) and agent.get("name", "").lower().strip() == "конвертер валют":
-                agent_category = "tools, currency, converter"
-                logger.warning(f"[TOOLS DEBUG] Категория агента '{agent.get('name')}' была пустой, установлена fallback: {agent_category}")
-            
-            # Fallback: если категория не заполнена в БД, но это агент "Поиск в интернете"
-            if (not agent_category or ("web_search" not in agent_category and "search" not in agent_category)) and agent.get("name", "").lower().strip() == "поиск в интернете":
-                agent_category = "tools, web_search, search"
-                logger.warning(f"[TOOLS DEBUG] Категория агента '{agent.get('name')}' была пустой, установлена fallback: {agent_category}")
-            
-            
-            # Fallback: если категория не заполнена в БД, но это агент "Кулинарный советник"
-            if (not agent_category or ("cooking" not in agent_category and "recipes" not in agent_category and "food" not in agent_category)) and agent.get("name", "").lower().strip() == "кулинарный советник":
-                agent_category = "tools, cooking, recipes, food"
-                logger.warning(f"[TOOLS DEBUG] Категория агента '{agent.get('name')}' была пустой, установлена fallback: {agent_category}")
-            
-            # Fallback: если категория не заполнена в БД, но это агент "Заметки"
-            if (not agent_category or ("notes" not in agent_category and "journal" not in agent_category and "ideas" not in agent_category)) and agent.get("name", "").lower().strip() == "заметки":
-                agent_category = "tools, notes, journal, ideas"
-                logger.warning(f"[TOOLS DEBUG] Категория агента '{agent.get('name')}' была пустой, установлена fallback: {agent_category}")
-            
+            # В проекте оставляем только персонажей: tool-агенты и model-агенты удалены.
+            # Инструменты к агентам больше не подключаем.
             tools = None
-            
-            # Для агента "Таймер и напоминания" предоставляем инструменты timer и reminder
-            if "timer" in agent_category and "reminder" in agent_category:
-                logger.warning(f"[TOOLS DEBUG] Агент '{agent.get('name')}' (id={agent_id}) категория={agent_category} → подключаем timer/reminder")
-                from tools.timer_tool import create_timer_tool, create_reminder_tool, _context_storage
-                
-                # Устанавливаем контекст разговора для инструментов
-                # Извлекаем оригинальный conversation_id (для групповых чатов может быть формат "id_agent_X")
-                original_conv_id = conversation_id
-                if conversation_id and isinstance(conversation_id, str) and "_agent_" in conversation_id:
-                    try:
-                        original_conv_id = int(conversation_id.split("_agent_")[0])
-                    except (ValueError, AttributeError):
-                        logger.warning(f"Не удалось извлечь conversation_id из {conversation_id}")
-                elif conversation_id and isinstance(conversation_id, str) and conversation_id.isdigit():
-                    original_conv_id = int(conversation_id)
-                
-                if original_conv_id:
-                    try:
-                        _context_storage.conversation_id = original_conv_id
-                        logger.info(f"✅ [TIMER TOOL] Установлен conversation_id={original_conv_id} в контекст для инструментов таймера")
-                    except (ValueError, AttributeError) as e:
-                        logger.warning(f"⚠️ [TIMER TOOL] Не удалось установить conversation_id для инструментов: {original_conv_id}, ошибка: {e}")
-                else:
-                    logger.warning(f"⚠️ [TIMER TOOL] original_conv_id не установлен! conversation_id={conversation_id}")
-                
-                try:
-                    _context_storage.agent_id = agent_id
-                    logger.info(f"✅ [TIMER TOOL] Установлен agent_id={agent_id} в контекст для инструментов таймера")
-                except Exception as e:
-                    logger.warning(f"⚠️ [TIMER TOOL] Не удалось установить agent_id: {e}")
-                
-                timer_tool = create_timer_tool(conversation_id=original_conv_id, agent_id=agent_id)
-                reminder_tool = create_reminder_tool(conversation_id=original_conv_id, agent_id=agent_id)
-                tools = [timer_tool, reminder_tool]
-                logger.info(f"✅ [TIMER TOOL] Агент {agent['name']} будет использовать инструменты timer и reminder (conversation_id={original_conv_id}, agent_id={agent_id}, original={conversation_id})")
-            
-            # Для агента "Конвертер валют" предоставляем инструмент currency_converter
-            elif "currency" in agent_category or "converter" in agent_category:
-                logger.info(f"[TOOLS DEBUG] Агент '{agent.get('name')}' (id={agent_id}) категория={agent_category} → подключаем currency_converter")
-                from tools.currency_converter_tool import create_currency_converter_tool
-                
-                currency_tool = create_currency_converter_tool()
-                tools = [currency_tool]
-                logger.info(f"✅ [CURRENCY TOOL] Агент {agent['name']} будет использовать инструмент currency_converter")
-            
-            # Для агента "Поиск в интернете" или AI новостей предоставляем инструмент web_search
-            elif "web_search" in agent_category or "search" in agent_category or "ai-news" in agent_category or "ai" in agent_category:
-                logger.info(f"[TOOLS DEBUG] Агент '{agent.get('name')}' (id={agent_id}) категория={agent_category} → подключаем web_search")
-                from tools.web_search_tool import create_web_search_tool
-                
-                web_search_tool = create_web_search_tool()
-                tools = [web_search_tool]
-                logger.info(f"✅ [WEB SEARCH TOOL] Агент {agent['name']} будет использовать инструмент web_search")
-            
-            # Для агента "Создатель тестов" предоставляем инструмент exam_preparation
-            elif "exam" in agent_category or "test" in agent_category or "quiz" in agent_category:
-                logger.info(f"[TOOLS DEBUG] Агент '{agent.get('name')}' (id={agent_id}) категория={agent_category} → подключаем exam_preparation")
-                from tools.exam_preparation_tool import create_exam_preparation_tool
-                
-                exam_preparation_tool = create_exam_preparation_tool()
-                tools = [exam_preparation_tool]
-                logger.info(f"✅ [EXAM PREPARATION TOOL] Агент {agent['name']} будет использовать инструмент exam_preparation")
-            
-            # Для агента "Кулинарный советник" предоставляем инструмент cooking_advisor
-            elif "cooking" in agent_category or "recipes" in agent_category or "food" in agent_category:
-                logger.info(f"[TOOLS DEBUG] Агент '{agent.get('name')}' (id={agent_id}) категория={agent_category} → подключаем cooking_advisor")
-                from tools.cooking_advisor_tool import create_cooking_advisor_tool
-                
-                cooking_advisor_tool = create_cooking_advisor_tool()
-                tools = [cooking_advisor_tool]
-                logger.info(f"✅ [COOKING ADVISOR TOOL] Агент {agent['name']} будет использовать инструмент cooking_advisor")
-            
-            # УДАЛЕНО - инструменты для удаленных моделей:
-            # - dietitian_tool
-            # - purchase_tracker_tool
-            # - notes_tool
-            # - todo_service (RAG)
-            # - progress_service (RAG)
-            # - travel_service (RAG)
 
-            else:
-                logger.warning(f"[TOOLS DEBUG] Агент '{agent.get('name')}' (id={agent_id}) категория={agent_category} → инструменты НЕ подключены")
-            
             # Инициализируем enhanced_message с исходным сообщением
             enhanced_message = message
-            
-            # УДАЛЕНО - RAG контексты для удаленных инструментов:
-            # - purchase_history_context
-            # - notes_history_context
-            # - todo_context
-            # - progress_context
-            # - travel_context
 
-            # Для таймера/напоминаний усиливаем инструкцию, чтобы LLM обязательно вызывал инструменты
-            if tools and "timer" in agent_category and "reminder" in agent_category:
-                enhanced_message = (
-                    f"{message}\n\n"
-                    "[ИНСТРУКЦИЯ АГЕНТУ]\n"
-                    "Всегда вызывай инструменты timer или reminder. Не отвечай без вызова инструмента.\n"
-                    "Если нужно установить таймер, вызови timer с duration (строка) и message (опционально).\n"
-                    "Если нужно создать напоминание, вызови reminder с time (строка) и message (текст напоминания).\n"
-                    "Примеры:\n"
-                    "- timer: duration='30 секунд', message='о походе в спортзал'\n"
-                    "- reminder: time='через 30 секунд', message='о походе в спортзал'\n"
-                )
-                
-            # Если есть инструменты, используем generate_response_with_tools
-            if tools:
-                return await self.langchain_service.generate_response_with_tools(
-                    agent_name=agent["name"],
-                    instructions=agent["instructions"],
-                    user_message=enhanced_message,
-                    tools=tools,
-                    conversation_id=unique_conversation_id,
-                    model=agent.get("model"),  # Передаем модель агента
-                    user_rules=user_rules,  # Передаем правила пользователя (None или список)
-                    language=detected_language,  # Передаем язык для ответа
-                )
-            else:
-                # Проверяем, является ли запрос запросом на генерацию изображения
-                message_text = enhanced_message
-                if isinstance(enhanced_message, list):
-                    # Извлекаем текстовую часть из сообщения
-                    text_parts = [
-                        item.get("text", "")
-                        for item in enhanced_message
-                        if isinstance(item, dict) and item.get("type") == "text"
-                    ]
-                    message_text = " ".join(text_parts) if text_parts else str(enhanced_message)
-                
-                if self._is_image_generation_request(message_text):
-                    logger.info(f"🎨 [IMAGE GENERATION] Обнаружен запрос на генерацию изображения: {message_text[:100]}")
-                    try:
-                        # Генерируем изображение
-                        image_result = await self.image_generation_service.generate_image(
-                            prompt=message_text,
-                            size="1024x1024",
-                            quality="standard"
+            # Проверяем, является ли запрос запросом на генерацию изображения
+            message_text = enhanced_message
+            if isinstance(enhanced_message, list):
+                # Извлекаем текстовую часть из сообщения
+                text_parts = [
+                    item.get("text", "")
+                    for item in enhanced_message
+                    if isinstance(item, dict) and item.get("type") == "text"
+                ]
+                message_text = " ".join(text_parts) if text_parts else str(enhanced_message)
+            
+            if self._is_image_generation_request(message_text):
+                logger.info(f"🎨 [IMAGE GENERATION] Обнаружен запрос на генерацию изображения: {message_text[:100]}")
+                try:
+                    # Генерируем изображение
+                    image_result = await self.image_generation_service.generate_image(
+                        prompt=message_text,
+                        size="1024x1024",
+                        quality="standard"
+                    )
+                    
+                    if image_result and image_result.get("url"):
+                        # Скачиваем изображение и преобразуем в base64
+                        image_base64 = await self.image_generation_service.download_image_as_base64(
+                            image_result["url"]
                         )
                         
-                        if image_result and image_result.get("url"):
-                            # Скачиваем изображение и преобразуем в base64
-                            image_base64 = await self.image_generation_service.download_image_as_base64(
-                                image_result["url"]
-                            )
+                        if image_base64:
+                            # Возвращаем структуру с текстом и изображением
+                            response_text = "Вот сгенерированное изображение по вашему запросу."
+                            if image_result.get("revised_prompt"):
+                                response_text += f"\n\nУлучшенный промпт: {image_result['revised_prompt']}"
                             
-                            if image_base64:
-                                # Возвращаем структуру с текстом и изображением
-                                response_text = "Вот сгенерированное изображение по вашему запросу."
-                                if image_result.get("revised_prompt"):
-                                    response_text += f"\n\nУлучшенный промпт: {image_result['revised_prompt']}"
-                                
-                                logger.info(f"✅ [IMAGE GENERATION] Изображение успешно сгенерировано и скачано, текст ответа: '{response_text[:50]}...'")
-                                
-                                result = {
-                                    "text": response_text,
-                                    "image": {
-                                        "base64": image_base64,
-                                        "url": image_result["url"],
-                                        "revised_prompt": image_result.get("revised_prompt")
-                                    }
+                            logger.info(f"✅ [IMAGE GENERATION] Изображение успешно сгенерировано и скачано, текст ответа: '{response_text[:50]}...'")
+                            
+                            result = {
+                                "text": response_text,
+                                "image": {
+                                    "base64": image_base64,
+                                    "url": image_result["url"],
+                                    "revised_prompt": image_result.get("revised_prompt")
                                 }
-                                logger.debug(f"📤 [IMAGE GENERATION] Возвращаем результат: text={len(response_text)} символов, image={'есть' if result.get('image') else 'нет'}")
-                                return result
-                            else:
-                                # Если не удалось скачать, возвращаем URL
-                                logger.warning(f"⚠️ [IMAGE GENERATION] Не удалось скачать изображение, возвращаем URL")
-                                response_text = f"Изображение сгенерировано! URL: {image_result['url']}"
-                                return {
-                                    "text": response_text,
-                                    "image": {
-                                        "url": image_result["url"],
-                                        "revised_prompt": image_result.get("revised_prompt")
-                                    }
+                            }
+                            logger.debug(f"📤 [IMAGE GENERATION] Возвращаем результат: text={len(response_text)} символов, image={'есть' if result.get('image') else 'нет'}")
+                            return result
+                        else:
+                            # Если не удалось скачать, возвращаем URL
+                            logger.warning(f"⚠️ [IMAGE GENERATION] Не удалось скачать изображение, возвращаем URL")
+                            response_text = f"Изображение сгенерировано! URL: {image_result['url']}"
+                            return {
+                                "text": response_text,
+                                "image": {
+                                    "url": image_result["url"],
+                                    "revised_prompt": image_result.get("revised_prompt")
                                 }
-                        else:
-                            # Если генерация не удалась, возвращаем понятное сообщение
-                            logger.warning("⚠️ [IMAGE GENERATION] Не удалось сгенерировать изображение")
-                            # Возвращаем сообщение пользователю о том, что генерация недоступна
-                            return "Извините, генерация изображений временно недоступна. Пожалуйста, убедитесь, что установлен OPENAI_API_KEY в настройках сервера."
-                    except Exception as e:
-                        logger.error(f"❌ [IMAGE GENERATION] Ошибка при генерации изображения: {e}", exc_info=True)
-                        # Возвращаем понятное сообщение об ошибке
-                        error_message = str(e)
-                        if "OPENAI_API_KEY" in error_message or "api key" in error_message.lower():
-                            return "Извините, генерация изображений недоступна. Необходимо настроить OPENAI_API_KEY в настройках сервера."
-                        else:
-                            return f"Извините, произошла ошибка при генерации изображения: {error_message}. Пожалуйста, попробуйте позже."
-                
-                # Используем LangChain сервис для генерации ответа
-                # ВАЖНО: передаём enhanced_message, чтобы RAG-контекст (журнал задач, покупки и т.п.)
-                # действительно участвовал в генерации ответа даже без инструментов
-                # Всегда передаем user_rules (может быть пустым списком), чтобы принудительно обновить системное сообщение
-                logger.debug(f"📝 [GENERATE RESPONSE] Вызываем LangChain для генерации обычного ответа")
-                # Используем модель из чата, если она установлена, иначе модель агента
-                model_to_use = conversation_model if conversation_model else agent.get("model")
-                logger.debug(f"🤖 [GENERATE RESPONSE] Используемая модель: {model_to_use} (из чата: {conversation_model is not None}, из агента: {conversation_model is None})")
-                
-                llm_response = await self.langchain_service.generate_response(
-                    agent_name=agent["name"],
-                    instructions=agent["instructions"],
-                    user_message=enhanced_message,
-                    conversation_id=unique_conversation_id,
-                    model=model_to_use,  # Используем модель из чата или модель агента
-                    user_rules=user_rules,  # Передаем правила пользователя (None или список)
-                    image_attachments=image_attachments,  # Передаем изображения для моделей с vision
-                    language=detected_language,  # Передаем язык для ответа
-                )
-                
-                # Проверяем, что ответ не пустой
-                if not llm_response or (isinstance(llm_response, str) and len(llm_response.strip()) == 0):
-                    logger.warning(f"⚠️ [GENERATE RESPONSE] LangChain вернул пустой ответ, используем fallback")
-                    llm_response = "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз."
-                
-                logger.debug(f"✅ [GENERATE RESPONSE] LangChain вернул ответ длиной {len(str(llm_response))} символов")
-                return llm_response
+                            }
+                    else:
+                        # Если генерация не удалась, возвращаем понятное сообщение
+                        logger.warning("⚠️ [IMAGE GENERATION] Не удалось сгенерировать изображение")
+                        # Возвращаем сообщение пользователю о том, что генерация недоступна
+                        return "Извините, генерация изображений временно недоступна. Пожалуйста, убедитесь, что установлен OPENAI_API_KEY в настройках сервера."
+                except Exception as e:
+                    logger.error(f"❌ [IMAGE GENERATION] Ошибка при генерации изображения: {e}", exc_info=True)
+                    # Возвращаем понятное сообщение об ошибке
+                    error_message = str(e)
+                    if "OPENAI_API_KEY" in error_message or "api key" in error_message.lower():
+                        return "Извините, генерация изображений недоступна. Необходимо настроить OPENAI_API_KEY в настройках сервера."
+                    else:
+                        return f"Извините, произошла ошибка при генерации изображения: {error_message}. Пожалуйста, попробуйте позже."
+            
+            # Используем LangChain сервис для генерации ответа
+            # ВАЖНО: передаём enhanced_message, чтобы RAG-контекст (журнал задач, покупки и т.п.)
+            # действительно участвовал в генерации ответа даже без инструментов
+            # Всегда передаем user_rules (может быть пустым списком), чтобы принудительно обновить системное сообщение
+            logger.debug(f"📝 [GENERATE RESPONSE] Вызываем LangChain для генерации обычного ответа")
+            # Используем модель из чата, если она установлена, иначе модель агента
+            model_to_use = conversation_model if conversation_model else agent.get("model")
+            logger.debug(f"🤖 [GENERATE RESPONSE] Используемая модель: {model_to_use} (из чата: {conversation_model is not None}, из агента: {conversation_model is None})")
+            
+            # Получаем инструкции агента, гарантируя, что они не None
+            agent_instructions = agent.get("instructions") or ""
+            if not agent_instructions:
+                logger.warning(f"⚠️ [GENERATE RESPONSE] Агент {agent_id} ({agent.get('name')}) не имеет инструкций! Используем пустую строку.")
+            
+            logger.debug(f"📋 [GENERATE RESPONSE] Инструкции агента {agent_id} ({agent.get('name')}): длина {len(agent_instructions)} символов")
+            
+            llm_response = await self.langchain_service.generate_response(
+                agent_name=agent["name"],
+                instructions=agent_instructions,
+                user_message=enhanced_message,
+                conversation_id=unique_conversation_id,
+                model=model_to_use,  # Используем модель из чата или модель агента
+                user_rules=user_rules,  # Передаем правила пользователя (None или список)
+                image_attachments=image_attachments,  # Передаем изображения для моделей с vision
+                language=detected_language,  # Передаем язык для ответа
+            )
+            
+            # Проверяем, что ответ не пустой
+            if not llm_response or (isinstance(llm_response, str) and len(llm_response.strip()) == 0):
+                logger.warning(f"⚠️ [GENERATE RESPONSE] LangChain вернул пустой ответ, используем fallback")
+                llm_response = "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз."
+            
+            logger.debug(f"✅ [GENERATE RESPONSE] LangChain вернул ответ длиной {len(str(llm_response))} символов")
+            return llm_response
         except Exception as e:
             logger.error(f"Ошибка при генерации ответа агента {agent_id}: {e}", exc_info=True)
             raise ValueError(f"Не удалось сгенерировать ответ для агента {agent_id}: {e}") from e

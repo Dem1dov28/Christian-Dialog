@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, or_, and_
 from datetime import timedelta, datetime
 import os
 import uuid
@@ -528,14 +528,41 @@ def get_usage_stats(
     
     messages_total = messages_total + multi_agent_messages_total
     
-    # Общее количество всех чатов (включая системный чат и групповые чаты)
-    # Считаем обычные чаты
+    # Общее количество всех чатов (исключая чаты с удаленными tools/models агентами)
+    # Используем LEFT JOIN для явной проверки существования агента и его категории
+    from models.agent import Agent
+    
+    # Считаем обычные чаты только с персонажами или без агента (системные чаты)
+    # Исключаем каналы (is_channel=True) и чаты с удаленными tools/models агентами
+    # Используем LEFT JOIN, чтобы явно исключить чаты с несуществующими агентами
+    # Исключаем пустые чаты (без сообщений), которые не являются системными
     regular_conversations_count = db.exec(
-        select(func.count(Conversation.id))
-        .where(Conversation.user_id == current_user.id)
+        select(func.count(func.distinct(Conversation.id)))
+        .outerjoin(Agent, Conversation.agent_id == Agent.id)
+        .outerjoin(Message, Conversation.id == Message.conversation_id)
+        .where(
+            Conversation.user_id == current_user.id,
+            Conversation.is_channel == False,  # Исключаем каналы  # noqa: E712
+            or_(
+                # Системные чаты (считаем даже если пустые)
+                Conversation.is_system_chat == True,  # noqa: E712
+                # Чаты с персонажами (только если есть сообщения)
+                and_(
+                    Agent.id.isnot(None),  # Агент существует
+                    ~Agent.category.ilike("%tools%"),  # Не tools
+                    ~Agent.category.ilike("%models%"),  # Не models
+                    Message.id.isnot(None)  # Есть хотя бы одно сообщение
+                ),
+                # Чаты без агента, но с сообщениями (старые чаты с удаленными агентами, но с историей)
+                and_(
+                    Conversation.agent_id.is_(None),
+                    Message.id.isnot(None)  # Есть хотя бы одно сообщение
+                )
+            )
+        )
     ).first() or 0
     
-    # Считаем групповые чаты (multi-agent)
+    # Считаем групповые чаты (multi-agent) - они уже фильтруются по user_id
     multi_agent_conversations_count = db.exec(
         select(func.count(MultiAgentConversation.id))
         .where(MultiAgentConversation.user_id == current_user.id)
@@ -544,12 +571,18 @@ def get_usage_stats(
     # Общее количество всех чатов
     conversations_count = regular_conversations_count + multi_agent_conversations_count
     
-    # Количество уникальных агентов, с которыми пользователь общался
+    # Количество уникальных агентов-персонажей, с которыми пользователь общался
     agents_used = db.exec(
         select(func.count(func.distinct(Conversation.agent_id)))
+        .outerjoin(Agent, Conversation.agent_id == Agent.id)
+        .outerjoin(Message, Conversation.id == Message.conversation_id)
         .where(
             Conversation.user_id == current_user.id,
-            Conversation.agent_id.isnot(None)  # Исключаем беседы без агента
+            Conversation.agent_id.isnot(None),  # Исключаем беседы без агента
+            Agent.id.isnot(None),  # Агент существует
+            ~Agent.category.ilike("%tools%"),  # Не tools
+            ~Agent.category.ilike("%models%"),  # Не models
+            Message.id.isnot(None)  # Есть хотя бы одно сообщение
         )
     ).first() or 0
     

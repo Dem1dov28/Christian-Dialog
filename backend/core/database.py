@@ -1,7 +1,8 @@
 from sqlmodel import Session, SQLModel, create_engine
-from typing import Generator
+from typing import Generator, Optional
 import os
 import logging
+from sqlalchemy import inspect, text
 
 # Импортируем все модели для создания таблиц
 from models.agent import Agent
@@ -19,81 +20,123 @@ from models.recurring_payment import RecurringPayment
 
 logger = logging.getLogger(__name__)
 
-# Настройки базы данных: фиксируем путь относительно директории backend
-BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sqlite_file_name = os.path.join(BACKEND_DIR, "database.db")
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+# Настройки базы данных - PostgreSQL обязателен
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# ✅ КРИТИЧНО: Настройки для многопоточной работы с SQLite
-connect_args = {
-    "check_same_thread": False,
-    "timeout": 30,  # Timeout для ожидания блокировок (секунды)
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL не установлена в переменных окружения!\n"
+        "Установите переменную окружения DATABASE_URL:\n"
+        "  export DATABASE_URL=postgresql://user:password@localhost:5432/timetalk\n"
+        "или добавьте в .env файл:\n"
+        "  DATABASE_URL=postgresql://user:password@localhost:5432/timetalk"
+    )
+
+if not (DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres://")):
+    raise ValueError(
+        f"DATABASE_URL должна указывать на PostgreSQL!\n"
+        f"Текущее значение: {DATABASE_URL}\n"
+        f"Ожидается формат: postgresql://user:password@host:port/database"
+    )
+
+logger.info(f"Используется база данных: PostgreSQL ({DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'configured'})")
+
+# Настройки подключения для PostgreSQL
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "pool_size": 10,
+    "max_overflow": 20,
+    "pool_recycle": 300,  # Переиспользование соединений каждые 5 минут
 }
 
-# ✅ Создаем движок базы данных с pool_pre_ping для проверки соединений
+# Создаем движок базы данных
 engine = create_engine(
-    sqlite_url, 
-    connect_args=connect_args,
-    pool_pre_ping=True,  # Проверяем соединение перед использованием
-    pool_size=10,  # Размер пула соединений
-    max_overflow=20,  # Максимум дополнительных соединений
+    DATABASE_URL,
+    **engine_kwargs,
+    echo=False,  # Установить в True для отладки SQL запросов
 )
 
 
+def get_column_names(conn, table_name: str) -> set:
+    """Получение списка колонок таблицы для PostgreSQL."""
+    inspector = inspect(engine)
+    try:
+        columns = inspector.get_columns(table_name)
+        return {col["name"] for col in columns}
+    except Exception as e:
+        logger.debug(f"Ошибка при получении колонок таблицы {table_name}: {e}")
+        # Fallback на прямой SQL запрос
+        try:
+            result = conn.execute(
+                text(f"""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = '{table_name}'
+                """)
+            )
+            return {row[0] for row in result.fetchall()}
+        except Exception as e2:
+            logger.error(f"Ошибка при fallback получении колонок: {e2}")
+            return set()
+
+
+def table_exists(conn, table_name: str) -> bool:
+    """Проверка существования таблицы в PostgreSQL."""
+    inspector = inspect(engine)
+    try:
+        return table_name.lower() in [t.lower() for t in inspector.get_table_names()]
+    except Exception:
+        # Fallback на прямой SQL
+        try:
+            result = conn.execute(
+                text("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = :table_name
+                    )
+                """),
+                {"table_name": table_name}
+            )
+            return result.scalar()
+        except Exception as e:
+            logger.error(f"Ошибка при проверке существования таблицы {table_name}: {e}")
+            return False
+
+
 def create_db_and_tables():
-    """Создать таблицы в базе данных"""
+    """Создать таблицы в базе данных PostgreSQL"""
     SQLModel.metadata.create_all(engine)
     
-    # ✅ КРИТИЧНО: Включаем WAL режим для SQLite (Write-Ahead Logging)
-    # Это позволяет множественным читателям работать одновременно с одним писателем
+    # Проверяем и добавляем необходимые колонки
     try:
         with engine.connect() as conn:
-            # Включаем WAL режим
-            conn.exec_driver_sql("PRAGMA journal_mode=WAL")
-            logger.info("SQLite WAL режим включен - параллельные запросы разблокированы")
-            
-            # Увеличиваем busy_timeout для предотвращения ошибок блокировки
-            conn.exec_driver_sql("PRAGMA busy_timeout = 30000")  # 30 секунд
-            logger.info("SQLite busy_timeout установлен на 30 секунд")
-            
             # Проверяем наличие колонки messages_cycle_started_at у таблицы user
-            res = conn.exec_driver_sql("PRAGMA table_info(user)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "user")
             if "messages_cycle_started_at" not in columns:
-                conn.exec_driver_sql("ALTER TABLE user ADD COLUMN messages_cycle_started_at DATETIME")
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN messages_cycle_started_at TIMESTAMP"))
                 logger.info("Добавлена колонка messages_cycle_started_at в таблицу user")
             
             # Проверяем наличие колонки is_system_chat у таблицы conversation
-            res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "conversation")
             if "is_system_chat" not in columns:
-                conn.exec_driver_sql("ALTER TABLE conversation ADD COLUMN is_system_chat BOOLEAN DEFAULT 0")
+                conn.execute(text("ALTER TABLE conversation ADD COLUMN is_system_chat BOOLEAN DEFAULT FALSE"))
                 logger.info("Добавлена колонка is_system_chat в таблицу conversation")
 
             # Проверяем наличие колонки user_rules у таблицы conversation
-            res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-            columns = [row[1] for row in res.fetchall()]
             if "user_rules" not in columns:
-                conn.exec_driver_sql("ALTER TABLE conversation ADD COLUMN user_rules VARCHAR DEFAULT '[]'")
+                conn.execute(text("ALTER TABLE conversation ADD COLUMN user_rules TEXT DEFAULT '[]'"))
                 logger.info("Добавлена колонка user_rules в таблицу conversation")
             
             # Проверяем наличие колонки conversation_type у таблицы conversation
-            res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-            columns = [row[1] for row in res.fetchall()]
             if "conversation_type" not in columns:
-                conn.exec_driver_sql("ALTER TABLE conversation ADD COLUMN conversation_type VARCHAR(20) DEFAULT 'agents_only'")
+                conn.execute(text("ALTER TABLE conversation ADD COLUMN conversation_type VARCHAR(20) DEFAULT 'agents_only'"))
                 logger.info("Добавлена колонка conversation_type в таблицу conversation")
             
             # Проверяем наличие колонки conversation_type у таблицы multiagentconversation
-            res = conn.exec_driver_sql("PRAGMA table_info(multiagentconversation)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "multiagentconversation")
             if "conversation_type" not in columns:
-                conn.exec_driver_sql("ALTER TABLE multiagentconversation ADD COLUMN conversation_type VARCHAR(20) DEFAULT 'agents_only'")
+                conn.execute(text("ALTER TABLE multiagentconversation ADD COLUMN conversation_type VARCHAR(20) DEFAULT 'agents_only'"))
                 logger.info("Добавлена колонка conversation_type в таблицу multiagentconversation")
-            
-            # Проверяем, что agent_id может быть NULL в таблице conversation
-            # В SQLite это уже должно работать, так как мы изменили модель, но для безопасности проверяем
-            # Если agent_id был NOT NULL, нужно будет пересоздать таблицу (но это сложно, поэтому оставляем как есть)
             
             # Проверяем дополнительные колонки для каналов
             ensure_conversation_channel_columns(conn)
@@ -106,37 +149,38 @@ def create_db_and_tables():
             # Проверяем столбец group_avatar у многопользовательских чатов
             ensure_multi_agent_conversation_avatar_column(conn)
 
-
             # Проверяем столбцы для авторизации через соцсети
             ensure_user_social_columns(conn)
 
             # Проверяем существование таблицы fileattachment
-            ensure_file_attachment_table()
+            ensure_file_attachment_table(conn)
             
             # Проверяем наличие колонки selected_model у таблицы conversation
             ensure_conversation_selected_model_column(conn)
             
             # Проверяем наличие колонки available_models у таблицы agent
             ensure_agent_available_models_column(conn)
+            
+            # Проверяем наличие колонки user_id у таблицы agent (для пользовательских персонажей)
+            ensure_agent_user_id_column(conn)
+            
+            conn.commit()
     except Exception as e:
         logger.error(f"Ошибка при настройке БД: {e}", exc_info=True)
-        # Не мешаем запуску, если миграция не удалась
-        pass
+        raise
 
 
 def ensure_user_messages_cycle_column():
     """Гарантировать существование колонки user.messages_cycle_started_at (ленивая миграция)."""
     try:
         with engine.connect() as conn:
-            res = conn.exec_driver_sql("PRAGMA table_info(user)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "user")
             if "messages_cycle_started_at" not in columns:
-                conn.exec_driver_sql("ALTER TABLE user ADD COLUMN messages_cycle_started_at DATETIME")
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN messages_cycle_started_at TIMESTAMP"))
+                conn.commit()
                 logger.debug("Добавлена колонка messages_cycle_started_at в таблицу user (ленивая миграция)")
     except Exception as e:
         logger.debug(f"Ошибка при проверке колонки messages_cycle_started_at: {e}")
-        # Тихо игнорируем, чтобы не ломать основной поток
-        pass
 
 
 def ensure_user_social_columns(connection=None):
@@ -144,29 +188,27 @@ def ensure_user_social_columns(connection=None):
     try:
         if connection is not None:
             conn = connection
+            should_close = False
         else:
             conn = engine.connect()
+            should_close = True
 
         try:
-            res = conn.exec_driver_sql("PRAGMA table_info(user)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "user")
 
             if "auth_provider" not in columns:
-                conn.exec_driver_sql(
-                    "ALTER TABLE user ADD COLUMN auth_provider VARCHAR DEFAULT 'local'"
-                )
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN auth_provider VARCHAR DEFAULT 'local'"))
                 logger.info("Добавлена колонка auth_provider в таблицу user")
 
             if "google_id" not in columns:
-                conn.exec_driver_sql(
-                    "ALTER TABLE user ADD COLUMN google_id VARCHAR"
-                )
-                conn.exec_driver_sql(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS ix_user_google_id ON user(google_id)"
-                )
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN google_id VARCHAR"))
+                conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_user_google_id ON \"user\"(google_id) WHERE google_id IS NOT NULL"))
                 logger.info("Добавлена колонка google_id в таблицу user")
+            
+            if should_close:
+                conn.commit()
         finally:
-            if connection is None:
+            if should_close:
                 conn.close()
     except Exception as e:
         logger.debug(f"Ошибка при проверке колонок соцавторизации: {e}")
@@ -176,44 +218,47 @@ def ensure_conversation_system_chat_column():
     """Гарантировать существование колонки conversation.is_system_chat (ленивая миграция)."""
     try:
         with engine.connect() as conn:
-            res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "conversation")
             if "is_system_chat" not in columns:
-                conn.exec_driver_sql("ALTER TABLE conversation ADD COLUMN is_system_chat BOOLEAN DEFAULT 0")
+                conn.execute(text("ALTER TABLE conversation ADD COLUMN is_system_chat BOOLEAN DEFAULT FALSE"))
+                conn.commit()
                 logger.debug("Добавлена колонка is_system_chat в таблицу conversation (ленивая миграция)")
     except Exception as e:
         logger.debug(f"Ошибка при проверке колонки is_system_chat: {e}")
-        # Тихо игнорируем, чтобы не ломать основной поток
-        pass
 
 
 def ensure_conversation_user_rules_column():
     """Гарантировать существование колонки conversation.user_rules (ленивая миграция)."""
     try:
         with engine.connect() as conn:
-            res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "conversation")
             if "user_rules" not in columns:
-                conn.exec_driver_sql("ALTER TABLE conversation ADD COLUMN user_rules VARCHAR DEFAULT '[]'")
+                conn.execute(text("ALTER TABLE conversation ADD COLUMN user_rules TEXT DEFAULT '[]'"))
+                conn.commit()
                 logger.debug("Добавлена колонка user_rules в таблицу conversation (ленивая миграция)")
     except Exception as e:
         logger.debug(f"Ошибка при проверке колонки user_rules: {e}")
-        # Тихо игнорируем, чтобы не ломать основной поток
-        pass
 
 
 def ensure_conversation_selected_model_column(connection=None):
     """Гарантировать существование колонки conversation.selected_model."""
     try:
-        conn = connection if connection else engine.connect()
+        if connection is not None:
+            conn = connection
+            should_close = False
+        else:
+            conn = engine.connect()
+            should_close = True
+        
         try:
-            res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "conversation")
             if "selected_model" not in columns:
-                conn.exec_driver_sql("ALTER TABLE conversation ADD COLUMN selected_model VARCHAR")
+                conn.execute(text("ALTER TABLE conversation ADD COLUMN selected_model VARCHAR"))
                 logger.info("Добавлена колонка selected_model в таблицу conversation")
+                if should_close:
+                    conn.commit()
         finally:
-            if not connection:
+            if should_close:
                 conn.close()
     except Exception as e:
         logger.error(f"Ошибка при проверке колонки selected_model: {e}", exc_info=True)
@@ -222,15 +267,22 @@ def ensure_conversation_selected_model_column(connection=None):
 def ensure_agent_available_models_column(connection=None):
     """Гарантировать существование колонки agent.available_models."""
     try:
-        conn = connection if connection else engine.connect()
+        if connection is not None:
+            conn = connection
+            should_close = False
+        else:
+            conn = engine.connect()
+            should_close = True
+        
         try:
-            res = conn.exec_driver_sql("PRAGMA table_info(agent)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "agent")
             if "available_models" not in columns:
-                conn.exec_driver_sql("ALTER TABLE agent ADD COLUMN available_models TEXT")
+                conn.execute(text("ALTER TABLE agent ADD COLUMN available_models JSONB"))
                 logger.info("Добавлена колонка available_models в таблицу agent")
+                if should_close:
+                    conn.commit()
         finally:
-            if not connection:
+            if should_close:
                 conn.close()
     except Exception as e:
         logger.error(f"Ошибка при проверке колонки available_models: {e}", exc_info=True)
@@ -242,6 +294,7 @@ def ensure_conversation_unread_count_column(connection=None):
         if connection is None:
             with engine.connect() as conn:
                 _ensure_conversation_unread_count_column(conn)
+                conn.commit()
         else:
             _ensure_conversation_unread_count_column(connection)
     except Exception as exc:
@@ -249,13 +302,10 @@ def ensure_conversation_unread_count_column(connection=None):
 
 
 def _ensure_conversation_unread_count_column(conn):
-    res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-    columns = {row[1] for row in res.fetchall()}
+    columns = get_column_names(conn, "conversation")
 
     if "unread_count" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE conversation ADD COLUMN unread_count INTEGER DEFAULT 0"
-        )
+        conn.execute(text("ALTER TABLE conversation ADD COLUMN unread_count INTEGER DEFAULT 0"))
         logger.info("Добавлена колонка unread_count в таблицу conversation")
 
 
@@ -268,6 +318,7 @@ def ensure_conversation_channel_columns(connection=None):
         if connection is None:
             with engine.connect() as conn:
                 _ensure_conversation_channel_columns(conn)
+                conn.commit()
         else:
             _ensure_conversation_channel_columns(connection)
     except Exception as exc:
@@ -282,6 +333,7 @@ def ensure_multi_agent_conversation_avatar_column(connection=None):
         if connection is None:
             with engine.connect() as conn:
                 _ensure_multi_agent_conversation_avatar_column(conn)
+                conn.commit()
         else:
             _ensure_multi_agent_conversation_avatar_column(connection)
     except Exception as exc:
@@ -294,6 +346,7 @@ def ensure_multi_agent_unread_count_column(connection=None):
         if connection is None:
             with engine.connect() as conn:
                 _ensure_multi_agent_unread_count_column(conn)
+                conn.commit()
         else:
             _ensure_multi_agent_unread_count_column(connection)
     except Exception as exc:
@@ -301,13 +354,10 @@ def ensure_multi_agent_unread_count_column(connection=None):
 
 
 def _ensure_multi_agent_unread_count_column(conn):
-    res = conn.exec_driver_sql("PRAGMA table_info(multiagentconversation)")
-    columns = {row[1] for row in res.fetchall()}
+    columns = get_column_names(conn, "multiagentconversation")
 
     if "unread_count" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE multiagentconversation ADD COLUMN unread_count INTEGER DEFAULT 0"
-        )
+        conn.execute(text("ALTER TABLE multiagentconversation ADD COLUMN unread_count INTEGER DEFAULT 0"))
         logger.info("Добавлена колонка unread_count в таблицу multiagentconversation")
 
 
@@ -317,6 +367,7 @@ def ensure_user_channel_subscription_unread_count_column(connection=None):
         if connection is None:
             with engine.connect() as conn:
                 _ensure_user_channel_subscription_unread_count_column(conn)
+                conn.commit()
         else:
             _ensure_user_channel_subscription_unread_count_column(connection)
     except Exception as exc:
@@ -324,96 +375,85 @@ def ensure_user_channel_subscription_unread_count_column(connection=None):
 
 
 def _ensure_user_channel_subscription_unread_count_column(conn):
-    res = conn.exec_driver_sql("PRAGMA table_info(userchannelsubscription)")
-    columns = {row[1] for row in res.fetchall()}
+    if not table_exists(conn, "userchannelsubscription"):
+        return
+    
+    columns = get_column_names(conn, "userchannelsubscription")
 
     if "unread_count" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE userchannelsubscription ADD COLUMN unread_count INTEGER DEFAULT 0"
-        )
+        conn.execute(text("ALTER TABLE userchannelsubscription ADD COLUMN unread_count INTEGER DEFAULT 0"))
         logger.info("Добавлена колонка unread_count в таблицу userchannelsubscription")
 
 
 def _ensure_multi_agent_conversation_avatar_column(conn):
-    res = conn.exec_driver_sql("PRAGMA table_info(multiagentconversation)")
-    columns = {row[1] for row in res.fetchall()}
+    columns = get_column_names(conn, "multiagentconversation")
 
     if "group_avatar" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE multiagentconversation ADD COLUMN group_avatar VARCHAR DEFAULT 'group'"
-        )
+        conn.execute(text("ALTER TABLE multiagentconversation ADD COLUMN group_avatar VARCHAR DEFAULT 'group'"))
         logger.info("Добавлена колонка group_avatar в таблицу multiagentconversation")
+    
+    # Добавляем колонку для URL загруженного аватара
+    if "group_avatar_url" not in columns:
+        conn.execute(text("ALTER TABLE multiagentconversation ADD COLUMN group_avatar_url VARCHAR DEFAULT NULL"))
+        logger.info("Добавлена колонка group_avatar_url в таблицу multiagentconversation")
 
 
 def _ensure_conversation_channel_columns(conn):
-    res = conn.exec_driver_sql("PRAGMA table_info(conversation)")
-    columns = {row[1] for row in res.fetchall()}
+    columns = get_column_names(conn, "conversation")
 
     if "is_channel" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE conversation ADD COLUMN is_channel BOOLEAN DEFAULT 0"
-        )
+        conn.execute(text("ALTER TABLE conversation ADD COLUMN is_channel BOOLEAN DEFAULT FALSE"))
         logger.info("Добавлена колонка is_channel в таблицу conversation")
 
     if "is_listed" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE conversation ADD COLUMN is_listed BOOLEAN DEFAULT 1"
-        )
+        conn.execute(text("ALTER TABLE conversation ADD COLUMN is_listed BOOLEAN DEFAULT TRUE"))
         logger.info("Добавлена колонка is_listed в таблицу conversation")
 
     if "channel_owner_id" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE conversation ADD COLUMN channel_owner_id INTEGER REFERENCES user(id)"
-        )
+        conn.execute(text("ALTER TABLE conversation ADD COLUMN channel_owner_id INTEGER REFERENCES \"user\"(id)"))
         logger.info("Добавлена колонка channel_owner_id в таблицу conversation")
 
     if "channel_description" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE conversation ADD COLUMN channel_description VARCHAR"
-        )
+        conn.execute(text("ALTER TABLE conversation ADD COLUMN channel_description VARCHAR"))
         logger.info("Добавлена колонка channel_description в таблицу conversation")
 
     if "frozen_at" not in columns:
-        conn.exec_driver_sql(
-            "ALTER TABLE conversation ADD COLUMN frozen_at DATETIME"
-        )
+        conn.execute(text("ALTER TABLE conversation ADD COLUMN frozen_at TIMESTAMP"))
         logger.info("Добавлена колонка frozen_at в таблицу conversation")
 
     # Индекс для ускоренного поиска каналов
-    conn.exec_driver_sql(
-        "CREATE INDEX IF NOT EXISTS ix_conversation_is_channel ON conversation(is_channel)"
-    )
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_conversation_is_channel ON conversation(is_channel)"))
 
 
 def ensure_user_pinned_chats_column():
     """Гарантировать существование колонки user.pinned_chats (ленивая миграция)."""
     try:
         with engine.connect() as conn:
-            res = conn.exec_driver_sql("PRAGMA table_info(user)")
-            columns = [row[1] for row in res.fetchall()]
+            columns = get_column_names(conn, "user")
             if "pinned_chats" not in columns:
-                conn.exec_driver_sql("ALTER TABLE user ADD COLUMN pinned_chats VARCHAR DEFAULT '[]'")
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN pinned_chats TEXT DEFAULT '[]'"))
+                conn.commit()
                 logger.debug("Добавлена колонка pinned_chats в таблицу user (ленивая миграция)")
     except Exception as e:
         logger.debug(f"Ошибка при проверке колонки pinned_chats: {e}")
-        # Тихо игнорируем, чтобы не ломать основной поток
-        pass
 
 
-def ensure_file_attachment_table():
+def ensure_file_attachment_table(connection=None):
     """Гарантировать существование таблицы fileattachment (ленивая миграция)."""
     try:
-        with engine.connect() as conn:
-            # Проверяем существование таблицы
-            res = conn.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table' AND name='fileattachment'")
-            if not res.fetchone():
-                # Таблица не существует, SQLModel.metadata.create_all уже вызван в create_db_and_tables
-                # Просто логируем, что таблица должна быть создана
+        if connection is not None:
+            conn = connection
+            should_close = False
+        else:
+            conn = engine.connect()
+            should_close = True
+        
+        try:
+            if not table_exists(conn, "fileattachment"):
                 logger.info("Таблица fileattachment будет создана через SQLModel.metadata.create_all")
             else:
                 # Таблица существует, проверяем наличие всех колонок
-                res = conn.exec_driver_sql("PRAGMA table_info(fileattachment)")
-                existing_columns = {row[1] for row in res.fetchall()}
+                existing_columns = get_column_names(conn, "fileattachment")
                 required_columns = {
                     "id", "filename", "original_filename", "file_path", "file_size",
                     "file_type", "file_extension", "user_id", "conversation_id",
@@ -422,24 +462,44 @@ def ensure_file_attachment_table():
                 missing_columns = required_columns - existing_columns
                 if missing_columns:
                     logger.warning(f"Отсутствующие колонки в fileattachment: {missing_columns}")
-                    # SQLModel должен автоматически создать недостающие колонки при следующем запуске
                 else:
                     logger.debug("Таблица fileattachment существует со всеми необходимыми колонками")
+            
+            if should_close:
+                conn.commit()
+        finally:
+            if should_close:
+                conn.close()
     except Exception as e:
         logger.error(f"Ошибка при проверке таблицы fileattachment: {e}", exc_info=True)
-        # Не мешаем запуску, если миграция не удалась
-        pass
+
+
+def ensure_agent_user_id_column(connection=None):
+    """Гарантировать существование колонки agent.user_id для пользовательских персонажей."""
+    try:
+        if connection is not None:
+            conn = connection
+            should_close = False
+        else:
+            conn = engine.connect()
+            should_close = True
+        
+        try:
+            columns = get_column_names(conn, "agent")
+            if "user_id" not in columns:
+                conn.execute(text("ALTER TABLE agent ADD COLUMN user_id INTEGER REFERENCES \"user\"(id) ON DELETE CASCADE"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_agent_user_id ON agent(user_id)"))
+                logger.info("Добавлена колонка user_id в таблицу agent")
+                if should_close:
+                    conn.commit()
+        finally:
+            if should_close:
+                conn.close()
+    except Exception as e:
+        logger.error(f"Ошибка при проверке колонки user_id в agent: {e}", exc_info=True)
 
 
 def get_session() -> Generator[Session, None, None]:
-    """Получить сессию базы данных"""
+    """Получить сессию базы данных PostgreSQL"""
     with Session(engine) as session:
-        # ✅ Устанавливаем WAL режим и busy_timeout для каждой сессии
-        try:
-            # Используем exec_driver_sql для PRAGMA команд
-            session.exec_driver_sql("PRAGMA journal_mode=WAL")
-            session.exec_driver_sql("PRAGMA busy_timeout=30000")
-        except Exception:
-            pass  # Игнорируем ошибки, если PRAGMA не поддерживается
-        
         yield session

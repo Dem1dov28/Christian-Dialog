@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import apiClient from "../services/api";
-import { hasJournal } from "../utils/agentUtils";
 
 const AgentsContext = createContext();
 
@@ -83,7 +82,7 @@ export const AgentsProvider = ({ children }) => {
     }
   };
 
-  // Удалить агента
+  // Удалить агента (только пользовательских)
   const deleteAgent = async (agentId) => {
     try {
       setIsLoading(true);
@@ -95,6 +94,59 @@ export const AgentsProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Создать пользовательского персонажа
+  const createUserAgent = async ({ name, description, instructions, avatar }) => {
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("instructions", instructions);
+      if (description) {
+        formData.append("description", description);
+      }
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
+      
+      const newAgent = await apiClient.createUserAgent(formData);
+      setAgents((prev) => [...prev, newAgent]);
+      return newAgent;
+    } catch (error) {
+      console.error("Failed to create user agent:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Обновить пользовательского персонажа
+  const updateUserAgent = async (agentId, { name, description, instructions, avatar }) => {
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      if (name) formData.append("name", name);
+      if (instructions) formData.append("instructions", instructions);
+      if (description !== undefined) formData.append("description", description || "");
+      if (avatar) formData.append("avatar", avatar);
+      
+      const updatedAgent = await apiClient.updateUserAgent(agentId, formData);
+      setAgents((prev) => prev.map((agent) => 
+        agent.id === agentId ? updatedAgent : agent
+      ));
+      return updatedAgent;
+    } catch (error) {
+      console.error("Failed to update user agent:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Получить пользовательских персонажей (созданных текущим пользователем)
+  const getUserAgents = () => {
+    return agents.filter((agent) => agent.user_id !== null && agent.user_id !== undefined);
   };
 
   // Получить агентов по категории
@@ -166,7 +218,7 @@ export const AgentsProvider = ({ children }) => {
       if (process.env.NODE_ENV === 'development') {
         console.log(`[AgentsContext] getAgentsByCategory("agents"): найдено ${result.length} агентов`);
         result.forEach(agent => {
-          console.log(`  - ${agent.name} (ID: ${agent.id}): категория = "${agent.category || '(пусто)'}", hasJournal = ${hasJournal(agent)}`);
+          console.log(`  - ${agent.name} (ID: ${agent.id}): категория = "${agent.category || '(пусто)'}"`);
         });
       }
       
@@ -245,6 +297,11 @@ export const AgentsProvider = ({ children }) => {
     createAgent,
     deleteAgent,
     getAgentsByCategory,
+    // Пользовательские персонажи
+    createUserAgent,
+    updateUserAgent,
+    deleteUserAgent: deleteAgent, // Используем тот же метод
+    getUserAgents,
   };
 
   return (

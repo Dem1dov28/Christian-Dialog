@@ -35,6 +35,8 @@ const geocoding = new GeocodingAPI(client);
 // Создаем единый объект API для обратной совместимости
 class UnifiedAPI {
   constructor() {
+    // Сохраняем ссылку на клиент для доступа к его свойствам
+    this.client = client;
     // Базовые методы клиента
     this.setToken = (token) => client.setToken(token);
     this.getHeaders = () => client.getHeaders();
@@ -44,6 +46,12 @@ class UnifiedAPI {
     this.post = (endpoint, data) => client.post(endpoint, data);
     this.put = (endpoint, data) => client.put(endpoint, data);
     this.delete = (endpoint) => client.delete(endpoint);
+    // Делегируем baseURL для удобства
+    Object.defineProperty(this, 'baseURL', {
+      get() {
+        return client.baseURL;
+      }
+    });
 
     // Auth методы
     this.register = (userData) => auth.register(userData);
@@ -68,6 +76,10 @@ class UnifiedAPI {
     this.getAgent = (agentId) => agents.getAgent(agentId);
     this.createAgent = (agentData) => agents.createAgent(agentData);
     this.deleteAgent = (agentId) => agents.deleteAgent(agentId);
+    // Пользовательские персонажи
+    this.getMyAgents = () => agents.getMyAgents();
+    this.createUserAgent = (formData) => agents.createUserAgent(formData);
+    this.updateUserAgent = (agentId, formData) => agents.updateUserAgent(agentId, formData);
 
     // Chats методы
     this.createChat = (agentId) => chats.createChat(agentId);
@@ -94,6 +106,7 @@ class UnifiedAPI {
 
     // Group Chats методы
     this.createGroupChat = (groupData) => groupChats.createGroupChat(groupData);
+    this.createGroupChatWithAvatar = (groupData, avatarFile) => groupChats.createGroupChatWithAvatar(groupData, avatarFile);
     this.getGroupChats = () => groupChats.getGroupChats();
     this.getGroupChat = (conversationId) => groupChats.getGroupChat(conversationId);
     this.getGroupChatAgents = (conversationId) => groupChats.getGroupChatAgents(conversationId);

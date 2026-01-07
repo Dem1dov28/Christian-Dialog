@@ -47,48 +47,8 @@ export default function ChatInputSection({
   // Используем модель из чата, если она установлена, иначе модель агента
   const currentModel = activeConversation?.selected_model || currentAgent?.model || null;
   
-  // Функция для определения, является ли агент AI-моделью
-  const getPrimaryCategory = (agent) => {
-    if (!agent) return null;
-    
-    // Используем категорию из базы данных, если она есть
-    if (agent.category) {
-      const categoryLower = agent.category.toLowerCase();
-      
-      // Если категория содержит запятые, извлекаем первую категорию
-      if (categoryLower.includes(',')) {
-        const firstCategory = categoryLower.split(',')[0].trim();
-        if (['models', 'модели'].includes(firstCategory)) {
-          return 'models';
-        }
-      }
-      
-      // Проверяем точное совпадение
-      if (['models'].includes(categoryLower)) {
-        return 'models';
-      }
-      
-      // Проверяем, содержит ли категория ключевые слова
-      if (categoryLower.includes('models') || categoryLower.includes('модели')) {
-        return 'models';
-      }
-    }
-    
-    // Fallback: определяем категорию на основе имени или описания агента
-    const name = agent.name.toLowerCase();
-    const description = (agent.description || '').toLowerCase();
-    
-    if (name.includes('deepseek') || name.includes('assistant') || name.includes('ai') || 
-        name.includes('gpt') || name.includes('claude') || name.includes('grok') || name.includes('gemini') ||
-        description.includes('ai') || description.includes('модель') || description.includes('ассистент')) {
-      return 'models';
-    }
-    
-    return null;
-  };
-  
-  // Проверяем, является ли текущий агент AI-моделью
-  const isAIModelChat = currentAgent ? getPrimaryCategory(currentAgent) === 'models' : false;
+  // В проекте удалены model-агенты; этот флаг всегда false
+  const isAIModelChat = false;
   
   if (!isChatSelected || isInlineLibraryOpen) {
     return null;
@@ -119,6 +79,7 @@ export default function ChatInputSection({
       onSendMessage={handleSendMessage}
       onCancelGeneration={handleCancelGeneration}
       onCloseReply={() => setReplyToMessage(null)}
+      isChannelChat={isChannelChat}
       isReadOnlyChannel={isReadOnlyChannel}
       messagePlaceholder={messagePlaceholder}
       activeConversation={activeConversation}

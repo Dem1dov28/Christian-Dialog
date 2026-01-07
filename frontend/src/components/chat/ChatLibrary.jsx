@@ -3,7 +3,6 @@ import { useAgents } from "../../contexts/AgentsContext";
 import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNotification } from "../../contexts/NotificationContext";
-import { hasJournal } from "../../utils/agentUtils";
 import { 
   MdStar, 
   MdNotifications, 
@@ -16,15 +15,21 @@ import {
   MdClose,
   MdSearch,
   MdFilterList,
-  MdArrowBack
+  MdArrowBack,
+  MdAdd,
+  MdEdit,
+  MdDelete
 } from "react-icons/md";
+import CreateAgentModal from "../agent/CreateAgentModal";
 
 const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [isVisible, setIsVisible] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
-  const { agents, getAgentsByCategory } = useAgents();
+  const { agents, getAgentsByCategory, getUserAgents, deleteAgent } = useAgents();
+  const { showSuccess, showError } = useNotification();
   const {
     channels,
     isChannelsLoading,
@@ -32,7 +37,6 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     loadChannels,
     subscribeToChannel,
   } = useChats();
-  const { showError, showSuccess } = useNotification();
   const availableChannels = useMemo(() => {
     if (!channels || channels.length === 0) {
       return [];
@@ -219,25 +223,14 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
         if (['персонаж', 'chats', 'characters', 'character'].includes(firstCategory)) {
           return 'chats';
         }
-        if (['models', 'модели'].includes(firstCategory)) {
-          return 'models';
-        }
-        if (['tools', 'инструменты'].includes(firstCategory)) {
-          // Проверяем, есть ли у инструмента журнал
-          return hasJournal(agent) ? 'tools' : 'agents';
-        }
       }
       
       // Проверяем точное совпадение
       if (['channels', 'channel', 'канал', 'каналы'].includes(categoryLower)) {
         return 'channels';
       }
-      if (['chats', 'models'].includes(categoryLower)) {
-        return categoryLower;
-      }
-      if (['tools', 'инструменты'].includes(categoryLower)) {
-        // Проверяем, есть ли у инструмента журнал
-        return hasJournal(agent) ? 'tools' : 'agents';
+      if (['chats'].includes(categoryLower)) {
+        return 'chats';
       }
       
       // Проверяем, содержит ли категория ключевые слова
@@ -247,13 +240,6 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       if (categoryLower.includes('персонаж') || categoryLower.includes('chats') || 
           categoryLower.includes('characters') || categoryLower.includes('character')) {
         return 'chats';
-      }
-      if (categoryLower.includes('models') || categoryLower.includes('модели')) {
-        return 'models';
-      }
-      if (categoryLower.includes('tools') || categoryLower.includes('инструменты')) {
-        // Проверяем, есть ли у инструмента журнал
-        return hasJournal(agent) ? 'tools' : 'agents';
       }
     }
     
@@ -265,17 +251,6 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       return 'channels';
     }
 
-    if (name.includes('deepseek') || name.includes('assistant') || name.includes('ai') || 
-        description.includes('ai') || description.includes('модель') || description.includes('ассистент')) {
-      return 'models';
-    }
-    
-    if (name.includes('калькулятор') || name.includes('перевод') || name.includes('погода') ||
-        description.includes('инструмент') || description.includes('утилита') || description.includes('математический')) {
-      // Проверяем, есть ли у инструмента журнал
-      return hasJournal(agent) ? 'tools' : 'agents';
-    }
-    
     return 'chats';
   }
 
@@ -563,10 +538,6 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     
     if (filterCategory === "all") {
       matchesCategoryFilter = true;
-    } else if (filterCategory === "ai" || filterCategory === "models") {
-      matchesCategoryFilter = persona.primaryCategory === "models";
-    } else if (filterCategory === "tools") {
-      matchesCategoryFilter = persona.primaryCategory === "tools";
     } else if (filterCategory === "agents") {
       matchesCategoryFilter = persona.primaryCategory === "agents";
     } else if (filterCategory === "chats" || filterCategory === "characters") {
@@ -631,11 +602,34 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   });
 
   const characters = filteredPersonas.filter((persona) => persona.primaryCategory === "chats");
-  const tools = filteredPersonas.filter((persona) => persona.primaryCategory === "tools");
+  // tool/model агенты удалены из проекта; оставляем пустые массивы для совместимости UI
+  const tools = [];
   const filteredAgents = filteredPersonas.filter((persona) => persona.primaryCategory === "agents");
-  const models = filteredPersonas.filter((persona) => persona.primaryCategory === "models");
+  const models = [];
+  
+  // Пользовательские персонажи (категория "created")
+  const userAgents = getUserAgents ? getUserAgents() : [];
+  const filteredUserAgents = userAgents.filter((agent) => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return agent.name.toLowerCase().includes(searchLower) ||
+           (agent.description && agent.description.toLowerCase().includes(searchLower));
+  });
 
-  const totalPersonas = characters.length + tools.length + filteredAgents.length + models.length;
+  const totalPersonas = characters.length + filteredAgents.length + filteredUserAgents.length;
+  
+  // Обработчик удаления пользовательского персонажа
+  const handleDeleteUserAgent = async (e, agentId, agentName) => {
+    e.stopPropagation();
+    if (window.confirm(`Удалить персонажа "${agentName}"?`)) {
+      try {
+        await deleteAgent(agentId);
+        showSuccess(`Персонаж "${agentName}" удален`);
+      } catch (error) {
+        showError(error.message || "Не удалось удалить персонажа");
+      }
+    }
+  };
 
   const ROWS_PER_BATCH = 3;
 
@@ -830,14 +824,9 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
 
           {/* Информация о персоонаже */}
           <div className="text-center relative z-10">
-            <h3 className="font-semibold text-[var(--text-white)] text-lg group-hover:text-[var(--accent)] transition-colors duration-300 mb-2">
+            <h3 className="font-semibold text-[var(--text-white)] text-lg group-hover:text-[var(--accent)] transition-colors duration-300">
               {persona.name}
             </h3>
-            {persona.description && (
-              <p className="text-sm text-[var(--text-gray)] line-clamp-2 group-hover:text-[var(--text-white)] transition-colors duration-300">
-                {persona.description}
-              </p>
-            )}
 
             {/* Категории персонажей - только понятные категории */}
             <div className="mt-3 flex flex-col gap-1.5 items-center">
@@ -1196,6 +1185,89 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
               </div>
             ) : (
               <>
+                {/* Секция "Созданные" - пользовательские персонажи */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xl font-semibold text-[var(--text-white)] flex items-center gap-2">
+                      <span>Созданные</span>
+                      {filteredUserAgents.length > 0 && (
+                        <span className="text-sm text-[var(--text-dim)]">({filteredUserAgents.length})</span>
+                      )}
+                    </h3>
+                    <button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--accent)] text-white text-sm font-medium hover:bg-[var(--accent-hover)] transition-all duration-200 hover:scale-105"
+                    >
+                      <MdAdd size={18} />
+                      <span>Создать</span>
+                    </button>
+                  </div>
+                  
+                  {filteredUserAgents.length === 0 ? (
+                    <div className="text-center py-8 bg-[var(--bg-secondary)] rounded-2xl border border-dashed border-[var(--border-color)]">
+                      <div className="text-4xl mb-3">✨</div>
+                      <p className="text-[var(--text-gray)] mb-3">У вас пока нет созданных персонажей</p>
+                      <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="text-[var(--accent)] hover:underline text-sm"
+                      >
+                        Создать первого персонажа
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                      {filteredUserAgents.map((agent) => (
+                        <div
+                          key={agent.id}
+                          onClick={() => handleChatSelect(`agent-${agent.id}`)}
+                          className="group cursor-pointer bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--hover-bg)] transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-[var(--border-color)] hover:border-[var(--accent)] hover:shadow-[var(--accent)]/20 relative overflow-hidden"
+                        >
+                          {/* Кнопка удаления */}
+                          <button
+                            onClick={(e) => handleDeleteUserAgent(e, agent.id, agent.name)}
+                            className="absolute top-3 right-3 p-2 rounded-full bg-red-500/10 text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 z-20"
+                            title="Удалить персонажа"
+                          >
+                            <MdDelete size={16} />
+                          </button>
+                          
+                          {/* Градиентный фон при hover */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          
+                          {/* Аватар */}
+                          <div className="flex justify-center mb-4 relative z-10">
+                            {agent.avatar_url ? (
+                              <div className="relative">
+                                <img
+                                  src={agent.avatar_url.startsWith('/') ? `http://localhost:8002${agent.avatar_url}` : agent.avatar_url}
+                                  alt={agent.name}
+                                  className="w-20 h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                                {agent.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Информация */}
+                          <div className="text-center relative z-10">
+                            <h3 className="font-semibold text-[var(--text-white)] text-lg group-hover:text-[var(--accent)] transition-colors duration-300">
+                              {agent.name}
+                            </h3>
+                            <div className="mt-3">
+                              <span className="inline-block px-2 py-1 text-xs rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
+                                Созданный
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {characters.length > 0 && (
                   <div>
                     <h3 className="text-xl font-semibold text-[var(--text-white)] mb-3 flex items-center gap-2">
@@ -1368,6 +1440,16 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
           </div>
         </div>
       </div>
+      
+      {/* Модальное окно создания персонажа */}
+      <CreateAgentModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={(newAgent) => {
+          // Персонаж создан, можно сразу открыть чат с ним
+          handleChatSelect(`agent-${newAgent.id}`);
+        }}
+      />
     </React.Fragment>
   );
 };

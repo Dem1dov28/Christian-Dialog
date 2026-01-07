@@ -25,6 +25,16 @@ const PERFORMANCE_CHECK_INTERVAL = 2000; // Увеличено для сниже
 const MAX_CONCURRENT_ANIMATIONS = 5; // Максимум одновременных анимаций
 
 /**
+ * Фильтрует конфигурацию анимации для react-spring
+ * Удаляет easing, так как react-spring использует физическую модель (mass, tension, friction)
+ */
+const filterSpringConfig = (config) => {
+  if (!config) return {};
+  const { easing, ...rest } = config;
+  return rest;
+};
+
+/**
  * Оптимизированный хук для анимаций сообщений
  */
 export const useOptimizedMessageAnimations = (options = {}) => {
@@ -178,12 +188,14 @@ export const useOptimizedMessageAnimations = (options = {}) => {
       opacity: 1,
       transform: "translate3d(0, 0, 0) scale(1)",
     },
-    config: getAnimationConfig(
-      AnimationType.SLIDE_IN,
-      deviceType,
-      isReducedMotion,
-      performanceLevel
-    ).config,
+    config: filterSpringConfig(
+      getAnimationConfig(
+        AnimationType.SLIDE_IN,
+        deviceType,
+        isReducedMotion,
+        performanceLevel
+      ).config
+    ),
     immediate: !enabled || isReducedMotion,
     onStart: () => {
       activeAnimationsRef.current++;
@@ -200,12 +212,14 @@ export const useOptimizedMessageAnimations = (options = {}) => {
   const hoverAnimation = useSpring({
     from: { transform: "scale3d(1, 1, 1)" },
     to: { transform: "scale3d(1, 1, 1)" },
-    config: getAnimationConfig(
-      AnimationType.HOVER_EFFECT,
-      deviceType,
-      isReducedMotion,
-      performanceLevel
-    ).config,
+    config: filterSpringConfig(
+      getAnimationConfig(
+        AnimationType.HOVER_EFFECT,
+        deviceType,
+        isReducedMotion,
+        performanceLevel
+      ).config
+    ),
     immediate: !enabled || isReducedMotion,
   });
 
@@ -221,12 +235,14 @@ export const useOptimizedMessageAnimations = (options = {}) => {
       transform: "scale3d(1.03, 1.03, 1)",
       backgroundColor: "rgba(239, 68, 68, 0.15)",
     },
-    config: getAnimationConfig(
-      AnimationType.ERROR_PULSE,
-      deviceType,
-      isReducedMotion,
-      performanceLevel
-    ).config,
+    config: filterSpringConfig(
+      getAnimationConfig(
+        AnimationType.ERROR_PULSE,
+        deviceType,
+        isReducedMotion,
+        performanceLevel
+      ).config
+    ),
     immediate: !enabled || isReducedMotion,
   });
 
@@ -292,12 +308,14 @@ export const useOptimizedMessageAnimations = (options = {}) => {
         from: { opacity: 0, transform: "translate3d(0, 20px, 0)" },
         enter: { opacity: 1, transform: "translate3d(0, 0, 0)" },
         leave: { opacity: 0, transform: "translate3d(0, -20px, 0)" },
-        config: getAnimationConfig(
-          AnimationType.SLIDE_IN,
-          deviceType,
-          isReducedMotion,
-          performanceLevel
-        ).config,
+        config: filterSpringConfig(
+          getAnimationConfig(
+            AnimationType.SLIDE_IN,
+            deviceType,
+            isReducedMotion,
+            performanceLevel
+          ).config
+        ),
         immediate: !enabled || isReducedMotion,
         keys: keyFn,
         trail: performanceLevel === PerformanceLevel.HIGH ? 50 : 0, // Stagger только на мощных устройствах

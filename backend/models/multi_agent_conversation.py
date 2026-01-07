@@ -17,6 +17,10 @@ class MultiAgentConversationBase(SQLModel):
         description="Имя иконки (avatar) для группового чата",
         max_length=32,
     )
+    group_avatar_url: str | None = Field(
+        default=None,
+        description="URL загруженного аватара для группового чата (только для Plus/Pro)",
+    )
     conversation_type: str | None = Field(
         default="agents_only",
         description="Тип чата: 'agents_only' (только агенты/персонажи)",
@@ -44,6 +48,7 @@ class MultiAgentConversationPublic(MultiAgentConversationBase):
     created_at: datetime
     updated_at: datetime
     unread_count: int = 0
+    group_avatar_url: str | None = None
 
 
 class MultiAgentConversationCreate(MultiAgentConversationBase):

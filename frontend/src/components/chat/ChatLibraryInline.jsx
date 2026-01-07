@@ -4,6 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useNotification } from "../../contexts/NotificationContext";
+import { useAuth } from "../../contexts/AuthContext";
+import CreateAgentModal from "../agent/CreateAgentModal";
+import DeleteAgentModal from "../agent/DeleteAgentModal";
+import PersonaDetailModal from "../modals/PersonaDetailModal";
+import apiClient from "../../services/api";
 import {
   MdStar,
   MdNotifications,
@@ -32,6 +38,10 @@ import {
   MdExpandLess,
   MdArrowBack,
   MdClose,
+  MdAdd,
+  MdEdit,
+  MdDelete,
+  MdAddAPhoto,
 } from "react-icons/md";
 import { FaPeopleGroup } from "react-icons/fa6";
 import { RiTeamFill } from "react-icons/ri";
@@ -39,7 +49,7 @@ import { HiMiniUserGroup, HiMiniArrowRight } from "react-icons/hi2";
 import { PiHandsClappingDuotone } from "react-icons/pi";
 import { TbUserCog } from "react-icons/tb";
 
-const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackButton, isLibraryWithSidebar = false }) => {
+const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackButton, isLibraryWithSidebar = false, onShowUpgradeModal }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -48,11 +58,62 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   const [currentStage, setCurrentStage] = useState("selection"); // "selection" | "setup"
   const [isMounted, setIsMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [agentToEdit, setAgentToEdit] = useState(null);
+  const [deleteAgentModal, setDeleteAgentModal] = useState({ isOpen: false, agent: null });
+  const [selectedPersonaForDetail, setSelectedPersonaForDetail] = useState(null);
+  const [isPersonaDetailModalOpen, setIsPersonaDetailModalOpen] = useState(false);
   const headerRef = useRef(null);
   const { t, translateAgent } = useLanguage();
 
-  const { agents } = useAgents();
+  const { agents, getUserAgents, deleteAgent, updateUserAgent } = useAgents();
   const { createGroupChat, channels, loadChannels, isChannelsLoading, channelsError } = useChats();
+  const { showSuccess, showError } = useNotification();
+  const { user } = useAuth();
+
+  // Проверяем, есть ли у пользователя активная Pro подписка
+  const isProUser = useMemo(() => {
+    if (!user) return false;
+    // Проверяем, что подписка Pro
+    if (user.subscription_tier !== "pro") return false;
+    // Проверяем, что подписка не истекла
+    if (user.expires_at) {
+      const expiresAt = new Date(user.expires_at);
+      const now = new Date();
+      if (expiresAt < now) return false; // Подписка истекла
+    }
+    return true;
+  }, [user]);
+
+  // Проверяем, есть ли у пользователя активная Plus или Pro подписка
+  const isPlusOrProUser = useMemo(() => {
+    if (!user) return false;
+    // Проверяем, что подписка Plus или Pro
+    if (!["plus", "pro"].includes(user.subscription_tier)) return false;
+    // Проверяем, что подписка не истекла
+    if (user.expires_at) {
+      const expiresAt = new Date(user.expires_at);
+      const now = new Date();
+      if (expiresAt < now) return false; // Подписка истекла
+    }
+    return true;
+  }, [user]);
+
+  // Обработчик создания персонажа с проверкой подписки
+  const handleCreateAgentClick = () => {
+    if (!isProUser) {
+      // Показываем модальное окно обновления подписки
+      if (onShowUpgradeModal) {
+        onShowUpgradeModal();
+      } else {
+        // Fallback: отправляем событие для открытия модального окна
+        window.dispatchEvent(new Event("aigram:show-upgrade-modal"));
+      }
+      showError("Создание собственных персонажей доступно только для пользователей с подпиской Pro");
+      return;
+    }
+    setIsCreateModalOpen(true);
+  };
 
   const availableChannels = useMemo(() => {
     if (!channels || channels.length === 0) {
@@ -423,18 +484,47 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     return terms;
   };
 
+  // Получаем пользовательских агентов
+  const userAgents = useMemo(() => {
+    return getUserAgents ? getUserAgents() : [];
+  }, [getUserAgents]);
+
   // Получаем все агенты из реальных данных с переводами
   const aiPersonas = useMemo(() => {
-    const personasMap = agents.map((agent) => {
+    // Добавляем пользовательских агентов в общий список
+    const allAgents = [...agents];
+    
+    // Добавляем пользовательских агентов, если их еще нет в списке
+    userAgents.forEach((userAgent) => {
+      if (!agents.find((a) => a.id === userAgent.id)) {
+        allAgents.push(userAgent);
+      }
+    });
+    
+    const personasMap = allAgents.map((agent) => {
       const translatedAgent = translateAgent(agent);
+      // Формируем полный URL для аватара, если это относительный путь
+      let imageSrc = translatedAgent.image_url || translatedAgent.avatar_url;
+      // Фильтруем пустые значения
+      if (imageSrc && imageSrc !== "null" && imageSrc !== "undefined" && imageSrc.trim() !== "") {
+        if (!imageSrc.startsWith("http") && !imageSrc.startsWith("/images/")) {
+          // Если это относительный путь от API (например, /static/user_agents/...), добавляем базовый URL API
+          const baseURL = apiClient?.baseURL || apiClient?.client?.baseURL || "http://localhost:8002";
+          imageSrc = `${baseURL}${imageSrc.startsWith("/") ? imageSrc : `/${imageSrc}`}`;
+        }
+      } else {
+        imageSrc = null;
+      }
       return {
         id: translatedAgent.id,
         name: translatedAgent.name,
         description: translatedAgent.description,
+        instructions: translatedAgent.instructions, // Добавляем инструкции для биографии
         colorClass: translatedAgent.color_class,
         iconName: translatedAgent.icon_name,
-        imageSrc: translatedAgent.image_url || translatedAgent.avatar_url,
+        imageSrc: imageSrc,
         category: translatedAgent.category, // Категория из базы данных (например, "персонаж, политик")
+        user_id: translatedAgent.user_id, // ID пользователя-создателя (для категории "created")
         primaryCategory: getPrimaryCategory(translatedAgent),      // Первичный: Персонаж/Инструмент/AI модель
         secondaryCategory: getSecondaryCategory(translatedAgent), // Вторичный: Фильмы/История/Политика и т.д.
         tertiaryCategory: getTertiaryCategory(translatedAgent)    // Троичный: Звёздные войны/Философ/Президент и т.д.
@@ -460,7 +550,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     });
 
     return Array.from(uniquePersonasMap.values()).filter((persona) => persona.primaryCategory !== 'channels');
-  }, [agents, translateAgent]);
+  }, [agents, userAgents, translateAgent]);
 
   // Определяем первичную категорию (Персонаж/Инструмент/AI модель)
   function getPrimaryCategory(agent) {
@@ -477,20 +567,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         if (['персонаж', 'chats', 'characters', 'character'].includes(firstCategory)) {
           return 'chats';
         }
-        if (['models', 'модели'].includes(firstCategory)) {
-          return 'models';
-        }
-        if (['tools', 'инструменты'].includes(firstCategory)) {
-          return 'tools';
-        }
       }
       
       // Проверяем точное совпадение
       if (['channels', 'channel', 'канал', 'каналы'].includes(categoryLower)) {
         return 'channels';
       }
-      if (['chats', 'models', 'tools'].includes(categoryLower)) {
-        return categoryLower;
+      if (['chats'].includes(categoryLower)) {
+        return 'chats';
       }
       
       // Проверяем, содержит ли категория ключевые слова
@@ -501,12 +585,6 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           categoryLower.includes('characters') || categoryLower.includes('character')) {
         return 'chats';
       }
-      if (categoryLower.includes('models') || categoryLower.includes('модели')) {
-        return 'models';
-      }
-      if (categoryLower.includes('tools') || categoryLower.includes('инструменты')) {
-        return 'tools';
-      }
     }
     
     // Fallback: определяем категорию на основе имени или описания агента
@@ -515,16 +593,6 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     
     if (name.includes('канал') || name.includes('channel') || description.includes('канал') || description.includes('channel')) {
       return 'channels';
-    }
-    
-    if (name.includes('deepseek') || name.includes('assistant') || name.includes('ai') || 
-        description.includes('ai') || description.includes('модель') || description.includes('ассистент')) {
-      return 'models';
-    }
-    
-    if (name.includes('калькулятор') || name.includes('перевод') || name.includes('погода') ||
-        description.includes('инструмент') || description.includes('утилита') || description.includes('математический')) {
-      return 'tools';
     }
     
     return 'chats';
@@ -782,6 +850,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     
     if (filterCategory === "all") {
       matchesCategoryFilter = true;
+    } else if (filterCategory === "created") {
+      // Для категории "Созданные" проверяем, что это пользовательский агент
+      matchesCategoryFilter = persona.category && persona.category.toLowerCase().includes("created");
     } else {
       const characterCategories = getCharacterCategory(persona);
       matchesCategoryFilter = characterCategories && characterCategories.length > 0 && 
@@ -796,14 +867,20 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   // Иначе показываем только отфильтрованные
   const shouldShowAllCategories = filterCategory === "all";
   
-  const characters = filteredPersonas.filter(p => p.primaryCategory === 'chats');
+  // Разделяем персонажей на обычные и созданные пользователем
+  const createdPersonas = filteredPersonas.filter(p => 
+    p.primaryCategory === 'chats' && p.category && p.category.toLowerCase().includes('created')
+  );
+  const characters = filteredPersonas.filter(p => 
+    p.primaryCategory === 'chats' && (!p.category || !p.category.toLowerCase().includes('created'))
+  );
   
   // Tools и models убраны из основной библиотеки - возвращаем пустые массивы
   const tools = [];
   const models = [];
   
   // Общее количество агентов для проверки пустоты (убраны tools и models)
-  const totalPersonas = characters.length;
+  const totalPersonas = characters.length + createdPersonas.length;
 
   const ROWS_PER_BATCH = 3;
 
@@ -882,9 +959,11 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   useEffect(() => {
     setVisibleCounts({
       characters: Math.min(itemsPerBatch, characters.length),
+      created: Math.min(itemsPerBatch, createdPersonas.length),
     });
     setRecentlyAddedIds({
       characters: [],
+      created: [],
     });
     const timers = animationTimeoutsRef.current;
     Object.keys(timers).forEach((key) => {
@@ -893,12 +972,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         timers[key] = null;
       }
     });
-  }, [characters.length, tools.length, models.length, itemsPerBatch]);
+  }, [characters.length, createdPersonas.length, tools.length, models.length, itemsPerBatch]);
 
   const handleShowMore = (categoryKey) => {
     const sourceItems =
       categoryKey === "characters"
         ? characters
+        : categoryKey === "created"
+        ? createdPersonas
         : categoryKey === "tools"
         ? tools
         : models;
@@ -922,8 +1003,51 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   };
 
   const visibleCharacters = characters.slice(0, visibleCounts.characters ?? itemsPerBatch);
+  const visibleCreated = createdPersonas.slice(0, visibleCounts.created ?? itemsPerBatch);
   const visibleTools = []; // Инструменты убраны из основной библиотеки
   const visibleModels = []; // Модели убраны из основной библиотеки
+
+  // Обработчик редактирования агента
+  const handleEditAgent = (e, agent) => {
+    e.stopPropagation();
+    
+    // Кнопка редактирования показывается только для Pro пользователей,
+    // но на всякий случай проверяем еще раз
+    if (!isProUser) {
+      if (onShowUpgradeModal) {
+        onShowUpgradeModal();
+      } else {
+        window.dispatchEvent(new Event("aigram:show-upgrade-modal"));
+      }
+      showError("Редактирование собственных персонажей доступно только для пользователей с подпиской Pro");
+      return;
+    }
+    
+    // Получаем полную информацию об агенте из списка agents
+    const fullAgent = agents.find(a => a.id === agent.id) || agent;
+    setAgentToEdit(fullAgent);
+    setIsCreateModalOpen(true);
+  };
+
+  // Обработчик удаления агента
+  const handleDeleteAgent = (e, agent) => {
+    e.stopPropagation();
+    setDeleteAgentModal({ isOpen: true, agent });
+  };
+
+  // Подтверждение удаления агента
+  const handleConfirmDeleteAgent = async () => {
+    if (!deleteAgentModal.agent) return;
+    
+    try {
+      await deleteAgent(deleteAgentModal.agent.id);
+      showSuccess(`Персонаж "${deleteAgentModal.agent.name}" удален`);
+      setDeleteAgentModal({ isOpen: false, agent: null });
+    } catch (error) {
+      console.error("Error deleting agent:", error);
+      showError(error.message || "Не удалось удалить персонажа");
+    }
+  };
 
   const handleChatSelect = (chatId) => {
     if (isGroupCreationMode) {
@@ -935,6 +1059,26 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     } else {
       // Для всех агентов открываем чат как обычно (tools и models убраны из библиотеки)
       onChatSelect(chatId);
+    }
+  };
+
+  // Обработчик клика на карточку персонажа - показывает модальное окно с деталями
+  const handlePersonaCardClick = (persona) => {
+    if (isGroupCreationMode) {
+      // В режиме создания группы используем старую логику
+      const agentId = persona.id;
+      handlePersonaSelect(agentId);
+    } else {
+      // В обычном режиме показываем модальное окно с деталями
+      setSelectedPersonaForDetail(persona);
+      setIsPersonaDetailModalOpen(true);
+    }
+  };
+
+  // Обработчик создания чата из модального окна
+  const handleStartChatFromModal = () => {
+    if (selectedPersonaForDetail) {
+      handleChatSelect(`agent-${selectedPersonaForDetail.id}`);
     }
   };
 
@@ -974,7 +1118,10 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   // Состояние для настройки чата
   const [chatName, setChatName] = useState("");
   const [chatAvatar, setChatAvatar] = useState("group");
+  const [chatAvatarFile, setChatAvatarFile] = useState(null);
+  const [chatAvatarPreview, setChatAvatarPreview] = useState(null);
   const [showAllAvatars, setShowAllAvatars] = useState(false);
+  const groupAvatarFileInputRef = useRef(null);
   const avatarOptions = useMemo(
     () => [
       { icon: MdGroup, name: "group" },
@@ -1031,7 +1178,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         title: chatName.trim(),
         description: `Групповой чат с ${selectedPersonas.length} персонажами`,
         agent_ids: selectedPersonas,
-        group_avatar: chatAvatar,
+        group_avatar: chatAvatarPreview ? "group" : chatAvatar, // Если загружено изображение, используем "group" как дефолтную иконку
+        avatarFile: chatAvatarFile, // Файл аватара (только для Plus/Pro)
       };
 
       // Создаем групповой чат через API
@@ -1177,9 +1325,10 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
             </div>
 
             {/* Категории (Chips) - Flex Wrap (без скролла) */}
-            <div className="flex flex-wrap gap-2 justify-center">
+            <div className="flex flex-wrap gap-2 justify-center items-center">
                 {[
                     { value: "all", label: "Все категории" },
+                    { value: "created", label: "Созданные" },
                     { value: "religion", label: "Религия" },
                     { value: "science", label: "Наука" },
                     { value: "politics", label: "Политика" },
@@ -1212,6 +1361,23 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                         </button>
                     );
                 })}
+                
+                {/* Кнопка создания персонажа */}
+                <button
+                    onClick={handleCreateAgentClick}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${
+                      isProUser
+                        ? "bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-[var(--accent)]/25"
+                        : "bg-gray-500 hover:bg-gray-600 shadow-gray-500/25 opacity-75 cursor-not-allowed"
+                    }`}
+                    title={!isProUser ? "Создание персонажей доступно только для Pro подписки" : ""}
+                >
+                    <MdAdd size={18} />
+                    <span>Создать персонажа</span>
+                    {!isProUser && (
+                      <span className="ml-1 text-xs opacity-75">(Pro)</span>
+                    )}
+                </button>
             </div>
         </div>
       )}
@@ -1270,6 +1436,85 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
               <label className="block text-sm font-medium text-tg-text mb-3">
                 Аватар чата
               </label>
+              
+              {/* Загрузка своего аватара (только для Plus/Pro) */}
+              {isPlusOrProUser && (
+                <div className="mb-4">
+                  <label className="block text-xs text-tg-text-secondary mb-2">
+                    Загрузить своё изображение (только для Plus/Pro)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <div
+                      onClick={() => groupAvatarFileInputRef.current?.click()}
+                      className="w-16 h-16 rounded-lg border-2 border-dashed border-tg-border hover:border-[var(--accent)] cursor-pointer flex items-center justify-center transition-colors relative overflow-hidden"
+                    >
+                      {chatAvatarPreview ? (
+                        <img
+                          src={chatAvatarPreview}
+                          alt="Avatar preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <MdAddAPhoto className="text-2xl text-tg-text-secondary" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <button
+                        type="button"
+                        onClick={() => groupAvatarFileInputRef.current?.click()}
+                        className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                      >
+                        {chatAvatarPreview ? "Изменить" : "Загрузить изображение"}
+                      </button>
+                      {chatAvatarPreview && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChatAvatarFile(null);
+                            setChatAvatarPreview(null);
+                            setChatAvatar("group");
+                          }}
+                          className="ml-2 text-sm text-red-500 hover:text-red-400 transition-colors"
+                        >
+                          Удалить
+                        </button>
+                      )}
+                      <p className="text-xs text-tg-text-secondary mt-1">
+                        JPG, PNG, GIF или WebP, до 5MB
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    ref={groupAvatarFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          showError("Файл слишком большой. Максимальный размер: 5MB");
+                          return;
+                        }
+                        if (!file.type.startsWith("image/")) {
+                          showError("Пожалуйста, выберите изображение");
+                          return;
+                        }
+                        setChatAvatarFile(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setChatAvatarPreview(reader.result);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ display: "none" }}
+                  />
+                </div>
+              )}
+              
+              {/* Иконки аватаров (используются, если не загружено изображение) */}
+              {!chatAvatarPreview && (
+                <>
               <div
                 className={`flex gap-3 flex-wrap overflow-hidden transition-all duration-300 ease-in-out ${
                   showAllAvatars ? "pt-2" : ""
@@ -1298,7 +1543,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   </button>
                 ))}
               </div>
-              {avatarOptions.length > 6 && (
+              </>
+              )}
+              {!chatAvatarPreview && avatarOptions.length > 6 && (
                 <button
                   type="button"
                   onClick={() => setShowAllAvatars((prev) => !prev)}
@@ -1384,6 +1631,141 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                     {/* При filterCategory === "all" показываем все категории отдельными контейнерами */}
                     {shouldShowAllCategories ? (
                     <>
+                    {/* 0. СОЗДАННЫЕ ПЕРСОНАЖИ */}
+                    {createdPersonas.length > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
+                            <span>Созданные</span>
+                            {createdPersonas.length > 0 && (
+                              <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
+                            )}
+                          </h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                          {visibleCreated.map((persona) => {
+                            const IconComponent = persona.iconName
+                              ? getIconComponent(persona.iconName)
+                              : null;
+                            const isSelected = selectedPersonas.includes(persona.id);
+                            const canSelect =
+                              !isGroupCreationMode ||
+                              selectedPersonas.length < 5 ||
+                              isSelected;
+                            const newlyAddedList = recentlyAddedIds.created ?? [];
+                            const animationIndex = newlyAddedList.indexOf(persona.id);
+                            const animationDelay =
+                              animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
+
+                            return (
+                              <div
+                                key={persona.id}
+                                onClick={() =>
+                                  canSelect && handlePersonaCardClick(persona)
+                                }
+                                className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
+                                  !canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
+                                  animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
+                                }`}
+                                style={animationIndex >= 0 ? { animationDelay } : undefined}
+                              >
+                                {isGroupCreationMode && (
+                                  <div className="absolute top-3 right-3 z-20">
+                                    <div
+                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                        isSelected
+                                          ? "bg-[var(--accent)] border-[var(--accent)]"
+                                          : "border-gray-400 bg-tg-bg"
+                                      }`}
+                                    >
+                                      {isSelected && (
+                                        <MdCheck className="text-white text-sm" />
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                  {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
+                                    <div className="relative">
+                                      <img
+                                        src={persona.imageSrc}
+                                        alt={persona.name}
+                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                          // Если изображение не загрузилось, скрываем его и показываем fallback
+                                          console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
+                                          e.target.style.display = "none";
+                                          const fallback = e.target.parentElement?.nextElementSibling;
+                                          if (fallback) {
+                                            fallback.style.display = "flex";
+                                          }
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    </div>
+                                  ) : null}
+                                  <div
+                                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                  >
+                                    {IconComponent && (
+                                      <IconComponent
+                                        className="text-2xl sm:text-3xl relative z-10"
+                                        style={{ transform: "scale(0.8)" }}
+                                      />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                  </div>
+                                </div>
+
+                                <div className="text-center relative z-10">
+                                  <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                    {persona.name}
+                                  </h3>
+                                </div>
+
+                                {/* Кнопки редактирования и удаления для созданных агентов */}
+                                {!isGroupCreationMode && persona.user_id && (
+                                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                    {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
+                                    <button
+                                      onClick={(e) => handleEditAgent(e, persona)}
+                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
+                                      title={isProUser ? "Редактировать" : "Редактировать (требуется Pro подписка)"}
+                                    >
+                                      <MdEdit size={16} />
+                                    </button>
+                                    <button
+                                      onClick={(e) => handleDeleteAgent(e, persona)}
+                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
+                                      title="Удалить"
+                                    >
+                                      <MdDelete size={16} />
+                                    </button>
+                                  </div>
+                                )}
+
+                                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {createdPersonas.length > visibleCreated.length && (
+                          <div className="mt-4 flex justify-center">
+                            <button
+                              onClick={() => handleShowMore("created")}
+                              className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                            >
+                              {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {/* 1. ПЕРСОНАЖИ */}
                     {characters.length > 0 && (
                   <div className="mb-6">
@@ -1409,7 +1791,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                           <div
                             key={persona.id}
                             onClick={() =>
-                              canSelect && handleChatSelect(`agent-${persona.id}`)
+                              canSelect && handlePersonaCardClick(persona)
                             }
                             className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
                               !canSelect ? " opacity-50 cursor-not-allowed" : ""
@@ -1466,12 +1848,18 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                             {/* Информация о персонаже */}
                             <div className="text-center relative z-10">
-                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
                                 {persona.name}
                               </h3>
-                              <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                {persona.description || "AI персонаж"}
-                              </p>
+                              
+                              {/* Описание - всегда видимое */}
+                              {persona.description && (
+                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                  {persona.description.length > 150 
+                                    ? persona.description.substring(0, 150) + "..." 
+                                    : persona.description}
+                                </p>
+                              )}
 
                               {/* Категории персонажей - только понятные категории */}
                               <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
@@ -1498,7 +1886,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                               </div>
                             </div>
 
-                            {/* Эффект свечения при hover */}
+                            {/* Градиент при hover */}
                             <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                         );
@@ -1542,7 +1930,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                           <div
                             key={persona.id}
                             onClick={() =>
-                              canSelect && handleChatSelect(`agent-${persona.id}`)
+                              canSelect && handlePersonaCardClick(persona)
                             }
                             className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
                               !canSelect ? " opacity-50 cursor-not-allowed" : ""
@@ -1601,12 +1989,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                             {/* Информация о персоонаже */}
                             <div className="text-center relative z-10">
-                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
                                 {persona.name}
                               </h3>
                               {persona.description && (
-                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                  {persona.description}
+                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                  {persona.description.length > 150 
+                                    ? persona.description.substring(0, 150) + "..." 
+                                    : persona.description}
                                 </p>
                               )}
 
@@ -1635,7 +2025,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                               </div>
                             </div>
 
-                            {/* Эффект свечения при hover */}
+                            {/* Градиент при hover */}
                             <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                         );
@@ -1679,7 +2069,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                           <div
                             key={persona.id}
                             onClick={() =>
-                              canSelect && handleChatSelect(`agent-${persona.id}`)
+                              canSelect && handlePersonaCardClick(persona)
                             }
                             className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
                               !canSelect ? " opacity-50 cursor-not-allowed" : ""
@@ -1738,12 +2128,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                             {/* Информация о персоонаже */}
                             <div className="text-center relative z-10">
-                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
                                 {persona.name}
                               </h3>
                               {persona.description && (
-                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                  {persona.description}
+                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                  {persona.description.length > 150 
+                                    ? persona.description.substring(0, 150) + "..." 
+                                    : persona.description}
                                 </p>
                               )}
 
@@ -1772,7 +2164,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                               </div>
                             </div>
 
-                            {/* Эффект свечения при hover */}
+                            {/* Градиент при hover */}
                             <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                         );
@@ -1794,6 +2186,148 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                 ) : (
                   <>
                     {/* При выборе конкретной категории показываем все отфильтрованные результаты */}
+                    {/* СОЗДАННЫЕ ПЕРСОНАЖИ - показываем только если выбрана категория "created" */}
+                    {filterCategory === "created" && createdPersonas.length > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
+                            <span>Созданные</span>
+                            <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
+                          </h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                          {visibleCreated.map((persona) => {
+                            const IconComponent = persona.iconName
+                              ? getIconComponent(persona.iconName)
+                              : null;
+                            const isSelected = selectedPersonas.includes(persona.id);
+                            const canSelect =
+                              !isGroupCreationMode ||
+                              selectedPersonas.length < 5 ||
+                              isSelected;
+                            const newlyAddedList = recentlyAddedIds.created ?? [];
+                            const animationIndex = newlyAddedList.indexOf(persona.id);
+                            const animationDelay =
+                              animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
+
+                            return (
+                              <div
+                                key={persona.id}
+                                onClick={() =>
+                                  canSelect && handlePersonaCardClick(persona)
+                                }
+                                className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
+                                  !canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
+                                  animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
+                                }`}
+                                style={animationIndex >= 0 ? { animationDelay } : undefined}
+                              >
+                                {isGroupCreationMode && (
+                                  <div className="absolute top-3 right-3 z-20">
+                                    <div
+                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                        isSelected
+                                          ? "bg-[var(--accent)] border-[var(--accent)]"
+                                          : "border-gray-400 bg-tg-bg"
+                                      }`}
+                                    >
+                                      {isSelected && (
+                                        <MdCheck className="text-white text-sm" />
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                  {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
+                                    <div className="relative">
+                                      <img
+                                        src={persona.imageSrc}
+                                        alt={persona.name}
+                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                          // Если изображение не загрузилось, скрываем его и показываем fallback
+                                          console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
+                                          e.target.style.display = "none";
+                                          const fallback = e.target.parentElement?.nextElementSibling;
+                                          if (fallback) {
+                                            fallback.style.display = "flex";
+                                          }
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    </div>
+                                  ) : null}
+                                  <div
+                                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                  >
+                                    {IconComponent && (
+                                      <IconComponent
+                                        className="text-2xl sm:text-3xl relative z-10"
+                                        style={{ transform: "scale(0.8)" }}
+                                      />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                  </div>
+                                </div>
+
+                                <div className="text-center relative z-10">
+                                  <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                    {persona.name}
+                                  </h3>
+                                  {/* Описание - всегда видимое */}
+                                  {persona.description && (
+                                    <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mt-1">
+                                      {persona.description.length > 150 
+                                        ? persona.description.substring(0, 150) + "..." 
+                                        : persona.description}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Кнопки редактирования и удаления для созданных агентов */}
+                                {!isGroupCreationMode && persona.user_id && (
+                                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                    {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
+                                    <button
+                                      onClick={(e) => handleEditAgent(e, persona)}
+                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
+                                      title={isProUser ? "Редактировать" : "Редактировать (требуется Pro подписка)"}
+                                    >
+                                      <MdEdit size={16} />
+                                    </button>
+                                    <button
+                                      onClick={(e) => handleDeleteAgent(e, persona)}
+                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
+                                      title="Удалить"
+                                    >
+                                      <MdDelete size={16} />
+                                    </button>
+                                  </div>
+                                )}
+
+                                {/* Градиент при hover */}
+                                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {createdPersonas.length > visibleCreated.length && (
+                          <div className="mt-4 flex justify-center">
+                            <button
+                              onClick={() => handleShowMore("created")}
+                              className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                            >
+                              {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {/* 1. ПЕРСОНАЖИ */}
                     {characters.length > 0 && (
                       <div className="mb-6">
@@ -1819,7 +2353,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                               <div
                                 key={persona.id}
                                 onClick={() =>
-                                  canSelect && handleChatSelect(`agent-${persona.id}`)
+                                  canSelect && handlePersonaCardClick(persona)
                                 }
                                 className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
                                   !canSelect ? " opacity-50 cursor-not-allowed" : ""
@@ -1952,7 +2486,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                               <div
                                 key={persona.id}
                                 onClick={() =>
-                                  canSelect && handleChatSelect(`agent-${persona.id}`)
+                                  canSelect && handlePersonaCardClick(persona)
                                 }
                                 className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
                                   !canSelect ? " opacity-50 cursor-not-allowed" : ""
@@ -2045,7 +2579,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   </div>
                                 </div>
 
-                                {/* Эффект свечения при hover */}
+                                {/* Градиент при hover */}
                                 <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                               </div>
                             );
@@ -2089,7 +2623,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                               <div
                                 key={persona.id}
                                 onClick={() =>
-                                  canSelect && handleChatSelect(`agent-${persona.id}`)
+                                  canSelect && handlePersonaCardClick(persona)
                                 }
                                 className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
                                   !canSelect ? " opacity-50 cursor-not-allowed" : ""
@@ -2182,7 +2716,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   </div>
                                 </div>
 
-                                {/* Эффект свечения при hover */}
+                                {/* Градиент при hover */}
                                 <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                               </div>
                             );
@@ -2324,6 +2858,44 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           </div>
         )}
       </div>
+      
+      {/* Модальное окно создания/редактирования персонажа */}
+      <CreateAgentModal
+        isOpen={isCreateModalOpen}
+        agentToEdit={agentToEdit}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setAgentToEdit(null);
+        }}
+        onSuccess={(newAgent) => {
+          // Персонаж создан/обновлен, сбрасываем состояние редактирования
+          setAgentToEdit(null);
+          // Персонаж создан, можно сразу открыть чат с ним (только при создании)
+          if (onChatSelect && !agentToEdit) {
+            onChatSelect(`agent-${newAgent.id}`);
+          }
+        }}
+      />
+
+      {/* Модальное окно подтверждения удаления персонажа */}
+      <DeleteAgentModal
+        isOpen={deleteAgentModal.isOpen}
+        onClose={() => setDeleteAgentModal({ isOpen: false, agent: null })}
+        onConfirm={handleConfirmDeleteAgent}
+        agentName={deleteAgentModal.agent?.name}
+        agentImage={deleteAgentModal.agent?.avatar_url || deleteAgentModal.agent?.image_url}
+      />
+
+      {/* Модальное окно с деталями персонажа */}
+      <PersonaDetailModal
+        isOpen={isPersonaDetailModalOpen}
+        onClose={() => {
+          setIsPersonaDetailModalOpen(false);
+          setSelectedPersonaForDetail(null);
+        }}
+        persona={selectedPersonaForDetail}
+        onStartChat={handleStartChatFromModal}
+      />
     </div>
   );
 };

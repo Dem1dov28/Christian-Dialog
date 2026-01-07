@@ -1,73 +1,8 @@
 /**
- * Утилиты для работы с агентами и инструментами
+ * Утилиты для работы с агентами (персонажами).
+ *
+ * В проекте удалены tool-агенты и model-агенты, поэтому логика журналов/инструментов больше не используется.
  */
-
-/**
- * Определяет, есть ли у инструмента журнал
- * Инструменты с журналом:
- * - Заметки (notes, journal, ideas)
- * - Ту-ду лист (todo, tasks, productivity, planning)
- * - Отслеживание прогресса (progress, tracking, goals)
- * - Журнал путешествий (travel, journey, trip, vacation)
- * - Диетолог (dietitian, nutrition, diet)
- * - Отслеживание покупок (purchase, expense, budget)
- */
-export const hasJournal = (agent) => {
-  if (!agent) return false;
-
-  const name = (agent.name || "").toLowerCase().trim();
-  const category = (agent.category || "").toLowerCase();
-
-  // Проверка по имени
-  const journalNames = [
-    "заметки",
-    "notes",
-    "ту-ду лист",
-    "todo list",
-    "отслеживание прогресса",
-    "progress tracking",
-    "журнал путешествий",
-    "travel journal",
-    "путешествия",
-    "travel",
-    "диетолог",
-    "dietitian",
-    "учет покупок",
-    "purchase tracker",
-  ];
-
-  if (journalNames.some((journalName) => name.includes(journalName))) {
-    return true;
-  }
-
-  // Проверка по категории
-  const journalCategories = [
-    "notes",
-    "journal",
-    "ideas",
-    "todo",
-    "tasks",
-    "productivity",
-    "planning",
-    "progress",
-    "tracking",
-    "goals",
-    "travel",
-    "journey",
-    "trip",
-    "vacation",
-    "dietitian",
-    "nutrition",
-    "diet",
-    "purchase",
-    "expense",
-    "budget",
-  ];
-
-  return journalCategories.some((journalCategory) =>
-    category.includes(journalCategory)
-  );
-};
 
 /**
  * Определяет категорию агента для localStorage (addedAgents, addedCharacters)
@@ -81,11 +16,6 @@ export const getAgentLibraryCategory = (agent) => {
 
   const category = (agent.category || "").toLowerCase();
 
-  // Инструменты теперь считаются агентами
-  if (category.includes("tools") || category.includes("инструменты")) {
-    return "agents";
-  }
-
   // Проверяем, является ли это персонажем (characters)
   if (
     category.includes("character") ||
@@ -95,7 +25,7 @@ export const getAgentLibraryCategory = (agent) => {
     return "characters";
   }
 
-  // Если это модели или другие категории, возвращаем null (не добавляются в библиотеку)
+  // Другие категории не добавляются в библиотеку
   return null;
 };
 

@@ -16,7 +16,7 @@ export const getPricingData = (t) => ({
   },
   plus: {
     title: t("pricing.plus"),
-    price: 25,
+    price: 2,
     description: t("pricing.plusDescription"),
     features: [
       t("pricing.plusFeature1"),
@@ -30,7 +30,7 @@ export const getPricingData = (t) => ({
   },
   pro: {
     title: t("pricing.pro"),
-    price: 75,
+    price: 5,
     description: t("pricing.proDescription"),
     features: [
       t("pricing.proFeature1"),
@@ -74,7 +74,7 @@ export const pricingData = {
   },
   plus: {
     title: "Plus",
-    price: 25,
+    price: 2,
     description:
       "Для пользователей, которым нужен расширенный доступ к агентам и функциям",
     features: [
@@ -89,7 +89,7 @@ export const pricingData = {
   },
   pro: {
     title: "Pro",
-    price: 75,
+    price: 5,
     description:
       "Для профессионалов и команд, которым нужны все возможности платформы",
     features: [

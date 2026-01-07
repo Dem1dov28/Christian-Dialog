@@ -1190,6 +1190,7 @@ const loadChannels = useCallback(
         agent_name: null,
         is_group: true,
         group_avatar: groupChat.group_avatar || "group", // Сохраняем выбранный аватар
+        group_avatar_url: groupChat.group_avatar_url || null, // Сохраняем URL загруженного аватара
         group_agent_ids: groupChat.agents?.map((agent) => agent.id) || [],
         created_at: groupChat.created_at,
         updated_at: groupChat.updated_at, // Добавляем updated_at
@@ -1582,6 +1583,8 @@ const loadChannels = useCallback(
       if (newlyCreatedEmptyChatsRef.current.has(targetConversationId)) {
         newlyCreatedEmptyChatsRef.current.delete(targetConversationId);
         console.log(`[sendMessage] Чат ${targetConversationId} больше не пустой (отправлено сообщение), убираем из отслеживания`);
+        // Триггерим обновление сайдбара, чтобы чат появился в списке
+        triggerUpdate();
       }
 
     // Мгновенно обновляем превью последнего сообщения в списке чатов
@@ -1646,6 +1649,17 @@ const loadChannels = useCallback(
 
         // Загружаем сообщения с сервера, чтобы получить ответ агента
         await loadMessages(targetConversationId);
+
+        // КРИТИЧНО: После загрузки сообщений убеждаемся, что чат удален из списка новых пустых
+        // Это важно, так как после loadMessages состояние messagesByConversation обновляется
+        setTimeout(() => {
+          const messagesCount = messagesByConversation[targetConversationId]?.length ?? 0;
+          if (messagesCount > 0 && newlyCreatedEmptyChatsRef.current.has(targetConversationId)) {
+            newlyCreatedEmptyChatsRef.current.delete(targetConversationId);
+            console.log(`[sendMessage] После loadMessages: Чат ${targetConversationId} имеет ${messagesCount} сообщений, убираем из отслеживания`);
+            triggerUpdate();
+          }
+        }, 300);
 
         // КРИТИЧНО: Удаляем ВСЕ thinking сообщения сразу после загрузки ответа
         // Это должно происходить синхронно, чтобы избежать повторного появления индикатора
@@ -2080,14 +2094,19 @@ const loadChannels = useCallback(
             });
           } else {
             // При первой загрузке
+            const filteredServerMessages = (messagesData || []).filter(msg => {
+              // Исключаем временные сообщения, которые начинаются с "temp_"
+              return !(typeof msg.id === 'string' && msg.id.startsWith('temp_'));
+            });
+            
+            console.log(
+              `[loadMessages] Первая загрузка для чата ${conversationId}: ` +
+              `получено ${messagesData?.length || 0} сообщений, ` +
+              `отфильтровано ${filteredServerMessages.length}, ` +
+              `предыдущих в состоянии: ${messagesByConversation[conversationId]?.length || 0}`
+            );
+            
             updateMessagesForConversation(conversationId, (prevMessages) => {
-              // Фильтруем временные сообщения пользователя (temp_*), чтобы избежать дублирования
-              // Серверные сообщения уже содержат реальные сообщения пользователя
-              const filteredServerMessages = (messagesData || []).filter(msg => {
-                // Исключаем временные сообщения, которые начинаются с "temp_"
-                return !(typeof msg.id === 'string' && msg.id.startsWith('temp_'));
-              });
-
               // КРИТИЧНО: Если есть ответы от агента в загруженных сообщениях, удаляем thinking сообщения
               // Проверяем, есть ли ответы от агента в загруженных сообщениях
               const hasAgentResponses = filteredServerMessages.some(
@@ -2134,6 +2153,7 @@ const loadChannels = useCallback(
 
               // Если есть ответы от агента, удаляем ВСЕ thinking сообщения
               if (hasAgentResponses) {
+                const beforeFilter = sortedMessages.length;
                 const filtered = sortedMessages.filter((m) => {
                   const isThinking = m.is_thinking === true || 
                                     m.state === "thinking" || 
@@ -2144,11 +2164,37 @@ const loadChannels = useCallback(
                   return !isThinking;
                 });
                 // КРИТИЧНО: Возвращаем отфильтрованные сообщения без thinking
+                console.log(
+                  `[loadMessages] Отфильтровано thinking сообщений: ${beforeFilter} -> ${filtered.length} для чата ${conversationId}`
+                );
                 return filtered;
               }
               
+              const finalCount = sortedMessages.length;
+              console.log(
+                `[loadMessages] Финальное количество сообщений для чата ${conversationId}: ${finalCount}`
+              );
               return sortedMessages;
             });
+            
+            // Проверяем результат обновления через небольшую задержку
+            // Используем функциональное обновление для получения актуального состояния
+            setTimeout(() => {
+              setMessagesByConversation((current) => {
+                const finalMessagesCount = current[conversationId]?.length ?? 0;
+                if (finalMessagesCount > 0) {
+                  console.log(
+                    `✅ [loadMessages] Сообщения успешно сохранены для чата ${conversationId}: ${finalMessagesCount} сообщений`
+                  );
+                } else {
+                  console.warn(
+                    `⚠️ [loadMessages] ПРОБЛЕМА: Сообщения не сохранились для чата ${conversationId} после updateMessagesForConversation. ` +
+                    `Ожидалось: ${filteredServerMessages.length}, но в состоянии: 0`
+                  );
+                }
+                return current; // Возвращаем без изменений, только для проверки
+              });
+            }, 200);
           }
         }
 
@@ -2687,9 +2733,17 @@ const loadChannels = useCallback(
                 } else {
                   await loadMessages(conversationId);
                 }
-                console.log(
-                  `✅ [Chat Load] Фоновая загрузка завершена для чата ${conversationId}`
-                );
+                // Принудительно обновляем состояние через небольшую задержку,
+                // чтобы компонент перерисовался после асинхронного обновления состояния
+                setTimeout(() => {
+                  setMessagesByConversation((current) => {
+                    const loadedCount = current[conversationId]?.length ?? 0;
+                    console.log(
+                      `✅ [Chat Load] Фоновая загрузка завершена для чата ${conversationId}, загружено сообщений: ${loadedCount}`
+                    );
+                    return current; // Возвращаем без изменений, только для триггера перерисовки
+                  });
+                }, 300);
               } catch (error) {
                 console.error(`[Chat Load] Ошибка фоновой загрузки для чата ${conversationId}:`, error);
               }
@@ -3348,15 +3402,28 @@ const loadChannels = useCallback(
       setIsLoading(true);
       console.log("Creating group chat:", groupData);
 
-      // Подготавливаем данные для multi-agent API
-      const multiAgentData = {
-        title: groupData.title,
-        description: groupData.description,
-        agent_ids: groupData.agent_ids,
-        group_avatar: groupData.group_avatar || groupData.avatar || "group",
-      };
-
-      const chatData = await apiClient.createGroupChat(multiAgentData);
+      // Если есть файл аватара, используем FormData, иначе обычный JSON
+      let chatData;
+      if (groupData.avatarFile) {
+        // Используем FormData для загрузки файла
+        const multiAgentData = {
+          title: groupData.title,
+          description: groupData.description,
+          agent_ids: groupData.agent_ids,
+          group_avatar: groupData.group_avatar || groupData.avatar || "group",
+          conversation_type: "agents_only",
+        };
+        chatData = await apiClient.createGroupChatWithAvatar(multiAgentData, groupData.avatarFile);
+      } else {
+        // Обычный JSON запрос
+        const multiAgentData = {
+          title: groupData.title,
+          description: groupData.description,
+          agent_ids: groupData.agent_ids,
+          group_avatar: groupData.group_avatar || groupData.avatar || "group",
+        };
+        chatData = await apiClient.createGroupChat(multiAgentData);
+      }
       console.log("Group chat created:", chatData);
 
       // Проверяем, что мы получили корректные данные
@@ -3387,6 +3454,7 @@ const loadChannels = useCallback(
           agent_name: null,
           is_group: true,
           group_avatar: backendAvatar,
+          group_avatar_url: chatData.group_avatar_url || null, // Сохраняем URL загруженного аватара
           group_agent_ids: groupData.agent_ids, // Сохраняем ID агентов группы
           created_at: new Date().toISOString(),
         };

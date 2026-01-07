@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MdPerson, MdReport, MdDelete, MdClear, MdBookmark, MdExitToApp, MdNotifications } from "react-icons/md";
+import { MdPerson, MdReport, MdDelete, MdClear, MdBookmark, MdExitToApp, MdNotifications, MdEdit } from "react-icons/md";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useChats } from "../../contexts/ChatsContext";
 import { useNotification } from "../../contexts/NotificationContext";
@@ -14,12 +14,14 @@ export default function HeaderMenu({
   onDeleteChat,
   onSavedMessages,
   onUnsubscribeChannel,
+  onEditGroupChat,
   isRightPanelOpen,
   onExited,
 }) {
   const { activeConversation, subscribeToChannel } = useChats();
   const { showSuccess, showError } = useNotification();
   const isChannelChat = activeConversation?.is_channel ?? false;
+  const isGroupChat = activeConversation?.is_group ?? false;
   const isSubscribed = isChannelChat && (activeConversation?.isSubscribed === true || activeConversation?.is_subscribed === true);
   const [isRendered, setIsRendered] = useState(isOpen);
   const [isShown, setIsShown] = useState(false);
@@ -156,6 +158,18 @@ export default function HeaderMenu({
             <span className="text-sm">{t("chat.report")}</span>
           </button>
         </li>
+        {isGroupChat && (
+          <li>
+            <button
+              type="button"
+              className="w-full text-left flex items-center px-3 py-2 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
+              onClick={handleAction(onEditGroupChat)}
+            >
+              <MdEdit className="text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" />
+              <span className="text-sm">Редактировать</span>
+            </button>
+          </li>
+        )}
         {!isChannelChat && (
           <li>
             <button

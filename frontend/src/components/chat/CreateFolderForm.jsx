@@ -51,6 +51,7 @@ import { FaPeopleGroup } from "react-icons/fa6";
 import { RiTeamFill } from "react-icons/ri";
 import { PiHandsClappingDuotone } from "react-icons/pi";
 import { TbUserCog } from "react-icons/tb";
+import { getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 const CreateFolderForm = ({
   isOpen = false,
@@ -346,6 +347,13 @@ const CreateFolderForm = ({
 
     // Проверяем, является ли это группой
     if (chat.is_group || chat.isGroup) {
+      // Проверяем, есть ли загруженный аватар
+      const groupAvatarUrl = getGroupChatAvatarUrl(chat.group_avatar_url);
+      if (groupAvatarUrl) {
+        return { type: "image", src: groupAvatarUrl };
+      }
+      
+      // Иначе используем иконку
       const allowedIcons = [
         "group",
         "groups",

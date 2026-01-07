@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Optional
 from sqlmodel import Session, select, col
+from datetime import datetime
 import logging
 
 from models.multi_agent_conversation import (
@@ -96,6 +97,7 @@ class MultiAgentConversationService(BaseService):
                     description=conversation_data.description,
                     user_id=user_id,
                     group_avatar=group_avatar,
+                    group_avatar_url=conversation_data.group_avatar_url,
                     conversation_type=conversation_type,
                 )
                 session.add(conversation)
@@ -129,6 +131,7 @@ class MultiAgentConversationService(BaseService):
                     "description": conversation.description,
                     "user_id": user_id,
                     "group_avatar": conversation.group_avatar or "group",
+                    "group_avatar_url": conversation.group_avatar_url,
                     "conversation_type": conversation.conversation_type or "agents_only",
                     "unread_count": conversation.unread_count or 0,
                     "agent_count": len(conversation_data.agent_ids) if conversation_type == "agents_only" else 0,
@@ -288,6 +291,7 @@ class MultiAgentConversationService(BaseService):
                     "title": conversation.title,
                     "description": conversation.description,
                     "group_avatar": conversation.group_avatar or "group",
+                    "group_avatar_url": conversation.group_avatar_url,
                     "conversation_type": conversation.conversation_type or "agents_only",
                     "user_id": user_id_val,  # Явно устанавливаем user_id
                     "created_at": conversation.created_at.isoformat() + 'Z' if conversation.created_at else None,
@@ -344,6 +348,7 @@ class MultiAgentConversationService(BaseService):
                         "title": conv.title,
                         "description": conv.description,
                         "group_avatar": conv.group_avatar or "group",
+                        "group_avatar_url": conv.group_avatar_url,
                         "conversation_type": conv.conversation_type or "agents_only",
                         "user_id": user_id_val,  # Явно устанавливаем user_id
                         "created_at": conv.created_at.isoformat() if conv.created_at else None,
@@ -407,4 +412,114 @@ class MultiAgentConversationService(BaseService):
                 return True
         except Exception as e:
             logger.error(f"Error deleting conversation {conversation_id}: {e}", exc_info=True)
+            return False
+    
+    def update_conversation_title(self, conversation_id: int, title: str) -> bool:
+        """Обновить название группового чата
+        
+        Args:
+            conversation_id: ID разговора
+            title: Новое название
+            
+        Returns:
+            True, если успешно, False в противном случае
+        """
+        try:
+            with self.get_session() as session:
+                conversation = session.get(MultiAgentConversation, conversation_id)
+                if not conversation:
+                    logger.warning(f"Conversation {conversation_id} not found")
+                    return False
+                
+                old_title = conversation.title
+                conversation.title = title.strip() if title else None
+                conversation.updated_at = datetime.utcnow()
+                
+                session.commit()
+                session.refresh(conversation)
+                
+                logger.info(f"✅ Title updated for conversation {conversation_id}: '{old_title}' -> '{conversation.title}'")
+                return True
+        except Exception as e:
+            logger.error(f"❌ Error updating title for conversation {conversation_id}: {e}", exc_info=True)
+            return False
+    
+    def update_conversation_avatar(self, conversation_id: int, group_avatar: str) -> bool:
+        """Обновить иконку аватара группового чата
+        
+        Args:
+            conversation_id: ID разговора
+            group_avatar: Название иконки аватара
+            
+        Returns:
+            True, если успешно, False в противном случае
+        """
+        try:
+            with self.get_session() as session:
+                conversation = session.get(MultiAgentConversation, conversation_id)
+                if not conversation:
+                    logger.warning(f"Conversation {conversation_id} not found")
+                    return False
+                
+                # Валидируем аватар
+                allowed_group_avatars = {
+                    "group", "groups", "group_add", "group_work", "diversity",
+                    "people_alt", "emoji_people", "connect", "interpreter",
+                    "chat", "comedy", "star", "fire", "diamond", "star_border",
+                    "fa_people_group", "team_fill",
+                }
+                if group_avatar not in allowed_group_avatars:
+                    group_avatar = "group"
+                
+                conversation.group_avatar = group_avatar
+                conversation.updated_at = datetime.utcnow()
+                
+                session.commit()
+                session.refresh(conversation)
+                
+                logger.info(f"✅ Avatar updated for conversation {conversation_id}: '{group_avatar}'")
+                return True
+        except Exception as e:
+            logger.error(f"❌ Error updating avatar for conversation {conversation_id}: {e}", exc_info=True)
+            return False
+    
+    def update_conversation_avatar_url(self, conversation_id: int, group_avatar: str, group_avatar_url: Optional[str]) -> bool:
+        """Обновить аватар группового чата (иконку и URL)
+        
+        Args:
+            conversation_id: ID разговора
+            group_avatar: Название иконки аватара
+            group_avatar_url: URL загруженного изображения (может быть None)
+            
+        Returns:
+            True, если успешно, False в противном случае
+        """
+        try:
+            with self.get_session() as session:
+                conversation = session.get(MultiAgentConversation, conversation_id)
+                if not conversation:
+                    logger.warning(f"Conversation {conversation_id} not found")
+                    return False
+                
+                # Валидируем аватар
+                allowed_group_avatars = {
+                    "group", "groups", "group_add", "group_work", "diversity",
+                    "people_alt", "emoji_people", "connect", "interpreter",
+                    "chat", "comedy", "star", "fire", "diamond", "star_border",
+                    "fa_people_group", "team_fill",
+                }
+                if group_avatar not in allowed_group_avatars:
+                    group_avatar = "group"
+                
+                conversation.group_avatar = group_avatar
+                conversation.group_avatar_url = group_avatar_url
+                conversation.updated_at = datetime.utcnow()
+                
+                session.commit()
+                session.refresh(conversation)
+                
+                logger.info(f"✅ Avatar URL updated for conversation {conversation_id}: group_avatar='{group_avatar}', group_avatar_url='{group_avatar_url}'")
+                return True
+        except Exception as e:
+            logger.error(f"❌ Error updating avatar URL for conversation {conversation_id}: {e}", exc_info=True)
             return False

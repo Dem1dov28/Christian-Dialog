@@ -1,0 +1,231 @@
+/* Модальное окно создания персонажа */
+
+.create-agent-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.create-agent-modal {
+  background: var(--bg-secondary, #1e1e2e);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color, #333);
+}
+
+.create-agent-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.create-agent-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-white, #fff);
+}
+
+.create-agent-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim, #888);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-agent-modal-close:hover {
+  background: var(--bg-tertiary, #2a2a3e);
+  color: var(--text-white, #fff);
+}
+
+.create-agent-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Секция аватара */
+.create-agent-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.create-agent-avatar-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--bg-tertiary, #2a2a3e);
+  border: 2px dashed var(--border-color, #444);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.create-agent-avatar-preview:hover {
+  border-color: var(--accent-color, #6366f1);
+  background: var(--bg-hover, #333);
+}
+
+.create-agent-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.create-agent-avatar-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim, #888);
+}
+
+.create-agent-avatar-placeholder span {
+  font-size: 0.75rem;
+}
+
+.create-agent-avatar-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim, #888);
+  margin: 0;
+}
+
+/* Поля формы */
+.create-agent-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.create-agent-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #ccc);
+}
+
+.create-agent-field input,
+.create-agent-field textarea {
+  background: var(--bg-tertiary, #2a2a3e);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  color: var(--text-white, #fff);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.create-agent-field input:focus,
+.create-agent-field textarea:focus {
+  outline: none;
+  border-color: var(--accent-color, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.create-agent-field input::placeholder,
+.create-agent-field textarea::placeholder {
+  color: var(--text-dim, #666);
+}
+
+.create-agent-field textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.create-agent-field-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim, #888);
+  margin: 0;
+}
+
+/* Кнопки */
+.create-agent-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.create-agent-cancel-btn,
+.create-agent-submit-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.create-agent-cancel-btn {
+  background: var(--bg-tertiary, #2a2a3e);
+  color: var(--text-secondary, #ccc);
+}
+
+.create-agent-cancel-btn:hover:not(:disabled) {
+  background: var(--bg-hover, #333);
+}
+
+.create-agent-submit-btn {
+  background: var(--accent-color, #6366f1);
+  color: white;
+}
+
+.create-agent-submit-btn:hover:not(:disabled) {
+  background: var(--accent-hover, #5558e3);
+  transform: translateY(-1px);
+}
+
+.create-agent-submit-btn:disabled,
+.create-agent-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 480px) {
+  .create-agent-modal {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .create-agent-modal-overlay {
+    padding: 0;
+  }
+  
+  .create-agent-avatar-preview {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+

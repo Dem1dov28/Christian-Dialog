@@ -44,6 +44,7 @@ import { useFolders } from "../../contexts/FoldersContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { formatTime } from "../../utils/formatters";
 import apiClient from "../../services/api";
+import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 import RecentChatsHorizontalScroll from "../search/RecentChatsHorizontalScroll";
 import ChatItem from "../chat/ChatItem";
 
@@ -693,7 +694,6 @@ const SearchWithAvatar = forwardRef(
 
       const chatsAgents = getAgentsByCategory("chats");
       const charactersAgents = getAgentsByCategory("characters");
-      const modelsAgents = getAgentsByCategory("models");
 
       // Получаем групповые чаты
       const groupChats = conversations.filter((conv) => conv.is_group);
@@ -722,7 +722,7 @@ const SearchWithAvatar = forwardRef(
             } участниками`,
           colorClass: "bg-[var(--accent)]",
           iconName: conversation.group_avatar || "group",
-          imageSrc: null,
+          imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
           unreadCount: 0,
           agentId: null,
           conversationId: conversation.id,
@@ -796,7 +796,6 @@ const SearchWithAvatar = forwardRef(
       const allAgents = [
         ...chatsAgents,
         ...charactersAgents,
-        ...modelsAgents,
       ];
       const uniqueAgents = allAgents.filter(
         (agent, index, self) =>
@@ -977,7 +976,7 @@ const SearchWithAvatar = forwardRef(
               fill="currentColor"
               strokeWidth="0"
               viewBox="0 0 24 24"
-              className="search-icon absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-dim)] text-xl transition-all duration-300"
+              className="search-icon absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-gray)] text-xl transition-all duration-300 z-10"
               height="1em"
               width="1em"
               xmlns="http://www.w3.org/2000/svg"
@@ -1208,15 +1207,21 @@ const SearchWithAvatar = forwardRef(
                                   onClick={() => handleAgentSelect(agent)}
                                 >
                                   <div className="flex-shrink-0 mr-3">
-                                    {agent.image_url || agent.avatar_url ? (
-                                      <img
-                                        src={
-                                          agent.image_url || agent.avatar_url
-                                        }
-                                        alt={agent.name}
-                                        className="w-12 h-12 rounded-full object-cover shadow-md select-none"
-                                      />
-                                    ) : (
+                                    {(() => {
+                                      const avatarUrl = getAgentAvatarUrl(agent.image_url, agent.avatar_url);
+                                      return avatarUrl ? (
+                                        <img
+                                          src={avatarUrl}
+                                          alt={agent.name}
+                                          className="w-12 h-12 rounded-full object-cover shadow-md select-none"
+                                          onError={(e) => {
+                                            console.warn("Failed to load agent avatar:", avatarUrl);
+                                            e.target.style.display = "none";
+                                          }}
+                                        />
+                                      ) : null;
+                                    })()}
+                                    {!getAgentAvatarUrl(agent.image_url, agent.avatar_url) && (
                                       <div
                                         className={`w-12 h-12 rounded-full ${
                                           agent.color_class ||
@@ -1244,11 +1249,7 @@ const SearchWithAvatar = forwardRef(
                                         {agent.name}
                                       </p>
                                       <p className="text-[12px] text-[var(--text-gray)]">
-                                        {agent.category === "models"
-                                          ? t("common.aiModel")
-                                          : agent.category === "tools"
-                                          ? t("common.tool")
-                                          : agent.category === "chats"
+                                        {agent.category === "chats"
                                           ? t("common.character")
                                           : agent.category === "work"
                                           ? t("common.work")

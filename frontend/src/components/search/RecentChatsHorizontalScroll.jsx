@@ -21,6 +21,7 @@ import { TbUserCog } from "react-icons/tb";
 import { useChats } from "../../contexts/ChatsContext";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
   const { conversations } = useChats();
@@ -155,6 +156,16 @@ const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
     }
 
     if (chat.is_group) {
+      // Проверяем, есть ли загруженный аватар
+      const groupAvatarUrl = getGroupChatAvatarUrl(chat.group_avatar_url);
+      if (groupAvatarUrl) {
+        return {
+          type: "image",
+          src: groupAvatarUrl,
+        };
+      }
+      
+      // Иначе используем иконку
       const allowedIcons = [
         "group",
         "groups",
