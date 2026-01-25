@@ -35,6 +35,7 @@ export function useContainerRef({
       // Для каналов не скроллим сразу, чтобы дождаться загрузки сообщений
       if (activeChatId !== null && !isChannelChat) {
         requestAnimationFrame(() => {
+          // Прокручиваем к самому низу чата (последним сообщениям)
           if (node && node.scrollHeight > 0) {
             node.scrollTop = node.scrollHeight;
           }

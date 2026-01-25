@@ -1,0 +1,14 @@
+docker-compose up -d postgresql
+
+cd backend
+.\venv\Scripts\activate
+
+python scripts/sync_agents_from_config.py
+
+python main.py
+
+cd frontend
+
+npm install
+
+npm run dev

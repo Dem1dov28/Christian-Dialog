@@ -26,7 +26,7 @@ export function useChatMessages({
   const [scrollButtonPosition, setScrollButtonPosition] = useState({ top: 0, right: 0 });
 
   // Refs для управления скроллом
-  const needInitialScrollRef = useRef(false);
+  const needInitialScrollRef = useRef(true);
   const prevScrollHeightRef = useRef(0);
   const pendingTopAdjustRef = useRef(false);
   const topLoadCooldownRef = useRef(false);
@@ -67,6 +67,7 @@ export function useChatMessages({
       const scrollTop = el.scrollTop;
       const scrollHeight = el.scrollHeight;
       const clientHeight = el.clientHeight;
+      // Стандартная формула: расстояние от низа = scrollHeight - scrollTop - clientHeight
       const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 
       scrollPositionCacheRef.current = {
@@ -88,11 +89,13 @@ export function useChatMessages({
       const el = containerRef.current;
       if (!el) return;
 
+      // Прокручиваем к самому низу чата (последним сообщениям)
+      const scrollTarget = el.scrollHeight - el.clientHeight;
       if (behavior === "auto") {
-        el.scrollTop = el.scrollHeight;
+        el.scrollTop = scrollTarget;
       } else {
         el.scrollTo({
-          top: el.scrollHeight,
+          top: scrollTarget,
           behavior,
         });
       }
@@ -159,9 +162,10 @@ export function useChatMessages({
       prevScrollTopRef.current = scrollPos.scrollTop;
 
       const scrollToBottom = () => {
-        const currentScrollPos = getScrollPosition(true);
+        // Прокручиваем к самому низу чата (последним сообщениям)
+        const scrollTarget = el.scrollHeight - el.clientHeight;
         el.scrollTo({
-          top: currentScrollPos.scrollHeight,
+          top: scrollTarget,
           behavior: "smooth",
         });
       };
@@ -230,43 +234,9 @@ export function useChatMessages({
   // Отслеживаем последнее сообщение для автоматической прокрутки
   const lastMessageIdRef = useRef(null);
 
-  // Гарантируем скролл вниз при первом открытии чата
-  useLayoutEffect(() => {
-    if (isInlineLibraryOpen) return;
-    if (!activeConversation?.id) return;
+  // Гарантируем скролл вниз при первом открытии чата - ТЕПЕРЬ В useChatScrollInitialization
+  // Этот блок удален, чтобы не конфликтовать с более продвинутой логикой в useChatScrollInitialization
 
-    if (messages.length === 0 && !isChannelChat) {
-      if (!isScrollReady) {
-        setIsScrollReady(true);
-      }
-      needInitialScrollRef.current = false;
-      return;
-    }
-
-    if (needInitialScrollRef.current && messages.length > 0) {
-      const el = containerRef.current;
-      if (el) {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            forceScrollToBottom("auto");
-            setIsScrollReady(true);
-            needInitialScrollRef.current = false;
-            // Сохраняем ID последнего сообщения
-            if (messages.length > 0) {
-              lastMessageIdRef.current = messages[messages.length - 1]?.id;
-            }
-          });
-        });
-      }
-    }
-  }, [
-    activeConversation?.id,
-    messages.length,
-    isChannelChat,
-    isInlineLibraryOpen,
-    isScrollReady,
-    forceScrollToBottom,
-  ]);
 
   // Автоматическая прокрутка при получении новых сообщений
   useEffect(() => {

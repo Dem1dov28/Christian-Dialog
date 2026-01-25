@@ -3,14 +3,14 @@ import { useAgents } from "../../contexts/AgentsContext";
 import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNotification } from "../../contexts/NotificationContext";
-import { 
-  MdStar, 
-  MdNotifications, 
-  MdWork, 
-  MdCalculate, 
-  MdTranslate, 
-  MdWbSunny, 
-  MdPsychology, 
+import {
+  MdStar,
+  MdNotifications,
+  MdWork,
+  MdCalculate,
+  MdTranslate,
+  MdWbSunny,
+  MdPsychology,
   MdAutoAwesome,
   MdClose,
   MdSearch,
@@ -27,7 +27,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [isVisible, setIsVisible] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  
+
   const { agents, getAgentsByCategory, getUserAgents, deleteAgent } = useAgents();
   const { showSuccess, showError } = useNotification();
   const {
@@ -41,13 +41,13 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     if (!channels || channels.length === 0) {
       return [];
     }
-    
+
     const filtered = channels.filter(
       (channel) => channel && channel.is_listed !== false
     );
-    
+
     console.log(`[ChatLibrary] availableChannels: получено ${filtered.length} каналов после фильтрации is_listed`);
-    
+
     // КРИТИЧНО: Сначала дедупликация по ID (самый строгий способ)
     const channelMapById = new Map();
     filtered.forEach((ch) => {
@@ -60,7 +60,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     });
     const uniqueById = Array.from(channelMapById.values());
     console.log(`[ChatLibrary] availableChannels: после дедупликации по ID осталось ${uniqueById.length} каналов`);
-    
+
     // КРИТИЧНО: Затем дедупликация по названию (для системных каналов с одинаковым названием)
     const titleMap = new Map();
     uniqueById.forEach((ch) => {
@@ -75,12 +75,12 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
         titleMap.set(`__no_title_${ch.id}__`, [ch]);
       }
     });
-    
+
     // Если есть дубликаты по названию, оставляем только один (с наибольшим количеством сообщений, затем самый старый по ID)
     const finalChannels = [];
     titleMap.forEach((channelsWithSameTitle, titleKey) => {
       if (channelsWithSameTitle.length > 1) {
-        console.warn(`[ChatLibrary] ⚠️ Обнаружены ${channelsWithSameTitle.length} каналов с одинаковым названием "${channelsWithSameTitle[0].title}":`, 
+        console.warn(`[ChatLibrary] ⚠️ Обнаружены ${channelsWithSameTitle.length} каналов с одинаковым названием "${channelsWithSameTitle[0].title}":`,
           channelsWithSameTitle.map(ch => ({ id: ch.id, title: ch.title, is_system_chat: ch.is_system_chat, message_count: ch.message_count || 0 })));
         // Сортируем: сначала по количеству сообщений (больше = лучше), затем по ID (меньший ID = старше)
         channelsWithSameTitle.sort((a, b) => {
@@ -95,12 +95,12 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       }
       finalChannels.push(channelsWithSameTitle[0]);
     });
-    
+
     console.log(`[ChatLibrary] availableChannels: финальный результат - ${finalChannels.length} уникальных каналов`);
     if (finalChannels.length !== uniqueById.length) {
       console.warn(`[ChatLibrary] ⚠️ Дедупликация по названию удалила ${uniqueById.length - finalChannels.length} дубликатов`);
     }
-    
+
     return finalChannels;
   }, [channels]);
   const { t } = useLanguage();
@@ -139,7 +139,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   // Маппинг категорий для поиска
   const getCategorySearchTerms = (persona) => {
     const terms = [];
-    
+
     // Первичные категории
     const primaryTerms = {
       'models': ['ai модель', 'модель', 'ассистент', 'ai ассистент'],
@@ -149,7 +149,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     if (persona.primaryCategory && primaryTerms[persona.primaryCategory]) {
       terms.push(...primaryTerms[persona.primaryCategory]);
     }
-    
+
     // Вторичные категории
     const secondaryTerms = {
       'cinema': ['фильмы', 'кино', 'cinema', 'кинематограф'],
@@ -167,7 +167,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     if (persona.secondaryCategory && secondaryTerms[persona.secondaryCategory]) {
       terms.push(...secondaryTerms[persona.secondaryCategory]);
     }
-    
+
     // Третичные категории
     const tertiaryTerms = {
       'star_wars': ['звёздные войны', 'star wars', 'вейдер', 'vader'],
@@ -186,7 +186,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     if (persona.tertiaryCategory && tertiaryTerms[persona.tertiaryCategory]) {
       terms.push(...tertiaryTerms[persona.tertiaryCategory]);
     }
-    
+
     return terms;
   };
 
@@ -213,7 +213,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     // Используем категорию из базы данных, если она есть
     if (agent.category) {
       const categoryLower = agent.category.toLowerCase();
-      
+
       // Если категория содержит запятые, извлекаем первую категорию
       if (categoryLower.includes(',')) {
         const firstCategory = categoryLower.split(',')[0].trim();
@@ -224,7 +224,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
           return 'chats';
         }
       }
-      
+
       // Проверяем точное совпадение
       if (['channels', 'channel', 'канал', 'каналы'].includes(categoryLower)) {
         return 'channels';
@@ -232,21 +232,21 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       if (['chats'].includes(categoryLower)) {
         return 'chats';
       }
-      
+
       // Проверяем, содержит ли категория ключевые слова
       if (categoryLower.includes('канал') || categoryLower.includes('channel')) {
         return 'channels';
       }
-      if (categoryLower.includes('персонаж') || categoryLower.includes('chats') || 
-          categoryLower.includes('characters') || categoryLower.includes('character')) {
+      if (categoryLower.includes('персонаж') || categoryLower.includes('chats') ||
+        categoryLower.includes('characters') || categoryLower.includes('character')) {
         return 'chats';
       }
     }
-    
+
     // Fallback: определяем категорию на основе имени или описания агента
     const name = agent.name.toLowerCase();
     const description = (agent.description || '').toLowerCase();
-    
+
     if (name.includes('канал') || name.includes('channel') || description.includes('канал') || description.includes('channel')) {
       return 'channels';
     }
@@ -259,37 +259,37 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     // Используем категорию из базы данных, если она есть
     if (agent.category) {
       const categoryLower = agent.category.toLowerCase();
-      
+
       // Если категория содержит запятые, извлекаем дополнительные категории
       if (categoryLower.includes(',')) {
         const categories = categoryLower.split(',').map(cat => cat.trim());
-        
+
         // Пропускаем первую категорию (персонаж/chats) и ищем дополнительные
         for (let i = 1; i < categories.length; i++) {
           const cat = categories[i];
-          
+
           // Политик
           if (cat === 'политик' || cat === 'politics') {
             return 'politics';
           }
-          
+
           // Герой фильма
           if (cat === 'герой фильма' || cat === 'movie hero' || cat === 'cinema hero') {
             return 'cinema';
           }
-          
+
           // Миллиардер
           if (cat === 'миллиардер' || cat === 'billionaire') {
             return 'technology'; // Миллиардеры обычно связаны с технологиями
           }
-          
+
           // Философ
           if (cat === 'философ' || cat === 'philosopher') {
             return 'philosophy';
           }
         }
       }
-      
+
       // Проверяем, содержит ли категория ключевые слова
       if (categoryLower.includes('канал') || categoryLower.includes('channel')) {
         return 'channels';
@@ -297,8 +297,8 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       if (categoryLower.includes('политик') || categoryLower.includes('politics')) {
         return 'politics';
       }
-      if (categoryLower.includes('герой фильма') || categoryLower.includes('movie hero') || 
-          categoryLower.includes('cinema hero')) {
+      if (categoryLower.includes('герой фильма') || categoryLower.includes('movie hero') ||
+        categoryLower.includes('cinema hero')) {
         return 'cinema';
       }
       if (categoryLower.includes('миллиардер') || categoryLower.includes('billionaire')) {
@@ -308,91 +308,91 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
         return 'philosophy';
       }
     }
-    
+
     // Fallback: определяем категорию на основе имени или описания агента
     const name = agent.name.toLowerCase();
     const description = (agent.description || '').toLowerCase();
     const combined = `${name} ${description}`;
     const primaryCategory = getPrimaryCategory(agent);
-    
+
     // Для инструментов - определяем специализацию
     if (primaryCategory === 'tools') {
       // Математика
       if (name.includes('калькулятор') || name.includes('calculator') ||
-          combined.includes('математик') || combined.includes('математический') ||
-          combined.includes('вычислен') || combined.includes('расчет')) {
+        combined.includes('математик') || combined.includes('математический') ||
+        combined.includes('вычислен') || combined.includes('расчет')) {
         return 'mathematics';
       }
-      
+
       // Языки/Перевод
       if (name.includes('перевод') || name.includes('переводчик') || name.includes('translator') ||
-          combined.includes('перевод') || combined.includes('язык') || combined.includes('language') ||
-          combined.includes('translation')) {
+        combined.includes('перевод') || combined.includes('язык') || combined.includes('language') ||
+        combined.includes('translation')) {
         return 'languages';
       }
-      
+
       // Погода
       if (name.includes('погода') || name.includes('weather') ||
-          combined.includes('погода') || combined.includes('weather') ||
-          combined.includes('метеор') || combined.includes('метео')) {
+        combined.includes('погода') || combined.includes('weather') ||
+        combined.includes('метеор') || combined.includes('метео')) {
         return 'weather';
       }
-      
+
       // Образование
       if (name.includes('учитель') || name.includes('teacher') ||
-          combined.includes('учитель') || combined.includes('преподаватель') ||
-          combined.includes('обучение') || combined.includes('образование') ||
-          combined.includes('english teacher') || combined.includes('учитель английского')) {
+        combined.includes('учитель') || combined.includes('преподаватель') ||
+        combined.includes('обучение') || combined.includes('образование') ||
+        combined.includes('english teacher') || combined.includes('учитель английского')) {
         return 'education';
       }
-      
+
       // По умолчанию для инструментов - утилита
       return 'utility';
     }
-    
+
     // Для персонажей - определяем тематику
     // Фильмы/Кино
-    if (combined.includes('фильм') || combined.includes('кино') || 
-        combined.includes('cinema') || combined.includes('movie')) {
+    if (combined.includes('фильм') || combined.includes('кино') ||
+      combined.includes('cinema') || combined.includes('movie')) {
       return 'cinema';
     }
-    
+
     // История
-    if (combined.includes('история') || combined.includes('исторический') || 
-        combined.includes('историк') || combined.includes('историческая') ||
-        name.includes('марк аврелий') || name.includes('marcus aurelius')) {
+    if (combined.includes('история') || combined.includes('исторический') ||
+      combined.includes('историк') || combined.includes('историческая') ||
+      name.includes('марк аврелий') || name.includes('marcus aurelius')) {
       return 'history';
     }
-    
+
     // Политика
-    if (combined.includes('политика') || combined.includes('политический') || 
-        combined.includes('политик') || combined.includes('президент') ||
-        name.includes('зеленский') || name.includes('zelensky') ||
-        name.includes('трамп') || name.includes('trump') ||
-        name.includes('путин') || name.includes('putin')) {
+    if (combined.includes('политика') || combined.includes('политический') ||
+      combined.includes('политик') || combined.includes('президент') ||
+      name.includes('зеленский') || name.includes('zelensky') ||
+      name.includes('трамп') || name.includes('trump') ||
+      name.includes('путин') || name.includes('putin')) {
       return 'politics';
     }
-    
+
     // Философия
-    if (combined.includes('философия') || combined.includes('философ') || 
-        combined.includes('философский') || name.includes('ницше') ||
-        name.includes('платон') || name.includes('plato')) {
+    if (combined.includes('философия') || combined.includes('философ') ||
+      combined.includes('философский') || name.includes('ницше') ||
+      name.includes('платон') || name.includes('plato')) {
       return 'philosophy';
     }
-    
+
     // Технологии
-    if (combined.includes('технология') || combined.includes('технологический') || 
-        combined.includes('тех') || name.includes('маск') || name.includes('musk') ||
-        name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
+    if (combined.includes('технология') || combined.includes('технологический') ||
+      combined.includes('тех') || name.includes('маск') || name.includes('musk') ||
+      name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'technology';
     }
-    
+
     // Литература
-    if (combined.includes('литература') || combined.includes('книга') || 
-        combined.includes('писатель')) {
+    if (combined.includes('литература') || combined.includes('книга') ||
+      combined.includes('писатель')) {
       return 'literature';
     }
-    
+
     return null;
   }
 
@@ -402,140 +402,140 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     const description = (agent.description || '').toLowerCase();
     const combined = `${name} ${description}`;
     const primaryCategory = getPrimaryCategory(agent);
-    
+
     // Для инструментов - определяем конкретный тип инструмента
     if (primaryCategory === 'tools') {
       // Калькулятор
       if (name.includes('калькулятор') || name.includes('calculator') ||
-          combined.includes('калькулятор') || combined.includes('calculator')) {
+        combined.includes('калькулятор') || combined.includes('calculator')) {
         return 'calculator';
       }
-      
+
       // Переводчик
       if (name.includes('перевод') || name.includes('переводчик') || name.includes('translator') ||
-          combined.includes('переводчик') || combined.includes('translator')) {
+        combined.includes('переводчик') || combined.includes('translator')) {
         return 'translator';
       }
-      
+
       // Погода/Метеорология
       if (name.includes('погода') || name.includes('weather') ||
-          combined.includes('погода') || combined.includes('weather') ||
-          combined.includes('метеор') || combined.includes('метео')) {
+        combined.includes('погода') || combined.includes('weather') ||
+        combined.includes('метеор') || combined.includes('метео')) {
         return 'meteorology';
       }
-      
+
       // Учитель английского
       if (name.includes('english teacher') || name.includes('учитель английского') ||
-          (combined.includes('учитель') && combined.includes('английск'))) {
+        (combined.includes('учитель') && combined.includes('английск'))) {
         return 'english_teacher';
       }
-      
+
       // По умолчанию для инструментов - утилита
       return 'utility_tool';
     }
-    
+
     // Для агентов - определяем конкретный тип агента (аналогично инструментам)
     if (primaryCategory === 'agents') {
       // Калькулятор
       if (name.includes('калькулятор') || name.includes('calculator') ||
-          combined.includes('калькулятор') || combined.includes('calculator')) {
+        combined.includes('калькулятор') || combined.includes('calculator')) {
         return 'calculator';
       }
-      
+
       // Переводчик
       if (name.includes('перевод') || name.includes('переводчик') || name.includes('translator') ||
-          combined.includes('переводчик') || combined.includes('translator')) {
+        combined.includes('переводчик') || combined.includes('translator')) {
         return 'translator';
       }
-      
+
       // Погода/Метеорология
       if (name.includes('погода') || name.includes('weather') ||
-          combined.includes('погода') || combined.includes('weather') ||
-          combined.includes('метеор') || combined.includes('метео')) {
+        combined.includes('погода') || combined.includes('weather') ||
+        combined.includes('метеор') || combined.includes('метео')) {
         return 'meteorology';
       }
-      
+
       // Учитель английского
       if (name.includes('english teacher') || name.includes('учитель английского') ||
-          (combined.includes('учитель') && combined.includes('английск'))) {
+        (combined.includes('учитель') && combined.includes('английск'))) {
         return 'english_teacher';
       }
-      
+
       // По умолчанию для агентов - утилита
       return 'utility_agent';
     }
-    
+
     // Для персонажей - определяем конкретную роль
     // Звёздные войны
     if (combined.includes('звездные войны') || combined.includes('star wars') ||
-        combined.includes('starwars')) {
+      combined.includes('starwars')) {
       return 'star_wars';
     }
-    
+
     // Литературный персонаж
     if ((combined.includes('литература') && combined.includes('персонаж')) ||
-        (combined.includes('книга') && !combined.includes('писатель'))) {
+      (combined.includes('книга') && !combined.includes('писатель'))) {
       return 'literary_character';
     }
-    
+
     // Философ
-    if (combined.includes('философия') || combined.includes('философ') || 
-        combined.includes('философский') || name.includes('ницше') ||
-        name.includes('платон') || name.includes('plato')) {
+    if (combined.includes('философия') || combined.includes('философ') ||
+      combined.includes('философский') || name.includes('ницше') ||
+      name.includes('платон') || name.includes('plato')) {
       return 'philosopher';
     }
-    
+
     // Президент/Политик
     if (name.includes('зеленский') || name.includes('zelensky') ||
-        name.includes('трамп') || name.includes('trump') ||
-        name.includes('путин') || name.includes('putin') ||
-        combined.includes('президент')) {
+      name.includes('трамп') || name.includes('trump') ||
+      name.includes('путин') || name.includes('putin') ||
+      combined.includes('президент')) {
       return 'president';
     }
-    
+
     // Историческая фигура
-    if (combined.includes('история') || combined.includes('исторический') || 
-        combined.includes('историк') || combined.includes('историческая') ||
-        name.includes('марк аврелий') || name.includes('marcus aurelius')) {
+    if (combined.includes('история') || combined.includes('исторический') ||
+      combined.includes('историк') || combined.includes('историческая') ||
+      name.includes('марк аврелий') || name.includes('marcus aurelius')) {
       return 'historical_figure';
     }
-    
+
     // Предприниматель в технологиях
     if (name.includes('маск') || name.includes('musk') ||
-        name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
+      name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'tech_entrepreneur';
     }
-    
+
     // Автор/Писатель (только если явно указано что это автор/писатель)
     if (combined.includes('писатель') || combined.includes('автор') ||
-        (combined.includes('литература') && combined.includes('писатель'))) {
+      (combined.includes('литература') && combined.includes('писатель'))) {
       return 'author';
     }
-    
+
     return null;
   }
 
   // Фильтрация персоонажей
   const filteredPersonas = aiPersonas.filter(persona => {
     const searchLower = searchQuery.toLowerCase().trim();
-    
+
     // Если поисковый запрос пустой, проверяем только категорию
     // Убрали ранний возврат, чтобы фильтрация по категориям из базы данных работала правильно
-    
+
     // Поиск по имени и описанию
     // Если поисковый запрос пустой, считаем, что поиск совпадает
     const matchesNameOrDesc = !searchLower || persona.name.toLowerCase().includes(searchLower) ||
-                              (persona.description && persona.description.toLowerCase().includes(searchLower));
-    
+      (persona.description && persona.description.toLowerCase().includes(searchLower));
+
     // Поиск по категориям (первичные, вторичные, третичные)
     const categoryTerms = getCategorySearchTerms(persona);
     const matchesCategorySearch = !searchLower || categoryTerms.some(term => term.toLowerCase().includes(searchLower));
-    
+
     const matchesSearch = matchesNameOrDesc || matchesCategorySearch;
-    
+
     // Фильтрация по категории
     let matchesCategoryFilter = filterCategory === "all";
-    
+
     if (filterCategory === "all") {
       matchesCategoryFilter = true;
     } else if (filterCategory === "agents") {
@@ -545,11 +545,11 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     } else {
       // Проверяем дополнительные категории (политик, герой фильма, миллиардер, философ)
       const filterCategoryLower = filterCategory.toLowerCase().trim();
-      
+
       // Используем категорию из persona (уже содержит category из базы данных)
       if (persona.category) {
         const categoryLower = persona.category.toLowerCase();
-        
+
         // Простая проверка: содержит ли категория агента искомую категорию
         // Например, "персонаж, политик" содержит "политик"
         if (categoryLower.includes(filterCategoryLower)) {
@@ -557,35 +557,35 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
         } else {
           // Разбиваем категорию по запятым и проверяем каждую
           const categories = categoryLower.split(',').map(cat => cat.trim());
-          
+
           // Проверяем, содержит ли какая-либо категория агента искомую категорию
           const matchesAnyCategory = categories.some(cat => {
             const catTrimmed = cat.trim();
-            
+
             // Точное совпадение (без учета регистра)
             if (catTrimmed === filterCategoryLower) {
               return true;
             }
-            
+
             // Проверяем, содержит ли категория искомую категорию (для случаев типа "герой фильма")
             // Например, если категория "герой фильма", а мы ищем "герой фильма"
             if (catTrimmed.includes(filterCategoryLower)) {
               return true;
             }
-            
+
             // Также проверяем обратное - если искомое содержит категорию (для коротких категорий)
             if (filterCategoryLower.includes(catTrimmed) && catTrimmed.length > 2) {
               return true;
             }
-            
+
             return false;
           });
-          
+
           if (matchesAnyCategory) {
             matchesCategoryFilter = true;
           } else {
             // Проверяем вторичную и третичную категории
-            matchesCategoryFilter = 
+            matchesCategoryFilter =
               (persona.secondaryCategory && persona.secondaryCategory === filterCategory) ||
               (persona.tertiaryCategory && persona.tertiaryCategory === filterCategory);
           }
@@ -597,7 +597,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
           (persona.tertiaryCategory && persona.tertiaryCategory === filterCategory);
       }
     }
-    
+
     return matchesSearch && matchesCategoryFilter;
   });
 
@@ -606,18 +606,18 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const tools = [];
   const filteredAgents = filteredPersonas.filter((persona) => persona.primaryCategory === "agents");
   const models = [];
-  
+
   // Пользовательские персонажи (категория "created")
   const userAgents = getUserAgents ? getUserAgents() : [];
   const filteredUserAgents = userAgents.filter((agent) => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return agent.name.toLowerCase().includes(searchLower) ||
-           (agent.description && agent.description.toLowerCase().includes(searchLower));
+      (agent.description && agent.description.toLowerCase().includes(searchLower));
   });
 
   const totalPersonas = characters.length + filteredAgents.length + filteredUserAgents.length;
-  
+
   // Обработчик удаления пользовательского персонажа
   const handleDeleteUserAgent = async (e, agentId, agentName) => {
     e.stopPropagation();
@@ -751,8 +751,8 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       categoryKey === "characters"
         ? characters
         : categoryKey === "tools"
-        ? tools
-        : models;
+          ? tools
+          : models;
 
     setVisibleCounts((prev) => {
       const currentValue = prev[categoryKey] ?? itemsPerBatch;
@@ -788,9 +788,8 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
         <div
           key={persona.id}
           onClick={() => handleChatSelect(`agent-${persona.id}`)}
-          className={`group cursor-pointer bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--hover-bg)] transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-[var(--border-color)] hover:border-[var(--accent)] hover:shadow-[var(--accent)]/20 relative overflow-hidden persona-card${
-            animationIndex >= 0 ? " persona-card-enter" : ""
-          }`}
+          className={`group cursor-pointer bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--hover-bg)] transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-[var(--border-color)] hover:border-[var(--accent)] hover:shadow-[var(--accent)]/20 relative overflow-hidden persona-card${animationIndex >= 0 ? " persona-card-enter" : ""
+            }`}
           style={animationIndex >= 0 ? { animationDelay } : undefined}
         >
           {/* Градиентный фон при hover */}
@@ -905,8 +904,8 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     combined.includes("правитель") || combined.includes("президент") ||
                     combined.includes("король") || combined.includes("император") ||
                     combined.includes("царь") || combined.includes("королева") ||
-                    name.includes("путин") || name.includes("зеленский") || 
-                    name.includes("трамп") || name.includes("putin") || 
+                    name.includes("путин") || name.includes("зеленский") ||
+                    name.includes("трамп") || name.includes("putin") ||
                     name.includes("zelensky") || name.includes("trump") ||
                     name.includes("ленин") || name.includes("сталин") ||
                     name.includes("lenin") || name.includes("stalin") ||
@@ -1023,7 +1022,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                 };
 
                 const characterCategories = getCharacterCategories(persona);
-                
+
                 if (characterCategories && characterCategories.length > 0) {
                   return (
                     <div className="flex flex-wrap gap-1.5 justify-center">
@@ -1038,7 +1037,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     </div>
                   );
                 }
-                
+
                 return null;
               })()}
               {/* Убираем отображение всех остальных технических категорий */}
@@ -1068,9 +1067,9 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       console.error("Failed to subscribe to channel:", error);
       showError(
         error.message ||
-          t("library.subscribeChannelError", {
-            defaultValue: "Не удалось подписаться на канал",
-          })
+        t("library.subscribeChannelError", {
+          defaultValue: "Не удалось подписаться на канал",
+        })
       );
     }
   };
@@ -1092,11 +1091,11 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
         href="https://fonts.googleapis.com/css2?family=Alegreya+Sans+SC:ital,wght@0,100;0,300;0,400;0,500;0,700;0,800;0,900;1,100;1,300;1,400;1,500;1,700;1,800;1,900&display=swap"
       />
       {/* Анимированный темный overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-60 z-40"
         onClick={handleOverlayClick}
       />
-      
+
       {/* Библиотека чатов */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
         <div className="bg-[var(--bg-primary)]/90 backdrop-blur-xl rounded-none sm:rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[92vw] sm:max-w-4xl md:max-w-5xl lg:max-w-6xl max-h-[calc(100vh-160px)] overflow-hidden border border-[var(--border-color)] flex flex-col">
@@ -1138,43 +1137,43 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
             </div>
           </div>
 
-            {/* Поиск и фильтры */}
-            <div className="mt-4 md:mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div className="relative flex-1">
-                <MdSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--text-gray)] text-xl" />
-                <input
-                  id="chat-library-search"
-                  name="search"
-                  type="text"
-                  placeholder={t('common.searchPlaceholder')}
-                  autoComplete="off"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all duration-200"
-                />
-              </div>
-              <div className="relative">
-                <MdFilterList className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--text-gray)] text-xl" />
-                <select
-                  id="filter-category"
-                  name="filterCategory"
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="pl-12 pr-8 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[var(--text-white)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all duration-200 appearance-none cursor-pointer"
-                >
-                  <option value="all">Все категории</option>
-                  <option value="religion">Религия</option>
-                  <option value="science">Наука</option>
-                  <option value="politics">Политика</option>
-                  <option value="philosophy">Философия</option>
-                  <option value="inventions">Изобретения</option>
-                  <option value="art">Искусство</option>
-                  <option value="literature">Литература</option>
-                  <option value="business">Бизнес</option>
-                </select>
-              </div>
+          {/* Поиск и фильтры */}
+          <div className="mt-4 md:mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="relative flex-1">
+              <MdSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--text-gray)] text-xl" />
+              <input
+                id="chat-library-search"
+                name="search"
+                type="text"
+                placeholder={t('common.searchPlaceholder')}
+                autoComplete="off"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all duration-200"
+              />
             </div>
-          
+            <div className="relative">
+              <MdFilterList className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--text-gray)] text-xl" />
+              <select
+                id="filter-category"
+                name="filterCategory"
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="pl-12 pr-8 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[var(--text-white)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all duration-200 appearance-none cursor-pointer"
+              >
+                <option value="all">Все категории</option>
+                <option value="religion">Религия</option>
+                <option value="science">Наука</option>
+                <option value="politics">Политика</option>
+                <option value="philosophy">Философия</option>
+                <option value="inventions">Изобретения</option>
+                <option value="art">Искусство</option>
+                <option value="literature">Литература</option>
+                <option value="business">Бизнес</option>
+              </select>
+            </div>
+          </div>
+
           <div className="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 custom-scrollbar space-y-6">
             {/* Категории персонажей */}
             {totalPersonas === 0 ? (
@@ -1202,7 +1201,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                       <span>Создать</span>
                     </button>
                   </div>
-                  
+
                   {filteredUserAgents.length === 0 ? (
                     <div className="text-center py-8 bg-[var(--bg-secondary)] rounded-2xl border border-dashed border-[var(--border-color)]">
                       <div className="text-4xl mb-3">✨</div>
@@ -1230,16 +1229,16 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                           >
                             <MdDelete size={16} />
                           </button>
-                          
+
                           {/* Градиентный фон при hover */}
                           <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          
+
                           {/* Аватар */}
                           <div className="flex justify-center mb-4 relative z-10">
                             {agent.avatar_url ? (
                               <div className="relative">
                                 <img
-                                  src={agent.avatar_url.startsWith('/') ? `http://localhost:8002${agent.avatar_url}` : agent.avatar_url}
+                                  src={agent.avatar_url.startsWith('/') ? `http://localhost:8000${agent.avatar_url}` : agent.avatar_url}
                                   alt={agent.name}
                                   className="w-20 h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                 />
@@ -1250,7 +1249,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                               </div>
                             )}
                           </div>
-                          
+
                           {/* Информация */}
                           <div className="text-center relative z-10">
                             <h3 className="font-semibold text-[var(--text-white)] text-lg group-hover:text-[var(--accent)] transition-colors duration-300">
@@ -1390,7 +1389,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                         }}
                         className="relative group bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-[var(--accent)] hover:bg-[var(--hover-bg)] cursor-pointer"
                       >
-                        <div 
+                        <div
                           className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-[var(--accent)] transition-colors duration-300 pointer-events-none"
                           style={{ zIndex: 1 }}
                         />
@@ -1440,7 +1439,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
           </div>
         </div>
       </div>
-      
+
       {/* Модальное окно создания персонажа */}
       <CreateAgentModal
         isOpen={isCreateModalOpen}

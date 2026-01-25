@@ -119,11 +119,11 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     if (!channels || channels.length === 0) {
       return [];
     }
-    
+
     const filtered = channels.filter(
       (channel) => channel && channel.is_listed !== false
     );
-    
+
     // КРИТИЧНО: Сначала дедупликация по ID (самый строгий способ)
     const channelMapById = new Map();
     filtered.forEach((ch) => {
@@ -135,7 +135,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       }
     });
     const uniqueById = Array.from(channelMapById.values());
-    
+
     // КРИТИЧНО: Затем дедупликация по названию (для системных каналов с одинаковым названием)
     const titleMap = new Map();
     uniqueById.forEach((ch) => {
@@ -150,12 +150,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         titleMap.set(`__no_title_${ch.id}__`, [ch]);
       }
     });
-    
+
     // Если есть дубликаты по названию, оставляем только один (с наибольшим количеством сообщений, затем самый старый по ID)
     const finalChannels = [];
     titleMap.forEach((channelsWithSameTitle) => {
       if (channelsWithSameTitle.length > 1) {
-        console.warn(`[ChatLibraryInline] ⚠️ Обнаружены ${channelsWithSameTitle.length} каналов с одинаковым названием "${channelsWithSameTitle[0].title}":`, 
+        console.warn(`[ChatLibraryInline] ⚠️ Обнаружены ${channelsWithSameTitle.length} каналов с одинаковым названием "${channelsWithSameTitle[0].title}":`,
           channelsWithSameTitle.map(ch => ({ id: ch.id, title: ch.title, message_count: ch.message_count || 0 })));
         // Сортируем: сначала по количеству сообщений (больше = лучше), затем по ID (меньший ID = старше)
         channelsWithSameTitle.sort((a, b) => {
@@ -170,7 +170,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       }
       finalChannels.push(channelsWithSameTitle[0]);
     });
-    
+
     return finalChannels;
   }, [channels]);
 
@@ -194,8 +194,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       let parent = element.parentElement;
       while (parent) {
         const style = window.getComputedStyle(parent);
-        if (style.overflowY === 'auto' || style.overflowY === 'scroll' || 
-            style.overflow === 'auto' || style.overflow === 'scroll') {
+        if (style.overflowY === 'auto' || style.overflowY === 'scroll' ||
+          style.overflow === 'auto' || style.overflow === 'scroll') {
           return parent;
         }
         parent = parent.parentElement;
@@ -204,7 +204,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     };
 
     const scrollableParent = findScrollableParent(headerRef.current);
-    
+
     const handleScroll = () => {
       let scrollTop = 0;
       if (scrollableParent === window) {
@@ -313,8 +313,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       combined.includes("правитель") || combined.includes("президент") ||
       combined.includes("король") || combined.includes("император") ||
       combined.includes("царь") || combined.includes("королева") ||
-      name.includes("путин") || name.includes("зеленский") || 
-      name.includes("трамп") || name.includes("putin") || 
+      name.includes("путин") || name.includes("зеленский") ||
+      name.includes("трамп") || name.includes("putin") ||
       name.includes("zelensky") || name.includes("trump") ||
       name.includes("ленин") || name.includes("сталин") ||
       name.includes("lenin") || name.includes("stalin") ||
@@ -433,7 +433,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   // Маппинг категорий для поиска
   const getCategorySearchTerms = (persona) => {
     const terms = [];
-    
+
     // Первичные категории
     const primaryTerms = {
       'models': ['ai модель', 'модель', 'ассистент', 'ai ассистент'],
@@ -443,7 +443,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     if (persona.primaryCategory && primaryTerms[persona.primaryCategory]) {
       terms.push(...primaryTerms[persona.primaryCategory]);
     }
-    
+
     // Вторичные категории
     const secondaryTerms = {
       'cinema': ['фильмы', 'кино', 'cinema', 'кинематограф'],
@@ -461,7 +461,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     if (persona.secondaryCategory && secondaryTerms[persona.secondaryCategory]) {
       terms.push(...secondaryTerms[persona.secondaryCategory]);
     }
-    
+
     // Третичные категории
     const tertiaryTerms = {
       'star_wars': ['звёздные войны', 'star wars', 'вейдер', 'vader'],
@@ -480,7 +480,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     if (persona.tertiaryCategory && tertiaryTerms[persona.tertiaryCategory]) {
       terms.push(...tertiaryTerms[persona.tertiaryCategory]);
     }
-    
+
     return terms;
   };
 
@@ -493,14 +493,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   const aiPersonas = useMemo(() => {
     // Добавляем пользовательских агентов в общий список
     const allAgents = [...agents];
-    
+
     // Добавляем пользовательских агентов, если их еще нет в списке
     userAgents.forEach((userAgent) => {
       if (!agents.find((a) => a.id === userAgent.id)) {
         allAgents.push(userAgent);
       }
     });
-    
+
     const personasMap = allAgents.map((agent) => {
       const translatedAgent = translateAgent(agent);
       // Формируем полный URL для аватара, если это относительный путь
@@ -509,7 +509,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       if (imageSrc && imageSrc !== "null" && imageSrc !== "undefined" && imageSrc.trim() !== "") {
         if (!imageSrc.startsWith("http") && !imageSrc.startsWith("/images/")) {
           // Если это относительный путь от API (например, /static/user_agents/...), добавляем базовый URL API
-          const baseURL = apiClient?.baseURL || apiClient?.client?.baseURL || "http://localhost:8002";
+          const baseURL = apiClient?.baseURL || apiClient?.client?.baseURL || "http://localhost:8000";
           imageSrc = `${baseURL}${imageSrc.startsWith("/") ? imageSrc : `/${imageSrc}`}`;
         }
       } else {
@@ -557,7 +557,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     // Используем категорию из базы данных, если она есть
     if (agent.category) {
       const categoryLower = agent.category.toLowerCase();
-      
+
       // Если категория содержит запятые, извлекаем первую категорию
       if (categoryLower.includes(',')) {
         const firstCategory = categoryLower.split(',')[0].trim();
@@ -568,7 +568,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           return 'chats';
         }
       }
-      
+
       // Проверяем точное совпадение
       if (['channels', 'channel', 'канал', 'каналы'].includes(categoryLower)) {
         return 'channels';
@@ -576,25 +576,25 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       if (['chats'].includes(categoryLower)) {
         return 'chats';
       }
-      
+
       // Проверяем, содержит ли категория ключевые слова
       if (categoryLower.includes('канал') || categoryLower.includes('channel')) {
         return 'channels';
       }
-      if (categoryLower.includes('персонаж') || categoryLower.includes('chats') || 
-          categoryLower.includes('characters') || categoryLower.includes('character')) {
+      if (categoryLower.includes('персонаж') || categoryLower.includes('chats') ||
+        categoryLower.includes('characters') || categoryLower.includes('character')) {
         return 'chats';
       }
     }
-    
+
     // Fallback: определяем категорию на основе имени или описания агента
     const name = agent.name.toLowerCase();
     const description = (agent.description || '').toLowerCase();
-    
+
     if (name.includes('канал') || name.includes('channel') || description.includes('канал') || description.includes('channel')) {
       return 'channels';
     }
-    
+
     return 'chats';
   }
 
@@ -603,43 +603,43 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     // Используем категорию из базы данных, если она есть
     if (agent.category) {
       const categoryLower = agent.category.toLowerCase();
-      
+
       // Если категория содержит запятые, извлекаем дополнительные категории
       if (categoryLower.includes(',')) {
         const categories = categoryLower.split(',').map(cat => cat.trim());
-        
+
         // Пропускаем первую категорию (персонаж/chats) и ищем дополнительные
         for (let i = 1; i < categories.length; i++) {
           const cat = categories[i];
-          
+
           // Политик
           if (cat === 'политик' || cat === 'politics') {
             return 'politics';
           }
-          
+
           // Герой фильма
           if (cat === 'герой фильма' || cat === 'movie hero' || cat === 'cinema hero') {
             return 'cinema';
           }
-          
+
           // Миллиардер
           if (cat === 'миллиардер' || cat === 'billionaire') {
             return 'technology'; // Миллиардеры обычно связаны с технологиями
           }
-          
+
           // Философ
           if (cat === 'философ' || cat === 'philosopher') {
             return 'philosophy';
           }
         }
       }
-      
+
       // Проверяем, содержит ли категория ключевые слова
       if (categoryLower.includes('политик') || categoryLower.includes('politics')) {
         return 'politics';
       }
-      if (categoryLower.includes('герой фильма') || categoryLower.includes('movie hero') || 
-          categoryLower.includes('cinema hero')) {
+      if (categoryLower.includes('герой фильма') || categoryLower.includes('movie hero') ||
+        categoryLower.includes('cinema hero')) {
         return 'cinema';
       }
       if (categoryLower.includes('миллиардер') || categoryLower.includes('billionaire')) {
@@ -649,91 +649,91 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         return 'philosophy';
       }
     }
-    
+
     // Fallback: определяем категорию на основе имени или описания агента
     const name = agent.name.toLowerCase();
     const description = (agent.description || '').toLowerCase();
     const combined = `${name} ${description}`;
     const primaryCategory = getPrimaryCategory(agent);
-    
+
     // Для инструментов - определяем специализацию
     if (primaryCategory === 'tools') {
       // Математика
       if (name.includes('калькулятор') || name.includes('calculator') ||
-          combined.includes('математик') || combined.includes('математический') ||
-          combined.includes('вычислен') || combined.includes('расчет')) {
+        combined.includes('математик') || combined.includes('математический') ||
+        combined.includes('вычислен') || combined.includes('расчет')) {
         return 'mathematics';
       }
-      
+
       // Языки/Перевод
       if (name.includes('перевод') || name.includes('переводчик') || name.includes('translator') ||
-          combined.includes('перевод') || combined.includes('язык') || combined.includes('language') ||
-          combined.includes('translation')) {
+        combined.includes('перевод') || combined.includes('язык') || combined.includes('language') ||
+        combined.includes('translation')) {
         return 'languages';
       }
-      
+
       // Погода
       if (name.includes('погода') || name.includes('weather') ||
-          combined.includes('погода') || combined.includes('weather') ||
-          combined.includes('метеор') || combined.includes('метео')) {
+        combined.includes('погода') || combined.includes('weather') ||
+        combined.includes('метеор') || combined.includes('метео')) {
         return 'weather';
       }
-      
+
       // Образование
       if (name.includes('учитель') || name.includes('teacher') ||
-          combined.includes('учитель') || combined.includes('преподаватель') ||
-          combined.includes('обучение') || combined.includes('образование') ||
-          combined.includes('english teacher') || combined.includes('учитель английского')) {
+        combined.includes('учитель') || combined.includes('преподаватель') ||
+        combined.includes('обучение') || combined.includes('образование') ||
+        combined.includes('english teacher') || combined.includes('учитель английского')) {
         return 'education';
       }
-      
+
       // По умолчанию для инструментов - утилита
       return 'utility';
     }
-    
+
     // Для персонажей - определяем тематику
     // Фильмы/Кино
-    if (combined.includes('фильм') || combined.includes('кино') || 
-        combined.includes('cinema') || combined.includes('movie')) {
+    if (combined.includes('фильм') || combined.includes('кино') ||
+      combined.includes('cinema') || combined.includes('movie')) {
       return 'cinema';
     }
-    
+
     // История
-    if (combined.includes('история') || combined.includes('исторический') || 
-        combined.includes('историк') || combined.includes('историческая') ||
-        name.includes('марк аврелий') || name.includes('marcus aurelius')) {
+    if (combined.includes('история') || combined.includes('исторический') ||
+      combined.includes('историк') || combined.includes('историческая') ||
+      name.includes('марк аврелий') || name.includes('marcus aurelius')) {
       return 'history';
     }
-    
+
     // Политика
-    if (combined.includes('политика') || combined.includes('политический') || 
-        combined.includes('политик') || combined.includes('президент') ||
-        name.includes('зеленский') || name.includes('zelensky') ||
-        name.includes('трамп') || name.includes('trump') ||
-        name.includes('путин') || name.includes('putin')) {
+    if (combined.includes('политика') || combined.includes('политический') ||
+      combined.includes('политик') || combined.includes('президент') ||
+      name.includes('зеленский') || name.includes('zelensky') ||
+      name.includes('трамп') || name.includes('trump') ||
+      name.includes('путин') || name.includes('putin')) {
       return 'politics';
     }
-    
+
     // Философия
-    if (combined.includes('философия') || combined.includes('философ') || 
-        combined.includes('философский') || name.includes('ницше') ||
-        name.includes('платон') || name.includes('plato')) {
+    if (combined.includes('философия') || combined.includes('философ') ||
+      combined.includes('философский') || name.includes('ницше') ||
+      name.includes('платон') || name.includes('plato')) {
       return 'philosophy';
     }
-    
+
     // Технологии
-    if (combined.includes('технология') || combined.includes('технологический') || 
-        combined.includes('тех') || name.includes('маск') || name.includes('musk') ||
-        name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
+    if (combined.includes('технология') || combined.includes('технологический') ||
+      combined.includes('тех') || name.includes('маск') || name.includes('musk') ||
+      name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'technology';
     }
-    
+
     // Литература
-    if (combined.includes('литература') || combined.includes('книга') || 
-        combined.includes('писатель')) {
+    if (combined.includes('литература') || combined.includes('книга') ||
+      combined.includes('писатель')) {
       return 'literature';
     }
-    
+
     return null;
   }
 
@@ -743,111 +743,111 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     const description = (agent.description || '').toLowerCase();
     const combined = `${name} ${description}`;
     const primaryCategory = getPrimaryCategory(agent);
-    
+
     // Для инструментов - определяем конкретный тип инструмента
     if (primaryCategory === 'tools') {
       // Калькулятор
       if (name.includes('калькулятор') || name.includes('calculator') ||
-          combined.includes('калькулятор') || combined.includes('calculator')) {
+        combined.includes('калькулятор') || combined.includes('calculator')) {
         return 'calculator';
       }
-      
+
       // Переводчик
       if (name.includes('перевод') || name.includes('переводчик') || name.includes('translator') ||
-          combined.includes('переводчик') || combined.includes('translator')) {
+        combined.includes('переводчик') || combined.includes('translator')) {
         return 'translator';
       }
-      
+
       // Погода/Метеорология
       if (name.includes('погода') || name.includes('weather') ||
-          combined.includes('погода') || combined.includes('weather') ||
-          combined.includes('метеор') || combined.includes('метео')) {
+        combined.includes('погода') || combined.includes('weather') ||
+        combined.includes('метеор') || combined.includes('метео')) {
         return 'meteorology';
       }
-      
+
       // Учитель английского
       if (name.includes('english teacher') || name.includes('учитель английского') ||
-          (combined.includes('учитель') && combined.includes('английск'))) {
+        (combined.includes('учитель') && combined.includes('английск'))) {
         return 'english_teacher';
       }
-      
+
       // По умолчанию для инструментов - утилита
       return 'utility_tool';
     }
-    
+
     // Для персонажей - определяем конкретную роль
     // Звёздные войны
     if (combined.includes('звездные войны') || combined.includes('star wars') ||
-        combined.includes('starwars')) {
+      combined.includes('starwars')) {
       return 'star_wars';
     }
-    
+
     // Литературный персонаж
     if ((combined.includes('литература') && combined.includes('персонаж')) ||
-        (combined.includes('книга') && !combined.includes('писатель'))) {
+      (combined.includes('книга') && !combined.includes('писатель'))) {
       return 'literary_character';
     }
-    
+
     // Философ
-    if (combined.includes('философия') || combined.includes('философ') || 
-        combined.includes('философский') || name.includes('ницше') ||
-        name.includes('платон') || name.includes('plato')) {
+    if (combined.includes('философия') || combined.includes('философ') ||
+      combined.includes('философский') || name.includes('ницше') ||
+      name.includes('платон') || name.includes('plato')) {
       return 'philosopher';
     }
-    
+
     // Президент/Политик
     if (name.includes('зеленский') || name.includes('zelensky') ||
-        name.includes('трамп') || name.includes('trump') ||
-        name.includes('путин') || name.includes('putin') ||
-        combined.includes('президент')) {
+      name.includes('трамп') || name.includes('trump') ||
+      name.includes('путин') || name.includes('putin') ||
+      combined.includes('президент')) {
       return 'president';
     }
-    
+
     // Историческая фигура
-    if (combined.includes('история') || combined.includes('исторический') || 
-        combined.includes('историк') || combined.includes('историческая') ||
-        name.includes('марк аврелий') || name.includes('marcus aurelius')) {
+    if (combined.includes('история') || combined.includes('исторический') ||
+      combined.includes('историк') || combined.includes('историческая') ||
+      name.includes('марк аврелий') || name.includes('marcus aurelius')) {
       return 'historical_figure';
     }
-    
+
     // Предприниматель в технологиях
     if (name.includes('маск') || name.includes('musk') ||
-        name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
+      name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'tech_entrepreneur';
     }
-    
+
     // Автор/Писатель (только если явно указано что это автор/писатель)
     if (combined.includes('писатель') || combined.includes('автор') ||
-        (combined.includes('литература') && combined.includes('писатель'))) {
+      (combined.includes('литература') && combined.includes('писатель'))) {
       return 'author';
     }
-    
+
     return null;
   }
 
   // Фильтрация персоонажей
   const filteredPersonas = aiPersonas.filter((persona) => {
     const searchLower = searchQuery.toLowerCase().trim();
-    
+
     // Если поисковый запрос пустой, проверяем только категорию
     // Убрали ранний возврат, чтобы фильтрация по категориям из базы данных работала правильно
-    
+
     // Поиск по имени и описанию
     // Если поисковый запрос пустой, считаем, что поиск совпадает
     const matchesNameOrDesc =
       !searchLower || persona.name.toLowerCase().includes(searchLower) ||
       (persona.description &&
         persona.description.toLowerCase().includes(searchLower));
-    
+
     // Поиск по категориям (первичные, вторичные, третичные)
     const categoryTerms = getCategorySearchTerms(persona);
     const matchesCategorySearch = !searchLower || categoryTerms.some(term => term.toLowerCase().includes(searchLower));
-    
+
     const matchesSearch = matchesNameOrDesc || matchesCategorySearch;
-    
+
     // Фильтрация по категории
     let matchesCategoryFilter = filterCategory === "all";
-    
+
     if (filterCategory === "all") {
       matchesCategoryFilter = true;
     } else if (filterCategory === "created") {
@@ -855,10 +855,10 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       matchesCategoryFilter = persona.category && persona.category.toLowerCase().includes("created");
     } else {
       const characterCategories = getCharacterCategory(persona);
-      matchesCategoryFilter = characterCategories && characterCategories.length > 0 && 
+      matchesCategoryFilter = characterCategories && characterCategories.length > 0 &&
         characterCategories.some(cat => cat.id === filterCategory);
     }
-    
+
     return matchesSearch && matchesCategoryFilter;
   });
 
@@ -866,19 +866,19 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   // При filterCategory === "all" показываем все категории отдельными контейнерами
   // Иначе показываем только отфильтрованные
   const shouldShowAllCategories = filterCategory === "all";
-  
+
   // Разделяем персонажей на обычные и созданные пользователем
-  const createdPersonas = filteredPersonas.filter(p => 
+  const createdPersonas = filteredPersonas.filter(p =>
     p.primaryCategory === 'chats' && p.category && p.category.toLowerCase().includes('created')
   );
-  const characters = filteredPersonas.filter(p => 
+  const characters = filteredPersonas.filter(p =>
     p.primaryCategory === 'chats' && (!p.category || !p.category.toLowerCase().includes('created'))
   );
-  
+
   // Tools и models убраны из основной библиотеки - возвращаем пустые массивы
   const tools = [];
   const models = [];
-  
+
   // Общее количество агентов для проверки пустоты (убраны tools и models)
   const totalPersonas = characters.length + createdPersonas.length;
 
@@ -979,10 +979,10 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       categoryKey === "characters"
         ? characters
         : categoryKey === "created"
-        ? createdPersonas
-        : categoryKey === "tools"
-        ? tools
-        : models;
+          ? createdPersonas
+          : categoryKey === "tools"
+            ? tools
+            : models;
 
     setVisibleCounts((prev) => {
       const currentValue = prev[categoryKey] ?? itemsPerBatch;
@@ -1010,7 +1010,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   // Обработчик редактирования агента
   const handleEditAgent = (e, agent) => {
     e.stopPropagation();
-    
+
     // Кнопка редактирования показывается только для Pro пользователей,
     // но на всякий случай проверяем еще раз
     if (!isProUser) {
@@ -1022,7 +1022,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       showError("Редактирование собственных персонажей доступно только для пользователей с подпиской Pro");
       return;
     }
-    
+
     // Получаем полную информацию об агенте из списка agents
     const fullAgent = agents.find(a => a.id === agent.id) || agent;
     setAgentToEdit(fullAgent);
@@ -1038,7 +1038,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   // Подтверждение удаления агента
   const handleConfirmDeleteAgent = async () => {
     if (!deleteAgentModal.agent) return;
-    
+
     try {
       await deleteAgent(deleteAgentModal.agent.id);
       showSuccess(`Персонаж "${deleteAgentModal.agent.name}" удален`);
@@ -1210,175 +1210,168 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         ref={headerRef}
         role="banner"
         aria-label={isGroupCreationMode ? t("library.createGroupChat") : t("library.title")}
-        className={`sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-xl border-b border-tg-border transition-all duration-300 ${
-            isScrolled ? 'shadow-lg shadow-black/5' : ''
-        }`}
+        className={`sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-xl border-b border-tg-border transition-all duration-300 ${isScrolled ? 'shadow-lg shadow-black/5' : ''
+          }`}
       >
         <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6">
-            {/* Верхняя строка: Назад/Отмена + Заголовок */}
-            <div className="relative flex items-center justify-between mb-2">
-                {/* ЛЕВАЯ ЧАСТЬ: Кнопка Назад */}
-                <div className="flex-shrink-0 w-10">
-                    {typeof onCloseInlineLibrary === "function" && !isGroupCreationMode && !isLibraryWithSidebar && (
-                        <button
-                            type="button"
-                            onClick={onLibraryBackButton || onCloseInlineLibrary}
-                            aria-label={t("common.back") || "Back"}
-                            className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                        >
-                            <MdArrowBack className="text-2xl" />
-                        </button>
-                    )}
-                     {isGroupCreationMode && (
-                        <button
-                            type="button"
-                            onClick={handleCancelGroupCreation}
-                            aria-label={t("common.cancel") || "Cancel"}
-                            className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                        >
-                            <MdArrowBack className="text-2xl" />
-                        </button>
-                     )}
-                </div>
-
-                {/* ЦЕНТР: Заголовок */}
-                <h1 
-                    className="flex-1 text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] via-[var(--accent)] to-[var(--accent)] dark:from-[var(--accent)] dark:via-[var(--accent)] dark:to-[var(--accent)] text-center whitespace-normal break-words px-2 drop-shadow-sm dark:drop-shadow-none"
-                    style={{ fontFamily: '"Rubik Mono One", sans-serif' }}
+          {/* Верхняя строка: Назад/Отмена + Заголовок */}
+          <div className="relative flex items-center justify-between mb-2">
+            {/* ЛЕВАЯ ЧАСТЬ: Кнопка Назад */}
+            <div className="flex-shrink-0 w-10">
+              {typeof onCloseInlineLibrary === "function" && !isGroupCreationMode && !isLibraryWithSidebar && (
+                <button
+                  type="button"
+                  onClick={onLibraryBackButton || onCloseInlineLibrary}
+                  aria-label={t("common.back") || "Back"}
+                  className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
-                    {isGroupCreationMode ? t("library.createGroupChat") : t("library.title")}
-                </h1>
-
-                {/* ПРАВАЯ ЧАСТЬ: Заглушка для центрирования */}
-                <div className="flex-shrink-0 w-10"></div>
+                  <MdArrowBack className="text-2xl" />
+                </button>
+              )}
+              {isGroupCreationMode && (
+                <button
+                  type="button"
+                  onClick={handleCancelGroupCreation}
+                  aria-label={t("common.cancel") || "Cancel"}
+                  className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  <MdArrowBack className="text-2xl" />
+                </button>
+              )}
             </div>
+
+            {/* ЦЕНТР: Заголовок */}
+            <h1
+              className="flex-1 text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] via-[var(--accent)] to-[var(--accent)] dark:from-[var(--accent)] dark:via-[var(--accent)] dark:to-[var(--accent)] text-center whitespace-normal break-words px-2 drop-shadow-sm dark:drop-shadow-none"
+              style={{ fontFamily: '"Rubik Mono One", sans-serif' }}
+            >
+              {isGroupCreationMode ? t("library.createGroupChat") : t("library.title")}
+            </h1>
+
+            {/* ПРАВАЯ ЧАСТЬ: Заглушка для центрирования */}
+            <div className="flex-shrink-0 w-10"></div>
+          </div>
         </div>
       </header>
 
       {/* Контейнер для Поиска и Фильтров (НЕ Sticky) */}
       {!(isGroupCreationMode && currentStage === "setup") && (
         <div className="px-4 sm:px-6 pt-4 pb-2">
-            {/* Поисковая строка и кнопка Создать группу */}
-            <div className="flex items-center gap-3 mb-4">
-                <div className="relative flex-grow">
-                    <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-xl" />
-                    <input
-                        id="chat-library-search"
-                        name="search"
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={t("common.searchPlaceholder") || "Поиск..."}
-                        autoComplete="off"
-                        className="w-full h-11 pl-12 pr-4 bg-[var(--bg-secondary)] border-none rounded-2xl text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--accent)]/50 transition-all outline-none"
-                    />
-                </div>
-                <button
-                  onClick={
-                    isGroupCreationMode
-                      ? handleCancelGroupCreation
-                      : handleCreateGroup
-                  }
-                  className="flex-shrink-0 flex items-center justify-center w-11 h-11 min-[950px]:w-auto min-[950px]:px-4 rounded-2xl bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-all shadow-lg shadow-[var(--accent)]/20"
-                  title={
-                    isGroupCreationMode
-                      ? t("common.cancel")
-                      : t("common.createGroup")
-                  }
-                >
-                  {/* Иконки накладываются и плавно меняют прозрачность */}
-                  <span className="relative flex items-center justify-center w-5 h-5">
-                    <HiMiniUserGroup
-                      className={`absolute inset-0 text-xl transition-opacity duration-200 ${
-                        isGroupCreationMode ? "opacity-0" : "opacity-100"
-                      }`}
-                    />
-                    <MdClose
-                      className={`absolute inset-0 text-xl transition-opacity duration-200 ${
-                        isGroupCreationMode ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
-                  </span>
-
-                  {/* Текст: плавный переход между "Создать группу" и "Отмена" */}
-                  <span className="hidden min-[950px]:inline-block ml-2 font-medium relative overflow-hidden">
-                    <span
-                      className={`absolute left-0 top-0 whitespace-nowrap transition-opacity duration-200 ${
-                        isGroupCreationMode ? "opacity-0" : "opacity-100"
-                      }`}
-                    >
-                      {t("common.createGroup")}
-                    </span>
-                    <span
-                      className={`absolute left-0 top-0 whitespace-nowrap transition-opacity duration-200 ${
-                        isGroupCreationMode ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      {t("common.cancel")}
-                    </span>
-                    {/* Невидимый span, чтобы зафиксировать ширину под самый длинный текст */}
-                    <span className="invisible whitespace-nowrap">
-                      {t("common.createGroup")}
-                    </span>
-                  </span>
-                </button>
+          {/* Поисковая строка и кнопка Создать группу */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-grow">
+              <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-xl" />
+              <input
+                id="chat-library-search"
+                name="search"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("common.searchPlaceholder") || "Поиск..."}
+                autoComplete="off"
+                className="w-full h-11 pl-12 pr-4 bg-[var(--bg-secondary)] border-none rounded-2xl text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--accent)]/50 transition-all outline-none"
+              />
             </div>
-
-            {/* Категории (Chips) - Flex Wrap (без скролла) */}
-            <div className="flex flex-wrap gap-2 justify-center items-center">
-                {[
-                    { value: "all", label: "Все категории" },
-                    { value: "created", label: "Созданные" },
-                    { value: "religion", label: "Религия" },
-                    { value: "science", label: "Наука" },
-                    { value: "politics", label: "Политика" },
-                    { value: "philosophy", label: "Философия" },
-                    { value: "inventions", label: "Изобретения" },
-                    { value: "art", label: "Искусство" },
-                    { value: "literature", label: "Литература" },
-                    { value: "business", label: "Бизнес" },
-                ].map((tab) => {
-                    const isActive = filterCategory === tab.value;
-                    return (
-                        <button
-                            key={tab.value}
-                            onClick={() => setFilterCategory(tab.value)}
-                            className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 outline-none ${
-                                isActive
-                                    ? "text-white scale-105"
-                                    : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
-                            }`}
-                        >
-                            {isActive && (
-                                <motion.div
-                                    layoutId="activeCategoryTab"
-                                    className="absolute inset-0 bg-[var(--accent)] rounded-xl shadow-lg shadow-[var(--accent)]/25"
-                                    initial={false}
-                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                />
-                            )}
-                            <span className="relative z-10">{tab.label}</span>
-                        </button>
-                    );
-                })}
-                
-                {/* Кнопка создания персонажа */}
-                <button
-                    onClick={handleCreateAgentClick}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${
-                      isProUser
-                        ? "bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-[var(--accent)]/25"
-                        : "bg-gray-500 hover:bg-gray-600 shadow-gray-500/25 opacity-75 cursor-not-allowed"
+            <button
+              onClick={
+                isGroupCreationMode
+                  ? handleCancelGroupCreation
+                  : handleCreateGroup
+              }
+              className="flex-shrink-0 flex items-center justify-center w-11 h-11 min-[950px]:w-auto min-[950px]:px-4 rounded-2xl bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-all shadow-lg shadow-[var(--accent)]/20"
+              title={
+                isGroupCreationMode
+                  ? t("common.cancel")
+                  : t("common.createGroup")
+              }
+            >
+              {/* Иконки накладываются и плавно меняют прозрачность */}
+              <span className="relative flex items-center justify-center w-5 h-5">
+                <HiMiniUserGroup
+                  className={`absolute inset-0 text-xl transition-opacity duration-200 ${isGroupCreationMode ? "opacity-0" : "opacity-100"
                     }`}
-                    title={!isProUser ? "Создание персонажей доступно только для Pro подписки" : ""}
+                />
+                <MdClose
+                  className={`absolute inset-0 text-xl transition-opacity duration-200 ${isGroupCreationMode ? "opacity-100" : "opacity-0"
+                    }`}
+                />
+              </span>
+
+              {/* Текст: плавный переход между "Создать группу" и "Отмена" */}
+              <span className="hidden min-[950px]:inline-block ml-2 font-medium relative overflow-hidden">
+                <span
+                  className={`absolute left-0 top-0 whitespace-nowrap transition-opacity duration-200 ${isGroupCreationMode ? "opacity-0" : "opacity-100"
+                    }`}
                 >
-                    <MdAdd size={18} />
-                    <span>Создать персонажа</span>
-                    {!isProUser && (
-                      <span className="ml-1 text-xs opacity-75">(Pro)</span>
-                    )}
+                  {t("common.createGroup")}
+                </span>
+                <span
+                  className={`absolute left-0 top-0 whitespace-nowrap transition-opacity duration-200 ${isGroupCreationMode ? "opacity-100" : "opacity-0"
+                    }`}
+                >
+                  {t("common.cancel")}
+                </span>
+                {/* Невидимый span, чтобы зафиксировать ширину под самый длинный текст */}
+                <span className="invisible whitespace-nowrap">
+                  {t("common.createGroup")}
+                </span>
+              </span>
+            </button>
+          </div>
+
+          {/* Категории (Chips) - Flex Wrap (без скролла) */}
+          <div className="flex flex-wrap gap-2 justify-center items-center">
+            {[
+              { value: "all", label: "Все категории" },
+              { value: "created", label: "Созданные" },
+              { value: "religion", label: "Религия" },
+              { value: "science", label: "Наука" },
+              { value: "politics", label: "Политика" },
+              { value: "philosophy", label: "Философия" },
+              { value: "inventions", label: "Изобретения" },
+              { value: "art", label: "Искусство" },
+              { value: "literature", label: "Литература" },
+              { value: "business", label: "Бизнес" },
+            ].map((tab) => {
+              const isActive = filterCategory === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setFilterCategory(tab.value)}
+                  className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 outline-none ${isActive
+                      ? "text-white scale-105"
+                      : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
+                    }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeCategoryTab"
+                      className="absolute inset-0 bg-[var(--accent)] rounded-xl shadow-lg shadow-[var(--accent)]/25"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
                 </button>
-            </div>
+              );
+            })}
+
+            {/* Кнопка создания персонажа */}
+            <button
+              onClick={handleCreateAgentClick}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${isProUser
+                  ? "bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-[var(--accent)]/25"
+                  : "bg-gray-500 hover:bg-gray-600 shadow-gray-500/25 opacity-75 cursor-not-allowed"
+                }`}
+              title={!isProUser ? "Создание персонажей доступно только для Pro подписки" : ""}
+            >
+              <MdAdd size={18} />
+              <span>Создать персонажа</span>
+              {!isProUser && (
+                <span className="ml-1 text-xs opacity-75">(Pro)</span>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
@@ -1436,7 +1429,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
               <label className="block text-sm font-medium text-tg-text mb-3">
                 Аватар чата
               </label>
-              
+
               {/* Загрузка своего аватара (только для Plus/Pro) */}
               {isPlusOrProUser && (
                 <div className="mb-4">
@@ -1511,39 +1504,37 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   />
                 </div>
               )}
-              
+
               {/* Иконки аватаров (используются, если не загружено изображение) */}
               {!chatAvatarPreview && (
                 <>
-              <div
-                className={`flex gap-3 flex-wrap overflow-hidden transition-all duration-300 ease-in-out ${
-                  showAllAvatars ? "pt-2" : ""
-                }`}
-                style={{
-                  maxHeight: showAllAvatars
-                    ? `${avatarContainerHeights.expanded}px`
-                    : `${avatarContainerHeights.collapsed}px`,
-                  opacity: showAllAvatars ? 1 : 0.95,
-                }}
-              >
-                {(showAllAvatars
-                  ? avatarOptions
-                  : avatarOptions.slice(0, 6)
-                ).map(({ icon: Icon, name }) => (
-                  <button
-                    key={name}
-                    onClick={() => setChatAvatar(name)}
-                    className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-colors ${
-                      chatAvatar === name
-                        ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                        : "border-tg-border hover:border-tg-accent text-tg-text-secondary hover:text-tg-text"
-                    }`}
+                  <div
+                    className={`flex gap-3 flex-wrap overflow-hidden transition-all duration-300 ease-in-out ${showAllAvatars ? "pt-2" : ""
+                      }`}
+                    style={{
+                      maxHeight: showAllAvatars
+                        ? `${avatarContainerHeights.expanded}px`
+                        : `${avatarContainerHeights.collapsed}px`,
+                      opacity: showAllAvatars ? 1 : 0.95,
+                    }}
                   >
-                    <Icon className="text-xl" />
-                  </button>
-                ))}
-              </div>
-              </>
+                    {(showAllAvatars
+                      ? avatarOptions
+                      : avatarOptions.slice(0, 6)
+                    ).map(({ icon: Icon, name }) => (
+                      <button
+                        key={name}
+                        onClick={() => setChatAvatar(name)}
+                        className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-colors ${chatAvatar === name
+                            ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                            : "border-tg-border hover:border-tg-accent text-tg-text-secondary hover:text-tg-text"
+                          }`}
+                      >
+                        <Icon className="text-xl" />
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
               {!chatAvatarPreview && avatarOptions.length > 6 && (
                 <button
@@ -1630,1214 +1621,1186 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   >
                     {/* При filterCategory === "all" показываем все категории отдельными контейнерами */}
                     {shouldShowAllCategories ? (
-                    <>
-                    {/* 0. СОЗДАННЫЕ ПЕРСОНАЖИ */}
-                    {createdPersonas.length > 0 && (
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
-                            <span>Созданные</span>
-                            {createdPersonas.length > 0 && (
-                              <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
-                            )}
-                          </h3>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                          {visibleCreated.map((persona) => {
-                            const IconComponent = persona.iconName
-                              ? getIconComponent(persona.iconName)
-                              : null;
-                            const isSelected = selectedPersonas.includes(persona.id);
-                            const canSelect =
-                              !isGroupCreationMode ||
-                              selectedPersonas.length < 5 ||
-                              isSelected;
-                            const newlyAddedList = recentlyAddedIds.created ?? [];
-                            const animationIndex = newlyAddedList.indexOf(persona.id);
-                            const animationDelay =
-                              animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
-
-                            return (
-                              <div
-                                key={persona.id}
-                                onClick={() =>
-                                  canSelect && handlePersonaCardClick(persona)
-                                }
-                                className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                                  !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                                }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                                  animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                                }`}
-                                style={animationIndex >= 0 ? { animationDelay } : undefined}
-                              >
-                                {isGroupCreationMode && (
-                                  <div className="absolute top-3 right-3 z-20">
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                        isSelected
-                                          ? "bg-[var(--accent)] border-[var(--accent)]"
-                                          : "border-gray-400 bg-tg-bg"
-                                      }`}
-                                    >
-                                      {isSelected && (
-                                        <MdCheck className="text-white text-sm" />
-                                      )}
-                                    </div>
-                                  </div>
+                      <>
+                        {/* 0. СОЗДАННЫЕ ПЕРСОНАЖИ */}
+                        {createdPersonas.length > 0 && (
+                          <div className="mb-6">
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
+                                <span>Созданные</span>
+                                {createdPersonas.length > 0 && (
+                                  <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
                                 )}
+                              </h3>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleCreated.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.created ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
 
-                                <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                                  {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
-                                    <div className="relative">
-                                      <img
-                                        src={persona.imageSrc}
-                                        alt={persona.name}
-                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                        onError={(e) => {
-                                          // Если изображение не загрузилось, скрываем его и показываем fallback
-                                          console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
-                                          e.target.style.display = "none";
-                                          const fallback = e.target.parentElement?.nextElementSibling;
-                                          if (fallback) {
-                                            fallback.style.display = "flex";
-                                          }
-                                        }}
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    </div>
-                                  ) : null}
+                                return (
                                   <div
-                                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
+                                      }`}
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
                                   >
-                                    {IconComponent && (
-                                      <IconComponent
-                                        className="text-2xl sm:text-3xl relative z-10"
-                                        style={{ transform: "scale(0.8)" }}
-                                      />
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
                                     )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            onError={(e) => {
+                                              // Если изображение не загрузилось, скрываем его и показываем fallback
+                                              console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
+                                              e.target.style.display = "none";
+                                              const fallback = e.target.parentElement?.nextElementSibling;
+                                              if (fallback) {
+                                                fallback.style.display = "flex";
+                                              }
+                                            }}
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : null}
+                                      <div
+                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                      >
+                                        {IconComponent && (
+                                          <IconComponent
+                                            className="text-2xl sm:text-3xl relative z-10"
+                                            style={{ transform: "scale(0.8)" }}
+                                          />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                      </div>
+                                    </div>
+
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                        {persona.name}
+                                      </h3>
+                                    </div>
+
+                                    {/* Кнопки редактирования и удаления для созданных агентов */}
+                                    {!isGroupCreationMode && persona.user_id && (
+                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                        {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
+                                        <button
+                                          onClick={(e) => handleEditAgent(e, persona)}
+                                          className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
+                                          title={isProUser ? "Редактировать" : "Редактировать (требуется Pro подписка)"}
+                                        >
+                                          <MdEdit size={16} />
+                                        </button>
+                                        <button
+                                          onClick={(e) => handleDeleteAgent(e, persona)}
+                                          className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
+                                          title="Удалить"
+                                        >
+                                          <MdDelete size={16} />
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
-                                </div>
-
-                                <div className="text-center relative z-10">
-                                  <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
-                                    {persona.name}
-                                  </h3>
-                                </div>
-
-                                {/* Кнопки редактирования и удаления для созданных агентов */}
-                                {!isGroupCreationMode && persona.user_id && (
-                                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-                                    {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
-                                    <button
-                                      onClick={(e) => handleEditAgent(e, persona)}
-                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
-                                      title={isProUser ? "Редактировать" : "Редактировать (требуется Pro подписка)"}
-                                    >
-                                      <MdEdit size={16} />
-                                    </button>
-                                    <button
-                                      onClick={(e) => handleDeleteAgent(e, persona)}
-                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
-                                      title="Удалить"
-                                    >
-                                      <MdDelete size={16} />
-                                    </button>
-                                  </div>
-                                )}
-
-                                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                );
+                              })}
+                            </div>
+                            {createdPersonas.length > visibleCreated.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("created")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
                               </div>
-                            );
-                          })}
-                        </div>
-                        {createdPersonas.length > visibleCreated.length && (
-                          <div className="mt-4 flex justify-center">
-                            <button
-                              onClick={() => handleShowMore("created")}
-                              className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                            >
-                              {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                            </button>
+                            )}
                           </div>
                         )}
-                      </div>
-                    )}
-                    
-                    {/* 1. ПЕРСОНАЖИ */}
-                    {characters.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
-                      <span>{t('common.characters')}</span>
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                      {visibleCharacters.map((persona) => {
-                        const IconComponent = persona.iconName
-                          ? getIconComponent(persona.iconName)
-                          : null;
-                        const isSelected = selectedPersonas.includes(persona.id);
-                        const canSelect =
-                          !isGroupCreationMode ||
-                          selectedPersonas.length < 5 ||
-                          isSelected;
-                        const newlyAddedList = recentlyAddedIds.characters ?? [];
-                        const animationIndex = newlyAddedList.indexOf(persona.id);
-                        const animationDelay =
-                          animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
 
-                        return (
-                          <div
-                            key={persona.id}
-                            onClick={() =>
-                              canSelect && handlePersonaCardClick(persona)
-                            }
-                            className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                              !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                            }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                              animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                            }`}
-                            style={animationIndex >= 0 ? { animationDelay } : undefined}
-                          >
-                            {/* Чекбокс для выбранных персонажей */}
-                            {isGroupCreationMode && (
-                              <div className="absolute top-3 right-3 z-20">
-                                <div
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                    isSelected
-                                      ? "bg-[var(--accent)] border-[var(--accent)]"
-                                      : "border-gray-400 bg-tg-bg"
-                                  }`}
-                                >
-                                  {isSelected && (
-                                    <MdCheck className="text-white text-sm" />
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                        {/* 1. ПЕРСОНАЖИ */}
+                        {characters.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
+                              <span>{t('common.characters')}</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleCharacters.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.characters ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
 
-                            {/* Градиентный фон при hover */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                            {/* Аватар с анимацией */}
-                            <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                              {persona.imageSrc ? (
-                                <div className="relative">
-                                  <img
-                                    src={persona.imageSrc}
-                                    alt={persona.name}
-                                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                  />
-                                  <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                </div>
-                              ) : (
-                                <div
-                                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
-                                >
-                                  {IconComponent && (
-                                    <IconComponent
-                                      className="text-2xl sm:text-3xl relative z-10"
-                                      style={{ transform: "scale(0.8)" }}
-                                    />
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Информация о персонаже */}
-                            <div className="text-center relative z-10">
-                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
-                                {persona.name}
-                              </h3>
-                              
-                              {/* Описание - всегда видимое */}
-                              {persona.description && (
-                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
-                                  {persona.description.length > 150 
-                                    ? persona.description.substring(0, 150) + "..." 
-                                    : persona.description}
-                                </p>
-                              )}
-
-                              {/* Категории персонажей - только понятные категории */}
-                              <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
-                                {(() => {
-                                  const characterCategories = getCharacterCategory(persona);
-                                  
-                                  if (characterCategories && characterCategories.length > 0) {
-                                    return (
-                                      <div className="flex flex-wrap gap-1.5 justify-center">
-                                        {characterCategories.map((cat) => (
-                                          <span
-                                            key={cat.id}
-                                            className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
-                                          >
-                                            {cat.label}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    );
-                                  }
-                                  
-                                  return null;
-                                })()}
-                              </div>
-                            </div>
-
-                            {/* Градиент при hover */}
-                            <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {characters.length > visibleCharacters.length && (
-                      <div className="mt-4 flex justify-center">
-                        <button
-                          onClick={() => handleShowMore("characters")}
-                          className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                        >
-                          {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 2. ИНСТРУМЕНТЫ */}
-                {tools.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
-                      <span>{t('common.tools')}</span>
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                      {visibleTools.map((persona) => {
-                        const IconComponent = persona.iconName
-                          ? getIconComponent(persona.iconName)
-                          : null;
-                        const isSelected = selectedPersonas.includes(persona.id);
-                        const canSelect =
-                          !isGroupCreationMode ||
-                          selectedPersonas.length < 5 ||
-                          isSelected;
-                        const newlyAddedList = recentlyAddedIds.tools ?? [];
-                        const animationIndex = newlyAddedList.indexOf(persona.id);
-                        const animationDelay =
-                          animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
-
-                        return (
-                          <div
-                            key={persona.id}
-                            onClick={() =>
-                              canSelect && handlePersonaCardClick(persona)
-                            }
-                            className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                              !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                            }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                              animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                            }`}
-                            style={animationIndex >= 0 ? { animationDelay } : undefined}
-                          >
-                            {/* Чекбокс для выбранных персонажей */}
-                            {isGroupCreationMode && (
-                              <div className="absolute top-3 right-3 z-20">
-                                <div
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                    isSelected
-                                      ? "bg-[var(--accent)] border-[var(--accent)]"
-                                      : "border-gray-400 bg-tg-bg"
-                                  }`}
-                                >
-                                  {isSelected && (
-                                    <MdCheck className="text-white text-sm" />
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Градиентный фон при hover */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                            {/* Аватар с анимацией */}
-                            <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                              {persona.imageSrc ? (
-                                <div className="relative">
-                                  <img
-                                    src={persona.imageSrc}
-                                    alt={persona.name}
-                                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                  />
-                                  <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                </div>
-                              ) : (
-                                <div
-                                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${
-                                    persona.colorClass || "bg-tg-accent"
-                                  } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
-                                >
-                                  {IconComponent && (
-                                    <IconComponent
-                                      className="text-2xl sm:text-3xl relative z-10"
-                                      style={{ transform: "scale(0.8)" }}
-                                    />
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Информация о персоонаже */}
-                            <div className="text-center relative z-10">
-                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
-                                {persona.name}
-                              </h3>
-                              {persona.description && (
-                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
-                                  {persona.description.length > 150 
-                                    ? persona.description.substring(0, 150) + "..." 
-                                    : persona.description}
-                                </p>
-                              )}
-
-                              {/* Категории персонажей - только понятные категории */}
-                              <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
-                                {(() => {
-                                  const characterCategories = getCharacterCategory(persona);
-                                  
-                                  if (characterCategories && characterCategories.length > 0) {
-                                    return (
-                                      <div className="flex flex-wrap gap-1.5 justify-center">
-                                        {characterCategories.map((cat) => (
-                                          <span
-                                            key={cat.id}
-                                            className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
-                                          >
-                                            {cat.label}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    );
-                                  }
-                                  
-                                  return null;
-                                })()}
-                              </div>
-                            </div>
-
-                            {/* Градиент при hover */}
-                            <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {tools.length > visibleTools.length && (
-                      <div className="mt-4 flex justify-center">
-                        <button
-                          onClick={() => handleShowMore("tools")}
-                          className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                        >
-                          {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 3. AI МОДЕЛИ */}
-                {models.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
-                      <span>{t('common.aiModels')}</span>
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                      {visibleModels.map((persona) => {
-                        const IconComponent = persona.iconName
-                          ? getIconComponent(persona.iconName)
-                          : null;
-                        const isSelected = selectedPersonas.includes(persona.id);
-                        const canSelect =
-                          !isGroupCreationMode ||
-                          selectedPersonas.length < 5 ||
-                          isSelected;
-                        const newlyAddedList = recentlyAddedIds.models ?? [];
-                        const animationIndex = newlyAddedList.indexOf(persona.id);
-                        const animationDelay =
-                          animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
-
-                        return (
-                          <div
-                            key={persona.id}
-                            onClick={() =>
-                              canSelect && handlePersonaCardClick(persona)
-                            }
-                            className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                              !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                            }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                              animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                            }`}
-                            style={animationIndex >= 0 ? { animationDelay } : undefined}
-                          >
-                            {/* Чекбокс для выбранных персонажей */}
-                            {isGroupCreationMode && (
-                              <div className="absolute top-3 right-3 z-20">
-                                <div
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                    isSelected
-                                      ? "bg-[var(--accent)] border-[var(--accent)]"
-                                      : "border-gray-400 bg-tg-bg"
-                                  }`}
-                                >
-                                  {isSelected && (
-                                    <MdCheck className="text-white text-sm" />
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Градиентный фон при hover */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                            {/* Аватар с анимацией */}
-                            <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                              {persona.imageSrc ? (
-                                <div className="relative">
-                                  <img
-                                    src={persona.imageSrc}
-                                    alt={persona.name}
-                                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                  />
-                                  <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                </div>
-                              ) : (
-                                <div
-                                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${
-                                    persona.colorClass || "bg-tg-accent"
-                                  } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
-                                >
-                                  {IconComponent && (
-                                    <IconComponent
-                                      className="text-2xl sm:text-3xl relative z-10"
-                                      style={{ transform: "scale(0.8)" }}
-                                    />
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Информация о персоонаже */}
-                            <div className="text-center relative z-10">
-                              <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
-                                {persona.name}
-                              </h3>
-                              {persona.description && (
-                                <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
-                                  {persona.description.length > 150 
-                                    ? persona.description.substring(0, 150) + "..." 
-                                    : persona.description}
-                                </p>
-                              )}
-
-                              {/* Категории персонажей - только понятные категории */}
-                              <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
-                                {(() => {
-                                  const characterCategories = getCharacterCategory(persona);
-                                  
-                                  if (characterCategories && characterCategories.length > 0) {
-                                    return (
-                                      <div className="flex flex-wrap gap-1.5 justify-center">
-                                        {characterCategories.map((cat) => (
-                                          <span
-                                            key={cat.id}
-                                            className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
-                                          >
-                                            {cat.label}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    );
-                                  }
-                                  
-                                  return null;
-                                })()}
-                              </div>
-                            </div>
-
-                            {/* Градиент при hover */}
-                            <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {models.length > visibleModels.length && (
-                      <div className="mt-4 flex justify-center">
-                        <button
-                          onClick={() => handleShowMore("models")}
-                          className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                        >
-                          {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-                  </>
-                ) : (
-                  <>
-                    {/* При выборе конкретной категории показываем все отфильтрованные результаты */}
-                    {/* СОЗДАННЫЕ ПЕРСОНАЖИ - показываем только если выбрана категория "created" */}
-                    {filterCategory === "created" && createdPersonas.length > 0 && (
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
-                            <span>Созданные</span>
-                            <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
-                          </h3>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                          {visibleCreated.map((persona) => {
-                            const IconComponent = persona.iconName
-                              ? getIconComponent(persona.iconName)
-                              : null;
-                            const isSelected = selectedPersonas.includes(persona.id);
-                            const canSelect =
-                              !isGroupCreationMode ||
-                              selectedPersonas.length < 5 ||
-                              isSelected;
-                            const newlyAddedList = recentlyAddedIds.created ?? [];
-                            const animationIndex = newlyAddedList.indexOf(persona.id);
-                            const animationDelay =
-                              animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
-
-                            return (
-                              <div
-                                key={persona.id}
-                                onClick={() =>
-                                  canSelect && handlePersonaCardClick(persona)
-                                }
-                                className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                                  !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                                }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                                  animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                                }`}
-                                style={animationIndex >= 0 ? { animationDelay } : undefined}
-                              >
-                                {isGroupCreationMode && (
-                                  <div className="absolute top-3 right-3 z-20">
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                        isSelected
-                                          ? "bg-[var(--accent)] border-[var(--accent)]"
-                                          : "border-gray-400 bg-tg-bg"
-                                      }`}
-                                    >
-                                      {isSelected && (
-                                        <MdCheck className="text-white text-sm" />
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                                  {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
-                                    <div className="relative">
-                                      <img
-                                        src={persona.imageSrc}
-                                        alt={persona.name}
-                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                        onError={(e) => {
-                                          // Если изображение не загрузилось, скрываем его и показываем fallback
-                                          console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
-                                          e.target.style.display = "none";
-                                          const fallback = e.target.parentElement?.nextElementSibling;
-                                          if (fallback) {
-                                            fallback.style.display = "flex";
-                                          }
-                                        }}
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    </div>
-                                  ) : null}
+                                return (
                                   <div
-                                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
+                                      }`}
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
                                   >
-                                    {IconComponent && (
-                                      <IconComponent
-                                        className="text-2xl sm:text-3xl relative z-10"
-                                        style={{ transform: "scale(0.8)" }}
-                                      />
+                                    {/* Чекбокс для выбранных персонажей */}
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
                                     )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Градиентный фон при hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Аватар с анимацией */}
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Информация о персонаже */}
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                        {persona.name}
+                                      </h3>
+
+                                      {/* Описание - всегда видимое */}
+                                      {persona.description && (
+                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                          {persona.description.length > 150
+                                            ? persona.description.substring(0, 150) + "..."
+                                            : persona.description}
+                                        </p>
+                                      )}
+
+                                      {/* Категории персонажей - только понятные категории */}
+                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                        {(() => {
+                                          const characterCategories = getCharacterCategory(persona);
+
+                                          if (characterCategories && characterCategories.length > 0) {
+                                            return (
+                                              <div className="flex flex-wrap gap-1.5 justify-center">
+                                                {characterCategories.map((cat) => (
+                                                  <span
+                                                    key={cat.id}
+                                                    className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
+                                                  >
+                                                    {cat.label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                        })()}
+                                      </div>
+                                    </div>
+
+                                    {/* Градиент при hover */}
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
-                                </div>
-
-                                <div className="text-center relative z-10">
-                                  <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
-                                    {persona.name}
-                                  </h3>
-                                  {/* Описание - всегда видимое */}
-                                  {persona.description && (
-                                    <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mt-1">
-                                      {persona.description.length > 150 
-                                        ? persona.description.substring(0, 150) + "..." 
-                                        : persona.description}
-                                    </p>
-                                  )}
-                                </div>
-
-                                {/* Кнопки редактирования и удаления для созданных агентов */}
-                                {!isGroupCreationMode && persona.user_id && (
-                                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-                                    {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
-                                    <button
-                                      onClick={(e) => handleEditAgent(e, persona)}
-                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
-                                      title={isProUser ? "Редактировать" : "Редактировать (требуется Pro подписка)"}
-                                    >
-                                      <MdEdit size={16} />
-                                    </button>
-                                    <button
-                                      onClick={(e) => handleDeleteAgent(e, persona)}
-                                      className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
-                                      title="Удалить"
-                                    >
-                                      <MdDelete size={16} />
-                                    </button>
-                                  </div>
-                                )}
-
-                                {/* Градиент при hover */}
-                                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                );
+                              })}
+                            </div>
+                            {characters.length > visibleCharacters.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("characters")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
                               </div>
-                            );
-                          })}
-                        </div>
-                        {createdPersonas.length > visibleCreated.length && (
-                          <div className="mt-4 flex justify-center">
-                            <button
-                              onClick={() => handleShowMore("created")}
-                              className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                            >
-                              {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                            </button>
+                            )}
                           </div>
                         )}
-                      </div>
-                    )}
-                    
-                    {/* 1. ПЕРСОНАЖИ */}
-                    {characters.length > 0 && (
-                      <div className="mb-6">
-                        <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
-                          <span>{t('common.characters')}</span>
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                          {visibleCharacters.map((persona) => {
-                            const IconComponent = persona.iconName
-                              ? getIconComponent(persona.iconName)
-                              : null;
-                            const isSelected = selectedPersonas.includes(persona.id);
-                            const canSelect =
-                              !isGroupCreationMode ||
-                              selectedPersonas.length < 5 ||
-                              isSelected;
-                            const newlyAddedList = recentlyAddedIds.characters ?? [];
-                            const animationIndex = newlyAddedList.indexOf(persona.id);
-                            const animationDelay =
-                              animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
 
-                            return (
-                              <div
-                                key={persona.id}
-                                onClick={() =>
-                                  canSelect && handlePersonaCardClick(persona)
-                                }
-                                className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                                  !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                                }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                                  animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                                }`}
-                                style={animationIndex >= 0 ? { animationDelay } : undefined}
-                              >
-                                {/* Чекбокс для выбранных персонажей */}
-                                {isGroupCreationMode && (
-                                  <div className="absolute top-3 right-3 z-20">
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                        isSelected
-                                          ? "bg-[var(--accent)] border-[var(--accent)]"
-                                          : "border-gray-400 bg-tg-bg"
+                        {/* 2. ИНСТРУМЕНТЫ */}
+                        {tools.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
+                              <span>{t('common.tools')}</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleTools.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.tools ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
+
+                                return (
+                                  <div
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
-                                    >
-                                      {isSelected && (
-                                        <MdCheck className="text-white text-sm" />
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
+                                  >
+                                    {/* Чекбокс для выбранных персонажей */}
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Градиентный фон при hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Аватар с анимацией */}
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
+                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
                                       )}
                                     </div>
-                                  </div>
-                                )}
 
-                                {/* Градиентный фон при hover */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                {/* Аватар с анимацией */}
-                                <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                                  {persona.imageSrc ? (
-                                    <div className="relative">
-                                      <img
-                                        src={persona.imageSrc}
-                                        alt={persona.name}
-                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
-                                    >
-                                      {IconComponent && (
-                                        <IconComponent
-                                          className="text-2xl sm:text-3xl relative z-10"
-                                          style={{ transform: "scale(0.8)" }}
-                                        />
+                                    {/* Информация о персоонаже */}
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                        {persona.name}
+                                      </h3>
+                                      {persona.description && (
+                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                          {persona.description.length > 150
+                                            ? persona.description.substring(0, 150) + "..."
+                                            : persona.description}
+                                        </p>
                                       )}
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                      {/* Категории персонажей - только понятные категории */}
+                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                        {(() => {
+                                          const characterCategories = getCharacterCategory(persona);
+
+                                          if (characterCategories && characterCategories.length > 0) {
+                                            return (
+                                              <div className="flex flex-wrap gap-1.5 justify-center">
+                                                {characterCategories.map((cat) => (
+                                                  <span
+                                                    key={cat.id}
+                                                    className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
+                                                  >
+                                                    {cat.label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                        })()}
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
 
-                                {/* Информация о персонаже */}
-                                <div className="text-center relative z-10">
-                                  <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
-                                    {persona.name}
-                                  </h3>
-                                  <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                    {persona.description || "AI персонаж"}
-                                  </p>
-
-                                  {/* Категории персонажей - только понятные категории */}
-                                  <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
-                                    {(() => {
-                                      const characterCategories = getCharacterCategory(persona);
-                                      
-                                      if (characterCategories && characterCategories.length > 0) {
-                                        return (
-                                          <div className="flex flex-wrap gap-1.5 justify-center">
-                                            {characterCategories.map((cat) => (
-                                              <span
-                                                key={cat.id}
-                                                className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
-                                              >
-                                                {cat.label}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        );
-                                      }
-                                      
-                                      return null;
-                                    })()}
+                                    {/* Градиент при hover */}
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
-                                </div>
-
-                                {/* Эффект свечения при hover */}
-                                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                );
+                              })}
+                            </div>
+                            {tools.length > visibleTools.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("tools")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
                               </div>
-                            );
-                          })}
-                        </div>
-                        {characters.length > visibleCharacters.length && (
-                          <div className="mt-4 flex justify-center">
-                            <button
-                              onClick={() => handleShowMore("characters")}
-                              className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                            >
-                              {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                            </button>
+                            )}
                           </div>
                         )}
-                      </div>
-                    )}
 
-                    {/* 2. ИНСТРУМЕНТЫ */}
-                    {tools.length > 0 && (
-                      <div className="mb-6">
-                        <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
-                          <span>{t('common.tools')}</span>
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                          {visibleTools.map((persona) => {
-                            const IconComponent = persona.iconName
-                              ? getIconComponent(persona.iconName)
-                              : null;
-                            const isSelected = selectedPersonas.includes(persona.id);
-                            const canSelect =
-                              !isGroupCreationMode ||
-                              selectedPersonas.length < 5 ||
-                              isSelected;
-                            const newlyAddedList = recentlyAddedIds.tools ?? [];
-                            const animationIndex = newlyAddedList.indexOf(persona.id);
-                            const animationDelay =
-                              animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
+                        {/* 3. AI МОДЕЛИ */}
+                        {models.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
+                              <span>{t('common.aiModels')}</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleModels.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.models ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
 
-                            return (
-                              <div
-                                key={persona.id}
-                                onClick={() =>
-                                  canSelect && handlePersonaCardClick(persona)
-                                }
-                                className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                                  !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                                }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                                  animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                                }`}
-                                style={animationIndex >= 0 ? { animationDelay } : undefined}
-                              >
-                                {/* Чекбокс для выбранных персонажей */}
-                                {isGroupCreationMode && (
-                                  <div className="absolute top-3 right-3 z-20">
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                        isSelected
-                                          ? "bg-[var(--accent)] border-[var(--accent)]"
-                                          : "border-gray-400 bg-tg-bg"
+                                return (
+                                  <div
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
-                                    >
-                                      {isSelected && (
-                                        <MdCheck className="text-white text-sm" />
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
+                                  >
+                                    {/* Чекбокс для выбранных персонажей */}
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Градиентный фон при hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Аватар с анимацией */}
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
+                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
                                       )}
                                     </div>
-                                  </div>
-                                )}
 
-                                {/* Градиентный фон при hover */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                {/* Аватар с анимацией */}
-                                <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                                  {persona.imageSrc ? (
-                                    <div className="relative">
-                                      <img
-                                        src={persona.imageSrc}
-                                        alt={persona.name}
-                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${
-                                        persona.colorClass || "bg-tg-accent"
-                                      } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
-                                    >
-                                      {IconComponent && (
-                                        <IconComponent
-                                          className="text-2xl sm:text-3xl relative z-10"
-                                          style={{ transform: "scale(0.8)" }}
-                                        />
+                                    {/* Информация о персоонаже */}
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                        {persona.name}
+                                      </h3>
+                                      {persona.description && (
+                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                          {persona.description.length > 150
+                                            ? persona.description.substring(0, 150) + "..."
+                                            : persona.description}
+                                        </p>
                                       )}
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                      {/* Категории персонажей - только понятные категории */}
+                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                        {(() => {
+                                          const characterCategories = getCharacterCategory(persona);
+
+                                          if (characterCategories && characterCategories.length > 0) {
+                                            return (
+                                              <div className="flex flex-wrap gap-1.5 justify-center">
+                                                {characterCategories.map((cat) => (
+                                                  <span
+                                                    key={cat.id}
+                                                    className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
+                                                  >
+                                                    {cat.label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                        })()}
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
 
-                                {/* Информация о персоонаже */}
-                                <div className="text-center relative z-10">
-                                  <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
-                                    {persona.name}
-                                  </h3>
-                                  {persona.description && (
-                                    <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                      {persona.description}
-                                    </p>
-                                  )}
-
-                                  {/* Категории персонажей - только понятные категории */}
-                                  <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
-                                    {(() => {
-                                      const characterCategories = getCharacterCategory(persona);
-                                      
-                                      if (characterCategories && characterCategories.length > 0) {
-                                        return (
-                                          <div className="flex flex-wrap gap-1.5 justify-center">
-                                            {characterCategories.map((cat) => (
-                                              <span
-                                                key={cat.id}
-                                                className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
-                                              >
-                                                {cat.label}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        );
-                                      }
-                                      
-                                      return null;
-                                    })()}
+                                    {/* Градиент при hover */}
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
-                                </div>
-
-                                {/* Градиент при hover */}
-                                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                );
+                              })}
+                            </div>
+                            {models.length > visibleModels.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("models")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
                               </div>
-                            );
-                          })}
-                        </div>
-                        {tools.length > visibleTools.length && (
-                          <div className="mt-4 flex justify-center">
-                            <button
-                              onClick={() => handleShowMore("tools")}
-                              className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                            >
-                              {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                            </button>
+                            )}
                           </div>
                         )}
-                      </div>
-                    )}
+                      </>
+                    ) : (
+                      <>
+                        {/* При выборе конкретной категории показываем все отфильтрованные результаты */}
+                        {/* СОЗДАННЫЕ ПЕРСОНАЖИ - показываем только если выбрана категория "created" */}
+                        {filterCategory === "created" && createdPersonas.length > 0 && (
+                          <div className="mb-6">
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
+                                <span>Созданные</span>
+                                <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
+                              </h3>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleCreated.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.created ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
 
-                    {/* 3. AI МОДЕЛИ */}
-                    {models.length > 0 && (
-                      <div className="mb-6">
-                        <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
-                          <span>{t('common.aiModels')}</span>
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
-                          {visibleModels.map((persona) => {
-                            const IconComponent = persona.iconName
-                              ? getIconComponent(persona.iconName)
-                              : null;
-                            const isSelected = selectedPersonas.includes(persona.id);
-                            const canSelect =
-                              !isGroupCreationMode ||
-                              selectedPersonas.length < 5 ||
-                              isSelected;
-                            const newlyAddedList = recentlyAddedIds.models ?? [];
-                            const animationIndex = newlyAddedList.indexOf(persona.id);
-                            const animationDelay =
-                              animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
-
-                            return (
-                              <div
-                                key={persona.id}
-                                onClick={() =>
-                                  canSelect && handlePersonaCardClick(persona)
-                                }
-                                className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${
-                                  !canSelect ? " opacity-50 cursor-not-allowed" : ""
-                                }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${
-                                  animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
-                                }`}
-                                style={animationIndex >= 0 ? { animationDelay } : undefined}
-                              >
-                                {/* Чекбокс для выбранных персонажей */}
-                                {isGroupCreationMode && (
-                                  <div className="absolute top-3 right-3 z-20">
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                        isSelected
-                                          ? "bg-[var(--accent)] border-[var(--accent)]"
-                                          : "border-gray-400 bg-tg-bg"
+                                return (
+                                  <div
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
-                                    >
-                                      {isSelected && (
-                                        <MdCheck className="text-white text-sm" />
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
+                                  >
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            onError={(e) => {
+                                              // Если изображение не загрузилось, скрываем его и показываем fallback
+                                              console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
+                                              e.target.style.display = "none";
+                                              const fallback = e.target.parentElement?.nextElementSibling;
+                                              if (fallback) {
+                                                fallback.style.display = "flex";
+                                              }
+                                            }}
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : null}
+                                      <div
+                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                      >
+                                        {IconComponent && (
+                                          <IconComponent
+                                            className="text-2xl sm:text-3xl relative z-10"
+                                            style={{ transform: "scale(0.8)" }}
+                                          />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                      </div>
+                                    </div>
+
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                        {persona.name}
+                                      </h3>
+                                      {/* Описание - всегда видимое */}
+                                      {persona.description && (
+                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mt-1">
+                                          {persona.description.length > 150
+                                            ? persona.description.substring(0, 150) + "..."
+                                            : persona.description}
+                                        </p>
                                       )}
                                     </div>
+
+                                    {/* Кнопки редактирования и удаления для созданных агентов */}
+                                    {!isGroupCreationMode && persona.user_id && (
+                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                        {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
+                                        <button
+                                          onClick={(e) => handleEditAgent(e, persona)}
+                                          className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
+                                          title={isProUser ? "Редактировать" : "Редактировать (требуется Pro подписка)"}
+                                        >
+                                          <MdEdit size={16} />
+                                        </button>
+                                        <button
+                                          onClick={(e) => handleDeleteAgent(e, persona)}
+                                          className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
+                                          title="Удалить"
+                                        >
+                                          <MdDelete size={16} />
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    {/* Градиент при hover */}
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
-                                )}
-
-                                {/* Градиентный фон при hover */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                {/* Аватар с анимацией */}
-                                <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                                  {persona.imageSrc ? (
-                                    <div className="relative">
-                                      <img
-                                        src={persona.imageSrc}
-                                        alt={persona.name}
-                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${
-                                        persona.colorClass || "bg-tg-accent"
-                                      } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
-                                    >
-                                      {IconComponent && (
-                                        <IconComponent
-                                          className="text-2xl sm:text-3xl relative z-10"
-                                          style={{ transform: "scale(0.8)" }}
-                                        />
-                                      )}
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Информация о персоонаже */}
-                                <div className="text-center relative z-10">
-                                  <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
-                                    {persona.name}
-                                  </h3>
-                                  {persona.description && (
-                                    <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                      {persona.description}
-                                    </p>
-                                  )}
-
-                                  {/* Категории персонажей - только понятные категории */}
-                                  <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
-                                    {(() => {
-                                      const characterCategories = getCharacterCategory(persona);
-                                      
-                                      if (characterCategories && characterCategories.length > 0) {
-                                        return (
-                                          <div className="flex flex-wrap gap-1.5 justify-center">
-                                            {characterCategories.map((cat) => (
-                                              <span
-                                                key={cat.id}
-                                                className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
-                                              >
-                                                {cat.label}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        );
-                                      }
-                                      
-                                      return null;
-                                    })()}
-                                  </div>
-                                </div>
-
-                                {/* Градиент при hover */}
-                                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                );
+                              })}
+                            </div>
+                            {createdPersonas.length > visibleCreated.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("created")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
                               </div>
-                            );
-                          })}
-                        </div>
-                        {models.length > visibleModels.length && (
-                          <div className="mt-4 flex justify-center">
-                            <button
-                              onClick={() => handleShowMore("models")}
-                              className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
-                            >
-                              {t('common.showMore', { defaultValue: 'Показать ещё' })}
-                            </button>
+                            )}
                           </div>
                         )}
-                      </div>
+
+                        {/* 1. ПЕРСОНАЖИ */}
+                        {characters.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
+                              <span>{t('common.characters')}</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleCharacters.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.characters ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
+
+                                return (
+                                  <div
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
+                                      }`}
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
+                                  >
+                                    {/* Чекбокс для выбранных персонажей */}
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Градиентный фон при hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Аватар с анимацией */}
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Информация о персонаже */}
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                                        {persona.name}
+                                      </h3>
+                                      <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
+                                        {persona.description || "AI персонаж"}
+                                      </p>
+
+                                      {/* Категории персонажей - только понятные категории */}
+                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                        {(() => {
+                                          const characterCategories = getCharacterCategory(persona);
+
+                                          if (characterCategories && characterCategories.length > 0) {
+                                            return (
+                                              <div className="flex flex-wrap gap-1.5 justify-center">
+                                                {characterCategories.map((cat) => (
+                                                  <span
+                                                    key={cat.id}
+                                                    className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
+                                                  >
+                                                    {cat.label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                        })()}
+                                      </div>
+                                    </div>
+
+                                    {/* Эффект свечения при hover */}
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {characters.length > visibleCharacters.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("characters")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 2. ИНСТРУМЕНТЫ */}
+                        {tools.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
+                              <span>{t('common.tools')}</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleTools.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.tools ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
+
+                                return (
+                                  <div
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
+                                      }`}
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
+                                  >
+                                    {/* Чекбокс для выбранных персонажей */}
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Градиентный фон при hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Аватар с анимацией */}
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
+                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Информация о персоонаже */}
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                                        {persona.name}
+                                      </h3>
+                                      {persona.description && (
+                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
+                                          {persona.description}
+                                        </p>
+                                      )}
+
+                                      {/* Категории персонажей - только понятные категории */}
+                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                        {(() => {
+                                          const characterCategories = getCharacterCategory(persona);
+
+                                          if (characterCategories && characterCategories.length > 0) {
+                                            return (
+                                              <div className="flex flex-wrap gap-1.5 justify-center">
+                                                {characterCategories.map((cat) => (
+                                                  <span
+                                                    key={cat.id}
+                                                    className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
+                                                  >
+                                                    {cat.label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                        })()}
+                                      </div>
+                                    </div>
+
+                                    {/* Градиент при hover */}
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {tools.length > visibleTools.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("tools")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 3. AI МОДЕЛИ */}
+                        {models.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
+                              <span>{t('common.aiModels')}</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                              {visibleModels.map((persona) => {
+                                const IconComponent = persona.iconName
+                                  ? getIconComponent(persona.iconName)
+                                  : null;
+                                const isSelected = selectedPersonas.includes(persona.id);
+                                const canSelect =
+                                  !isGroupCreationMode ||
+                                  selectedPersonas.length < 5 ||
+                                  isSelected;
+                                const newlyAddedList = recentlyAddedIds.models ?? [];
+                                const animationIndex = newlyAddedList.indexOf(persona.id);
+                                const animationDelay =
+                                  animationIndex >= 0 ? `${animationIndex * 60}ms` : undefined;
+
+                                return (
+                                  <div
+                                    key={persona.id}
+                                    onClick={() =>
+                                      canSelect && handlePersonaCardClick(persona)
+                                    }
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                      }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
+                                      }`}
+                                    style={animationIndex >= 0 ? { animationDelay } : undefined}
+                                  >
+                                    {/* Чекбокс для выбранных персонажей */}
+                                    {isGroupCreationMode && (
+                                      <div className="absolute top-3 right-3 z-20">
+                                        <div
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+                                              ? "bg-[var(--accent)] border-[var(--accent)]"
+                                              : "border-gray-400 bg-tg-bg"
+                                            }`}
+                                        >
+                                          {isSelected && (
+                                            <MdCheck className="text-white text-sm" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Градиентный фон при hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                    {/* Аватар с анимацией */}
+                                    <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
+                                      {persona.imageSrc ? (
+                                        <div className="relative">
+                                          <img
+                                            src={persona.imageSrc}
+                                            alt={persona.name}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                          />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
+                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Информация о персоонаже */}
+                                    <div className="text-center relative z-10">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                                        {persona.name}
+                                      </h3>
+                                      {persona.description && (
+                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
+                                          {persona.description}
+                                        </p>
+                                      )}
+
+                                      {/* Категории персонажей - только понятные категории */}
+                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                        {(() => {
+                                          const characterCategories = getCharacterCategory(persona);
+
+                                          if (characterCategories && characterCategories.length > 0) {
+                                            return (
+                                              <div className="flex flex-wrap gap-1.5 justify-center">
+                                                {characterCategories.map((cat) => (
+                                                  <span
+                                                    key={cat.id}
+                                                    className="inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-tg-accent/40 text-gray-800 dark:bg-tg-accent/30 dark:text-tg-accent"
+                                                  >
+                                                    {cat.label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                        })()}
+                                      </div>
+                                    </div>
+
+                                    {/* Градиент при hover */}
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {models.length > visibleModels.length && (
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  onClick={() => handleShowMore("models")}
+                                  className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
+                                >
+                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-                </motion.div>
-              </AnimatePresence>
+                  </motion.div>
+                </AnimatePresence>
               )
             )}
 
             {/* Каналы - показываем только если выбраны "Все категории" или "Каналы" */}
-            {(shouldShowAllCategories || filterCategory === "channels") && 
-             (isChannelsLoading || channelsError || availableChannels.length > 0) && (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={filterCategory === "channels" ? "channels-only" : "channels-all"}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-6"
-                >
-                <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
-                  <span>{t("library.channelsTitle", { defaultValue: "Каналы" })}</span>
-                </h3>
-                {channelsError && (
-                  <div className="text-sm text-[var(--destructive)] bg-[var(--destructive)]/10 border border-[var(--destructive)]/30 rounded-lg px-4 py-2 mt-3">
-                    {channelsError}
-                  </div>
-                )}
-                {isChannelsLoading && availableChannels.length === 0 && (
-                  <div className="text-sm text-[var(--text-gray)] bg-tg-bg border border-tg-border rounded-lg px-4 py-4 mt-3">
-                    {t("library.channelsLoading", { defaultValue: "Загружаем каналы..." })}
-                  </div>
-                )}
-                {!isChannelsLoading && availableChannels.length === 0 && !channelsError && (
-                  <div className="text-sm text-[var(--text-gray)] bg-tg-bg border border-tg-border rounded-lg px-4 py-4 mt-3">
-                    {t("library.channelsEmpty", { defaultValue: "Публичные каналы появятся здесь позже" })}
-                  </div>
-                )}
-                {availableChannels.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
-                    {availableChannels.map((channel) => (
-                      <div
-                        key={channel.id}
-                        onClick={(e) => {
-                          // Проверяем, что клик не был на кнопке подписки или её дочерних элементах
-                          const button = e.target.closest('button[data-testid="subscribe-button"]');
-                          if (button) {
-                            console.log("[ChatLibraryInline] Click was on subscribe button, ignoring card click");
-                            return;
-                          }
-                          console.log(`[ChatLibraryInline] Открываем канал ${channel.title} (ID: ${channel.id}) для просмотра`);
-                          if (onChatSelect) {
-                            onChatSelect(channel.id);
-                          }
-                        }}
-                        className="relative group bg-tg-bg border border-tg-border rounded-xl sm:rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-tg-accent hover:bg-tg-hover cursor-pointer"
-                      >
-                        <div 
-                          className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-tg-accent transition-colors duration-300 pointer-events-none"
-                          style={{ zIndex: 1 }}
-                        />
-                        <div className="flex items-center gap-3 mb-3">
-                          {channel.imageSrc ? (
-                            <img
-                              src={channel.imageSrc}
-                              alt={channel.title}
-                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-md"
-                            />
-                          ) : (
-                            <div
-                              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${channel.colorClass || "bg-[var(--accent)]"} flex items-center justify-center text-white shadow-md`}
-                            >
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-base sm:text-lg font-semibold text-[var(--text-white)] truncate">
-                              {channel.title}
-                            </p>
-                          </div>
-                        </div>
-                        {channel.channel_description && (
-                          <p className="text-xs sm:text-sm text-tg-text-secondary mb-3 line-clamp-3">
-                            {channel.channel_description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between text-[10px] sm:text-xs text-tg-text-secondary">
-                          <span>
-                            {t("library.channelMessagesCount", {
-                              defaultValue: "Сообщений: {{count}}",
-                              count: channel.message_count ?? 0,
-                            })}
-                          </span>
-                          {channel.can_write && (
-                            <span className="px-2 sm:px-3 py-1 rounded-full bg-[var(--success)]/20 text-[var(--success)]">
-                              {t("library.channelOwnerBadge", { defaultValue: "Можно публиковать" })}
-                            </span>
-                          )}
-                        </div>
+            {(shouldShowAllCategories || filterCategory === "channels") &&
+              (isChannelsLoading || channelsError || availableChannels.length > 0) && (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={filterCategory === "channels" ? "channels-only" : "channels-all"}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="mb-6"
+                  >
+                    <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
+                      <span>{t("library.channelsTitle", { defaultValue: "Каналы" })}</span>
+                    </h3>
+                    {channelsError && (
+                      <div className="text-sm text-[var(--destructive)] bg-[var(--destructive)]/10 border border-[var(--destructive)]/30 rounded-lg px-4 py-2 mt-3">
+                        {channelsError}
                       </div>
-                    ))}
-                  </div>
-                )}
-                </motion.div>
-              </AnimatePresence>
-            )}
+                    )}
+                    {isChannelsLoading && availableChannels.length === 0 && (
+                      <div className="text-sm text-[var(--text-gray)] bg-tg-bg border border-tg-border rounded-lg px-4 py-4 mt-3">
+                        {t("library.channelsLoading", { defaultValue: "Загружаем каналы..." })}
+                      </div>
+                    )}
+                    {!isChannelsLoading && availableChannels.length === 0 && !channelsError && (
+                      <div className="text-sm text-[var(--text-gray)] bg-tg-bg border border-tg-border rounded-lg px-4 py-4 mt-3">
+                        {t("library.channelsEmpty", { defaultValue: "Публичные каналы появятся здесь позже" })}
+                      </div>
+                    )}
+                    {availableChannels.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                        {availableChannels.map((channel) => (
+                          <div
+                            key={channel.id}
+                            onClick={(e) => {
+                              // Проверяем, что клик не был на кнопке подписки или её дочерних элементах
+                              const button = e.target.closest('button[data-testid="subscribe-button"]');
+                              if (button) {
+                                console.log("[ChatLibraryInline] Click was on subscribe button, ignoring card click");
+                                return;
+                              }
+                              console.log(`[ChatLibraryInline] Открываем канал ${channel.title} (ID: ${channel.id}) для просмотра`);
+                              if (onChatSelect) {
+                                onChatSelect(channel.id);
+                              }
+                            }}
+                            className="relative group bg-tg-bg border border-tg-border rounded-xl sm:rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-tg-accent hover:bg-tg-hover cursor-pointer"
+                          >
+                            <div
+                              className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-tg-accent transition-colors duration-300 pointer-events-none"
+                              style={{ zIndex: 1 }}
+                            />
+                            <div className="flex items-center gap-3 mb-3">
+                              {channel.imageSrc ? (
+                                <img
+                                  src={channel.imageSrc}
+                                  alt={channel.title}
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-md"
+                                />
+                              ) : (
+                                <div
+                                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${channel.colorClass || "bg-[var(--accent)]"} flex items-center justify-center text-white shadow-md`}
+                                >
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-base sm:text-lg font-semibold text-[var(--text-white)] truncate">
+                                  {channel.title}
+                                </p>
+                              </div>
+                            </div>
+                            {channel.channel_description && (
+                              <p className="text-xs sm:text-sm text-tg-text-secondary mb-3 line-clamp-3">
+                                {channel.channel_description}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between text-[10px] sm:text-xs text-tg-text-secondary">
+                              <span>
+                                {t("library.channelMessagesCount", {
+                                  defaultValue: "Сообщений: {{count}}",
+                                  count: channel.message_count ?? 0,
+                                })}
+                              </span>
+                              {channel.can_write && (
+                                <span className="px-2 sm:px-3 py-1 rounded-full bg-[var(--success)]/20 text-[var(--success)]">
+                                  {t("library.channelOwnerBadge", { defaultValue: "Можно публиковать" })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              )}
 
             {isMounted &&
               isGroupCreationMode &&
@@ -2858,7 +2821,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           </div>
         )}
       </div>
-      
+
       {/* Модальное окно создания/редактирования персонажа */}
       <CreateAgentModal
         isOpen={isCreateModalOpen}

@@ -31,15 +31,14 @@ export function useChatScrollInitialization({
     if (isInlineLibraryOpen) return;
     if (!activeConversation?.id) return;
 
-    // КРИТИЧНО: Для нового пустого чата сразу показываем контент
-    // Проверяем это ПЕРЕД проверкой needInitialScrollRef, чтобы не блокировать показ
-    if (visibleMessages.length === 0 && !isChannelChat) {
+    // Для пустого чата (если он действительно загрузился) показываем контент
+    // Проверяем это ПЕРЕД проверкой needInitialScrollRef
+    if (visibleMessages.length === 0 && !isChannelChat && chatReady) {
       // Если сообщений нет, показываем контент сразу
       if (!isScrollReady) {
         setIsScrollReady(true);
       }
-      // Для пустых чатов больше не требуется первоначальный скролл
-      needInitialScrollRef.current = false;
+      // НЕ отключаем needInitialScrollRef, чтобы скролл сработал, если сообщения загрузятся позже
       return;
     }
 
@@ -49,20 +48,46 @@ export function useChatScrollInitialization({
 
     // Проверяем, что контейнер имеет контент для скролла
     const scrollPos = getScrollPosition(true);
+
+    // Даже если контент помещается, принудительно ставим скролл в конец (на всякий случай)
+    // Это не повредит, так как scrollTop будет ограничен браузером
+    if (visibleMessages.length > 0) {
+      forceScrollToBottom("auto");
+    }
+
     if (scrollPos.scrollHeight <= scrollPos.clientHeight) {
       // Если контента еще нет, но есть сообщения, показываем через небольшую задержку
       if (visibleMessages.length > 0) {
         // Сообщения есть, но DOM еще не обновился - ждем немного и показываем
-        setTimeout(() => {
+        // Пытаемся несколько раз, так как рендеринг большого количества сообщений может занять время
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const checkAndScroll = () => {
+          attempts++;
           const el = containerRef.current;
-          if (!el) return;
+          if (!el || !needInitialScrollRef.current) return;
+
+          // Принудительно скроллим
+          forceScrollToBottom("auto");
+          
           const newScrollPos = getScrollPosition(true);
-          if (newScrollPos.scrollHeight <= newScrollPos.clientHeight) {
-            // Контент помещается, показываем сразу
+          const hasContentToScroll = newScrollPos.scrollHeight > newScrollPos.clientHeight;
+          
+          // Если контент появился ИЛИ мы превысили лимит попыток ИЛИ сообщений очень мало
+          if (hasContentToScroll || attempts >= maxAttempts || visibleMessages.length < 5) {
             needInitialScrollRef.current = false;
-            setIsScrollReady(true);
+            // Показываем контент
+            if (!isScrollReady) {
+              setIsScrollReady(true);
+            }
+          } else {
+            // Продолжаем ждать рендеринга
+            setTimeout(checkAndScroll, 100);
           }
-        }, 100);
+        };
+        
+        setTimeout(checkAndScroll, 50);
       }
       return;
     }
@@ -81,20 +106,19 @@ export function useChatScrollInitialization({
         const el = containerRef.current;
         if (!el || !needInitialScrollRef.current) return;
 
-        // Финальная проверка: контент должен быть больше видимой области
-        const scrollPos = getScrollPosition(true);
-        if (scrollPos.scrollHeight > scrollPos.clientHeight) {
-          forceScrollToBottom("auto");
-          needInitialScrollRef.current = false;
-          // Показываем контент после установки скролла
-          requestAnimationFrame(() => {
-            setIsScrollReady(true);
-          });
-        } else {
-          // Если скролл не нужен (контент помещается в видимую область), показываем сразу
-          needInitialScrollRef.current = false;
+        // Безусловный скролл вниз
+        forceScrollToBottom("auto");
+
+        // Повторяем скролл через время для надежности (assets loading)
+        setTimeout(() => {
+          if (containerRef.current) forceScrollToBottom("auto");
+        }, 100);
+
+        needInitialScrollRef.current = false;
+        // Показываем контент после установки скролла
+        requestAnimationFrame(() => {
           setIsScrollReady(true);
-        }
+        });
       });
     });
   }, [
@@ -118,13 +142,13 @@ export function useChatScrollInitialization({
     if (isInlineLibraryOpen) return;
     if (!activeConversation?.id) return;
 
-    // КРИТИЧНО: Для пустого чата сразу показываем контент, даже если chatReady еще не установлен
+    // Для пустого чата (если он действительно загрузился) сразу показываем контент
     // Это гарантирует, что новый пустой чат сразу готов к использованию
-    if (visibleMessages.length === 0 && !isChannelChat) {
+    if (visibleMessages.length === 0 && !isChannelChat && chatReady) {
       if (!isScrollReady) {
         setIsScrollReady(true);
       }
-      needInitialScrollRef.current = false;
+      // НЕ отключаем needInitialScrollRef, чтобы скролл сработал, если сообщения загрузятся позже
       return;
     }
 
@@ -148,30 +172,47 @@ export function useChatScrollInitialization({
     // Тройной requestAnimationFrame + setTimeout для максимальной гарантии полного рендера
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setTimeout(() => {
+        // Пытаемся несколько раз, так как рендеринг большого количества сообщений может занять время
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        const checkAndScrollDelayed = () => {
+          attempts++;
           const el = containerRef.current;
           if (!el || !needInitialScrollRef.current) return;
 
-          // Критическая проверка: контент должен быть больше видимой области
-          // и скролл должен быть возможен
           const scrollPos = getScrollPosition(true);
+          
           if (scrollPos.scrollHeight > scrollPos.clientHeight) {
             // Дополнительная проверка: если скролл уже внизу (или близко), не трогаем
             if (scrollPos.distanceFromBottom > 50) {
               // Скролл не внизу, принудительно скроллим
               forceScrollToBottom("auto");
             }
-            needInitialScrollRef.current = false;
-            // Показываем контент после установки скролла
-            requestAnimationFrame(() => {
-              setIsScrollReady(true);
-            });
+            
+            // Проверяем еще раз после скролла
+            const finalScrollPos = getScrollPosition(true);
+            if (finalScrollPos.distanceFromBottom <= 10 || attempts >= maxAttempts) {
+              needInitialScrollRef.current = false;
+              requestAnimationFrame(() => {
+                setIsScrollReady(true);
+              });
+            } else {
+              setTimeout(checkAndScrollDelayed, 100);
+            }
           } else {
-            // Если контент помещается в видимую область, показываем сразу
-            needInitialScrollRef.current = false;
-            setIsScrollReady(true);
+            // Если контент помещается в видимую область, но сообщений много - возможно, они еще не отрендерились
+            if (visibleMessages.length > 10 && attempts < maxAttempts) {
+              setTimeout(checkAndScrollDelayed, 100);
+            } else {
+              // Если контент действительно помещается в видимую область (мало сообщений), показываем сразу
+              needInitialScrollRef.current = false;
+              setIsScrollReady(true);
+            }
           }
-        }, 50); // Небольшая задержка для гарантии полного рендера
+        };
+        
+        setTimeout(checkAndScrollDelayed, 50);
       });
     });
   }, [
@@ -198,6 +239,15 @@ export function useChatScrollInitialization({
 
     const fallbackTimer = setTimeout(() => {
       if (!isScrollReady && visibleMessages.length > 0) {
+        // Попытка скролла в fallback
+        const el = containerRef.current;
+        if (el) {
+          const scrollPos = getScrollPosition(true);
+          if (scrollPos.scrollHeight > scrollPos.clientHeight) {
+            forceScrollToBottom("auto");
+          }
+        }
+
         needInitialScrollRef.current = false;
         setIsScrollReady(true);
       }
@@ -211,6 +261,9 @@ export function useChatScrollInitialization({
     isInlineLibraryOpen,
     setIsScrollReady,
     needInitialScrollRef,
+    forceScrollToBottom,
+    getScrollPosition,
+    containerRef
   ]);
 
   // Автоскролл вниз при получении новых сообщений от агента, если пользователь внизу чата
@@ -396,6 +449,9 @@ export function useChatScrollInitialization({
                       channelScrollDoneRef.current[activeConversation.id] = true;
                       needInitialScrollRef.current = false;
                       setIsScrollReady(true);
+                    } else {
+                      // Если скролл не дошел до конца, возможно контент еще растет
+                      // Не сбрасываем флаги, позволяем следующей попытке сработать
                     }
                   }, 100);
                 } else {
@@ -405,12 +461,17 @@ export function useChatScrollInitialization({
                   setIsScrollReady(true);
                 }
               } else {
-                // Контент еще не готов, показываем через небольшую задержку
-                setTimeout(() => {
+                // Контент еще не готов (scrollHeight <= clientHeight), но сообщения есть
+                if (currentCount > 5 && attempts < 10) {
+                   // Ждем следующей попытки (useEffect сработает снова или attempts увеличится)
+                } else {
+                  // Сообщений мало или попытки исчерпаны
+                  channelScrollDoneRef.current[activeConversation.id] = true;
+                  needInitialScrollRef.current = false;
                   if (!isScrollReady) {
                     setIsScrollReady(true);
                   }
-                }, 200);
+                }
               }
             }, 50);
           });

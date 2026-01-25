@@ -43,6 +43,62 @@ import AgentSettingsSection from "./AgentSettingsSection";
 import ImageModal from "../chat/ImageModal";
 import { usePanelWidth } from "../../contexts/PanelWidthContext";
 
+const ExpandableDescription = ({ text }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textRef = useRef(null);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [text]);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (textRef.current) {
+        const hasOverflow = textRef.current.scrollHeight > textRef.current.clientHeight + 1;
+        setIsOverflowing(hasOverflow);
+      }
+    };
+
+    checkOverflow();
+    const timer = setTimeout(checkOverflow, 100);
+
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+      window.removeEventListener('resize', checkOverflow);
+      clearTimeout(timer);
+    };
+  }, [text]);
+
+  return (
+    <div className="flex flex-col items-center w-full px-2">
+      <p
+        ref={textRef}
+        className="text-[var(--text-gray)] text-sm text-center transition-all duration-200"
+        style={!isExpanded ? {
+          display: '-webkit-box',
+          WebkitLineClamp: 4,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden'
+        } : {}}
+      >
+        {text}
+      </p>
+      {!isExpanded && isOverflowing && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(true);
+          }}
+          className="text-blue-400 hover:text-blue-500 text-sm mt-0.5 hover:underline focus:outline-none cursor-pointer"
+        >
+          еще...
+        </button>
+      )}
+    </div>
+  );
+};
+
 export default function AIPanel({
   onClose,
   activeChatId,
@@ -72,7 +128,7 @@ export default function AIPanel({
       if (Number.isFinite(parsed) && parsed >= 240 && parsed <= 450) {
         return parsed;
       }
-    } catch {}
+    } catch { }
     return 280; // значение по умолчанию
   });
 
@@ -110,26 +166,26 @@ export default function AIPanel({
   // Функция для определения категории агента
   const getAgentCategory = useCallback((agent) => {
     if (!agent) return null;
-    
+
     // Используем категорию из базы данных, если она есть
     if (agent.category && agent.category !== 'general') {
       return agent.category;
     }
-    
+
     // Определяем категорию на основе имени или описания агента
     const name = agent.name.toLowerCase();
     const description = (agent.description || '').toLowerCase();
-    
-    if (name.includes('deepseek') || name.includes('assistant') || name.includes('ai') || 
-        description.includes('ai') || description.includes('модель') || description.includes('ассистент')) {
+
+    if (name.includes('deepseek') || name.includes('assistant') || name.includes('ai') ||
+      description.includes('ai') || description.includes('модель') || description.includes('ассистент')) {
       return 'models';
     }
-    
+
     if (name.includes('калькулятор') || name.includes('перевод') || name.includes('погода') ||
-        description.includes('инструмент') || description.includes('утилита') || description.includes('математический')) {
+      description.includes('инструмент') || description.includes('утилита') || description.includes('математический')) {
       return 'tools';
     }
-    
+
     return 'chats';
   }, []);
 
@@ -231,13 +287,13 @@ export default function AIPanel({
     if (!activeConversation) {
       return { info: { name: t("chat.aiAssistant"), colorClass: "bg-purple-500" } };
     }
-    
+
     // КРИТИЧНО: Проверяем канал ПЕРЕД системным чатом, чтобы каналы не показывали иконку Saved Messages
     // Проверяем как is_channel, так и наличие channel_owner_id для надежности
-    const isChannel = isChannelChat || 
-                      activeConversation.is_channel === true ||
-                      (activeConversation.channel_owner_id != null && !activeConversation.is_group);
-    
+    const isChannel = isChannelChat ||
+      activeConversation.is_channel === true ||
+      (activeConversation.channel_owner_id != null && !activeConversation.is_group);
+
     if (isChannel) {
       return {
         info: {
@@ -282,7 +338,7 @@ export default function AIPanel({
         },
       };
     }
-    
+
     if (isGroupChat) {
       return {
         info: {
@@ -302,7 +358,7 @@ export default function AIPanel({
         },
       };
     }
-    
+
     // КРИТИЧНО: Проверяем системный чат, но исключаем каналы (даже если у них is_system_chat: true)
     if (activeConversation.is_system_chat && !isChannelChat && !activeConversation.is_channel) {
       return {
@@ -319,7 +375,7 @@ export default function AIPanel({
         },
       };
     }
-    
+
     if (currentAgent) {
       const translatedAgent = translateAgent(currentAgent);
       return {
@@ -337,15 +393,15 @@ export default function AIPanel({
         },
       };
     }
-    
-    return { 
-      info: { 
-        name: t("chat.aiAssistant"), 
+
+    return {
+      info: {
+        name: t("chat.aiAssistant"),
         colorClass: "bg-purple-500",
         iconName: "psychology",
         ChatInfo: t("chat.aiAssistant"),
         imageSrc: null
-      } 
+      }
     };
   }, [
     activeConversation,
@@ -429,7 +485,7 @@ export default function AIPanel({
           String(Math.round(rightPanelWidth))
         );
       }
-    } catch {}
+    } catch { }
 
     if (!isModal) {
       updateRightPanelWidth(rightPanelWidth);
@@ -458,7 +514,7 @@ export default function AIPanel({
         setDisplayWidth(rightPanelWidth);
       });
     });
-    
+
     return () => {
       if (!isClosing) {
         setRightPanelOpen(false);
@@ -561,59 +617,93 @@ export default function AIPanel({
         </button>
       </div>
 
-      {/* Chat Info */}
-      <div className="p-4 border-b border-[var(--border-color)]">
-        <div className="flex flex-col items-center">
-          {isGroupChat ? (
-            // Отображение аватарки для группового чата
-            (() => {
-              // Проверяем, есть ли загруженный аватар
-              const groupAvatarUrl = getGroupChatAvatarUrl(activeConversation?.group_avatar_url);
-              
-              if (groupAvatarUrl) {
-                // Отображаем загруженное изображение
+      {/* Скроллируемый контейнер с Chat Info и Navigation */}
+      <div className="flex-1 overflow-y-auto chat-scrollbar min-h-0">
+        {/* Chat Info */}
+        <div className="p-4 border-b border-[var(--border-color)]">
+          <div className="flex flex-col items-center">
+            {isGroupChat ? (
+              // Отображение аватарки для группового чата
+              (() => {
+                // Проверяем, есть ли загруженный аватар
+                const groupAvatarUrl = getGroupChatAvatarUrl(activeConversation?.group_avatar_url);
+
+                if (groupAvatarUrl) {
+                  // Отображаем загруженное изображение
+                  return (
+                    <img
+                      src={groupAvatarUrl}
+                      alt={name}
+                      className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
+                      onError={(e) => {
+                        console.warn("Failed to load group chat avatar in AI Panel:", groupAvatarUrl);
+                        e.target.style.display = "none";
+                        const fallback = e.target.nextElementSibling;
+                        if (fallback) {
+                          fallback.style.display = "flex";
+                        }
+                      }}
+                    />
+                  );
+                }
+
+                // Иначе показываем иконку
                 return (
-                  <img
-                    src={groupAvatarUrl}
-                    alt={name}
-                    className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
-                    onError={(e) => {
-                      console.warn("Failed to load group chat avatar in AI Panel:", groupAvatarUrl);
-                      e.target.style.display = "none";
-                      const fallback = e.target.nextElementSibling;
-                      if (fallback) {
-                        fallback.style.display = "flex";
-                      }
-                    }}
-                  />
-                );
-              }
-              
-              // Иначе показываем иконку
-              return (
-                <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-md select-none mb-3">
-                  <div
-                    className="absolute inset-0 bg-center bg-cover"
-                    style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
-                    aria-hidden="true"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center text-white">
-                    {getIconComponent(iconName)}
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-md select-none mb-3">
+                    <div
+                      className="absolute inset-0 bg-center bg-cover"
+                      style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                      aria-hidden="true"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-white">
+                      {getIconComponent(iconName)}
+                    </div>
                   </div>
+                );
+              })()
+            ) : isChannelChat ? (
+              imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt={name}
+                  className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
+                  onError={(e) => {
+                    // Если изображение не загрузилось, скрываем его и показываем fallback
+                    console.warn("Failed to load agent avatar in AI Panel:", imageSrc);
+                    e.target.style.display = "none";
+                    const fallback = e.target.nextElementSibling;
+                    if (fallback) {
+                      fallback.style.display = "flex";
+                    }
+                  }}
+                />
+              ) : (
+                <div
+                  className={`w-16 h-16 rounded-full ${colorClass || "bg-blue-500 dark:bg-blue-600"
+                    } flex items-center justify-center text-white shadow-md select-none mb-3`}
+                >
+                  {getIconComponent(iconName)}
                 </div>
-              );
-            })()
-          ) : isChannelChat ? (
-            imageSrc ? (
+              )
+            ) : imageSrc ? (
               <img
                 src={imageSrc}
                 alt={name}
-                className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
+                className={`w-16 h-16 rounded-full object-cover shadow-md select-none mb-3 ${!activeConversation?.is_system_chat && !isGroupChat && currentAgent
+                  ? "cursor-pointer hover:opacity-80 transition-opacity"
+                  : ""
+                  }`}
+                onClick={() => {
+                  // Открываем модальное окно только для чатов с агентами (не групп и не системных)
+                  if (!activeConversation?.is_system_chat && !isGroupChat && currentAgent && imageSrc) {
+                    setIsImageModalOpen(true);
+                  }
+                }}
                 onError={(e) => {
                   // Если изображение не загрузилось, скрываем его и показываем fallback
                   console.warn("Failed to load agent avatar in AI Panel:", imageSrc);
                   e.target.style.display = "none";
-                  const fallback = e.target.nextElementSibling;
+                  const fallback = e.target.parentElement?.querySelector(".avatar-fallback");
                   if (fallback) {
                     fallback.style.display = "flex";
                   }
@@ -621,62 +711,26 @@ export default function AIPanel({
               />
             ) : (
               <div
-                className={`w-16 h-16 rounded-full ${
-                  colorClass || "bg-blue-500 dark:bg-blue-600"
-                } flex items-center justify-center text-white shadow-md select-none mb-3`}
+                className={`w-16 h-16 rounded-full ${colorClass || "bg-purple-500 dark:bg-purple-600"
+                  } flex items-center justify-center text-white shadow-md select-none mb-3`}
               >
                 {getIconComponent(iconName)}
               </div>
-            )
-          ) : imageSrc ? (
-            <img
-              src={imageSrc}
-              alt={name}
-              className={`w-16 h-16 rounded-full object-cover shadow-md select-none mb-3 ${
-                !activeConversation?.is_system_chat && !isGroupChat && currentAgent
-                  ? "cursor-pointer hover:opacity-80 transition-opacity"
-                  : ""
-              }`}
-              onClick={() => {
-                // Открываем модальное окно только для чатов с агентами (не групп и не системных)
-                if (!activeConversation?.is_system_chat && !isGroupChat && currentAgent && imageSrc) {
-                  setIsImageModalOpen(true);
-                }
-              }}
-              onError={(e) => {
-                // Если изображение не загрузилось, скрываем его и показываем fallback
-                console.warn("Failed to load agent avatar in AI Panel:", imageSrc);
-                e.target.style.display = "none";
-                const fallback = e.target.parentElement?.querySelector(".avatar-fallback");
-                if (fallback) {
-                  fallback.style.display = "flex";
-                }
-              }}
-            />
-          ) : (
-            <div
-              className={`w-16 h-16 rounded-full ${
-                colorClass || "bg-purple-500 dark:bg-purple-600"
-              } flex items-center justify-center text-white shadow-md select-none mb-3`}
-            >
-              {getIconComponent(iconName)}
-            </div>
-          )}
-          <h3 className="font-medium text-xl mb-1 text-[var(--text-white)]">
-            {chatTitle}
-          </h3>
-          <p className="text-[var(--text-gray)] text-sm text-center">{ChatInfo}</p>
-          {/* Описание для персонажей */}
-          {agentCategory === "chats" && currentAgent && (
-            <p className="text-[var(--text-gray)] text-xs text-center mt-2 select-none">
-              {t("chat.characterInspired", { name: currentAgent.name })}
-            </p>
-          )}
+            )}
+            <h3 className="font-medium text-xl mb-1 text-[var(--text-white)]">
+              {chatTitle}
+            </h3>
+            <ExpandableDescription text={ChatInfo} key={activeConversation?.id || ChatInfo} />
+            {/* Описание для персонажей */}
+            {agentCategory === "chats" && currentAgent && (
+              <p className="text-[var(--text-gray)] text-xs text-center mt-2 select-none">
+                {t("chat.characterInspired", { name: currentAgent.name })}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto chat-scrollbar min-h-0">
+        {/* Navigation */}
         <div className="space-y-0">
           {/* Закрепленные сообщения */}
           {!isChannelChat && (
@@ -749,9 +803,9 @@ export default function AIPanel({
 
   return (
     <>
-      <div 
+      <div
         className={`ai-panel-wrapper ${isClosing ? 'ai-panel-closing' : ''} relative`}
-        style={{ 
+        style={{
           width: `${displayWidth}px`,
           minWidth: 0,
           transition: isResizing ? 'none' : 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -767,8 +821,8 @@ export default function AIPanel({
         <aside
           ref={asideRef}
           className={`bg-[var(--bg-secondary)] flex flex-col border-l border-[var(--border-color)] relative h-full ${isClosing ? 'ai-panel-slide-out' : 'ai-panel-slide-in'}`}
-          style={{ 
-            width: `${rightPanelWidth}px`, 
+          style={{
+            width: `${rightPanelWidth}px`,
             minWidth: `${rightPanelWidth}px`,
             flexShrink: 0
           }}

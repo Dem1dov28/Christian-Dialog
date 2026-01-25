@@ -218,6 +218,7 @@ function MainApp() {
     setIsAISettingsVisible,
     isRightPanelModal,
     setIsRightPanelVisible,
+    systemChat,
   });
 
   const {

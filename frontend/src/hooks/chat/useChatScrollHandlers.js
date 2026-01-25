@@ -61,8 +61,11 @@ export function useChatScrollHandlers({
         const currentScrollTop = scrollPos.scrollTop;
         const prevScrollTop = prevScrollTopRef.current;
 
-        // Если скроллим вверх (scrollTop уменьшается), устанавливаем флаг
+        // Стандартное поведение скролла:
+        // scrollTop увеличивается = скролл ВНИЗ (к концу контента)
+        // scrollTop уменьшается = скролл ВВЕРХ (к началу контента)
         if (currentScrollTop < prevScrollTop) {
+          // Скроллим вверх (к старым сообщениям)
           isUserScrollingUpRef.current = true;
           // Сбрасываем флаг через небольшую задержку после остановки скролла
           if (scrollUpTimeoutRef.current) {
@@ -72,7 +75,7 @@ export function useChatScrollHandlers({
             isUserScrollingUpRef.current = false;
           }, 500);
         } else if (currentScrollTop > prevScrollTop) {
-          // Если скроллим вниз, сбрасываем флаг сразу
+          // Скроллим вниз (к новым сообщениям), сбрасываем флаг сразу
           isUserScrollingUpRef.current = false;
           if (scrollUpTimeoutRef.current) {
             clearTimeout(scrollUpTimeoutRef.current);
@@ -174,7 +177,8 @@ export function useChatScrollHandlers({
 
         // Подгрузка предыдущих сообщений при прокрутке вверх (с защитами)
         if (activeConversation?.id) {
-          // Проверяем, находится ли скролл в пределах 20% от верха контейнера
+          // Стандартное поведение: scrollTop близко к 0 = top (старые сообщения)
+          // Проверяем, находится ли скролл в пределах верхних 20% контента
           const nearTop = scrollPos.scrollTop <= scrollPos.scrollHeight * 0.2;
           if (nearTop) {
             if (suppressTopLoadRef.current) return;

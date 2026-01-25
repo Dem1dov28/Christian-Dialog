@@ -35,6 +35,11 @@ for p in (BACKEND_DIR, REPO_ROOT):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+from dotenv import load_dotenv
+
+# Load .env (needed because core.database requires DATABASE_URL)
+load_dotenv(os.path.join(BACKEND_DIR, ".env"))
+
 from sqlmodel import Session, select
 
 from core.database import engine

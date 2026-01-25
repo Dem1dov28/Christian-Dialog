@@ -507,15 +507,20 @@ export default function Chat({
     // КРИТИЧНО: Убрали conversations и selectConversation из зависимостей
     // чтобы не срабатывать при обновлении списка чатов после генерации
     // Используем только activeChatId и activeConversation
-    if (activeChatId && conversations.length > 0) {
+    if (activeChatId) {
       // Находим разговор по ID чата (не по agent_id)
       const conversation = conversations.find(
         (conv) => conv.id === activeChatId
       );
-      if (conversation) {
+      
+      // Также проверяем системный чат
+      const isSystemChat = systemChat && systemChat.id === activeChatId;
+
+      if (conversation || isSystemChat) {
+        const targetConversation = conversation || systemChat;
         // Проверяем, что это не тот же разговор, что уже активен
-        if (!activeConversation || activeConversation.id !== conversation.id) {
-          selectConversation(conversation.id);
+        if (!activeConversation || activeConversation.id !== targetConversation.id) {
+          selectConversation(targetConversation.id);
         }
       }
     }

@@ -53,11 +53,11 @@ def load_agents_config(config_path: str = None) -> list:
     return config.get('agents', [])
 
 
-def sync_agents_from_config(dry_run: bool = False):
+def sync_agents_from_config(dry_run: bool = False, config_path: str = None):
     """Синхронизировать агентов из конфигурации в БД"""
     create_db_and_tables()
     
-    agents_config = load_agents_config()
+    agents_config = load_agents_config(config_path=config_path)
     if not agents_config:
         print("❌ Нет агентов в конфигурации")
         return
@@ -190,7 +190,7 @@ def main():
     if args.dry_run:
         print("🔍 DRY RUN MODE - изменения не будут применены\n")
     
-    sync_agents_from_config(dry_run=args.dry_run)
+    sync_agents_from_config(dry_run=args.dry_run, config_path=args.config)
 
 
 if __name__ == "__main__":

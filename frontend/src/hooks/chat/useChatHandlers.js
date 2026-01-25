@@ -23,6 +23,7 @@ export function useChatHandlers({
   setIsAISettingsVisible,
   isRightPanelModal,
   setIsRightPanelVisible,
+  systemChat,
 }) {
   const openCompactChatView = useCallback(() => {
     if (isUltraCompact) {
@@ -96,8 +97,13 @@ export function useChatHandlers({
 
           // Сначала проверяем, есть ли разговор с таким ID (включая групповые чаты)
           const conversation = conversations.find((conv) => conv.id === numericId);
-          if (conversation) {
-            console.log("Switching to conversation:", numericId, "type:", conversation.is_group ? "group" : "single");
+          
+          // Также проверяем системный чат
+          const isSystemChat = systemChat && systemChat.id === numericId;
+
+          if (conversation || isSystemChat) {
+            const chatToOpen = conversation || systemChat;
+            console.log("Switching to conversation:", numericId, "type:", isSystemChat ? "system" : (chatToOpen.is_group ? "group" : "single"));
             setActiveChatId(numericId);
             await selectConversation(numericId);
             openCompactChatView();
@@ -176,6 +182,7 @@ export function useChatHandlers({
       isUltraCompact,
       setIsCompactChatOpen,
       setIsMediumScreenSidebarVisible,
+      systemChat,
     ]
   );
 

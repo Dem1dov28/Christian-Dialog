@@ -122,7 +122,7 @@ const ChatMessagesList = ({
     }
   };
   return (
-    <div className="-mx-3 sm:-mx-6 flex flex-col justify-end">
+    <div className="-mx-3 sm:-mx-6 flex flex-col justify-end flex-1">
       <div
         className="w-full flex flex-col-reverse"
         role="listbox"
