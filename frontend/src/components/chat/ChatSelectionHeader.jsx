@@ -40,7 +40,7 @@ function ChatSelectionHeader({
         title={t("chat.cancel", { defaultValue: "Отмена" })}
         className="px-3 py-1.5 rounded-md text-[var(--accent)] hover:bg-[var(--button-hover-bg)] transition-colors duration-200"
       >
-        {t("chat.cancel", { defaultValue: "ОТМЕНА" })}
+        {t("chat.cancel", { defaultValue: "Отмена" })}
       </button>
     </header>
   );

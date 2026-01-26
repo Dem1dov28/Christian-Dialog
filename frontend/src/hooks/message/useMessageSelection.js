@@ -252,9 +252,14 @@ export function useMessageSelection() {
     };
   }, [isSelecting, isContainerDragSelecting, dragSelectionMode]);
 
-  // Запрет выделения текста во время drag-выделения
+  // Запрет выделения текста во время активного режима выделения
   useEffect(() => {
-    if (isSelecting && isContainerDragSelecting) {
+    if (selectionActive) {
+      // Сбрасываем текущее выделение текста в браузере
+      if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+      }
+
       const prevUserSelect = document.body.style.userSelect;
       const prevWebkitUserSelect = document.body.style.webkitUserSelect;
       document.body.style.userSelect = "none";
@@ -264,7 +269,7 @@ export function useMessageSelection() {
         document.body.style.webkitUserSelect = prevWebkitUserSelect || "";
       };
     }
-  }, [isSelecting, isContainerDragSelecting]);
+  }, [selectionActive]);
 
   return {
     // State

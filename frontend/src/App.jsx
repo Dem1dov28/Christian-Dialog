@@ -31,6 +31,7 @@ import { ImageModalProvider } from "./contexts/ImageModalContext.jsx";
 import { PanelWidthProvider } from "./contexts/PanelWidthContext.jsx";
 import FolderManager from "./components/chat/FolderManager.jsx";
 import MainLayout from "./components/layout/MainLayout.jsx";
+import LoadingScreen from "./components/loading/LoadingScreen.jsx";
 import { useGlobalLongPress } from "./hooks/common/useGlobalLongPress.js";
 import { useAppState } from "./hooks/common/useAppState.js";
 import { usePanelHandlers } from "./hooks/common/usePanelHandlers.js";
@@ -43,6 +44,7 @@ import { useFolderHandlers } from "./hooks/common/useFolderHandlers.js";
 function MainApp() {
   // Используем кастомные хуки для управления состоянием
   const appState = useAppState();
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = React.useState(false);
   const {
     isDrawerOpen,
     setIsDrawerOpen,
@@ -139,7 +141,7 @@ function MainApp() {
     toggleSystemChatVisibility,
     unsubscribeFromChannel,
   } = useChats();
-  const { getAgent, agents } = useAgents();
+  const { getAgent, agents, isLoading: isAgentsLoading } = useAgents();
   const { user } = useAuth();
   const {
     folders,
@@ -373,6 +375,20 @@ function MainApp() {
     }
   };
 
+  // Эффект для отслеживания завершения первичной загрузки
+  React.useEffect(() => {
+    // Ждем, пока оба флага загрузки станут false И данные появятся в стейте
+    if (!isLoading && !isAgentsLoading && (agents.length > 0 || conversations.length > 0)) {
+      setIsInitialLoadComplete(true);
+    }
+  }, [isLoading, isAgentsLoading, agents.length, conversations.length]);
+
+  // Показываем 3D лоадер ТОЛЬКО при первичной загрузке после авторизации
+  // Убираем условие (isLoading || isAgentsLoading) во второй части, чтобы не было "проскока" старого интерфейса
+  if (!isInitialLoadComplete) {
+    return <LoadingScreen />;
+  }
+
   const shouldRenderSidebar =
     isProfileVisible || 
     (isUltraCompact && !isCompactChatOpen) ||
@@ -596,14 +612,7 @@ function ProtectedRoute({ children }) {
   const { t } = useLanguage();
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{t("common.loading")}</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -615,14 +624,7 @@ function PublicRoute({ children }) {
   const { t } = useLanguage();
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{t("common.loading")}</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return !isAuthenticated ? children : <Navigate to="/" replace />;

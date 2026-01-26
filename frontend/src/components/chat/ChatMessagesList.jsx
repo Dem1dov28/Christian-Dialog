@@ -163,6 +163,9 @@ const ChatMessagesList = ({
                   }
                 }}
                 className="w-full"
+                onMouseDown={(e) => handleMessageMouseDown(e, message.id)}
+                onMouseEnter={(e) => handleMessageMouseEnter(e, message.id)}
+                onMouseUp={handleMessageMouseUp}
                 onClick={(e) => onMessageClick(e, message.id)}
                 onContextMenu={(e) => {
                   if (isSelecting || selectionActive) return;
@@ -183,6 +186,9 @@ const ChatMessagesList = ({
                   backgroundColor: bgColor,
                   // Убираем transition для предотвращения постоянных изменений
                   transition: "none",
+                  // Блокируем выделение текста во всем контейнере, когда активен режим выделения
+                  userSelect: selectionActive ? 'none' : 'auto',
+                  WebkitUserSelect: selectionActive ? 'none' : 'auto',
                 }}
               >
                 <div className="px-3 sm:px-6">{renderMessage(message)}</div>

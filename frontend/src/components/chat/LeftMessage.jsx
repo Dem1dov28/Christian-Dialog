@@ -36,11 +36,11 @@ export default function LeftMessage({
   const { messageStateManager, sendMessage: sendChatMessage, activeConversation, activeAgentId: contextActiveAgentId, loadMessages } = useChats();
   const { showError } = useNotification();
   const { openImageModal } = useImageModal();
-  
+
   // Используем agentId из пропсов как fallback, если activeAgentId из контекста не определен
   // Также пытаемся получить agentId из беседы, если он есть
   const activeAgentId = contextActiveAgentId || agentId || (activeConversation?.agent_id || null);
-  
+
   // Логирование для отладки
   useEffect(() => {
     if (text && text.includes('interactive-test')) {
@@ -52,7 +52,7 @@ export default function LeftMessage({
       });
     }
   }, [text, contextActiveAgentId, agentId, activeConversation, activeAgentId]);
-  
+
   // Форматирование размера файла
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + " B";
@@ -87,7 +87,7 @@ export default function LeftMessage({
   };
 
   const { t } = useLanguage();
-  
+
   // Обработчик скачивания файла
   const handleDownloadFile = async (filename, originalFilename, e) => {
     e?.stopPropagation(); // Предотвращаем всплытие события
@@ -168,7 +168,7 @@ export default function LeftMessage({
   // Обработка результатов проверки теста из других сообщений
   useEffect(() => {
     if (!activeConversation || !text) return;
-    
+
     // Пытаемся найти JSON с результатами в тексте (даже если он внутри ```json ``` блока)
     const jsonMatch = text.match(/\{[\s\S]*"results"[\s\S]*\}/);
     if (jsonMatch) {
@@ -183,13 +183,13 @@ export default function LeftMessage({
               if (question) {
                 const icon = question.querySelector(`.test-result-icon[data-question-id="${result.question_id}"]`);
                 const input = question.querySelector(`.test-answer-input[data-question-id="${result.question_id}"]`);
-                
+
                 if (icon && input) {
                   // Обновляем иконку результата
                   icon.innerHTML = result.is_correct
                     ? '<span style="color: hsl(var(--success)); font-size: 20px;">✓</span>'
                     : '<span style="color: hsl(var(--destructive)); font-size: 20px;">✗</span>';
-                  
+
                   // Обновляем стили поля ввода
                   if (result.is_correct) {
                     input.style.borderColor = 'hsl(var(--success))';
@@ -198,13 +198,13 @@ export default function LeftMessage({
                     input.style.borderColor = 'hsl(var(--destructive))';
                     input.style.backgroundColor = 'hsla(var(--destructive) / 0.1)';
                   }
-                  
+
                   // Блокируем поле ввода после проверки
                   input.disabled = true;
                 }
               }
             });
-            
+
             // Скрываем кнопку проверки
             const checkButton = testContainer.querySelector('.test-check-button');
             if (checkButton) {
@@ -228,13 +228,13 @@ export default function LeftMessage({
 
     // Удаляем markdown-блок ```json ... ```
     cleaned = cleaned.replace(/```json[\s\S]*?```/gi, '').trim();
-    
+
     // Удаляем markdown-блок ```html ... ```
     cleaned = cleaned.replace(/```html[\s\S]*?```/gi, (match) => {
       // Удаляем только обертки ```html и ```, оставляя содержимое
       return match.replace(/^```html\s*/i, '').replace(/\s*```$/g, '');
     }).trim();
-    
+
     // Удаляем оставшиеся блоки ``` в начале и конце (на случай, если формат немного другой)
     cleaned = cleaned.replace(/^```\s*/g, '').replace(/\s*```$/g, '');
 
@@ -280,7 +280,7 @@ export default function LeftMessage({
     const earlyHasResult = /Результат:/i.test(text);
     const earlyHasExplanation = /Разъяснение:|Объяснение:|Пояснение:/i.test(text);
     const earlyHasAnalysis = (
-      /Вот (анализ|ошибки в) ваших ответов/i.test(text) || 
+      /Вот (анализ|ошибки в) ваших ответов/i.test(text) ||
       /(анализ|анализируй).*ответов.*тест/i.test(text) ||
       /(ошибки в|что не так с).*ответами.*тест/i.test(text) ||
       /Анализ.*ответов.*тест/i.test(text) ||
@@ -292,26 +292,26 @@ export default function LeftMessage({
     // Предварительная очистка: удаляем CSS-стили и HTML-атрибуты из текста
     // Удаляем стили вида "• top: 28px; margin-bottom: 16px;">" перед вопросами
     let cleanedText = text;
-    
+
     // Сначала удаляем некорректные HTML-теги, которые могут быть в тексте
     // Удаляем некорректные вложенные div'ы типа <div class="test<div class="
     cleanedText = cleanedText.replace(/<div\s+class\s*=\s*["']test<div\s+class\s*=\s*["']/gi, '');
     cleanedText = cleanedText.replace(/<div\s+class\s*=\s*["'][^"']*test-analytics[^"']*["']\s*>\s*<div\s+class\s*=\s*["']/gi, '');
-    
+
     // Удаляем некорректные теги, которые содержат вложенные теги внутри атрибутов
     // Например: <div class="test<div class=" test-analytics-recommendations-item"="">•analytics-question">
     cleanedText = cleanedText.replace(/<div\s+class\s*=\s*["'][^"']*<[^>]*>/gi, '');
     cleanedText = cleanedText.replace(/<[^>]*class\s*=\s*["'][^"']*<[^>]*>/gi, '');
-    
+
     // Удаляем артефакты от некорректных тегов (например, "•analytics-question">")
     // Более агрессивная очистка - удаляем все артефакты в начале строк
     cleanedText = cleanedText.replace(/^[•\-]\s*analytics-[^>\n]*["']?\s*>\s*/gim, '');
     cleanedText = cleanedText.replace(/[•\-]\s*analytics-[^>\s]*["']?\s*>/gi, '');
     cleanedText = cleanedText.replace(/["']\s*>/g, '');
-    
+
     // Удаляем HTML-атрибуты style из текста (если они попали как обычный текст)
     cleanedText = cleanedText.replace(/style\s*=\s*["'][^"']*["']/gi, '');
-    
+
     // Удаляем оставшиеся HTML-теги, которые попали как обычный текст (но не удаляем содержимое)
     // НО: если текст уже содержит правильно сформированные HTML-теги аналитики или интерактивный тест, не трогаем их
     // ИЛИ если текст является аналитикой теста (определено ранее), не удаляем HTML теги
@@ -328,22 +328,22 @@ export default function LeftMessage({
       // НО только если это НЕ аналитика теста
       cleanedText = cleanedText.replace(/<[^>]+>/g, '');
     }
-    
+
     // Удаляем CSS-стили, которые попали в текст как обычный текст
     cleanedText = cleanedText.replace(/(?:^|\n)\s*[•\s]*[a-z-]+\s*:\s*.*?["']?\s*[>"]?\s*/gim, (match) => {
       const hasCSSUnits = /(px|em|%|rem|vh|vw|pt|pc|in|cm|mm|ex|ch|deg|rad|grad|ms|s|Hz|kHz|dpi|dpcm|dppx)/i.test(match);
       const hasCSSColors = /(#[0-9a-f]{3,6}|rgb|rgba|hsl|hsla)/i.test(match);
       const hasCSSProperties = /(top|bottom|left|right|margin|padding|border|background|color|font|width|height|display|position|z-index|box-shadow|border-radius|linear-gradient)/i.test(match);
-      
+
       if (hasCSSUnits || hasCSSColors || hasCSSProperties) {
         return '';
       }
       return match;
     });
-    
+
     // Удаляем лишние символы перед номерами вопросов (•, -, пробелы)
     cleanedText = cleanedText.replace(/^[\s•\-]*(\d+\.\s*Вопрос)/gm, '$1');
-    
+
     // Удаляем множественные пробелы и переносы строк
     cleanedText = cleanedText.replace(/\n{3,}/g, '\n\n');
     cleanedText = cleanedText.replace(/[ \t]{2,}/g, ' ');
@@ -363,11 +363,11 @@ export default function LeftMessage({
     const hasCorrectAnswer = /Правильный ответ:/i.test(cleanedText);
     const hasResult = /Результат:/i.test(cleanedText);
     const hasExplanation = /Разъяснение:|Объяснение:|Пояснение:/i.test(cleanedText);
-    
+
     // Аналитика может приходить без заголовка "Вот анализ", просто со структурой вопросов
     // Упрощенная проверка: достаточно наличия вопроса и хотя бы одного из элементов
     const hasAnalysis = (
-      /Вот (анализ|ошибки в) ваших ответов/i.test(cleanedText) || 
+      /Вот (анализ|ошибки в) ваших ответов/i.test(cleanedText) ||
       /(анализ|анализируй).*ответов.*тест/i.test(cleanedText) ||
       /(ошибки в|что не так с).*ответами.*тест/i.test(cleanedText) ||
       /Анализ.*ответов.*тест/i.test(cleanedText) ||
@@ -383,10 +383,10 @@ export default function LeftMessage({
 
     // ВАЖНО: Сначала обрабатываем вопросы, чтобы они были правильно обернуты
     // Затем обрабатываем заголовок, чтобы он не захватывал первый вопрос
-    
+
     // Обрабатываем заголовки markdown (##) перед вопросами
     formatted = formatted.replace(/^##\s*(.+)$/gm, '<div class="test-analytics-header">$1</div>');
-    
+
     // Вопросы: открываем контейнер вопроса и его заголовок
     // Обрабатываем вопросы по одному, чтобы правильно закрывать предыдущие div'ы
     let questionIndex = 0;
@@ -398,12 +398,12 @@ export default function LeftMessage({
         const beforeMatch = string.substring(0, offset);
         const lastOpenTag = beforeMatch.lastIndexOf('<div class="test-analytics-question">');
         const lastCloseTag = beforeMatch.lastIndexOf('</div>');
-        
+
         // Если есть открывающий тег вопроса и после него нет закрывающего тега, значит вопрос уже внутри блока
         if (lastOpenTag !== -1 && (lastCloseTag === -1 || lastCloseTag < lastOpenTag)) {
           return match;
         }
-        
+
         // Если есть предыдущий вопрос, закрываем его
         let result = '';
         if (questionIndex > 0) {
@@ -437,14 +437,14 @@ export default function LeftMessage({
       /<div class="test-analytics-question">(<div class="test-analytics-question-title">[^<]*<\/div>)([\s\S]*?)(?=<\/div>\s*(?:<div class="test-analytics-question"|<div class="test-analytics-recommendations"|$)|$)/g,
       (match, title, content) => {
         // Если содержимое уже содержит правильные div'ы, не обрабатываем
-        if (content.includes('test-analytics-your-answer') || 
-            content.includes('test-analytics-correct-answer') ||
-            content.includes('test-analytics-result')) {
+        if (content.includes('test-analytics-your-answer') ||
+          content.includes('test-analytics-correct-answer') ||
+          content.includes('test-analytics-result')) {
           return match;
         }
-        
+
         let processedContent = content.trim();
-        
+
         // Обрабатываем "Ваш ответ:" - может быть сразу после заголовка или после других элементов
         processedContent = processedContent.replace(
           /Ваш ответ:\s*([^\n<]*?)(?=\s*(?:Правильный ответ:|Результат:|Разъяснение:|Объяснение:|Пояснение:|$))/i,
@@ -456,7 +456,7 @@ export default function LeftMessage({
             return `<div class="${baseClass}${modifier}"><span class="test-analytics-label">Ваш ответ:</span><span class="test-analytics-value">${cleanAnswer}</span></div>`;
           }
         );
-        
+
         // Обрабатываем "Правильный ответ:"
         processedContent = processedContent.replace(
           /Правильный ответ:\s*([^\n<]*?)(?=\s*(?:Результат:|Разъяснение:|Объяснение:|Пояснение:|$))/i,
@@ -465,7 +465,7 @@ export default function LeftMessage({
             return `<div class="test-analytics-correct-answer"><span class="test-analytics-label">Правильный ответ:</span><span class="test-analytics-value">${cleanAnswer}</span></div>`;
           }
         );
-        
+
         // Обрабатываем "Результат:"
         processedContent = processedContent.replace(
           /Результат:\s*([^\n<]*?)(?=\s*(?:Разъяснение:|Объяснение:|Пояснение:|$))/i,
@@ -482,7 +482,7 @@ export default function LeftMessage({
             return `<div class="test-analytics-result${modifier}"><span class="test-analytics-label">Результат:</span><span class="test-analytics-value">${cleanResult}</span></div>`;
           }
         );
-        
+
         // Обрабатываем "Разъяснение:" (закрывает вопрос)
         // Захватываем весь текст разъяснения до следующего вопроса или конца
         processedContent = processedContent.replace(
@@ -493,7 +493,7 @@ export default function LeftMessage({
             return `<div class="test-analytics-explanation"><span class="test-analytics-label">Разъяснение:</span><span class="test-analytics-value">${cleanExplanation}</span></div></div>`;
           }
         );
-        
+
         // Если разъяснения нет, но есть результат, закрываем вопрос после результата
         if (!processedContent.includes('test-analytics-explanation') && processedContent.includes('test-analytics-result')) {
           processedContent = processedContent.replace(
@@ -501,16 +501,16 @@ export default function LeftMessage({
             '$1$2</div>'
           );
         }
-        
+
         // Если нет ни разъяснения, ни результата, но есть другие элементы, закрываем вопрос
         if (!processedContent.includes('test-analytics-explanation') && !processedContent.includes('test-analytics-result') && processedContent.trim()) {
           processedContent = processedContent.trim() + '</div>';
         }
-        
+
         return `<div class="test-analytics-question">${title}${processedContent}`;
       }
     );
-    
+
     // Также обрабатываем элементы вне блоков вопросов (на случай, если они еще не обработаны)
     // Ваш ответ
     formatted = formatted.replace(
@@ -555,7 +555,7 @@ export default function LeftMessage({
 
     // Разъяснение - захватываем весь текст до следующего вопроса или конца
     formatted = formatted.replace(
-      /(?:^|\n)\s*(?:<strong>)?(?:Разъяснение|Объяснение|Пояснение):(?:<\/strong>)?\s*([^\n<]*(?:\n(?!\d+\.\s*Вопрос|\n\s*\d+\.|###|Рекомендации:|Если хотите|Если нужна|<\/div>)[^\n<]*)*?)(?=\s*(?:\d+\.\s*Вопрос|\n\s*\d+\.|###|Рекомендации:|Если хотите|Если нужна|<\/div>|$))/gim,
+      /(?:^|\n)\s*(?:<strong>)?(?:Разъяснение|Объяснение|Пояснение):(?:<\/strong>)?\s*([^\n<]*(?:(?!\d+\.\s*Вопрос|\s*\d+\.|###|Рекомендации:|Если хотите|Если нужна|<\/div>)[^\n<]*)*?)(?=\s*(?:\d+\.\s*Вопрос|\s*\d+\.|###|Рекомендации:|Если хотите|Если нужна|<\/div>|$))/gim,
       (match, explanation) => {
         if (match.includes('test-analytics-explanation')) return match;
         const cleanExplanation = explanation.trim().replace(/\n+/g, ' ').replace(/\s+/g, ' ').replace(/<\/?(?:strong|em)>/g, '').trim();
@@ -563,7 +563,7 @@ export default function LeftMessage({
         return `<div class="test-analytics-explanation"><span class="test-analytics-label">Разъяснение:</span><span class="test-analytics-value">${cleanExplanation}</span></div></div>`;
       }
     );
-    
+
     // Закрываем вопросы перед следующим вопросом или рекомендациями
     // Ищем результаты, после которых идет новый вопрос или рекомендации
     // Используем более гибкое регулярное выражение, которое работает даже если между результатом и вопросом есть текст
@@ -577,14 +577,14 @@ export default function LeftMessage({
         return match;
       }
     );
-    
+
     // Также закрываем вопросы после разъяснений, если после них идет новый вопрос
     // (разъяснение уже закрывает вопрос, но проверяем на всякий случай)
     formatted = formatted.replace(
       /(<div class="test-analytics-explanation">[\s\S]*?<\/div><\/div>)(\s*)(?=<div class="test-analytics-question")/g,
       '$1$2'
     );
-    
+
     // Явно закрываем все вопросы перед следующим вопросом
     // Это гарантирует, что каждый вопрос будет в отдельном блоке
     formatted = formatted.replace(
@@ -593,7 +593,7 @@ export default function LeftMessage({
         // Проверяем, закрыт ли вопрос
         const openDivs = (questionContent.match(/<div[^>]*>/gi) || []).length;
         const closeDivs = (questionContent.match(/<\/div>/gi) || []).length;
-        
+
         // Если вопрос не закрыт, закрываем его
         if (openDivs > closeDivs) {
           return questionContent + '</div>'.repeat(openDivs - closeDivs);
@@ -601,13 +601,13 @@ export default function LeftMessage({
         return match;
       }
     );
-    
+
     // Закрываем все незакрытые контейнеры вопросов после обработки всех элементов
     if (questionIndex > 0) {
       // Подсчитываем баланс div'ов
       const allOpenDivs = (formatted.match(/<div[^>]*>/gi) || []).length;
       const allCloseDivs = (formatted.match(/<\/div>/gi) || []).length;
-      
+
       // Если есть незакрытые div'ы, закрываем их в конце (но не перед рекомендациями)
       if (allOpenDivs > allCloseDivs) {
         const missingCloses = allOpenDivs - allCloseDivs;
@@ -634,7 +634,7 @@ export default function LeftMessage({
         return header + cleanedText;
       }
     );
-    
+
     // Очищаем лишний текст между блоками вопросов
     // Удаляем любой текст, который остался между закрывающим тегом вопроса и следующим вопросом
     // Ищем закрывающие теги вопросов (может быть один или два </div>)
@@ -653,7 +653,7 @@ export default function LeftMessage({
         return match;
       }
     );
-    
+
     // Удаляем лишний текст после последнего вопроса перед рекомендациями
     formatted = formatted.replace(
       /(<\/div>\s*(?:<\/div>)?)([^<]*?)(?=<div class="test-analytics-recommendations">)/g,
@@ -665,16 +665,16 @@ export default function LeftMessage({
         return match;
       }
     );
-    
+
     // Раздел "Рекомендации"
     formatted = formatted.replace(/(?:---|\*\*\*)\s*\n/gi, '');
-    
+
     // Обрабатываем рекомендации - они могут быть с заголовком "### Рекомендации:" или просто "Рекомендации:" или с эмодзи
     formatted = formatted.replace(
       /(?:###\s*)?(?:💡\s*)?Рекомендации:\s*\n([^\n]+(?:\n(?!###|\d+\.\s*Вопрос|Если хотите|Если нужна)[^\n]+)*)/gi,
       '<div class="test-analytics-recommendations"><div class="test-analytics-recommendations-title">💡 Рекомендации:</div><div class="test-analytics-recommendations-body">$1</div></div>'
     );
-    
+
     // Если рекомендации не были обработаны выше, обрабатываем их отдельно
     if (!formatted.includes('test-analytics-recommendations')) {
       // Ищем блок рекомендаций - может быть с эмодзи или без
@@ -684,13 +684,13 @@ export default function LeftMessage({
         const recommendationsContent = recommendationsMatch[1];
         formatted = formatted.replace(
           recommendationsMatch[0],
-          '<div class="test-analytics-recommendations"><div class="test-analytics-recommendations-title">💡 Рекомендации:</div><div class="test-analytics-recommendations-body">' + 
-          recommendationsContent.replace(/(?:^|\n)\s*[-•]\s*([^\n]+)/gm, '<div class="test-analytics-recommendations-item"><span class="test-analytics-bullet">•</span><span>$1</span></div>') + 
+          '<div class="test-analytics-recommendations"><div class="test-analytics-recommendations-title">💡 Рекомендации:</div><div class="test-analytics-recommendations-body">' +
+          recommendationsContent.replace(/(?:^|\n)\s*[-•]\s*([^\n]+)/gm, '<div class="test-analytics-recommendations-item"><span class="test-analytics-bullet">•</span><span>$1</span></div>') +
           '</div></div>'
         );
       }
     }
-    
+
     // Обрабатываем пункты рекомендаций внутри уже созданного блока
     // Сначала обрабатываем случаи, когда пункты идут на одной строке через " - "
     formatted = formatted.replace(
@@ -711,7 +711,7 @@ export default function LeftMessage({
         return match;
       }
     );
-    
+
     // Затем обрабатываем одиночные пункты с дефисом или точкой, которые еще не обработаны
     formatted = formatted.replace(
       /(<div class="test-analytics-recommendations-body">[^<]*?)((?:^|\n)\s*[-•]\s*[^\n<]+)/gm,
@@ -725,16 +725,16 @@ export default function LeftMessage({
         return match;
       }
     );
-    
+
     // Удаляем одиночные символы "•" в начале строк внутри блока рекомендаций
     formatted = formatted.replace(
       /(<div class="test-analytics-recommendations-body">[^<]*?)((?:^|\n)\s*•\s*(?=\n|$))/gm,
       '$1'
     );
-    
+
     // Удаляем оставшиеся одиночные символы "•" в начале строк
     formatted = formatted.replace(/^\s*•\s*$/gm, '');
-    
+
     // Удаляем пустые строки внутри блока рекомендаций
     formatted = formatted.replace(
       /(<div class="test-analytics-recommendations-body">[^<]*?)(\n\s*\n)/g,
@@ -757,10 +757,10 @@ export default function LeftMessage({
       }
     }
     formatted = parts.join('');
-    
+
     // Удаляем пустые HTML-теги выделения (только если они пустые)
     formatted = formatted.replace(/<(?:strong|em)>\s*<\/(?:strong|em)>/g, '');
-    
+
     // Удаляем множественные пробелы внутри текстовых узлов
     formatted = formatted.replace(/>\s{2,}</g, '> <');
 
@@ -844,7 +844,7 @@ export default function LeftMessage({
       const checkButton = testContainer.querySelector('.test-check-button');
       const analyticsButton = testContainer.querySelector('.test-analytics-button');
       const targetButton = analyticsButton || checkButton;
-      
+
       if (targetButton && targetButton.parentNode) {
         const analyticsDiv = document.createElement('div');
         analyticsDiv.innerHTML = analyticsHTML;
@@ -866,15 +866,15 @@ export default function LeftMessage({
         if (saved) {
           const savedAnswers = JSON.parse(saved);
           const questions = testContainer.querySelectorAll('.test-question');
-          
+
           questions.forEach((question) => {
             const questionId = question.getAttribute('data-question-id');
             const input = question.querySelector(`.test-answer-input[data-question-id="${questionId}"]`);
             const icon = question.querySelector(`.test-result-icon[data-question-id="${questionId}"]`);
-            
+
             if (input && savedAnswers[questionId]) {
               input.value = savedAnswers[questionId].answer || '';
-              
+
               // Восстанавливаем состояние проверки, если было
               if (savedAnswers[questionId].checked) {
                 const isCorrect = savedAnswers[questionId].is_correct;
@@ -883,7 +883,7 @@ export default function LeftMessage({
                     ? '<span style="color: hsl(var(--success)); font-size: 20px;">✓</span>'
                     : '<span style="color: hsl(var(--destructive)); font-size: 20px;">✗</span>';
                 }
-                
+
                 if (isCorrect) {
                   input.style.borderColor = 'hsl(var(--success))';
                   input.style.backgroundColor = 'hsla(var(--success) / 0.1)';
@@ -891,12 +891,12 @@ export default function LeftMessage({
                   input.style.borderColor = 'hsl(var(--destructive))';
                   input.style.backgroundColor = 'hsla(var(--destructive) / 0.1)';
                 }
-                
+
                 input.disabled = true;
               }
             }
           });
-          
+
           // Если все ответы проверены, заменяем кнопку проверки на кнопку аналитики
           const allChecked = Object.values(savedAnswers).every(a => a.checked);
           if (allChecked) {
@@ -922,12 +922,12 @@ export default function LeftMessage({
       try {
         const questions = testContainer.querySelectorAll('.test-question');
         const answers = {};
-        
+
         questions.forEach((question) => {
           const questionId = question.getAttribute('data-question-id');
           const input = question.querySelector(`.test-answer-input[data-question-id="${questionId}"]`);
           const icon = question.querySelector(`.test-result-icon[data-question-id="${questionId}"]`);
-          
+
           if (input) {
             answers[questionId] = {
               answer: input.value,
@@ -936,7 +936,7 @@ export default function LeftMessage({
             };
           }
         });
-        
+
         const storageKey = getTestStorageKey(testId);
         localStorage.setItem(storageKey, JSON.stringify(answers));
       } catch (e) {
@@ -952,7 +952,7 @@ export default function LeftMessage({
         if (testId) {
           // Восстанавливаем ответы
           setTimeout(() => restoreTestAnswers(testId), 100);
-          
+
           // Добавляем обработчики для сохранения при вводе
           const inputs = container.querySelectorAll('.test-answer-input');
           inputs.forEach((input) => {
@@ -977,7 +977,7 @@ export default function LeftMessage({
 
       const questions = testContainer.querySelectorAll('.test-question');
       const checkButton = testContainer.querySelector('.test-check-button');
-      
+
       if (!checkButton || !activeAgentId) {
         console.warn('[TEST] Cannot check answers: missing required context', {
           checkButton: !!checkButton,
@@ -996,7 +996,7 @@ export default function LeftMessage({
         const questionId = question.getAttribute('data-question-id');
         const questionText = question.querySelector('p')?.textContent || '';
         const input = question.querySelector(`.test-answer-input[data-question-id="${questionId}"]`);
-        
+
         if (input && questionText) {
           questionsData.push({
             question_id: questionId,
@@ -1030,13 +1030,13 @@ export default function LeftMessage({
             if (question) {
               const icon = question.querySelector(`.test-result-icon[data-question-id="${result.question_id}"]`);
               const input = question.querySelector(`.test-answer-input[data-question-id="${result.question_id}"]`);
-              
+
               if (icon && input) {
                 // Обновляем иконку результата
                 icon.innerHTML = result.is_correct
                   ? '<span style="color: hsl(var(--success)); font-size: 20px;">✓</span>'
                   : '<span style="color: hsl(var(--destructive)); font-size: 20px;">✗</span>';
-                
+
                 // Обновляем стили поля ввода
                 if (result.is_correct) {
                   input.style.borderColor = 'hsl(var(--success))';
@@ -1045,13 +1045,13 @@ export default function LeftMessage({
                   input.style.borderColor = 'hsl(var(--destructive))';
                   input.style.backgroundColor = 'hsla(var(--destructive) / 0.1)';
                 }
-                
+
                 // Блокируем поле ввода после проверки
                 input.disabled = true;
               }
             }
           });
-          
+
           // Сохраняем результаты в localStorage
           const storageKey = getTestStorageKey(testId);
           const savedAnswers = {};
@@ -1061,7 +1061,7 @@ export default function LeftMessage({
             const input = question.querySelector(`.test-answer-input[data-question-id="${questionId}"]`);
             const icon = question.querySelector(`.test-result-icon[data-question-id="${questionId}"]`);
             const result = response.results.find(r => r.question_id === questionId);
-            
+
             if (input) {
               savedAnswers[questionId] = {
                 answer: input.value,
@@ -1071,22 +1071,22 @@ export default function LeftMessage({
             }
           });
           localStorage.setItem(storageKey, JSON.stringify(savedAnswers));
-          
+
           // Заменяем кнопку проверки на кнопку аналитики
           checkButton.textContent = 'Аналитика теста';
           checkButton.className = 'test-analytics-button';
           checkButton.setAttribute('data-test-id', testId);
           checkButton.disabled = false;
           checkButton.style.display = 'block';
-          
+
           // Показываем аналитику результатов
           showTestAnalytics(testId, response.results);
-          
+
           console.log('[TEST] Проверка завершена успешно');
         } else {
           throw new Error('Invalid response format');
         }
-        
+
       } catch (error) {
         console.error('Error checking test answers:', error);
         showError('Не удалось проверить ответы. Попробуйте еще раз.');
@@ -1126,7 +1126,7 @@ export default function LeftMessage({
 
       if (incorrectQuestions.length > 0) {
         // Формируем запрос для объяснения
-        const explanationRequest = `Объясни, пожалуйста, почему мои ответы неправильные:\n\n${incorrectQuestions.map((q, i) => 
+        const explanationRequest = `Объясни, пожалуйста, почему мои ответы неправильные:\n\n${incorrectQuestions.map((q, i) =>
           `${i + 1}. Вопрос: ${q.question}\nМой ответ: ${q.userAnswer}\nПравильный ответ: ${q.correctAnswer}`
         ).join('\n\n')}`;
 
@@ -1165,13 +1165,13 @@ export default function LeftMessage({
         });
 
         console.log('[TEST] Ответ от сервера:', response);
-        
+
         // apiClient.request возвращает напрямую распарсенный JSON, а не объект с полем data
         // Проверяем разные форматы ответа
         if (response && (response.ok || response.analytics)) {
           // Аналитика уже создана как сообщение от агента на бэкенде
           console.log('[TEST] Аналитика успешно получена и создана как сообщение от агента');
-          
+
           // Обновляем список сообщений вручную, чтобы новое сообщение появилось сразу
           if (activeConversation && loadMessages) {
             // Пробуем обновить несколько раз с задержками, так как сообщение может сохраняться асинхронно
@@ -1179,7 +1179,7 @@ export default function LeftMessage({
               try {
                 await loadMessages(activeConversation.id);
                 console.log(`[TEST] Сообщения обновлены после получения аналитики (попытка ${attempt})`);
-                
+
                 // Проверяем, появилось ли новое сообщение с аналитикой
                 // Если нет, пробуем еще раз через 1 секунду (максимум 3 попытки)
                 if (attempt < 3) {
@@ -1189,7 +1189,7 @@ export default function LeftMessage({
                 console.error('[TEST] Ошибка при обновлении сообщений:', error);
               }
             };
-            
+
             // Начинаем обновление через 500мс после получения ответа
             setTimeout(() => updateMessages(1), 500);
           }
@@ -1202,7 +1202,7 @@ export default function LeftMessage({
         }
 
         console.log('[TEST] Аналитика успешно получена и отправлена');
-        
+
         // Восстанавливаем кнопку после успешного запроса
         if (analyticsButton) {
           analyticsButton.disabled = false;
@@ -1260,7 +1260,7 @@ export default function LeftMessage({
         // Проверяем наличие кнопок в DOM
         const checkButtons = messageRef.current.querySelectorAll('.test-check-button');
         console.log('[TEST] Найдено кнопок "Проверить":', checkButtons.length);
-        
+
         messageRef.current.addEventListener('click', handleClick, true); // Используем capture phase
         console.log('[TEST] Обработчик событий добавлен');
       } else {
@@ -1279,7 +1279,7 @@ export default function LeftMessage({
   // Если это состояние "думает" и нет текста сообщения, показываем индикатор
   // Индикатор не должен показываться, если уже есть текст ответа
   const shouldShowThinkingIndicator = (isThinking || currentMessageState?.state === MessageState.THINKING) && !text;
-  
+
   if (shouldShowThinkingIndicator) {
     return (
       <animated.div
@@ -1292,9 +1292,6 @@ export default function LeftMessage({
           ...slideInProps,
         }}
         data-message-id={messageId}
-        onMouseDown={onSelectMouseDown}
-        onMouseEnter={onSelectMouseEnter}
-        onMouseUp={onSelectMouseUp}
       >
         <div
           className="rounded-lg rounded-bl-none p-2 max-w-md relative message-content message-thinking"
@@ -1303,10 +1300,9 @@ export default function LeftMessage({
             color: "var(--msg-left-text-color)",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)",
             ...stateStyles,
-            // Разрешаем выделение текста, если сообщение уже выделено или режим выделения не активен
-            // Блокируем только когда сообщение не выделено И активен режим выделения
-            userSelect: (isSelected || !selectionActive) ? 'auto' : 'none',
-            WebkitUserSelect: (isSelected || !selectionActive) ? 'auto' : 'none',
+            // Блокируем выделение текста, когда активен режим выделения
+            userSelect: selectionActive ? 'none' : 'auto',
+            WebkitUserSelect: selectionActive ? 'none' : 'auto',
           }}
         >
           {/* Имя агента для групповых чатов */}
@@ -1343,9 +1339,6 @@ export default function LeftMessage({
         ...slideInProps,
       }}
       data-message-id={messageId}
-      onMouseDown={onSelectMouseDown}
-      onMouseEnter={onSelectMouseEnter}
-      onMouseUp={onSelectMouseUp}
     >
       <animated.div
         className="rounded-lg rounded-bl-none p-2 max-w-md relative message-content"
@@ -1354,10 +1347,9 @@ export default function LeftMessage({
           color: "var(--msg-left-text-color)",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)",
           ...stateStyles,
-          // Разрешаем выделение текста, если сообщение уже выделено или режим выделения не активен
-          // Блокируем только когда сообщение не выделено И активен режим выделения
-          userSelect: (isSelected || !selectionActive) ? 'auto' : 'none',
-          WebkitUserSelect: (isSelected || !selectionActive) ? 'auto' : 'none',
+          // Блокируем выделение текста, когда активен режим выделения
+          userSelect: selectionActive ? 'none' : 'auto',
+          WebkitUserSelect: selectionActive ? 'none' : 'auto',
         }}
         onMouseDown={(e) => {
           // Не блокируем клики по ссылкам
@@ -1369,7 +1361,7 @@ export default function LeftMessage({
             // НЕ вызываем preventDefault, чтобы ссылка работала
             return;
           }
-          
+
           if (selectionActive && onSelectContentMouseDown) {
             // В активном режиме выбора — клики по пузырю тоже переключают выделение
             onSelectContentMouseDown(e);
@@ -1431,7 +1423,7 @@ export default function LeftMessage({
               displayText.includes('</strong>') ||
               /<[a-z][^>]*>/i.test(displayText)
             );
-            
+
             // Если после очистки от служебного JSON текста не осталось — ничего не рендерим
             if (!displayText) {
               return null;
@@ -1444,11 +1436,11 @@ export default function LeftMessage({
               const hasLink = displayText.includes('<a ');
               const startsWithTag = displayText.trim().startsWith('<');
               const hasAnyTag = /<[a-z][^>]*>/i.test(displayText);
-              
+
               // Логируем все сообщения, которые могут содержать HTML
               // ВАЖНО: логируем ПОЛНОЕ содержимое для отладки
-              console.log('[LeftMessage] Content check:', { 
-                hasHTMLTags, 
+              console.log('[LeftMessage] Content check:', {
+                hasHTMLTags,
                 textLength: displayText.length,
                 hasDiv,
                 hasLink,
@@ -1458,7 +1450,7 @@ export default function LeftMessage({
                 fullText: displayText  // Логируем полный текст для отладки
               });
             }
-            
+
             return hasHTMLTags ? (
               <div
                 ref={messageRef}
@@ -1474,13 +1466,13 @@ export default function LeftMessage({
                   const target = e.target;
                   const link = target.tagName === 'A' ? target : target.closest('a');
                   const button = target.tagName === 'BUTTON' ? target : target.closest('button');
-                  
+
                   // Если клик по кнопке теста, не блокируем - обработчик в handleClick обработает
                   if (button && (button.classList.contains('test-check-button') || button.classList.contains('test-explain-button'))) {
                     // Не блокируем - позволим handleClick обработать
                     return;
                   }
-                  
+
                   if (link) {
                     // Не блокируем клики по ссылкам - позволяем им работать
                     e.stopPropagation();

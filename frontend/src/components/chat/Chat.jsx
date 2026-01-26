@@ -1171,7 +1171,7 @@ export default function Chat({
                         className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
                         aria-label="Scroll down"
                       >
-                        ↓
+                        <MdArrowDownward size={22} />
                       </button>
                     )}
                     <ChatMessagesList

@@ -456,10 +456,9 @@ export default function RightMessage({
           ...(currentMessageState?.state === MessageState.ERROR
             ? errorProps
             : {}),
-          // Разрешаем выделение текста, если сообщение уже выделено или режим выделения не активен
-          // Блокируем только когда сообщение не выделено И активен режим выделения
-          userSelect: (isSelected || !selectionActive) ? 'auto' : 'none',
-          WebkitUserSelect: (isSelected || !selectionActive) ? 'auto' : 'none',
+          // Блокируем выделение текста, когда активен режим выделения
+          userSelect: selectionActive ? 'none' : 'auto',
+          WebkitUserSelect: selectionActive ? 'none' : 'auto',
         }}
         onMouseDown={(e) => {
           if (selectionActive && onSelectContentMouseDown) {

@@ -1,0 +1,136 @@
+/* LoadingScreen.css - 3D Геометрический куб с фиолетовым градиентом */
+
+/* ========================================
+   Основной контейнер
+   ======================================== */
+.loading-screen-3d {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: #0c0015; /* Однотонный fallback для мгновенного скрытия фона */
+  background: linear-gradient(135deg, #0c0015 0%, #1a0a2e 50%, #16082a 100%);
+  overflow: hidden;
+}
+
+/* ========================================
+   Градиентное наложение
+   ======================================== */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at center,
+    transparent 0%,
+    rgba(12, 0, 21, 0.3) 50%,
+    rgba(12, 0, 21, 0.7) 100%
+  );
+  pointer-events: none;
+}
+
+/* ========================================
+   Контент загрузки (текст + прогресс-бар)
+   ======================================== */
+.loading-content {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+/* ========================================
+   Текст загрузки
+   ======================================== */
+.loading-text-3d {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+  animation: text-glow 2s ease-in-out infinite;
+}
+
+@keyframes text-glow {
+  0%, 100% {
+    opacity: 0.7;
+    text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 30px rgba(168, 85, 247, 0.8), 0 0 60px rgba(217, 70, 239, 0.4);
+  }
+}
+
+/* ========================================
+   Прогресс-бар
+   ======================================== */
+.loading-bar {
+  width: 200px;
+  height: 3px;
+  background: rgba(168, 85, 247, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #a855f7, #d946ef, #a855f7);
+  background-size: 200% 100%;
+  border-radius: 3px;
+  animation: loading-progress 1.5s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+}
+
+@keyframes loading-progress {
+  0% {
+    left: -40%;
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+  100% {
+    left: 100%;
+    background-position: 0% 0%;
+  }
+}
+
+/* ========================================
+   Адаптивность
+   ======================================== */
+@media (max-width: 768px) {
+  .loading-text-3d {
+    font-size: 14px;
+  }
+  
+  .loading-bar {
+    width: 160px;
+  }
+  
+  .loading-content {
+    bottom: 20%;
+  }
+}
+
+/* ========================================
+   Анимация появления всей сцены (отключена для мгновенного перекрытия фона)
+   ======================================== */
+.loading-screen-3d {
+  /* Убрали scene-fade-in для исключения просвечивания старого фона */
+}
