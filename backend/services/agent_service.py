@@ -208,7 +208,7 @@ class AgentService(BaseService):
         try:
             with self.get_session() as session:
                 # Используем стандартную модель для всех персонажей
-                default_model = "openrouter/google/gemini-2.0-flash-001"
+                default_model = "google/gemini-2.0-flash-001"
                 
                 db_agent = Agent(
                     name=name,

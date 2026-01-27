@@ -18,10 +18,6 @@ class MessageBase(SQLModel):
     reply_to_message_id: Optional[int] = Field(default=None, foreign_key="message.id")  # ID сообщения, на которое отвечаем
     is_deleted: bool = Field(default=False)  # Удалено ли сообщение (мягкое удаление)
     
-    # Поля для сохраненных сообщений
-    original_message_id: Optional[int] = Field(default=None, foreign_key="message.id")  # ID оригинального сообщения
-    original_chat_name: Optional[str] = Field(default=None)  # Название оригинального чата
-    original_agent_name: Optional[str] = Field(default=None)  # Имя оригинального агента
     
     # Валидация: сообщение должно принадлежать либо обычному чату, либо многопользовательскому
     def __init__(self, **data):

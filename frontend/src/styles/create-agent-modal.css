@@ -127,7 +127,7 @@
 .create-agent-field label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-secondary, #ccc);
+  color: var(--text-gray);
 }
 
 .create-agent-field input,
@@ -187,7 +187,7 @@
 
 .create-agent-cancel-btn {
   background: var(--bg-tertiary, #2a2a3e);
-  color: var(--text-secondary, #ccc);
+  color: var(--text-gray);
 }
 
 .create-agent-cancel-btn:hover:not(:disabled) {
@@ -217,15 +217,13 @@
     max-height: 100vh;
     border-radius: 0;
   }
-  
+
   .create-agent-modal-overlay {
     padding: 0;
   }
-  
+
   .create-agent-avatar-preview {
     width: 100px;
     height: 100px;
   }
 }
-
-

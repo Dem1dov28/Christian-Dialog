@@ -12,9 +12,7 @@ const Actions = ({
   onReply,
   onCopy,
   onPin,
-  onSave,
   onDelete,
-  showSave = true, // По умолчанию показываем кнопку Save
   isSelectionMode = false,
   onUnselect,
 }) => {
@@ -83,18 +81,6 @@ const Actions = ({
                 <span className="text-base">Copy Text</span>
               </button>
             </li>
-            {showSave && (
-              <li>
-                <button
-                  type="button"
-                  className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                  onClick={handleAction(onSave)}
-                >
-                  {React.createElement(getActionIcon("save"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
-                  <span className="text-base">Save</span>
-                </button>
-              </li>
-            )}
             <li>
               <button
                 type="button"
@@ -148,18 +134,6 @@ const Actions = ({
                 <span className="text-base">Pin</span>
               </button>
             </li>
-            {showSave && (
-              <li>
-                <button
-                  type="button"
-                  className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                  onClick={handleAction(onSave)}
-                >
-                  {React.createElement(getActionIcon("save"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
-                  <span className="text-base">Save</span>
-                </button>
-              </li>
-            )}
             <li>
               <button
                 type="button"

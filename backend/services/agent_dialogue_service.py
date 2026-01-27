@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from datetime import datetime
 import random
 import logging
+import asyncio
 
 from models.message import Message
 from models.multi_agent_conversation import MultiAgentConversation
@@ -154,6 +155,10 @@ class AgentDialogueService(BaseService):
                 agent_participation = {first_agent["id"]: 1}
                 
                 for agent in agent_queue:
+                    # Добавляем небольшую задержку между ответами агентов для имитации естественности
+                    # и предотвращения превышения лимитов API (Rate Limits)
+                    await asyncio.sleep(1.0)
+                    
                     # Проверяем, должен ли агент ответить
                     participation_count = agent_participation.get(agent["id"], 0)
                     total_participation = self.interaction_service.get_agent_participation_count(
@@ -420,6 +425,9 @@ class AgentDialogueService(BaseService):
             if self.agent_selector.should_add_final_response(final_probability):
                 other_agents = [a for a in agents if a["id"] != next_agent["id"]]
                 if other_agents:
+                    # Задержка перед финальным ответом
+                    await asyncio.sleep(1.0)
+                    
                     # Выбираем агента с учетом вовлеченности
                     agent_engagements = []
                     for agent in other_agents:
@@ -610,6 +618,9 @@ class AgentDialogueService(BaseService):
                 if self.agent_selector.should_add_final_response(0.4):
                     other_agents = [a for a in agents if a["id"] != agent["id"]]
                     if other_agents:
+                        # Задержка перед вторым ответом
+                        await asyncio.sleep(1.0)
+                        
                         final_agent = random.choice(other_agents)
                         final_context = f"{context}\n{agent['name']}: {continuation_response}"
                         # Используем is_multi_agent=True для уникального conversation_id

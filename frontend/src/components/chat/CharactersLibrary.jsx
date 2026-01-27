@@ -55,7 +55,7 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
         localStorage.setItem("addedCharacters", JSON.stringify(newCharacterIds));
         setAddedCharacterIds(newCharacterIds);
         window.dispatchEvent(new Event("aigram:characters-updated"));
-        
+
         if (onAddCharacter) {
           onAddCharacter(characterId);
         }
@@ -80,10 +80,10 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-white)]">
-                Библиотека персонажей
+                {t("library.title")}
               </h2>
               <p className="text-sm text-[var(--text-gray)]">
-                Выберите персонажей для добавления
+                {t("library.chooseCharacters")}
               </p>
             </div>
           </div>
@@ -102,7 +102,7 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
             <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xl text-[var(--text-gray)]" />
             <input
               type="text"
-              placeholder="Поиск персонажей..."
+              placeholder={t("library.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)]"
@@ -117,8 +117,8 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
               <MdPerson className="text-6xl text-[var(--text-gray)] mb-4 opacity-50" />
               <p className="text-lg text-[var(--text-gray)]">
                 {searchQuery
-                  ? "Персонажи не найдены"
-                  : "Нет доступных персонажей"}
+                  ? t("library.noCharactersFound")
+                  : t("library.noCharactersAvailable")}
               </p>
             </div>
           ) : (
@@ -130,11 +130,10 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
                 return (
                   <div
                     key={character.id}
-                    className={`group relative bg-[var(--bg-primary)] rounded-xl p-5 border transition-all duration-300 hover:scale-105 hover:shadow-lg ${
-                      isAdded
-                        ? "border-[var(--accent)] bg-[var(--accent)]/10"
-                        : "border-[var(--border-color)] hover:border-[var(--accent)]"
-                    }`}
+                    className={`group relative bg-[var(--bg-primary)] rounded-xl p-5 border transition-all duration-300 hover:scale-105 hover:shadow-lg ${isAdded
+                      ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                      : "border-[var(--border-color)] hover:border-[var(--accent)]"
+                      }`}
                   >
                     {/* Индикатор добавленного персонажа */}
                     {isAdded && (
@@ -153,9 +152,8 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
                         />
                       ) : (
                         <div
-                          className={`w-16 h-16 rounded-full ${
-                            character.colorClass || "bg-blue-500"
-                          } flex items-center justify-center text-white shadow-lg`}
+                          className={`w-16 h-16 rounded-full ${character.colorClass || "bg-blue-500"
+                            } flex items-center justify-center text-white shadow-lg`}
                         >
                           <IconComponent className="text-2xl" />
                         </div>
@@ -181,13 +179,12 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
                           handleAddCharacter(character.id);
                         }}
                         disabled={isAdded}
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
-                          isAdded
-                            ? "bg-[var(--accent)]/20 text-[var(--accent)] cursor-default"
-                            : "bg-[var(--accent)] text-white hover:brightness-110 cursor-pointer"
-                        }`}
+                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${isAdded
+                          ? "bg-[var(--accent)]/20 text-[var(--accent)] cursor-default"
+                          : "bg-[var(--accent)] text-white hover:brightness-110 cursor-pointer"
+                          }`}
                       >
-                        {isAdded ? "✓ Добавлено" : "+ Добавить"}
+                        {isAdded ? `✓ ${t("library.added")}` : `+ ${t("library.add")}`}
                       </button>
                     </div>
                   </div>

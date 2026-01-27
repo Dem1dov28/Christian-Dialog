@@ -15,7 +15,6 @@ export function useAppState() {
   const [isProfileVisible, setIsProfileVisible] = useState(false);
   const [isInlineLibraryOpen, setIsInlineLibraryOpen] = useState(false);
   const [isPricingPageVisible, setIsPricingPageVisible] = useState(false);
-  const [isAISettingsVisible, setIsAISettingsVisible] = useState(false);
   const [targetMessageId, setTargetMessageId] = useState(null);
   const [isCompactChatOpen, setIsCompactChatOpen] = useState(false);
 
@@ -116,8 +115,7 @@ export function useAppState() {
     setIsInlineLibraryOpen,
     isPricingPageVisible,
     setIsPricingPageVisible,
-    isAISettingsVisible,
-    setIsAISettingsVisible,
+
     targetMessageId,
     setTargetMessageId,
     isCompactChatOpen,

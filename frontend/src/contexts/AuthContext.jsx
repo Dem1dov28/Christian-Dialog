@@ -20,6 +20,8 @@ export const AuthProvider = ({ children }) => {
 
   // Проверяем токен при загрузке приложения
   useEffect(() => {
+    console.log("[AuthContext] useEffect triggered, isInitialized:", isInitialized);
+    
     // Защита от повторных вызовов в React StrictMode
     if (isInitialized) return;
 

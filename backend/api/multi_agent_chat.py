@@ -31,6 +31,30 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     conversation_service = ConversationService()
     
+    def _parse_conversation_id(conversation_id_str: str) -> int:
+        """Парсит ID разговора, удаляя префикс 'group-', если он есть"""
+        if isinstance(conversation_id_str, int):
+            return conversation_id_str
+        
+        # Если это строка с префиксом group-
+        if isinstance(conversation_id_str, str) and conversation_id_str.startswith("group-"):
+            try:
+                return int(conversation_id_str.replace("group-", ""))
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Неверный формат ID разговора: {conversation_id_str}"
+                )
+        
+        # Если это просто строка-число
+        try:
+            return int(conversation_id_str)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Неверный ID разговора: {conversation_id_str}"
+            )
+
     def verify_conversation_access(conversation_id: int, current_user: User) -> dict:
         """Проверить права доступа к разговору"""
         conversation = multi_agent_chat_service.get_conversation(conversation_id, current_user.id)
@@ -136,7 +160,7 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.post("/multi-agent-chat/{conversation_id}/add-agent/{agent_id}")
     def add_agent_to_conversation(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         agent_id: Annotated[int, Path(ge=1, description="ID агента")],
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
@@ -145,6 +169,7 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
         
         """
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             success = multi_agent_chat_service.add_agent_to_conversation(conversation_id, agent_id)
@@ -174,13 +199,14 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.delete("/multi-agent-chat/{conversation_id}/remove-agent/{agent_id}")
     def remove_agent_from_conversation(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         agent_id: Annotated[int, Path(ge=1, description="ID агента")],
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Удалить агента из разговора"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             success = multi_agent_chat_service.remove_agent_from_conversation(conversation_id, agent_id)
@@ -203,12 +229,13 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.get("/multi-agent-chat/{conversation_id}/agents")
     def get_conversation_agents(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Получить список агентов в разговоре"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             agents = multi_agent_chat_service.get_conversation_agents(conversation_id)
@@ -225,13 +252,14 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.put("/multi-agent-chat/{conversation_id}/title")
     def update_conversation_title(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         request: Annotated[dict, Body()],
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Обновить название группового чата"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             title = request.get("title", "").strip()
@@ -267,13 +295,14 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.put("/multi-agent-chat/{conversation_id}")
     def update_conversation(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         request: dict,
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Обновить параметры группового чата (например, group_avatar)"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             group_avatar = request.get("group_avatar")
@@ -308,7 +337,7 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.put("/multi-agent-chat/{conversation_id}/avatar")
     async def update_conversation_avatar(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         avatar: Optional[UploadFile] = File(None),
         group_avatar: Optional[str] = Form("group"),
         session: Session = Depends(get_session),
@@ -316,6 +345,7 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     ):
         """Обновить аватар группового чата"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             # Проверяем подписку Plus или Pro
@@ -402,7 +432,14 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
                 )
             
             # Преобразуем conversation_id в int для валидации
-            conversation_id = int(message_data.conversation_id)
+            try:
+                conversation_id = _parse_conversation_id(message_data.conversation_id)
+            except HTTPException:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid conversation ID format"
+                )
+                
             if conversation_id <= 0:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -444,7 +481,7 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.get("/multi-agent-chat/{conversation_id}/messages")
     def get_conversation_messages(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user),
         offset: int = Query(0, ge=0, description="Смещение для пагинации (количество уже загруженных сообщений, используется только если before_date не указан)"),
@@ -453,6 +490,7 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     ):
         """Получить сообщения из многопользовательского разговора с лимитом по символам"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             # Получаем все сообщения
@@ -551,12 +589,13 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.get("/multi-agent-chat/{conversation_id}", response_model=MultiAgentConversationPublic)
     def get_multi_agent_conversation(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Получить многопользовательский разговор по ID"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             return verify_conversation_access(conversation_id, current_user)
         except HTTPException:
             raise
@@ -569,14 +608,25 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.post("/multi-agent-chat/{conversation_id}/continue-dialogue")
     async def continue_agent_dialogue(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         request: Request,
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Продолжить диалог между агентами без участия пользователя"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
+            
+            # Проверяем статус подписки (передаем сессию для сброса цикла)
+            SubscriptionService.check_subscription_status(current_user, session)
+            
+            # Проверяем лимит сообщений перед продолжением диалога
+            if not SubscriptionService.can_send_message(current_user, session):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Message limit exceeded. Please upgrade your subscription."
+                )
             
             # Получаем параметры из тела запроса
             language = None
@@ -587,6 +637,14 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
                 is_chat_active = body.get("is_chat_active", False)
             except:
                 pass
+            
+            # Увеличиваем счетчик сообщений пользователя
+            # (даже при автоматической генерации диалога, так как это считается активностью)
+            if not SubscriptionService.increment_message_count(session, current_user):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Message limit exceeded. Please upgrade your subscription."
+                )
             
             result = await multi_agent_chat_service.continue_dialogue(conversation_id, language=language, is_chat_active=is_chat_active)
             logger.info(f"Dialogue continued for conversation {conversation_id} by user {current_user.id} (chat_active={is_chat_active})")
@@ -605,12 +663,13 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.delete("/multi-agent-chat/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)
     def delete_multi_agent_conversation(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
         """Удалить многопользовательский разговор"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             success = multi_agent_chat_service.delete_conversation(conversation_id)
@@ -633,12 +692,13 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.post("/multi-agent-chat/{conversation_id}/messages/{message_id}/pin")
     def pin_message_in_multi_agent_chat(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         message_id: Annotated[int, Path(ge=1, description="ID сообщения")],
         current_user: User = Depends(get_current_active_user)
     ):
         """Закрепить сообщение в многопользовательском чате"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             success = multi_agent_chat_service.pin_message(conversation_id, message_id)
@@ -661,11 +721,12 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.delete("/multi-agent-chat/{conversation_id}/messages/pin")
     def unpin_message_in_multi_agent_chat(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         current_user: User = Depends(get_current_active_user)
     ):
         """Открепить сообщение в многопользовательском чате"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             success = multi_agent_chat_service.unpin_message(conversation_id)
@@ -688,11 +749,12 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.get("/multi-agent-chat/{conversation_id}/pinned-message")
     def get_pinned_message_in_multi_agent_chat(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         current_user: User = Depends(get_current_active_user)
     ):
         """Получить закрепленное сообщение многопользовательского чата"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             pinned_message = multi_agent_chat_service.get_pinned_message(conversation_id)
@@ -710,11 +772,12 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.get("/multi-agent-chat/{conversation_id}/pinned-messages")
     def get_pinned_messages_in_multi_agent_chat(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         current_user: User = Depends(get_current_active_user)
     ):
         """Получить все закрепленные сообщения группового чата"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             pinned_messages = multi_agent_chat_service.get_pinned_messages(conversation_id)
@@ -733,12 +796,13 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.delete("/multi-agent-chat/{conversation_id}/messages/{message_id}/pin")
     def unpin_specific_message_in_multi_agent_chat(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         message_id: Annotated[int, Path(ge=1, description="ID сообщения")],
         current_user: User = Depends(get_current_active_user)
     ):
         """Открепить конкретное сообщение в групповом чате"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             success = multi_agent_chat_service.unpin_specific_message(conversation_id, message_id)
@@ -765,11 +829,12 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.post("/multi-agent-chat/{conversation_id}/mark-as-read")
     def mark_multi_agent_conversation_as_read(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         current_user: User = Depends(get_current_active_user)
     ):
         """Пометить групповой чат как прочитанный"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             conversation_service.reset_unread_count(conversation_id, is_group_chat=True)
@@ -787,11 +852,12 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
     
     @app.post("/multi-agent-chat/{conversation_id}/clear")
     def clear_multi_agent_conversation_messages(
-        conversation_id: Annotated[int, Path(ge=1, description="ID разговора")],
+        conversation_id: str,
         current_user: User = Depends(get_current_active_user)
     ):
         """Очистить все сообщения из группового разговора"""
         try:
+            conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
             
             # Очищаем сообщения через conversation_service

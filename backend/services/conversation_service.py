@@ -92,75 +92,6 @@ class ConversationService(BaseService):
             return session.get(MultiAgentConversation, conversation_id)
         return session.get(Conversation, conversation_id)
     
-    def create_system_chat(self, user_id: int, chat_type: str = "saved_messages") -> Dict[str, Any]:
-        """Создать системный чат для пользователя"""
-        # Обеспечиваем существование поля is_system_chat
-        from core.database import ensure_conversation_system_chat_column
-        ensure_conversation_system_chat_column()
-        
-        with self.get_session() as session:
-            # Проверяем, не существует ли уже системный чат этого типа для пользователя
-            try:
-                existing_chat = session.exec(
-                    select(Conversation)
-                    .where(Conversation.user_id == user_id)
-                    .where(Conversation.is_system_chat == True)
-                    .where(Conversation.title == "Saved Messages")
-                ).first()
-            except Exception as e:
-                logger.warning(f"Error querying existing system chat: {e}")
-                # Fallback: ищем по названию без проверки is_system_chat
-                existing_chat = session.exec(
-                    select(Conversation)
-                    .where(Conversation.user_id == user_id)
-                    .where(Conversation.title == "Saved Messages")
-                ).first()
-            
-            if existing_chat:
-                return self._format_conversation_dict(existing_chat)
-            
-            # Создаем системный чат
-            # Системный чат не имеет агента (agent_id=None)
-            conversation = Conversation(
-                agent_id=None,  # Системный чат без агента
-                title="Saved Messages",
-                user_id=user_id,
-                is_system_chat=True
-            )
-            session.add(conversation)
-            session.commit()
-            session.refresh(conversation)
-            
-            return self._format_conversation_dict(conversation)
-    
-    def get_system_chat(self, user_id: int, chat_type: str = "saved_messages") -> Optional[Dict[str, Any]]:
-        """Получить системный чат пользователя"""
-        # Обеспечиваем существование поля is_system_chat
-        from core.database import ensure_conversation_system_chat_column
-        ensure_conversation_system_chat_column()
-        
-        with self.get_session() as session:
-            # Используем raw SQL для избежания проблем с SQLModel, если поле отсутствует
-            try:
-                conversation = session.exec(
-                    select(Conversation)
-                    .where(Conversation.user_id == user_id)
-                    .where(Conversation.is_system_chat == True)
-                    .where(Conversation.title == "Saved Messages")
-                ).first()
-            except Exception as e:
-                logger.warning(f"Error querying system chat: {e}")
-                # Fallback: ищем по названию без проверки is_system_chat
-                conversation = session.exec(
-                    select(Conversation)
-                    .where(Conversation.user_id == user_id)
-                    .where(Conversation.title == "Saved Messages")
-                ).first()
-            
-            if conversation:
-                return self._format_conversation_dict(conversation)
-            return None
-    
     def create_conversation(
         self, 
         agent_id: Optional[int], 
@@ -1125,8 +1056,11 @@ class ConversationService(BaseService):
             "created_at": message.created_at.isoformat() if message.created_at else None,
             "agent_id": message.agent_id,
             "agent_name": None,
-            "original_chat_name": message.original_chat_name,
-            "original_agent_name": message.original_agent_name,
+            # Для системных чатов (Saved Messages) - опциональные поля
+            "original_chat_name": getattr(message, 'original_chat_name', None),
+            "original_agent_name": getattr(message, 'original_agent_name', None),
+            "original_message_id": getattr(message, 'original_message_id', None),
+            "original_chat_id": getattr(message, 'original_chat_id', None),
             "file_attachments": file_attachments
         }
         

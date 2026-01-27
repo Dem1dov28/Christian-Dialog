@@ -27,7 +27,6 @@ import { useMaxWidth } from "../../hooks/common/use-mobile";
 const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect }) => {
   const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const { systemChat, selectConversation } = useChats();
   const { showSuccess, showError } = useNotification();
   const [notifications, setNotifications] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -172,16 +171,6 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
     onOpenPricing();
   };
 
-  const handleSavedMessagesClick = async () => {
-    if (systemChat && onChatSelect) {
-      console.log("Opening Saved Messages chat:", systemChat);
-      await selectConversation(systemChat.id);
-      onChatSelect(systemChat.id);
-      onClose(); // Закрываем профиль после выбора чата
-    } else {
-      console.log("System chat not available or onChatSelect not provided");
-    }
-  };
 
   const handleUpgradeToAPI = async (apiKey) => {
     try {
@@ -199,12 +188,6 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
     {
       title: t("profile.sections.account"),
       data: [
-        {
-          id: "saved-messages",
-          label: t("profile.menu.saved_messages"),
-          icon: FiBookmark,
-          onPress: handleSavedMessagesClick,
-        },
         {
           id: "subscription-status",
           label: t("profile.menu.subscription_status"),
@@ -258,35 +241,13 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
             </div>
           ),
         },
-        {
-          id: "api-settings",
-          label: t("profile.menu.api_settings"),
-          icon: FiSettings,
-          onPress: handleUpgradeClick,
-        },
+
       ],
     },
     {
       title: t("profile.sections.support"),
       data: [
-        {
-          id: "tell-friend",
-          label: t("profile.menu.tell_friend"),
-          icon: FiShare2,
-          onPress: () => {
-            // TODO: Implement share functionality
-            console.log("Share app");
-          },
-        },
-        {
-          id: "rate-app",
-          label: t("profile.menu.rate_app"),
-          icon: FiStar,
-          onPress: () => {
-            // TODO: Navigate to app store rating
-            console.log("Rate app");
-          },
-        },
+
       ],
     },
     {

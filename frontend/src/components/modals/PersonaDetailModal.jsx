@@ -57,7 +57,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
             onClick={handleOverlayClick}
           />
 
@@ -67,7 +67,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
             onClick={handleOverlayClick}
           >
             <div

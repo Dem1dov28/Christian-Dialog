@@ -136,9 +136,9 @@ class SearchService(BaseService):
         """Экранирует специальные символы для SQL LIKE/ILIKE паттернов.
         
         Экранирует символы, которые имеют специальное значение в SQL LIKE:
-        - % (любые символы) -> \%
-        - _ (один символ) -> \_
-        - \ (экранирующий символ) -> \\
+        - % (любые символы) -> \\%
+        - _ (один символ) -> \\_  
+        - \\ (экранирующий символ) -> \\
         
         Кавычки (" и ') и другие специальные символы (скобки, знаки препинания и т.д.)
         не требуют экранирования для LIKE и обрабатываются как обычный текст.
@@ -290,14 +290,6 @@ class SearchService(BaseService):
                 "agent_name": channel_title,
                 "agent_color": color_class or "bg-blue-500",
                 "agent_icon": icon_name,
-                "group_avatar": None,
-            }
-        if is_system_chat:
-            return {
-                "agent_avatar": "/images/agents/Saved_Messages.png",
-                "agent_name": "Saved Messages",
-                "agent_color": "bg-purple-500",
-                "agent_icon": "bookmark",
                 "group_avatar": None,
             }
         elif agent:
@@ -733,79 +725,102 @@ class SearchService(BaseService):
         sort_by: str = "relevance"
     ) -> Dict[str, Any]:
         """Поиск сообщений по всем чатам пользователя"""
+        logger.info(f"Starting search_messages for user_id={user_id}, query='{query}', limit={limit}")
+        
         from models.message import Message
         from models.agent import Agent
         from models.multi_agent_conversation import MultiAgentConversation, ConversationAgent
         
-        # Создаем условия поиска
-        search_conditions = self.build_message_search_conditions(query)
-        subscribed_channel_ids = self._get_user_channel_ids(session, user_id)
-        accessible_conversations_condition = self._build_accessible_conversation_condition(
-            user_id, subscribed_channel_ids
-        )
-        
-        # ПОИСК В ОБЫЧНЫХ ЧАТАХ
-        regular_messages_statement = (
-            select(Message, Conversation, Agent)
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .outerjoin(Agent, Conversation.agent_id == Agent.id)
-            .where(
-                accessible_conversations_condition,
-                or_(*search_conditions),
-                Message.is_deleted == False
+        try:
+            # Создаем условия поиска
+            logger.info("Building search conditions...")
+            search_conditions = self.build_message_search_conditions(query)
+            logger.info(f"Built {len(search_conditions)} search conditions")
+            
+            subscribed_channel_ids = self._get_user_channel_ids(session, user_id)
+            logger.info(f"User {user_id} is subscribed to {len(subscribed_channel_ids)} channels")
+            
+            accessible_conversations_condition = self._build_accessible_conversation_condition(
+                user_id, subscribed_channel_ids
             )
-        )
-        
-        regular_results = session.exec(regular_messages_statement).all()
-        
-        # ПОИСК В ГРУППОВЫХ ЧАТАХ
-        group_messages_statement = (
-            select(Message, MultiAgentConversation)
-            .join(MultiAgentConversation, Message.multi_agent_conversation_id == MultiAgentConversation.id)
-            .where(
-                MultiAgentConversation.user_id == user_id,
-                or_(*search_conditions),
-                Message.is_deleted == False
+            logger.info("Built accessible conversations condition")
+            
+            # ПОИСК В ОБЫЧНЫХ ЧАТАХ
+            logger.info("Searching in regular conversations...")
+            regular_messages_statement = (
+                select(Message, Conversation, Agent)
+                .join(Conversation, Message.conversation_id == Conversation.id)
+                .outerjoin(Agent, Conversation.agent_id == Agent.id)
+                .where(
+                    accessible_conversations_condition,
+                    or_(*search_conditions),
+                    Message.is_deleted == False
+                )
             )
-        )
-        
-        group_results = session.exec(group_messages_statement).all()
-        
-        # Формируем результаты с информацией о чате и агенте
-        enhanced_results = []
-        
-        # ОБРАБОТКА ОБЫЧНЫХ ЧАТОВ
-        for message, conversation, agent in regular_results:
-            agent_info = self.get_agent_info_for_regular_chat(conversation, agent, session)
-            result = self.format_message_result(message, conversation, agent_info, query, is_group=False)
-            enhanced_results.append(result)
-        
-        # ОБРАБОТКА ГРУППОВЫХ ЧАТОВ
-        for message, multi_conversation in group_results:
-            agent_info = self.get_agent_info_for_group_chat(multi_conversation, session)
-            result = self.format_message_result(
-                message, None, agent_info, query,
-                is_group=True, multi_conversation=multi_conversation
+            
+            regular_results = session.exec(regular_messages_statement).all()
+            logger.info(f"Found {len(regular_results)} results in regular conversations")
+            
+            # ПОИСК В ГРУППОВЫХ ЧАТАХ
+            logger.info("Searching in group conversations...")
+            group_messages_statement = (
+                select(Message, MultiAgentConversation)
+                .join(MultiAgentConversation, Message.multi_agent_conversation_id == MultiAgentConversation.id)
+                .where(
+                    MultiAgentConversation.user_id == user_id,
+                    or_(*search_conditions),
+                    Message.is_deleted == False
+                )
             )
-            enhanced_results.append(result)
-        
-        # Сортируем по релевантности или дате
-        if sort_by == "date":
-            enhanced_results.sort(key=lambda x: x["created_at"], reverse=True)
-        else:  # relevance
-            enhanced_results.sort(key=lambda x: x["relevance_score"], reverse=True)
-        
-        # Фильтруем и ограничиваем
-        filtered_results = [r for r in enhanced_results if r["relevance_score"] > 0]
-        final_results = filtered_results[:limit]
-        
-        return {
-            "query": query,
-            "results": final_results,
-            "total": len(final_results),
-            "sort_by": sort_by,
-            "has_more": len(filtered_results) > limit
-        }
+            
+            group_results = session.exec(group_messages_statement).all()
+            logger.info(f"Found {len(group_results)} results in group conversations")
+            
+            # Формируем результаты с информацией о чате и агенте
+            enhanced_results = []
+            
+            # ОБРАБОТКА ОБЫЧНЫХ ЧАТОВ
+            logger.info("Processing regular conversation results...")
+            for message, conversation, agent in regular_results:
+                agent_info = self.get_agent_info_for_regular_chat(conversation, agent, session)
+                result = self.format_message_result(message, conversation, agent_info, query, is_group=False)
+                enhanced_results.append(result)
+            
+            # ОБРАБОТКА ГРУППОВЫХ ЧАТОВ
+            logger.info("Processing group conversation results...")
+            for message, multi_conversation in group_results:
+                agent_info = self.get_agent_info_for_group_chat(multi_conversation, session)
+                result = self.format_message_result(
+                    message, None, agent_info, query,
+                    is_group=True, multi_conversation=multi_conversation
+                )
+                enhanced_results.append(result)
+            
+            logger.info(f"Total enhanced results: {len(enhanced_results)}")
+            
+            # Сортируем по релевантности или дате
+            if sort_by == "date":
+                enhanced_results.sort(key=lambda x: x["created_at"], reverse=True)
+            else:  # relevance
+                enhanced_results.sort(key=lambda x: x["relevance_score"], reverse=True)
+            
+            # Фильтруем и ограничиваем
+            filtered_results = [r for r in enhanced_results if r["relevance_score"] > 0]
+            logger.info(f"Filtered results with relevance > 0: {len(filtered_results)}")
+            
+            final_results = filtered_results[:limit]
+            logger.info(f"Final results after limiting to {limit}: {len(final_results)}")
+            
+            return {
+                "query": query,
+                "results": final_results,
+                "total": len(final_results),
+                "sort_by": sort_by,
+                "has_more": len(filtered_results) > limit
+            }
+        except Exception as e:
+            logger.error(f"Error in search_messages for user {user_id}: {e}", exc_info=True)
+            raise
     
     def global_search(
         self,

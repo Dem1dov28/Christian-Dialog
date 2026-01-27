@@ -1,13 +1,12 @@
 import { useCallback } from "react";
 
 /**
- * Хук для управления панелями приложения (правая панель, профиль, настройки ИИ)
+ * Хук для управления панелями приложения (правая панель, профиль)
  */
 export function usePanelHandlers({
   isRightPanelVisible,
   setIsRightPanelVisible,
   setIsProfileVisible,
-  setIsAISettingsVisible,
   rightPanelRef,
 }) {
   const toggleRightPanel = useCallback(() => {
@@ -40,22 +39,12 @@ export function usePanelHandlers({
   const openProfile = useCallback(() => {
     setIsProfileVisible(true);
     closeRightPanelWithAnimation();
-    setIsAISettingsVisible(false);
-  }, [setIsProfileVisible, setIsAISettingsVisible, closeRightPanelWithAnimation]);
+  }, [setIsProfileVisible, closeRightPanelWithAnimation]);
 
   const closeProfile = useCallback(() => {
     setIsProfileVisible(false);
   }, [setIsProfileVisible]);
 
-  const openAISettings = useCallback(() => {
-    setIsAISettingsVisible(true);
-    setIsProfileVisible(false);
-    closeRightPanelWithAnimation();
-  }, [setIsAISettingsVisible, setIsProfileVisible, closeRightPanelWithAnimation]);
-
-  const closeAISettings = useCallback(() => {
-    setIsAISettingsVisible(false);
-  }, [setIsAISettingsVisible]);
 
   return {
     toggleRightPanel,
@@ -63,8 +52,6 @@ export function usePanelHandlers({
     closeRightPanelWithAnimation,
     openProfile,
     closeProfile,
-    openAISettings,
-    closeAISettings,
   };
 }
 

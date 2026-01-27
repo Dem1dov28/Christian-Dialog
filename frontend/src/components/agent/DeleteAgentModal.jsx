@@ -77,16 +77,14 @@ const DeleteAgentModal = ({
 
   return (
     <div
-      className={`fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm ${
-        isShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
-      }`}
+      className={`fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm ${isShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
+        }`}
       style={{ paddingTop: '120px', paddingBottom: '20px' }}
     >
       <div
         ref={modalRef}
-        className={`frosted-glass rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[calc(100vh-160px)] overflow-y-auto ${
-          isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
-        }`}
+        className={`frosted-glass rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[calc(100vh-160px)] overflow-y-auto ${isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
+          }`}
         style={{
           border: "1px solid rgba(255, 255, 255, 0.1)",
         }}
@@ -100,7 +98,7 @@ const DeleteAgentModal = ({
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
-                  alt={agentName || "Агент"}
+                  alt={agentName || t("common.agent")}
                   className="absolute inset-0 w-full h-full object-cover"
                   onError={(e) => {
                     e.target.style.display = "none";
@@ -112,24 +110,29 @@ const DeleteAgentModal = ({
                 />
               ) : null}
               <div
-                className={`absolute inset-0 flex items-center justify-center text-white avatar-fallback-icon ${
-                  avatarUrl ? "hidden" : "flex"
-                }`}
+                className={`absolute inset-0 flex items-center justify-center text-white avatar-fallback-icon ${avatarUrl ? "hidden" : "flex"
+                  }`}
               >
                 <MdPerson className="text-white text-xl" />
               </div>
             </div>
 
             {/* Заголовок */}
-            <h2 className="text-xl font-semibold text-[var(--accent)]">Удалить персонажа</h2>
+            <h2 className="text-xl font-semibold text-[var(--accent)]">
+              {t("library.deleteModal.title")}
+            </h2>
           </div>
 
           {/* Описание */}
           <div className="mb-6">
             <p className="text-[var(--accent)] text-base leading-relaxed mb-2">
-              Вы уверены, что хотите удалить персонажа "{agentName || "Агент"}"?
+              {t("library.deleteModal.confirmText", {
+                name: agentName || t("common.agent"),
+              })}
             </p>
-            <p className="text-[var(--text-dim)] text-sm">Это действие нельзя отменить.</p>
+            <p className="text-[var(--text-dim)] text-sm">
+              {t("library.deleteModal.undoneHint")}
+            </p>
           </div>
 
           {/* Кнопки */}
@@ -138,13 +141,13 @@ const DeleteAgentModal = ({
               onClick={handleClose}
               className="px-4 py-2 text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium text-base"
             >
-              Отмена
+              {t("library.deleteModal.cancel")}
             </button>
             <button
               onClick={handleConfirm}
               className="px-4 py-2 text-red-500 hover:text-red-400 transition-colors duration-200 font-medium text-base"
             >
-              Удалить
+              {t("library.deleteModal.delete")}
             </button>
           </div>
         </div>

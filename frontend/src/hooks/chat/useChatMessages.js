@@ -90,7 +90,7 @@ export function useChatMessages({
       if (!el) return;
 
       // Прокручиваем к самому низу чата (последним сообщениям)
-      const scrollTarget = el.scrollHeight - el.clientHeight;
+      const scrollTarget = Math.max(el.scrollHeight - el.clientHeight, 0);
       if (behavior === "auto") {
         el.scrollTop = scrollTarget;
       } else {

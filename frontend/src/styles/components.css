@@ -211,8 +211,6 @@ button[data-id]:hover .badge {
   background-repeat: no-repeat;
   /* Привязываем фон к контейнеру, чтобы не ломать DnD */
   background-attachment: scroll;
-  z-index: 0;
-  isolation: isolate;
 }
 
 .dark .chat-bg {
@@ -465,43 +463,6 @@ input:checked + .toggle-slider {
 
 input:checked + .toggle-slider:before {
   transform: translateX(20px);
-}
-
-/* AI Panel styles */
-.ai-panel-wrapper {
-  min-width: 0;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
-
-.ai-panel-closing {
-  pointer-events: none;
-}
-
-main[class*="flex-col"] {
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              flex-basis 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-div.flex.flex-1.overflow-hidden {
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-main.flex.flex-col {
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              flex-basis 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* AI Panel item hover */
-.ai-panel-item {
-  transition: all 0.2s ease;
-}
-
-.ai-panel-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Loader */

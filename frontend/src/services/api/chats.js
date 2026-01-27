@@ -28,15 +28,6 @@ export class ChatsAPI {
     }
   }
 
-  // Получить системный чат 'Saved Messages'
-  async getSystemChat() {
-    return this.client.get("/conversations/system-chat");
-  }
-
-  // Обновить настройку видимости системного чата
-  async updateSystemChatVisibility(isHidden) {
-    return this.client.put("/auth/me", { is_system_chat_hidden: isHidden });
-  }
 
   // Получить список разговоров
   async getConversations(agentId = null, offset = 0, limit = 100) {
@@ -145,15 +136,6 @@ export class ChatsAPI {
     }
   }
 
-  // Сохранить сообщение в Saved Messages
-  async saveMessageToSavedMessages(messageData) {
-    return this.client.post("/saved-messages/", messageData);
-  }
-
-  // Получить Saved Messages
-  async getSavedMessages() {
-    return this.client.get("/saved-messages/");
-  }
 
   // ========== Single Agent Tools методы ==========
   

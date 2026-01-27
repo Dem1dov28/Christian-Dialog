@@ -15,6 +15,7 @@ export function useMessageHandlers({
   selectedIds,
   clearSelection,
   loadMessages,
+  updateMessagesForConversation,
   systemChat,
   pinnedMessagesArray,
   currentPinIndex,
@@ -111,15 +112,15 @@ export function useMessageHandlers({
           showSuccess(t("chat.allAlreadySaved", { count: alreadyCount }));
         }
 
-        // Обновляем Saved Messages после сохранения (если он существует)
-        if (systemChat?.id) {
-          try {
-            await loadMessages(systemChat.id);
-          } catch (error) {
-            console.error(
-              "Failed to reload Saved Messages after bulk save:",
-              error
-            );
+        // Обновляем Saved Messages после массового сохранения без полной перезагрузки
+        if (systemChat?.id && updateMessagesForConversation) {
+          const newMessages = results.filter(msg => msg && typeof msg === 'object');
+          if (newMessages.length > 0) {
+            updateMessagesForConversation(systemChat.id, (prev) => {
+              const existingIds = new Set(prev.map(m => m.id));
+              const filteredNew = newMessages.filter(m => !existingIds.has(m.id));
+              return [...prev, ...filteredNew];
+            });
           }
         }
 

@@ -15,7 +15,7 @@ class ConversationBase(SQLModel):
         foreign_key="user.id", description="ID пользователя, создавшего разговор"
     )
     is_system_chat: bool = Field(
-        default=False, description="Системный чат (например, Saved Messages)"
+        default=False, description="Системный чат"
     )
     conversation_type: str | None = Field(
         default="agents_only",

@@ -9,7 +9,13 @@ export class GroupChatsAPI {
 
   // Создать новый групповой чат
   async createGroupChat(groupData) {
-    return this.client.post("/multi-agent-chat/new", groupData);
+    const formData = new FormData();
+    formData.append("title", groupData.title);
+    formData.append("description", groupData.description || "");
+    formData.append("agent_ids", JSON.stringify(groupData.agent_ids));
+    formData.append("group_avatar", groupData.group_avatar || "group");
+    formData.append("conversation_type", groupData.conversation_type || "agents_only");
+    return this.client.postFormData("/multi-agent-chat/new", formData);
   }
 
   // Создать новый групповой чат с загрузкой файла (аватар)

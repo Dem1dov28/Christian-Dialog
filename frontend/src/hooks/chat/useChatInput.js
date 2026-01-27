@@ -29,6 +29,7 @@ export function useChatInput({
   publishChannelMessage,
   loadMessages,
   loadGroupMessages,
+  updateMessagesForConversation,
   onMessageSent,
   showError,
   showSuccess,
@@ -184,8 +185,8 @@ export function useChatInput({
     const skippedCount = files.length - filesToProcess.length;
 
     if (skippedCount > 0) {
-      showError(t("chat.filesLimitMessage", { 
-        count: remainingSlots, 
+      showError(t("chat.filesLimitMessage", {
+        count: remainingSlots,
         skipped: skippedCount,
         defaultValue: `Можно добавить только ${remainingSlots} файл(ов). Пропущено: ${skippedCount}`
       }));
@@ -278,8 +279,8 @@ export function useChatInput({
     const skippedCount = files.length - filesToProcess.length;
 
     if (skippedCount > 0) {
-      showError(t("chat.filesLimitMessage", { 
-        count: remainingSlots, 
+      showError(t("chat.filesLimitMessage", {
+        count: remainingSlots,
         skipped: skippedCount,
         defaultValue: `Можно добавить только ${remainingSlots} файл(ов). Пропущено: ${skippedCount}`
       }));
@@ -339,8 +340,8 @@ export function useChatInput({
     const skippedCount = imageItems.length - itemsToProcess.length;
 
     if (skippedCount > 0) {
-      showError(t("chat.filesLimitMessage", { 
-        count: remainingSlots, 
+      showError(t("chat.filesLimitMessage", {
+        count: remainingSlots,
         skipped: skippedCount,
         defaultValue: `Можно добавить только ${remainingSlots} файл(ов). Пропущено: ${skippedCount}`
       }));
@@ -443,7 +444,7 @@ export function useChatInput({
     }
 
     let finalMessage = inputValue.trim();
-    
+
     // Очищаем поле ввода СРАЗУ после нажатия кнопки отправки
     clearInput();
 
@@ -513,7 +514,7 @@ export function useChatInput({
       if (needInitialScrollRef?.current !== undefined) {
         needInitialScrollRef.current = true;
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Обработка каналов
     if (isChannelChat) {
@@ -539,9 +540,9 @@ export function useChatInput({
         console.error("Failed to publish channel message:", error);
         showError(
           error?.message ||
-            t("chat.channelPublishError", {
-              defaultValue: "Не удалось отправить сообщение в канале",
-            })
+          t("chat.channelPublishError", {
+            defaultValue: "Не удалось отправить сообщение в канале",
+          })
         );
         clearInput(finalMessage);
       }
@@ -727,6 +728,7 @@ export function useChatInput({
     publishChannelMessage,
     loadMessages,
     loadGroupMessages,
+    updateMessagesForConversation,
     onMessageSent,
     showError,
     showSuccess,

@@ -347,12 +347,12 @@ const SearchWithAvatar = forwardRef(
         .replace(/<div[^>]*data-reply-to-id="[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi, "")
         .replace(/<div[^>]*class="[^"]*reply-block[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
         .replace(/<div[^>]*data-reply-to-id="[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "");
-      
+
       // Удаляем оставшиеся закрывающие теги в начале
       cleaned = cleaned.trim().replace(/^<\/div>\s*/i, "");
       cleaned = cleaned.trim().replace(/^<\/div>\s*<\/div>\s*/i, "");
       cleaned = cleaned.trim().replace(/^<\/div>\s*<\/div>\s*<\/div>\s*/i, "");
-      
+
       // Шаг 2: Декодируем HTML entities ТОЛЬКО через regex
       // Важно: порядок имеет значение - сначала &amp;, чтобы не конфликтовало
       const decoded = cleaned
@@ -362,7 +362,7 @@ const SearchWithAvatar = forwardRef(
         .replace(/&quot;/g, '"')    // Декодируем &quot; в "
         .replace(/&#039;/g, "'")    // Декодируем &#039; в '
         .replace(/&#x27;/g, "'");   // Декодируем &#x27; в '
-      
+
       return decoded.trim();
     };
 
@@ -578,19 +578,19 @@ const SearchWithAvatar = forwardRef(
       // Поддерживаем категории с запятыми (например, "персонаж, политик")
       return agents.filter((agent) => {
         const cat = (agent.category || "").toLowerCase();
-        
+
         // Проверяем точное совпадение
         if (accepted.has(cat)) {
           return true;
         }
-        
+
         // Проверяем, содержит ли категория одну из искомых категорий (для категорий с запятыми)
         for (const acceptedCategory of accepted) {
           if (cat.includes(acceptedCategory)) {
             return true;
           }
         }
-        
+
         return false;
       });
     };
@@ -652,7 +652,7 @@ const SearchWithAvatar = forwardRef(
           : null;
         const preview = decodedMessage
           ? decodedMessage.substring(0, 50) +
-            (decodedMessage.length > 50 ? "..." : "")
+          (decodedMessage.length > 50 ? "..." : "")
           : getAgentTypeFromAgent(agent);
 
         // Определяем номер чата на основе порядка создания (как в Sidebar.jsx)
@@ -717,8 +717,7 @@ const SearchWithAvatar = forwardRef(
           time: formatTime(conversation.updated_at || conversation.created_at),
           preview:
             agentNames ||
-            `Групповой чат с ${
-              conversation.group_agent_ids?.length || 0
+            `Групповой чат с ${conversation.group_agent_ids?.length || 0
             } участниками`,
           colorClass: "bg-[var(--accent)]",
           iconName: conversation.group_avatar || "group",
@@ -952,9 +951,8 @@ const SearchWithAvatar = forwardRef(
         .sort((a, b) => b.relevance - a.relevance);
     }, [searchQuery, agents]);
 
-    const containerClasses = `flex flex-col w-full ${
-      isSearchOpen ? "flex-1 min-h-0" : ""
-    }`;
+    const containerClasses = `flex flex-col w-full ${isSearchOpen ? "flex-1 min-h-0" : ""
+      }`;
 
     return (
       <div ref={searchContainerRef} className={containerClasses}>
@@ -963,7 +961,7 @@ const SearchWithAvatar = forwardRef(
           onClick={(e) => e.stopPropagation()}
         >
           {onMenuClick && (
-            <button 
+            <button
               className="p-2 rounded-lg text-[var(--text-gray)] hover:bg-[var(--hover-bg)] transition-colors"
               onClick={onMenuClick}
             >
@@ -976,7 +974,7 @@ const SearchWithAvatar = forwardRef(
               fill="currentColor"
               strokeWidth="0"
               viewBox="0 0 24 24"
-              className="search-icon absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-gray)] text-xl transition-all duration-300 z-10"
+              className="search-icon absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-gray)] text-xl transition-all duration-300 z-[1]"
               height="1em"
               width="1em"
               xmlns="http://www.w3.org/2000/svg"
@@ -987,7 +985,7 @@ const SearchWithAvatar = forwardRef(
               id="header-search"
               name="search"
               className="search-input w-full rounded-lg pl-10 pr-10 py-2.5 text-base text-[var(--text-white)] select-text focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-80 transition-all duration-300 group"
-              style={{ 
+              style={{
                 boxShadow: '0 0 0 0px transparent',
               }}
               placeholder={t("common.searchPlaceholderShort")}
@@ -1032,11 +1030,10 @@ const SearchWithAvatar = forwardRef(
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center py-3 px-4 text-sm font-medium transition-colors ${
-                    activeTab === tab.id
+                  className={`flex-1 flex items-center justify-center py-3 px-4 text-sm font-medium transition-colors ${activeTab === tab.id
                       ? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
                       : "text-[var(--text-dim)] hover:text-[var(--text-white)]"
-                  }`}
+                    }`}
                 >
                   <Icon className="mr-2 text-lg" />
                   {tab.label}
@@ -1057,21 +1054,19 @@ const SearchWithAvatar = forwardRef(
             >
               <button
                 onClick={() => setSearchScope("all")}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                  searchScope === "all"
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${searchScope === "all"
                     ? "bg-[var(--accent)] text-white"
                     : "bg-[var(--bg-tertiary)] text-[var(--text-dim)] hover:bg-[var(--button-hover-bg)]"
-                }`}
+                  }`}
               >
                 {t("common.allChats")}
               </button>
               <button
                 onClick={() => setSearchScope("current")}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                  searchScope === "current"
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${searchScope === "current"
                     ? "bg-[var(--accent)] text-white"
                     : "bg-[var(--bg-tertiary)] text-[var(--text-dim)] hover:bg-[var(--button-hover-bg)]"
-                }`}
+                  }`}
               >
                 {getCurrentChatTitle()}
               </button>
@@ -1223,10 +1218,9 @@ const SearchWithAvatar = forwardRef(
                                     })()}
                                     {!getAgentAvatarUrl(agent.image_url, agent.avatar_url) && (
                                       <div
-                                        className={`w-12 h-12 rounded-full ${
-                                          agent.color_class ||
+                                        className={`w-12 h-12 rounded-full ${agent.color_class ||
                                           "bg-[var(--accent)]"
-                                        } flex items-center justify-center text-white shadow-md select-none`}
+                                          } flex items-center justify-center text-white shadow-md select-none`}
                                       >
                                         {IconComponent ? (
                                           <IconComponent
@@ -1252,12 +1246,12 @@ const SearchWithAvatar = forwardRef(
                                         {agent.category === "chats"
                                           ? t("common.character")
                                           : agent.category === "work"
-                                          ? t("common.work")
-                                          : agent.category === "system"
-                                          ? t("common.system")
-                                          : agent.category === "favorites"
-                                          ? t("common.favorites")
-                                          : t("common.agent")}
+                                            ? t("common.work")
+                                            : agent.category === "system"
+                                              ? t("common.system")
+                                              : agent.category === "favorites"
+                                                ? t("common.favorites")
+                                                : t("common.agent")}
                                       </p>
                                     </div>
                                     <div className="flex items-center justify-between w-full">
@@ -1355,9 +1349,8 @@ const SearchWithAvatar = forwardRef(
                                       </div>
                                     ) : (
                                       <div
-                                        className={`w-12 h-12 rounded-full ${
-                                          message.agent_color || "bg-[var(--accent)]"
-                                        } flex items-center justify-center text-white shadow-md select-none`}
+                                        className={`w-12 h-12 rounded-full ${message.agent_color || "bg-[var(--accent)]"
+                                          } flex items-center justify-center text-white shadow-md select-none`}
                                       >
                                         {IconComponent && (
                                           <IconComponent

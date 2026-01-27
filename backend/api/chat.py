@@ -131,7 +131,7 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             # Создаем новый разговор (тип agents_only по умолчанию)
             conversation = conversation_service.create_conversation(
                 agent_id, 
-                f"Чат с {agent.name}", 
+                None, 
                 current_user.id, 
                 folder_service,
                 conversation_type="agents_only"
@@ -541,7 +541,7 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                         )
                     conversation = conversation_service.create_conversation(
                         agent_id,
-                        f"Чат с {agent.name}",
+                        None,
                         current_user.id,
                         folder_service
                     )
@@ -837,7 +837,7 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             if not conversation:
                 conversation = conversation_service.create_conversation(
                     agent_id, 
-                    f"Чат с {agent.name}", 
+                    None, 
                     current_user.id, 
                     folder_service
                 )

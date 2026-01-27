@@ -84,8 +84,6 @@ class UnifiedAPI {
     // Chats методы
     this.createChat = (agentId) => chats.createChat(agentId);
     this.sendMessage = (messageData) => chats.sendMessage(messageData);
-    this.getSystemChat = () => chats.getSystemChat();
-    this.updateSystemChatVisibility = (isHidden) => chats.updateSystemChatVisibility(isHidden);
     this.getConversations = (agentId, offset, limit) => chats.getConversations(agentId, offset, limit);
     this.getConversation = (conversationId) => chats.getConversation(conversationId);
     this.getConversationMessages = (conversationId, offset, maxChars, beforeDate) => 
@@ -99,8 +97,6 @@ class UnifiedAPI {
     this.getPinnedMessage = (conversationId) => chats.getPinnedMessage(conversationId);
     this.getPinnedGroupMessage = (conversationId) => chats.getPinnedGroupMessage(conversationId);
     this.deleteMessage = (messageId) => chats.deleteMessage(messageId);
-    this.saveMessageToSavedMessages = (messageData) => chats.saveMessageToSavedMessages(messageData);
-    this.getSavedMessages = () => chats.getSavedMessages();
 
 
 

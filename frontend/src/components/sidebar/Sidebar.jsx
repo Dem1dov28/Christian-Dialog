@@ -89,7 +89,7 @@ const Sidebar = ({
   const { updateTrigger } = useSidebarUpdate();
   const sidebarRef = useRef(null);
   const { t, translateAgent } = useLanguage();
-  
+
   // Состояние для отслеживания выбранной модели (для показа истории чатов)
   // Состояние для отображения библиотек
   const [isAgentsLibraryOpen, setIsAgentsLibraryOpen] = useState(false);
@@ -142,7 +142,7 @@ const Sidebar = ({
 
     window.addEventListener("aigram:open-agents-library", handleOpenAgentsLibrary);
     window.addEventListener("aigram:open-characters-library", handleOpenCharactersLibrary);
-    
+
     return () => {
       window.removeEventListener("aigram:open-agents-library", handleOpenAgentsLibrary);
       window.removeEventListener("aigram:open-characters-library", handleOpenCharactersLibrary);
@@ -153,11 +153,11 @@ const Sidebar = ({
   const handleCloseAgentsLibrary = useCallback(() => {
     setIsAgentsLibraryOpen(false);
   }, []);
-  
+
   const handleCloseCharactersLibrary = useCallback(() => {
     setIsCharactersLibraryOpen(false);
   }, []);
-  
+
   const handleAgentAdded = useCallback(
     async (agentId) => {
       console.log("Agent added to library:", agentId);
@@ -166,7 +166,7 @@ const Sidebar = ({
         const existingChat = conversations.find(
           (conv) => conv.agent_id === agentId && !conv.is_group && !conv.is_channel
         );
-        
+
         if (existingChat) {
           // Если чат существует, просто открываем его
           await selectConversation(existingChat.id);
@@ -190,7 +190,7 @@ const Sidebar = ({
     },
     [conversations, createChat, selectConversation, onChatSelect]
   );
-  
+
   const handleCharacterAdded = useCallback(
     async (characterId) => {
       console.log("Character added to library:", characterId);
@@ -227,10 +227,10 @@ const Sidebar = ({
     }
   });
   // УДАЛЕНО - addedTools (инструменты были удалены)
-  
+
   // Используем контекст для управления шириной панели
   const { sidebarWidth, updateSidebarWidth, MIN_WIDTH, MAX_WIDTH } = usePanelWidth();
-  
+
   const [isResizing, setIsResizing] = useState(false);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -267,13 +267,13 @@ const Sidebar = ({
       "literature",
       "business",
     ];
-    
+
     // Проверяем, является ли папка системной (по строковому ID)
     const folderIdStr = String(folderId || "");
-    const isSystemFolder = !folderId || 
+    const isSystemFolder = !folderId ||
       (typeof folderId === 'string' && systemFolders.includes(folderId)) ||
       (typeof folderId === 'number' && false); // Числовые ID - это всегда пользовательские папки
-    
+
     if (isSystemFolder) {
       // Для системных папок загружаем из localStorage
       const pinnedChats = getPinnedChatsInSystemFolder(folderId || "all");
@@ -283,7 +283,7 @@ const Sidebar = ({
 
     // Для пользовательских папок (числовой ID) загружаем через API
     const numericFolderId = typeof folderId === 'number' ? folderId : Number(folderId);
-    
+
     if (!isNaN(numericFolderId) && numericFolderId > 0) {
       try {
         const pinnedChats = await getPinnedChatsInFolder(numericFolderId);
@@ -306,24 +306,24 @@ const Sidebar = ({
 
   // Ref для защиты от множественных вызовов создания чата
   const creatingModelChatRef = useRef(new Set());
-  
+
 
   // Обновление списка после изменения conversations
   useEffect(() => {
     // Форсим обновление компонента при изменении списка чатов
     setForceUpdate((prev) => prev + 1);
   }, [conversations]);
-  
+
   // Фильтруем группы и каналы из conversations
   const groups = conversations.filter((conv) => conv.is_group || conv.isGroup);
   const channels = conversations.filter((conv) => conv.is_channel || conv.isChannel);
   const { folders, getChatsByFolder, reorderFolders, loadFolders, updateFolder, deleteFolder } =
     useFolders();
-  
+
   // Состояние для редактирования папки
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingFolder, setEditingFolder] = useState(null);
-  
+
   // Состояние для модального окна удаления папки
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState(null);
@@ -369,7 +369,7 @@ const Sidebar = ({
 
       if (folder) {
         // Сохраняем в БД через updateFolder(settings.hidden=true)
-        updateFolder(folder.id, { settings: { hidden: true } }).catch(() => {});
+        updateFolder(folder.id, { settings: { hidden: true } }).catch(() => { });
       }
 
       // Сохраняем скрытую папку в localStorage
@@ -378,16 +378,16 @@ const Sidebar = ({
       try {
         const raw = localStorage.getItem(key);
         hidden = raw ? JSON.parse(raw) : [];
-      } catch {}
+      } catch { }
       if (!hidden.includes(sysType)) hidden.push(sysType);
       try {
         localStorage.setItem(key, JSON.stringify(hidden));
-      } catch {}
+      } catch { }
 
       // Сообщаем Sidebar об изменении
       try {
         window.dispatchEvent(new Event("aigram:hidden-system-folders-changed"));
-      } catch {}
+      } catch { }
     } catch (error) {
       console.error("Failed to hide folder:", error);
     }
@@ -405,7 +405,7 @@ const Sidebar = ({
   // Подтверждение удаления папки
   const handleConfirmDeleteFolder = useCallback(async () => {
     if (!folderToDelete) return;
-    
+
     try {
       await deleteFolder(folderToDelete.id);
       setShowDeleteModal(false);
@@ -428,11 +428,11 @@ const Sidebar = ({
   const handleMarkAsRead = useCallback(async (folderId) => {
     try {
       const folderChats = getChatsByFolder(folderId, conversations);
-      
+
       // Помечаем каждый чат как прочитанный
       for (const conversation of folderChats) {
         if (!conversation.id) continue;
-        
+
         const isGroupChat = conversation.is_group || false;
         const isChannelChat = conversation.is_channel || false;
 
@@ -444,7 +444,7 @@ const Sidebar = ({
             } else {
               await apiClient.post(`/conversations/${conversation.id}/mark-as-read`);
             }
-            
+
             // Обновляем локальный счетчик непрочитанных - сбрасываем его
             resetUnreadCount(conversation.id);
           } catch (err) {
@@ -482,11 +482,11 @@ const Sidebar = ({
     // Используем явно переданный folderId, если он есть, иначе activeFolder
     const targetFolderId = explicitFolderId || activeFolder;
     const activeFolderStr = String(targetFolderId || "");
-    
+
     console.log(`[Sidebar] handlePinInFolder: chatId=${targetConversationId}, explicitFolderId=${explicitFolderId}, activeFolder=${activeFolder}, targetFolderId=${targetFolderId}`);
-    
+
     // Определяем тип папки: системная (строка из списка) или пользовательская (число)
-    const isSystemFolder = !targetFolderId || 
+    const isSystemFolder = !targetFolderId ||
       (typeof targetFolderId === 'string' && systemFolders.includes(targetFolderId)) ||
       (typeof targetFolderId === 'number' && false); // Числовые ID - это всегда пользовательские папки
 
@@ -500,22 +500,22 @@ const Sidebar = ({
     } else {
       // Для пользовательских папок (числовой ID или числовая строка) используем API
       const folderId = typeof targetFolderId === 'number' ? targetFolderId : Number(targetFolderId);
-      
+
       if (isNaN(folderId)) {
         console.error("handlePinInFolder: Invalid folder ID", { targetFolderId, folderId });
         return;
       }
 
       // Преобразуем targetConversationId в число для API
-      const numericConversationId = typeof targetConversationId === 'number' 
-        ? targetConversationId 
+      const numericConversationId = typeof targetConversationId === 'number'
+        ? targetConversationId
         : Number(targetConversationId);
-      
+
       if (isNaN(numericConversationId)) {
         console.error("handlePinInFolder: Invalid conversation ID", { targetConversationId, numericConversationId });
         return;
       }
-      
+
       try {
         await pinChatInFolder(folderId, numericConversationId);
         // Перезагружаем закрепленные чаты в папке
@@ -532,7 +532,7 @@ const Sidebar = ({
           conversationId: numericConversationId,
           fullError: error
         });
-        
+
         // Показываем более понятное сообщение пользователю
         if (error.status === 404) {
           console.error("404 error - возможно папка не найдена или принадлежит другому пользователю");
@@ -564,11 +564,11 @@ const Sidebar = ({
     // Используем явно переданный folderId, если он есть, иначе activeFolder
     const targetFolderId = explicitFolderId || activeFolder;
     const activeFolderStr = String(targetFolderId || "");
-    
+
     console.log(`[Sidebar] handleUnpinFromFolder: chatId=${targetConversationId}, explicitFolderId=${explicitFolderId}, activeFolder=${activeFolder}, targetFolderId=${targetFolderId}`);
-    
+
     // Определяем тип папки: системная (строка из списка) или пользовательская (число)
-    const isSystemFolder = !targetFolderId || 
+    const isSystemFolder = !targetFolderId ||
       (typeof targetFolderId === 'string' && systemFolders.includes(targetFolderId)) ||
       (typeof targetFolderId === 'number' && false); // Числовые ID - это всегда пользовательские папки
 
@@ -582,22 +582,22 @@ const Sidebar = ({
     } else {
       // Для пользовательских папок (числовой ID или числовая строка) используем API
       const folderId = typeof targetFolderId === 'number' ? targetFolderId : Number(targetFolderId);
-      
+
       if (isNaN(folderId)) {
         console.error("handleUnpinFromFolder: Invalid folder ID", { targetFolderId, folderId });
         return;
       }
 
       // Преобразуем targetConversationId в число для API
-      const numericConversationId = typeof targetConversationId === 'number' 
-        ? targetConversationId 
+      const numericConversationId = typeof targetConversationId === 'number'
+        ? targetConversationId
         : Number(targetConversationId);
-      
+
       if (isNaN(numericConversationId)) {
         console.error("handleUnpinFromFolder: Invalid conversation ID", { targetConversationId, numericConversationId });
         return;
       }
-      
+
       try {
         await unpinChatFromFolder(folderId, numericConversationId);
         // Перезагружаем закрепленные чаты в папке
@@ -691,13 +691,13 @@ const Sidebar = ({
       console.log("[Sidebar] Agents updated, reloading from localStorage");
       loadAddedItems();
     };
-    
+
     // Загружаем начальные значения
     loadAddedItems();
-    
+
     window.addEventListener("aigram:agents-updated", handleAgentsUpdate);
     window.addEventListener("aigram:characters-updated", handleAgentsUpdate);
-    
+
     return () => {
       window.removeEventListener("aigram:agents-updated", handleAgentsUpdate);
       window.removeEventListener("aigram:characters-updated", handleAgentsUpdate);
@@ -732,7 +732,7 @@ const Sidebar = ({
       localStorage.setItem("hiddenSystemFolders", JSON.stringify(hiddenFromDb));
       // Тригерим локальный апдейт
       setHiddenSystemFoldersVersion((v) => v + 1);
-    } catch {}
+    } catch { }
   }, [folders]);
 
   const getHiddenSystemFolders = () => {
@@ -860,7 +860,14 @@ const Sidebar = ({
       // Определяем название чата: используем сохраненное название или стандартное с номером
       const translatedAgent = translateAgent(agent);
       let title;
-      if (conversation.title && conversation.title.trim()) {
+      
+      // Проверяем, является ли название стандартным "Чат с ..." или "Chat with ..."
+      const isDefaultTitle = conversation.title && (
+        conversation.title.startsWith("Чат с ") || 
+        conversation.title.startsWith("Chat with ")
+      );
+
+      if (conversation.title && conversation.title.trim() && !isDefaultTitle) {
         // Используем сохраненное название чата (переименованное пользователем)
         title = conversation.title;
       } else {
@@ -874,11 +881,11 @@ const Sidebar = ({
         const conversationIndex = allAgentConversations.findIndex(
           (c) => c.id === conversation.id
         );
-        
+
         title =
           allAgentConversations.length > 1
             ? `${translatedAgent.name} (${conversationIndex + 1})`
-            : translatedAgent.name;
+            : t("chat.chatWith", { name: translatedAgent.name });
       }
 
       // Декодируем HTML entities в last_message перед обрезкой
@@ -894,7 +901,7 @@ const Sidebar = ({
         ),
         preview: decodedMessage
           ? decodedMessage.substring(0, 50) +
-            (decodedMessage.length > 50 ? "..." : "")
+          (decodedMessage.length > 50 ? "..." : "")
           : t("chat.chatWith", { name: translatedAgent.name }),
         colorClass: agent.color_class || "bg-purple-500",
         iconName: agent.icon_name || "psychology",
@@ -981,8 +988,8 @@ const Sidebar = ({
       combined.includes("правитель") || combined.includes("президент") ||
       combined.includes("король") || combined.includes("император") ||
       combined.includes("царь") || combined.includes("королева") ||
-      name.includes("путин") || name.includes("зеленский") || 
-      name.includes("трамп") || name.includes("putin") || 
+      name.includes("путин") || name.includes("зеленский") ||
+      name.includes("трамп") || name.includes("putin") ||
       name.includes("zelensky") || name.includes("trump") ||
       name.includes("ленин") || name.includes("сталин") ||
       name.includes("lenin") || name.includes("stalin") ||
@@ -1069,7 +1076,7 @@ const Sidebar = ({
         new Date(b.updated_at || b.created_at) -
         new Date(a.updated_at || a.created_at)
     );
-    
+
     // Фильтруем групповые чаты с персонажами
     // Используем allCharacterAgents для проверки, является ли агент персонажем
     const charactersAgentIds = new Set(allCharacterAgents.map((agent) => agent.id));
@@ -1077,14 +1084,14 @@ const Sidebar = ({
       if (!conversation.group_agent_ids || conversation.group_agent_ids.length === 0) {
         return false;
       }
-      
+
       // Проверяем, что все агенты в группе являются персонажами
       // Используем charactersAgentIds для надежной проверки
-      return conversation.group_agent_ids.every((agentId) => 
+      return conversation.group_agent_ids.every((agentId) =>
         charactersAgentIds.has(agentId)
       );
     });
-    
+
     const groupChatItems = sortedGroupChats.map((conversation) => {
       // Получаем имена агентов группы
       const agentNames =
@@ -1103,8 +1110,7 @@ const Sidebar = ({
         ),
         preview:
           agentNames ||
-          `Групповой чат с ${
-            conversation.group_agent_ids?.length || 0
+          `Групповой чат с ${conversation.group_agent_ids?.length || 0
           } участниками`,
         colorClass: "bg-purple-500",
         iconName: conversation.group_avatar || "group",
@@ -1171,30 +1177,30 @@ const Sidebar = ({
       // Добавляем системный чат в общий список для сортировки
       ...(systemChat && !isSystemChatHidden
         ? [
-            {
-              id: systemChat.id.toString(),
-              title: systemChat.title,
-              time: formatTime(
-                systemChat.updated_at || systemChat.created_at
-              ),
-              preview: (() => {
-                const decoded = systemChat.last_message
-                  ? decodeHtmlEntities(systemChat.last_message)
-                  : null;
-                return decoded
-                  ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
-                  : t("chat.savedMessages");
-              })(),
-              colorClass: "bg-gray-500",
-              iconName: "bookmark",
-              imageSrc: "/images/agents/Saved_Messages.png",
-              unreadCount: getUnreadCount(systemChat.id),
-              agentId: null,
-              conversationId: systemChat.id,
-              hasConversation: true,
-              isSystemChat: true,
-            },
-          ]
+          {
+            id: systemChat.id.toString(),
+            title: systemChat.title,
+            time: formatTime(
+              systemChat.updated_at || systemChat.created_at
+            ),
+            preview: (() => {
+              const decoded = systemChat.last_message
+                ? decodeHtmlEntities(systemChat.last_message)
+                : null;
+              return decoded
+                ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
+                : t("chat.savedMessages");
+            })(),
+            colorClass: "bg-gray-500",
+            iconName: "bookmark",
+            imageSrc: "/images/agents/Saved_Messages.png",
+            unreadCount: getUnreadCount(systemChat.id),
+            agentId: null,
+            conversationId: systemChat.id,
+            hasConversation: true,
+            isSystemChat: true,
+          },
+        ]
         : []),
     ];
 
@@ -1245,7 +1251,7 @@ const Sidebar = ({
     // Функция для создания данных категории персонажей
     const createCategoryData = (categoryId, categoryAgents) => {
       const categoryChats = categoryAgents.flatMap((agent) => buildListItems(agent, categoryId));
-      
+
       // Групповые чаты с персонажами этой категории
       const categoryGroupChats = characterGroupChats
         .filter((conversation) => {
@@ -1271,8 +1277,7 @@ const Sidebar = ({
             ),
             preview:
               agentNames ||
-              `Групповой чат с ${
-                conversation.group_agent_ids?.length || 0
+              `Групповой чат с ${conversation.group_agent_ids?.length || 0
               } участниками`,
             colorClass: "bg-purple-500",
             iconName: conversation.group_avatar || "group",
@@ -1285,11 +1290,11 @@ const Sidebar = ({
             groupAvatar: conversation.group_avatar,
           };
         });
-      
+
       const allCategoryChats = [...categoryChats, ...categoryGroupChats];
       return allCategoryChats.sort((a, b) => {
-        const convA = conversations.find((c) => c.id === parseInt(a.id));
-        const convB = conversations.find((c) => c.id === parseInt(b.id));
+        const convA = conversations.find((c) => String(c.id) === String(a.id));
+        const convB = conversations.find((c) => String(c.id) === String(b.id));
         if (!convA || !convB) return 0;
         return (
           new Date(convB.updated_at || convB.created_at) -
@@ -1311,28 +1316,28 @@ const Sidebar = ({
     const baseData = {
       // "Все чаты" содержит все чаты с персонажами, отсортированные по времени последнего сообщения
       chats: finalSortedChats.filter((item) => item !== null),
-      
+
       // Религия
       religion: createCategoryData("religion", religionAgents),
-      
+
       // Наука
       science: createCategoryData("science", scienceAgents),
-      
+
       // Политика
       politics: createCategoryData("politics", politicsAgents),
-      
+
       // Философия
       philosophy: createCategoryData("philosophy", philosophyAgents),
-      
+
       // Изобретения
       inventions: createCategoryData("inventions", inventionsAgents),
-      
+
       // Искусство
       art: createCategoryData("art", artAgents),
-      
+
       // Литература
       literature: createCategoryData("literature", literatureAgents),
-      
+
       // Бизнес
       business: createCategoryData("business", businessAgents),
     };
@@ -1356,151 +1361,164 @@ const Sidebar = ({
           })
           .map((conversation) => {
             // Проверка на инструменты уже выполнена в filter выше
-          if (conversation.is_channel) {
-            const description =
-              conversation.channel_description ||
-              t("library.channelReadOnly", { defaultValue: "Только чтение" });
-
-            const channelColorClass =
-              conversation.colorClass ||
-              conversation.channel_color_class ||
-              "bg-blue-500";
-
-            const channelIconName =
-              conversation.iconName ||
-              conversation.channel_icon_name ||
-              "notifications";
-
-            const channelAvatar =
-              conversation.imageSrc ||
-              conversation.channel_avatar_url ||
-              conversation.channelAvatar ||
-              conversation.avatar_url ||
-              conversation.avatar ||
-              null;
-
-            return {
-              id: conversation.id.toString(),
-              title:
-                conversation.title ||
+            if (conversation.is_channel) {
+              const description =
                 conversation.channel_description ||
-                `Канал #${conversation.id}`,
-              time: formatTime(
-                conversation.updated_at || conversation.created_at
-              ),
-              preview: description,
-              colorClass: channelColorClass,
-              iconName: channelIconName,
-              imageSrc: channelAvatar,
-              unreadCount: getUnreadCount(conversation.id),
-              agentId: null,
-              conversationId: conversation.id,
-              hasConversation: true,
-              isChannel: true,
-              is_channel: true,
-              can_write: Boolean(conversation.can_write),
-              channel_description: conversation.channel_description || "",
-            };
-          }
+                t("library.channelReadOnly", { defaultValue: "Только чтение" });
 
-          // Обработка групповых чатов
-          if (conversation.is_group) {
-            // Получаем имена агентов группы
-            const agentNames =
-              conversation.group_agent_ids
-                ?.map((agentId) => {
-                  const agent = agents.find((a) => a.id === agentId);
-                  return agent ? translateAgent(agent).name : t("chat.agent") + ` ${agentId}`;
-                })
-                .join(", ") || "";
+              const channelColorClass =
+                conversation.colorClass ||
+                conversation.channel_color_class ||
+                "bg-blue-500";
 
-            const decoded = conversation.last_message
-              ? decodeHtmlEntities(conversation.last_message)
-              : null;
+              const channelIconName =
+                conversation.iconName ||
+                conversation.channel_icon_name ||
+                "notifications";
 
-            return {
-              id: conversation.id.toString(),
-              title: conversation.title,
-              time: formatTime(
-                conversation.updated_at || conversation.created_at
-              ),
-              preview: decoded
-                ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
-                : agentNames ||
-                  `Групповой чат с ${
-                    conversation.group_agent_ids?.length || 0
-                  } участниками`,
-              colorClass: "bg-purple-500",
-              iconName: conversation.group_avatar || "group",
-              imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
-              unreadCount: getUnreadCount(conversation.id),
-              agentId: null,
-              conversationId: conversation.id,
-              hasConversation: true,
-              isGroup: true,
-              groupAvatar: conversation.group_avatar,
-            };
-          }
+              const channelAvatar =
+                conversation.imageSrc ||
+                conversation.channel_avatar_url ||
+                conversation.channelAvatar ||
+                conversation.avatar_url ||
+                conversation.avatar ||
+                null;
 
-          const agent = agents.find((a) => a.id === conversation.agent_id);
+              return {
+                id: conversation.id.toString(),
+                title:
+                  conversation.title ||
+                  conversation.channel_description ||
+                  `Канал #${conversation.id}`,
+                time: formatTime(
+                  conversation.updated_at || conversation.created_at
+                ),
+                preview: description,
+                colorClass: channelColorClass,
+                iconName: channelIconName,
+                imageSrc: channelAvatar,
+                unreadCount: getUnreadCount(conversation.id),
+                agentId: null,
+                conversationId: conversation.id,
+                hasConversation: true,
+                isChannel: true,
+                is_channel: true,
+                can_write: Boolean(conversation.can_write),
+                channel_description: conversation.channel_description || "",
+              };
+            }
 
-          // Показываем активный чат даже если он новый пустой
-          // Фильтруем новые пустые чаты - они не должны показываться в списке до отправки сообщения
-          if (conversation.id !== activeConversation?.id && isNewlyCreatedEmptyChat(conversation.id)) {
-            return null;
-          }
+            // Обработка групповых чатов
+            if (conversation.is_group) {
+              // Получаем имена агентов группы
+              const agentNames =
+                conversation.group_agent_ids
+                  ?.map((agentId) => {
+                    const agent = agents.find((a) => a.id === agentId);
+                    return agent ? translateAgent(agent).name : t("chat.agent") + ` ${agentId}`;
+                  })
+                  .join(", ") || "";
 
-          // Фильтруем чаты инструментов - они не должны отображаться в списке
-          if (agent && toolsAgentIds.has(agent.id)) {
-            return null; // Инструменты работают как мини-приложения, их чаты не показываются
-          }
-
-          // Используем ту же логику, что и в buildListItems для правильного названия
-          const agentConversations = conversations.filter(
-            (conv) => conv.agent_id === agent?.id
-          );
-
-          // Определяем номер чата на основе порядка создания, а не текущей сортировки
-          const allAgentConversations = agentConversations.sort(
-            (a, b) => new Date(a.created_at) - new Date(b.created_at)
-          );
-          const conversationIndex = allAgentConversations.findIndex(
-            (conv) => conv.id === conversation.id
-          );
-
-          const translatedAgent = agent ? translateAgent(agent) : null;
-          const title =
-            allAgentConversations.length > 1
-              ? `${translatedAgent?.name} (${conversationIndex + 1})`
-              : translatedAgent?.name || t("chat.newChat");
-
-          // Формируем данные в том же формате, что и buildListItems
-          return {
-            id: conversation.id.toString(),
-            title,
-            time: formatTime(
-              conversation.updated_at || conversation.created_at
-            ),
-            preview: (() => {
               const decoded = conversation.last_message
                 ? decodeHtmlEntities(conversation.last_message)
                 : null;
-              return decoded
-                ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
-                : t("chat.chatWith", {
+
+              return {
+                id: conversation.id.toString(),
+                title: conversation.title,
+                time: formatTime(
+                  conversation.updated_at || conversation.created_at
+                ),
+                preview: decoded
+                  ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
+                  : agentNames ||
+                  `Групповой чат с ${conversation.group_agent_ids?.length || 0
+                  } участниками`,
+                colorClass: "bg-purple-500",
+                iconName: conversation.group_avatar || "group",
+                imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
+                unreadCount: getUnreadCount(conversation.id),
+                agentId: null,
+                conversationId: conversation.id,
+                hasConversation: true,
+                isGroup: true,
+                groupAvatar: conversation.group_avatar,
+              };
+            }
+
+            const agent = agents.find((a) => a.id === conversation.agent_id);
+
+            // Показываем активный чат даже если он новый пустой
+            // Фильтруем новые пустые чаты - они не должны показываться в списке до отправки сообщения
+            if (conversation.id !== activeConversation?.id && isNewlyCreatedEmptyChat(conversation.id)) {
+              return null;
+            }
+
+            // Фильтруем чаты инструментов - они не должны отображаться в списке
+            if (agent && toolsAgentIds.has(agent.id)) {
+              return null; // Инструменты работают как мини-приложения, их чаты не показываются
+            }
+
+            // Используем ту же логику, что и в buildListItems для правильного названия
+            const agentConversations = conversations.filter(
+              (conv) => conv.agent_id === agent?.id
+            );
+
+            // Определяем номер чата на основе порядка создания, а не текущей сортировки
+            const allAgentConversations = agentConversations.sort(
+              (a, b) => new Date(a.created_at) - new Date(b.created_at)
+            );
+            const conversationIndex = allAgentConversations.findIndex(
+              (conv) => conv.id === conversation.id
+            );
+
+            const translatedAgent = agent ? translateAgent(agent) : null;
+            
+            // Проверяем, является ли название стандартным "Чат с ..." или "Chat with ..."
+            const isDefaultTitle = conversation.title && (
+              conversation.title.startsWith("Чат с ") || 
+              conversation.title.startsWith("Chat with ")
+            );
+
+            let title;
+            if (conversation.title && conversation.title.trim() && !isDefaultTitle) {
+              // Используем сохраненное название чата (переименованное пользователем)
+              title = conversation.title;
+            } else {
+              // Fallback: используем стандартное название с номером
+              title =
+                allAgentConversations.length > 1
+                  ? `${translatedAgent?.name} (${conversationIndex + 1})`
+                  : t("chat.chatWith", { name: translatedAgent?.name || t("chat.unknownAgent") });
+            }
+
+            // Формируем данные в том же формате, что и buildListItems
+            return {
+              id: conversation.id.toString(),
+              title,
+              time: formatTime(
+                conversation.updated_at || conversation.created_at
+              ),
+              preview: (() => {
+                const decoded = conversation.last_message
+                  ? decodeHtmlEntities(conversation.last_message)
+                  : null;
+                return decoded
+                  ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
+                  : t("chat.chatWith", {
                     name: translatedAgent?.name || t("chat.unknownAgent"),
                   });
-            })(),
-            colorClass:
-              agent?.color_class || "bg-purple-500 dark:bg-purple-600",
-            iconName: agent?.icon_name || "psychology",
-            imageSrc: getAgentAvatarUrl(agent?.image_url, agent?.avatar_url),
-            unreadCount: getUnreadCount(conversation.id),
-            agentId: agent?.id,
-            conversationId: conversation.id,
-            hasConversation: true,
-          };
-        });
+              })(),
+              colorClass:
+                agent?.color_class || "bg-purple-500 dark:bg-purple-600",
+              iconName: agent?.icon_name || "psychology",
+              imageSrc: getAgentAvatarUrl(agent?.image_url, agent?.avatar_url),
+              unreadCount: getUnreadCount(conversation.id),
+              agentId: agent?.id,
+              conversationId: conversation.id,
+              hasConversation: true,
+            };
+          });
 
         // Объединяем только чаты папки без системного чата
         // Фильтруем null значения от отфильтрованных инструментов
@@ -1540,7 +1558,7 @@ const Sidebar = ({
   // Пользовательские папки
   const customFolders = useMemo(() => {
     const allFolders = folders || [];
-    
+
     const custom = allFolders
       .filter((folder) => folder && folder.folder_type === "custom")
       .map((folder) => ({
@@ -1549,7 +1567,7 @@ const Sidebar = ({
         icon: getFolderIcon(folder.icon),
         unreadCount: getFolderUnreadCount(folder.id),
       }));
-    
+
     return custom;
   }, [folders, chatData, getFolderUnreadCount]);
 
@@ -1559,55 +1577,55 @@ const Sidebar = ({
     const baseSystemFolders = [
       {
         id: "chats",
-        label: "Все чаты",
+        label: t("common.allChats"),
         icon: MdHome,
         unreadCount: getFolderUnreadCount("chats"),
       },
       {
         id: "religion",
-        label: "Религия",
+        label: t("library.categories.religion"),
         icon: MdFavorite,
         unreadCount: getFolderUnreadCount("religion"),
       },
       {
         id: "science",
-        label: "Наука",
+        label: t("library.categories.science"),
         icon: MdSchool,
         unreadCount: getFolderUnreadCount("science"),
       },
       {
         id: "politics",
-        label: "Политика",
+        label: t("library.categories.politics"),
         icon: MdBusiness,
         unreadCount: getFolderUnreadCount("politics"),
       },
       {
         id: "philosophy",
-        label: "Философия",
+        label: t("library.categories.philosophy"),
         icon: MdPsychology,
         unreadCount: getFolderUnreadCount("philosophy"),
       },
       {
         id: "inventions",
-        label: "Изобретения",
+        label: t("library.categories.inventions"),
         icon: MdWork,
         unreadCount: getFolderUnreadCount("inventions"),
       },
       {
         id: "art",
-        label: "Искусство",
+        label: t("library.categories.art"),
         icon: MdStar,
         unreadCount: getFolderUnreadCount("art"),
       },
       {
         id: "literature",
-        label: "Литература",
+        label: t("library.categories.literature"),
         icon: MdAutoAwesome,
         unreadCount: getFolderUnreadCount("literature"),
       },
       {
         id: "business",
-        label: "Бизнес",
+        label: t("library.categories.business"),
         icon: MdCalculate,
         unreadCount: getFolderUnreadCount("business"),
       },
@@ -1660,7 +1678,7 @@ const Sidebar = ({
     const currentIndex = navItems.findIndex((item) => String(item.id) === String(activeFolder));
 
     if (prevIndex === -1 || currentIndex === -1 || prevIndex === currentIndex) return 0;
-    
+
     // Если новая папка ниже (индекс больше) -> направление 1 (вниз/вперед) -> уходит влево, приходит справа
     // Если новая папка выше (индекс меньше) -> направление -1 (вверх/назад) -> уходит вправо, приходит слева
     return currentIndex > prevIndex ? 1 : -1;
@@ -1676,7 +1694,7 @@ const Sidebar = ({
       const currentFolderExists = navItems.some(
         (item) => String(item.id) === String(activeFolder)
       );
-      
+
       // Если текущая категория не найдена, переключаемся на первую доступную
       if (!currentFolderExists) {
         const firstFolder = navItems[0];
@@ -1784,158 +1802,157 @@ const Sidebar = ({
 
   const asideBaseClasses =
     "md:flex-shrink-0 bg-[var(--bg-secondary)] flex flex-col min-h-0 h-full border-r border-[var(--border-color)] relative";
-  const asideClassName = `${asideBaseClasses} ${
-    isFullWidth ? "flex-1 min-w-0" : "w-full"
-  }`.trim();
+  const asideClassName = `${asideBaseClasses} ${isFullWidth ? "flex-1 min-w-0" : "w-full"
+    }`.trim();
 
   return (
     <div ref={containerRef} className={containerClassName}>
-          {(
-            <aside
-              ref={sidebarRef}
-              className={asideClassName}
-              style={{
-                width: isFullWidth ? undefined : `${sidebarWidth}px`,
-                flex: isFullWidth ? "1 1 auto" : undefined,
-                transition: isResizing ? "none" : "width 240ms ease-out",
-              }}
-            >
-            <SearchWithAvatar
-              onMenuClick={onMenuClick}
-              ref={searchRef}
-              onSearchToggle={handleSearchToggle}
-              sidebarRef={sidebarRef}
-              onChatSelect={onChatSelect}
-              currentChatId={activeChatId}
-            />
-            {!isSearchOpen && (
-              <div className="relative flex-1 w-full min-h-0 overflow-hidden">
-                <AnimatePresence mode="sync" initial={false} custom={direction}>
-                  <motion.div
-                    key={activeFolder}
-                    custom={direction}
-                    variants={variants}
-                    className="absolute inset-0 w-full h-full flex flex-col"
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{
-                      type: "tween",
-                      duration: 0.25,
-                      ease: [0.4, 0, 0.2, 1],
-                    }}
-                    style={{
-                      willChange: "transform, opacity",
-                      backfaceVisibility: "hidden",
-                    }}
-                  >
-                    {/* Для остальных разделов показываем обычный ChatList */}
-                    <ChatList
-                      items={chatData[activeFolder] || []}
-                      onChatSelect={onChatSelect}
-                      activeChatId={activeChatId}
-                      onDeleteChat={onDeleteChat}
-                      onAddToCollection={onAddToCollection}
-                      onPinToTop={onPinToTop}
-                      onDeleteAgent={onDeleteAgent}
-                      onUnsubscribeChannel={onUnsubscribeChannel}
-                      onHideChat={onHideChat}
-                      pinnedChats={pinnedChats}
-                      // Пропсы для закрепления в папках
-                      folderId={activeFolder}
-                      pinnedChatsInFolder={pinnedChatsInCurrentFolder}
-                      onPinInFolder={handlePinInFolder}
-                      onUnpinFromFolder={handleUnpinFromFolder}
-                    />
-                  </motion.div>
-                </AnimatePresence>
-                {/* Кнопка добавления нового чата в правом нижнем углу */}
-                {(
-                  <button
-                    className="absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg z-10 transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl"
-                    style={{
-                      backgroundColor: "var(--accent)",
-                    }}
-                    onClick={() => {
-                      // Открываем библиотеку персонажей для всех категорий персонажей
-                      onOpenLibrary(); // ChatLibraryInline для персонажей
-                    }}
-                    title={t("common.openLibrary")}
-                  >
-                    <MdAdd className="text-white text-2xl" />
-                  </button>
-                )}
-              </div>
-            )}
-            {/** Invisible right-edge resizer hit area inside aside */}
-            {isMobileViewport || isFullWidth ? null : (
-              <div
-                className="absolute top-0 right-0 h-full w-[8px] cursor-col-resize select-none"
-                style={{ background: "transparent" }}
-                onMouseDown={(e) => {
-                  startXRef.current = e.clientX;
-                  startWidthRef.current = sidebarWidth;
-                  setIsResizing(true);
-                }}
-              />
-            )}
-            </aside>
+      {(
+        <aside
+          ref={sidebarRef}
+          className={asideClassName}
+          style={{
+            width: isFullWidth ? undefined : `${sidebarWidth}px`,
+            flex: isFullWidth ? "1 1 auto" : undefined,
+            transition: isResizing ? "none" : "width 240ms ease-out",
+          }}
+        >
+          <SearchWithAvatar
+            onMenuClick={onMenuClick}
+            ref={searchRef}
+            onSearchToggle={handleSearchToggle}
+            sidebarRef={sidebarRef}
+            onChatSelect={onChatSelect}
+            currentChatId={activeChatId}
+          />
+          {!isSearchOpen && (
+            <div className="relative flex-1 w-full min-h-0 overflow-hidden">
+              <AnimatePresence mode="sync" initial={false} custom={direction}>
+                <motion.div
+                  key={activeFolder}
+                  custom={direction}
+                  variants={variants}
+                  className="absolute inset-0 w-full h-full flex flex-col"
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{
+                    type: "tween",
+                    duration: 0.25,
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
+                  style={{
+                    willChange: "transform, opacity",
+                    backfaceVisibility: "hidden",
+                  }}
+                >
+                  {/* Для остальных разделов показываем обычный ChatList */}
+                  <ChatList
+                    items={chatData[activeFolder] || []}
+                    onChatSelect={onChatSelect}
+                    activeChatId={activeChatId}
+                    onDeleteChat={onDeleteChat}
+                    onAddToCollection={onAddToCollection}
+                    onPinToTop={onPinToTop}
+                    onDeleteAgent={onDeleteAgent}
+                    onUnsubscribeChannel={onUnsubscribeChannel}
+                    onHideChat={onHideChat}
+                    pinnedChats={pinnedChats}
+                    // Пропсы для закрепления в папках
+                    folderId={activeFolder}
+                    pinnedChatsInFolder={pinnedChatsInCurrentFolder}
+                    onPinInFolder={handlePinInFolder}
+                    onUnpinFromFolder={handleUnpinFromFolder}
+                  />
+                </motion.div>
+              </AnimatePresence>
+              {/* Кнопка добавления нового чата в правом нижнем углу */}
+              {(
+                <button
+                  className="absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl"
+                  style={{
+                    backgroundColor: "var(--accent)",
+                  }}
+                  onClick={() => {
+                    // Открываем библиотеку персонажей для всех категорий персонажей
+                    onOpenLibrary(); // ChatLibraryInline для персонажей
+                  }}
+                  title={t("common.openLibrary")}
+                >
+                  <MdAdd className="text-white text-2xl" />
+                </button>
+              )}
+            </div>
           )}
+          {/** Invisible right-edge resizer hit area inside aside */}
+          {isMobileViewport || isFullWidth ? null : (
+            <div
+              className="absolute top-0 right-0 h-full w-[8px] cursor-col-resize select-none"
+              style={{ background: "transparent" }}
+              onMouseDown={(e) => {
+                startXRef.current = e.clientX;
+                startWidthRef.current = sidebarWidth;
+                setIsResizing(true);
+              }}
+            />
+          )}
+        </aside>
+      )}
 
-          {/* Форма редактирования папки */}
-          <CreateFolderForm
-            isOpen={showEditForm}
-            onClose={() => {
+      {/* Форма редактирования папки */}
+      <CreateFolderForm
+        isOpen={showEditForm}
+        onClose={() => {
+          setShowEditForm(false);
+          setEditingFolder(null);
+        }}
+        onCreateFolder={async (folderData) => {
+          try {
+            if (editingFolder) {
+              await updateFolder(editingFolder.id, folderData);
               setShowEditForm(false);
               setEditingFolder(null);
-            }}
-            onCreateFolder={async (folderData) => {
-              try {
-                if (editingFolder) {
-                  await updateFolder(editingFolder.id, folderData);
-                  setShowEditForm(false);
-                  setEditingFolder(null);
-                }
-              } catch (error) {
-                console.error("Failed to update folder:", error);
-              }
-            }}
-            conversations={conversations.filter((conv) => !conv.is_group && !conv.isGroup && !conv.is_channel && !conv.isChannel)}
-            agents={agents}
-            groups={groups}
-            channels={channels}
-            editingFolder={editingFolder}
-            isEditMode={true}
-          />
+            }
+          } catch (error) {
+            console.error("Failed to update folder:", error);
+          }
+        }}
+        conversations={conversations.filter((conv) => !conv.is_group && !conv.isGroup && !conv.is_channel && !conv.isChannel)}
+        agents={agents}
+        groups={groups}
+        channels={channels}
+        editingFolder={editingFolder}
+        isEditMode={true}
+      />
 
-          {/* Модальное окно удаления папки */}
-          <DeleteFolderModal
-            isOpen={showDeleteModal}
-            onClose={() => {
-              setShowDeleteModal(false);
-              setFolderToDelete(null);
-            }}
-            onConfirm={handleConfirmDeleteFolder}
-            folderName={folderToDelete?.name || null}
-            folderIcon={folderToDelete?.icon || "folder"}
-          />
+      {/* Модальное окно удаления папки */}
+      <DeleteFolderModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setFolderToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteFolder}
+        folderName={folderToDelete?.name || null}
+        folderIcon={folderToDelete?.icon || "folder"}
+      />
 
-          {/* Библиотека агентов */}
-          {isAgentsLibraryOpen && (
-            <AgentsLibrary
-              onClose={handleCloseAgentsLibrary}
-              onAddAgent={handleAgentAdded}
-            />
-          )}
-          
-          {/* Библиотека персонажей */}
-          {isCharactersLibraryOpen && (
-            <CharactersLibrary
-              onClose={handleCloseCharactersLibrary}
-              onAddCharacter={handleCharacterAdded}
-            />
-          )}
-          
+      {/* Библиотека агентов */}
+      {isAgentsLibraryOpen && (
+        <AgentsLibrary
+          onClose={handleCloseAgentsLibrary}
+          onAddAgent={handleAgentAdded}
+        />
+      )}
+
+      {/* Библиотека персонажей */}
+      {isCharactersLibraryOpen && (
+        <CharactersLibrary
+          onClose={handleCloseCharactersLibrary}
+          onAddCharacter={handleCharacterAdded}
+        />
+      )}
+
       <ProfileScreen isOpen={showProfile} {...mergedProfileScreenProps} />
     </div>
   );

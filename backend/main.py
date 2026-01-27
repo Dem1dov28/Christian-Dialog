@@ -28,7 +28,6 @@ from api.agents import create_agent_endpoints
 from api.chat import create_chat_endpoints
 from api.multi_agent_chat import create_multi_agent_chat_endpoints
 from api.folders import create_folder_endpoints
-from api.saved_messages import create_saved_messages_endpoints
 from api.pinned_chats import create_pinned_chats_endpoints
 # from api.pinned_messages import create_pinned_messages_endpoints  # Файл не существует
 from api.search import router as search_router
@@ -151,7 +150,6 @@ create_agent_endpoints(app, agent_service, user_agent_service)
 create_chat_endpoints(app, agent_service, conversation_service, folder_service)
 create_multi_agent_chat_endpoints(app, multi_agent_chat_service)
 create_folder_endpoints(app, folder_service)
-create_saved_messages_endpoints(app, conversation_service)
 create_pinned_chats_endpoints(app, pinned_chats_service)
 create_budget_endpoints(app, budget_service)
 create_savings_goal_endpoints(app, savings_goal_service)
@@ -162,6 +160,62 @@ create_attraction_visit_endpoints(app, attraction_visit_service)
 create_geocoding_endpoints(app, geocoding_service)
 create_wikipedia_attractions_endpoints(app, wikipedia_service)
 # create_pinned_messages_endpoints(app, pinned_messages_service)  # Файл не существует
+
+
+@app.get("/test-search-db")
+async def test_search_db():
+    """Тестовый эндпоинт для проверки поиска в базе данных"""
+    try:
+        from services.search_service import SearchService
+        from core.database import engine
+        from sqlmodel import Session, select
+        from models.user import User
+        
+        search_service = SearchService()
+        
+        # Получаем тестового пользователя (первого попавшегося)
+        with Session(engine) as session:
+            user = session.exec(select(User)).first()
+            if not user:
+                return {"status": "error", "message": "No users found in database"}
+            
+            # Пробуем выполнить поиск
+            try:
+                result = search_service.search_messages(
+                    query="test",
+                    user_id=user.id,
+                    session=session,
+                    limit=10
+                )
+                return {
+                    "status": "success", 
+                    "message": "Search completed successfully",
+                    "user_id": user.id,
+                    "results_count": result["total"],
+                    "results": result
+                }
+            except Exception as search_error:
+                logger.error(f"Error during search: {search_error}", exc_info=True)
+                return {
+                    "status": "error", 
+                    "message": f"Search failed: {str(search_error)}",
+                    "user_id": user.id
+                }
+    except Exception as e:
+        logger.error(f"Error in test_search_db: {e}", exc_info=True)
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/test-search")
+async def test_search():
+    """Тестовый эндпоинт для проверки поиска"""
+    try:
+        from services.search_service import SearchService
+        search_service = SearchService()
+        return {"status": "success", "message": "SearchService initialized successfully"}
+    except Exception as e:
+        logger.error(f"Error initializing SearchService: {e}", exc_info=True)
+        return {"status": "error", "message": str(e)}
 
 
 @app.get("/")

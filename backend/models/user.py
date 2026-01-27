@@ -44,7 +44,6 @@ class UserUpdate(SQLModel):
     full_name: Optional[str] = Field(default=None, max_length=100)
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
     password: Optional[str] = Field(default=None, min_length=6, max_length=100)
-    is_system_chat_hidden: Optional[bool] = Field(default=None, description="Скрыт ли системный чат Saved Messages")
 
 
 class User(UserBase, table=True):
@@ -76,8 +75,6 @@ class User(UserBase, table=True):
     api_key: Optional[str] = Field(default=None)
     expires_at: Optional[datetime] = Field(default=None)
     
-    # Настройки пользователя
-    is_system_chat_hidden: bool = Field(default=False, description="Скрыт ли системный чат Saved Messages")
     google_id: Optional[str] = Field(
         default=None,
         description="Google subject identifier",
@@ -190,7 +187,6 @@ class UserResponse(UserBase):
     api_access: bool = False
     expires_at: Optional[datetime] = None
     messages_cycle_started_at: Optional[datetime] = None
-    is_system_chat_hidden: bool = False
     pinned_chats: List[int] = []
 
 

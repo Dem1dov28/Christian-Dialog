@@ -9,6 +9,8 @@ export function useChatHeaderHandlers({
   isLoading,
   setIsDialogueLoading,
   continueGroupDialogue,
+  checkMessageLimit,
+  setShowUpgradeModal,
   onToggleRightPanel,
   onOpenChatSearch,
   showError,
@@ -62,12 +64,31 @@ export function useChatHeaderHandlers({
         return;
       }
 
+      // Проверяем лимит сообщений перед продолжением диалога
+      const canSend = await checkMessageLimit();
+      if (!canSend) {
+        setShowUpgradeModal(true);
+        return;
+      }
+
       try {
         setIsDialogueLoading(true);
         await continueGroupDialogue(activeConversation.id);
         showSuccess(t("chat.dialogueContinued"));
       } catch (error) {
         console.error("Failed to continue dialogue:", error);
+        
+        // Проверяем, является ли это ошибкой лимита сообщений
+        const isMessageLimitError =
+          error.status === 429 ||
+          error.message?.includes("Message limit exceeded") ||
+          error.message?.includes("limit exceeded");
+
+        if (isMessageLimitError) {
+          setShowUpgradeModal(true);
+          return;
+        }
+        
         showError(t("chat.continueDialogueError"));
       } finally {
         setIsDialogueLoading(false);
@@ -79,6 +100,8 @@ export function useChatHeaderHandlers({
       isLoading,
       setIsDialogueLoading,
       continueGroupDialogue,
+      checkMessageLimit,
+      setShowUpgradeModal,
       showError,
       showSuccess,
       t,

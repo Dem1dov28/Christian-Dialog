@@ -5,7 +5,7 @@
  * Использует Three.js для рендеринга 3D-сцены с эффектами свечения.
  */
 
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, MeshTransmissionMaterial, Environment, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -21,9 +21,9 @@ const InnerParticles = () => {
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 1.5;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 1.5;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 1.5;
+      pos[i * 3] = (Math.random() - 0.5) * 0.75;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 0.75;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 0.75;
     }
     return pos;
   }, []);
@@ -46,7 +46,7 @@ const InnerParticles = () => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.05}
+        size={0.025}
         color="#e879f9"
         transparent
         opacity={0.8}
@@ -64,14 +64,14 @@ const GlowingCore = () => {
   
   useFrame((state) => {
     if (coreRef.current) {
-      const scale = 0.3 + Math.sin(state.clock.elapsedTime * 2) * 0.1;
+      const scale = 0.15 + Math.sin(state.clock.elapsedTime * 2) * 0.05;
       coreRef.current.scale.setScalar(scale);
     }
   });
 
   return (
     <mesh ref={coreRef}>
-      <sphereGeometry args={[0.3, 32, 32]} />
+      <sphereGeometry args={[0.15, 32, 32]} />
       <meshBasicMaterial color="#c084fc" transparent opacity={0.6} />
     </mesh>
   );
@@ -104,11 +104,11 @@ const GlassCube = () => {
       <group>
         {/* Прозрачный куб с эффектом преломления */}
         <mesh ref={cubeRef}>
-          <boxGeometry args={[2, 2, 2]} />
+          <boxGeometry args={[1, 1, 1]} />
           <MeshTransmissionMaterial
             backside
             samples={16}
-            thickness={0.5}
+            thickness={0.25}
             chromaticAberration={0.1}
             anisotropy={0.3}
             distortion={0.2}
@@ -126,7 +126,7 @@ const GlassCube = () => {
         
         {/* Светящиеся грани куба */}
         <lineSegments ref={edgesRef}>
-          <edgesGeometry args={[new THREE.BoxGeometry(2.02, 2.02, 2.02)]} />
+          <edgesGeometry args={[new THREE.BoxGeometry(1.02, 1.02, 1.02)]} />
           <lineBasicMaterial color="#e879f9" transparent opacity={0.6} />
         </lineSegments>
 
@@ -140,36 +140,7 @@ const GlassCube = () => {
   );
 };
 
-/**
- * Орбитальные кольца вокруг куба
- */
-const OrbitalRings = () => {
-  const ring1Ref = useRef();
-  const ring2Ref = useRef();
 
-  useFrame((state) => {
-    if (ring1Ref.current) {
-      ring1Ref.current.rotation.z = state.clock.elapsedTime * 0.5;
-    }
-    if (ring2Ref.current) {
-      ring2Ref.current.rotation.z = -state.clock.elapsedTime * 0.3;
-      ring2Ref.current.rotation.x = state.clock.elapsedTime * 0.2;
-    }
-  });
-
-  return (
-    <>
-      <mesh ref={ring1Ref} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[2.5, 0.02, 16, 100]} />
-        <meshBasicMaterial color="#a855f7" transparent opacity={0.4} />
-      </mesh>
-      <mesh ref={ring2Ref} rotation={[Math.PI / 3, Math.PI / 4, 0]}>
-        <torusGeometry args={[2.8, 0.015, 16, 100]} />
-        <meshBasicMaterial color="#d946ef" transparent opacity={0.3} />
-      </mesh>
-    </>
-  );
-};
 
 /**
  * 3D Сцена
@@ -196,57 +167,140 @@ const Scene = () => {
       
       {/* Основные элементы */}
       <GlassCube />
-      <OrbitalRings />
     </>
   );
 };
 
 /**
- * Главный компонент экрана загрузки
+ * Preloader для заранее загрузки 3D ресурсов
  */
-const LoadingScreen = () => {
+const LoadingScreenPreloader = () => {
+  const [isPreloaded, setIsPreloaded] = useState(false);
+  
   useEffect(() => {
-    // Сохраняем текущие стили body
-    const originalBackgroundImage = document.body.style.backgroundImage;
-    const originalBackgroundColor = document.body.style.backgroundColor;
-
-    // Принудительно убираем фоновое изображение и устанавливаем темный фон
-    // Это предотвращает просвечивание старого фона через анимации лоадера
-    document.body.style.backgroundImage = 'none';
-    document.body.style.backgroundColor = '#0c0015';
-
-    // Возвращаем стили при размонтировании
+    // Создаем скрытый canvas для предзагрузки ресурсов Three.js
+    const preloadCanvas = document.createElement('canvas');
+    preloadCanvas.style.position = 'absolute';
+    preloadCanvas.style.top = '-1000px';
+    preloadCanvas.style.left = '-1000px';
+    preloadCanvas.width = 1;
+    preloadCanvas.height = 1;
+    document.body.appendChild(preloadCanvas);
+    
+    try {
+      // Инициализируем WebGL контекст для предварительной загрузки
+      const gl = preloadCanvas.getContext('webgl') || preloadCanvas.getContext('experimental-webgl');
+      if (gl) {
+        // Создаем базовые шейдеры и программы для прогрева
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, `
+          attribute vec3 position;
+          void main() {
+            gl_Position = vec4(position, 1.0);
+          }
+        `);
+        gl.compileShader(vertexShader);
+        
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, `
+          void main() {
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+          }
+        `);
+        gl.compileShader(fragmentShader);
+        
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        
+        // Создаем простой буфер для тестирования
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0]), gl.STATIC_DRAW);
+        
+        console.log('[LoadingScreen] WebGL resources preloaded successfully');
+      }
+    } catch (error) {
+      console.warn('[LoadingScreen] WebGL preloading failed:', error);
+    }
+    
+    // Задержка для полной инициализации контекста и ресурсов
+    const timer = setTimeout(() => {
+      if (document.body.contains(preloadCanvas)) {
+        document.body.removeChild(preloadCanvas);
+      }
+      setIsPreloaded(true);
+      console.log('[LoadingScreen] Preloading complete');
+    }, 150); // 150ms для уверенности в полной инициализации
+    
     return () => {
-      document.body.style.backgroundImage = originalBackgroundImage;
-      document.body.style.backgroundColor = originalBackgroundColor;
+      clearTimeout(timer);
+      if (document.body.contains(preloadCanvas)) {
+        document.body.removeChild(preloadCanvas);
+      }
     };
   }, []);
+  
+  return null; // Этот компонент ничего не рендерит в DOM
+};
 
+/**
+ * Главный компонент экрана загрузки
+ */
+const LoadingScreen = ({ isVisible = true }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Эффект для плавного появления после полной загрузки
+  useEffect(() => {
+    if (isVisible) {
+      // Небольшая задержка для уверенности в готовности всех ресурсов
+      // Даже при предзагрузке добавляем минимальную задержку для плавности
+      const timer = setTimeout(() => {
+        setIsLoaded(true);
+      }, 30); // 30ms для плавного появления
+      
+      return () => clearTimeout(timer);
+    } else {
+      // При скрытии сбрасываем состояние для следующего появления
+      setIsLoaded(false);
+    }
+  }, [isVisible]);
+  
+  if (!isVisible) {
+    return null;
+  }
+  
   return (
     <div className="loading-screen-3d">
-      {/* 3D Canvas */}
-      <Canvas
-        camera={{ position: [0, 0, 6], fov: 45 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
+      {/* 3D Canvas с плавным появлением */}
+      <div 
+        className="canvas-container"
+        style={{
+          opacity: isLoaded ? 1 : 0,
+          transition: 'opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        }}
       >
-        <Scene />
-      </Canvas>
+        <Canvas
+          camera={{ position: [0, 0, 6], fov: 45 }}
+          dpr={[1, 2]}
+          gl={{ 
+            antialias: true, 
+            alpha: true,
+            powerPreference: "high-performance" // Оптимизация производительности
+          }}
+        >
+          <Scene />
+        </Canvas>
+      </div>
       
       {/* Наложение с градиентом */}
       <div className="loading-overlay" />
-      
-      {/* Текст загрузки */}
-      <div className="loading-content">
-        <p className="loading-text-3d">
-          Подключаем ваших персонажей...
-        </p>
-        <div className="loading-bar">
-          <div className="loading-bar-fill" />
-        </div>
-      </div>
     </div>
   );
 };
+
+// Экспортируем также preloader для использования на уровне приложения
+LoadingScreen.Preloader = LoadingScreenPreloader;
 
 export default LoadingScreen;

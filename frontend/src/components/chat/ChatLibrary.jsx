@@ -862,7 +862,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     name.includes("buddha") || name.includes("моисей") ||
                     name.includes("moses")
                   ) {
-                    categories.push({ id: "religion", label: "Религия" });
+                    categories.push({ id: "religion", label: t("library.categories.religion") });
                   }
 
                   // Наука
@@ -885,7 +885,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     name.includes("einstein") || name.includes("newton") ||
                     name.includes("darwin") || name.includes("tesla")
                   ) {
-                    categories.push({ id: "science", label: "Наука" });
+                    categories.push({ id: "science", label: t("library.categories.science") });
                   }
 
                   // Политика
@@ -911,7 +911,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     name.includes("lenin") || name.includes("stalin") ||
                     name.includes("марк аврелий") || name.includes("marcus aurelius")
                   ) {
-                    categories.push({ id: "politics", label: "Политика" });
+                    categories.push({ id: "politics", label: t("library.categories.politics") });
                   }
 
                   // Философия
@@ -931,7 +931,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     name.includes("marcus aurelius") || name.includes("аристотель") ||
                     name.includes("aristotle")
                   ) {
-                    categories.push({ id: "philosophy", label: "Философия" });
+                    categories.push({ id: "philosophy", label: t("library.categories.philosophy") });
                   }
 
                   // Изобретения
@@ -949,7 +949,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     name.includes("edison") || name.includes("bell") ||
                     name.includes("ford") || name.includes("wright")
                   ) {
-                    categories.push({ id: "inventions", label: "Изобретения" });
+                    categories.push({ id: "inventions", label: t("library.categories.inventions") });
                   }
 
                   // Искусство
@@ -971,7 +971,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     combined.includes("artist") ||
                     combined.includes("poet") || combined.includes("musician")
                   ) {
-                    categories.push({ id: "art", label: "Искусство" });
+                    categories.push({ id: "art", label: t("library.categories.art") });
                   }
 
                   // Литература
@@ -989,7 +989,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     combined.includes("author") || combined.includes("book") ||
                     combined.includes("novel") || combined.includes("poetry")
                   ) {
-                    categories.push({ id: "literature", label: "Литература" });
+                    categories.push({ id: "literature", label: t("library.categories.literature") });
                   }
 
                   // Бизнес
@@ -1015,7 +1015,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     name.includes("брэнсон") || name.includes("branson") ||
                     name.includes("баффет") || name.includes("buffett")
                   ) {
-                    categories.push({ id: "business", label: "Бизнес" });
+                    categories.push({ id: "business", label: t("library.categories.business") });
                   }
 
                   return categories;
@@ -1092,12 +1092,12 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       />
       {/* Анимированный темный overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-60 z-40"
+        className="fixed inset-0 bg-black bg-opacity-60 z-[100]"
         onClick={handleOverlayClick}
       />
 
       {/* Библиотека чатов */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
         <div className="bg-[var(--bg-primary)]/90 backdrop-blur-xl rounded-none sm:rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[92vw] sm:max-w-4xl md:max-w-5xl lg:max-w-6xl max-h-[calc(100vh-160px)] overflow-hidden border border-[var(--border-color)] flex flex-col">
           {/* Заголовок с градиентом */}
           <div
@@ -1161,15 +1161,15 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="pl-12 pr-8 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[var(--text-white)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all duration-200 appearance-none cursor-pointer"
               >
-                <option value="all">Все категории</option>
-                <option value="religion">Религия</option>
-                <option value="science">Наука</option>
-                <option value="politics">Политика</option>
-                <option value="philosophy">Философия</option>
-                <option value="inventions">Изобретения</option>
-                <option value="art">Искусство</option>
-                <option value="literature">Литература</option>
-                <option value="business">Бизнес</option>
+                <option value="all">{t("library.categories.all")}</option>
+                <option value="religion">{t("library.categories.religion")}</option>
+                <option value="science">{t("library.categories.science")}</option>
+                <option value="politics">{t("library.categories.politics")}</option>
+                <option value="philosophy">{t("library.categories.philosophy")}</option>
+                <option value="inventions">{t("library.categories.inventions")}</option>
+                <option value="art">{t("library.categories.art")}</option>
+                <option value="literature">{t("library.categories.literature")}</option>
+                <option value="business">{t("library.categories.business")}</option>
               </select>
             </div>
           </div>
@@ -1188,7 +1188,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xl font-semibold text-[var(--text-white)] flex items-center gap-2">
-                      <span>Созданные</span>
+                      <span>{t("library.categories.created")}</span>
                       {filteredUserAgents.length > 0 && (
                         <span className="text-sm text-[var(--text-dim)]">({filteredUserAgents.length})</span>
                       )}
@@ -1198,19 +1198,19 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--accent)] text-white text-sm font-medium hover:bg-[var(--accent-hover)] transition-all duration-200 hover:scale-105"
                     >
                       <MdAdd size={18} />
-                      <span>Создать</span>
+                      <span>{t("common.create")}</span>
                     </button>
                   </div>
 
                   {filteredUserAgents.length === 0 ? (
                     <div className="text-center py-8 bg-[var(--bg-secondary)] rounded-2xl border border-dashed border-[var(--border-color)]">
                       <div className="text-4xl mb-3">✨</div>
-                      <p className="text-[var(--text-gray)] mb-3">У вас пока нет созданных персонажей</p>
+                      <p className="text-[var(--text-gray)] mb-3">{t("library.noCreatedAgents")}</p>
                       <button
                         onClick={() => setIsCreateModalOpen(true)}
                         className="text-[var(--accent)] hover:underline text-sm"
                       >
-                        Создать первого персонажа
+                        {t("library.createFirstAgent")}
                       </button>
                     </div>
                   ) : (
@@ -1225,7 +1225,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                           <button
                             onClick={(e) => handleDeleteUserAgent(e, agent.id, agent.name)}
                             className="absolute top-3 right-3 p-2 rounded-full bg-red-500/10 text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 z-20"
-                            title="Удалить персонажа"
+                            title={t("library.deleteAgent")}
                           >
                             <MdDelete size={16} />
                           </button>
@@ -1257,7 +1257,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                             </h3>
                             <div className="mt-3">
                               <span className="inline-block px-2 py-1 text-xs rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
-                                Созданный
+                                {t("library.createdBadge")}
                               </span>
                             </div>
                           </div>

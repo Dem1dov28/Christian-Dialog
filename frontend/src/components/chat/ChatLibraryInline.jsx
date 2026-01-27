@@ -271,7 +271,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       name.includes("buddha") || name.includes("моисей") ||
       name.includes("moses")
     ) {
-      categories.push({ id: "religion", label: "Религия" });
+      categories.push({ id: "religion", label: t("library.categories.religion") });
     }
 
     // Наука
@@ -294,7 +294,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       name.includes("einstein") || name.includes("newton") ||
       name.includes("darwin") || name.includes("tesla")
     ) {
-      categories.push({ id: "science", label: "Наука" });
+      categories.push({ id: "science", label: t("library.categories.science") });
     }
 
     // Политика
@@ -320,7 +320,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       name.includes("lenin") || name.includes("stalin") ||
       name.includes("марк аврелий") || name.includes("marcus aurelius")
     ) {
-      categories.push({ id: "politics", label: "Политика" });
+      categories.push({ id: "politics", label: t("library.categories.politics") });
     }
 
     // Философия
@@ -340,7 +340,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       name.includes("marcus aurelius") || name.includes("аристотель") ||
       name.includes("aristotle")
     ) {
-      categories.push({ id: "philosophy", label: "Философия" });
+      categories.push({ id: "philosophy", label: t("library.categories.philosophy") });
     }
 
     // Изобретения
@@ -358,7 +358,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       name.includes("edison") || name.includes("bell") ||
       name.includes("ford") || name.includes("wright")
     ) {
-      categories.push({ id: "inventions", label: "Изобретения" });
+      categories.push({ id: "inventions", label: t("library.categories.inventions") });
     }
 
     // Искусство
@@ -380,7 +380,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       combined.includes("artist") ||
       combined.includes("poet") || combined.includes("musician")
     ) {
-      categories.push({ id: "art", label: "Искусство" });
+      categories.push({ id: "art", label: t("library.categories.art") });
     }
 
     // Литература
@@ -398,7 +398,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       combined.includes("author") || combined.includes("book") ||
       combined.includes("novel") || combined.includes("poetry")
     ) {
-      categories.push({ id: "literature", label: "Литература" });
+      categories.push({ id: "literature", label: t("library.categories.literature") });
     }
 
     // Бизнес
@@ -424,11 +424,11 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       name.includes("брэнсон") || name.includes("branson") ||
       name.includes("баффет") || name.includes("buffett")
     ) {
-      categories.push({ id: "business", label: "Бизнес" });
+      categories.push({ id: "business", label: t("library.categories.business") });
     }
 
     return categories;
-  }, []);
+  }, [t]);
 
   // Маппинг категорий для поиска
   const getCategorySearchTerms = (persona) => {
@@ -1041,11 +1041,11 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
     try {
       await deleteAgent(deleteAgentModal.agent.id);
-      showSuccess(`Персонаж "${deleteAgentModal.agent.name}" удален`);
+      showSuccess(t("library.deleteAgentConfirm", { name: deleteAgentModal.agent.name }));
       setDeleteAgentModal({ isOpen: false, agent: null });
     } catch (error) {
       console.error("Error deleting agent:", error);
-      showError(error.message || "Не удалось удалить персонажа");
+      showError(error.message || t("library.deleteAgentConfirmError"));
     }
   };
 
@@ -1242,7 +1242,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
             {/* ЦЕНТР: Заголовок */}
             <h1
-              className="flex-1 text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] via-[var(--accent)] to-[var(--accent)] dark:from-[var(--accent)] dark:via-[var(--accent)] dark:to-[var(--accent)] text-center whitespace-normal break-words px-2 drop-shadow-sm dark:drop-shadow-none"
+              className="flex-1 text-lg sm:text-xl font-bold text-[var(--text-primary)] dark:text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] via-[var(--accent)] to-[var(--accent)] dark:from-[var(--accent)] dark:via-[var(--accent)] dark:to-[var(--accent)] text-center whitespace-normal break-words px-2 drop-shadow-sm dark:drop-shadow-none"
               style={{ fontFamily: '"Rubik Mono One", sans-serif' }}
             >
               {isGroupCreationMode ? t("library.createGroupChat") : t("library.title")}
@@ -1322,16 +1322,16 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           {/* Категории (Chips) - Flex Wrap (без скролла) */}
           <div className="flex flex-wrap gap-2 justify-center items-center">
             {[
-              { value: "all", label: "Все категории" },
-              { value: "created", label: "Созданные" },
-              { value: "religion", label: "Религия" },
-              { value: "science", label: "Наука" },
-              { value: "politics", label: "Политика" },
-              { value: "philosophy", label: "Философия" },
-              { value: "inventions", label: "Изобретения" },
-              { value: "art", label: "Искусство" },
-              { value: "literature", label: "Литература" },
-              { value: "business", label: "Бизнес" },
+              { value: "all", label: t("library.categories.all") },
+              { value: "created", label: t("library.categories.created") },
+              { value: "religion", label: t("library.categories.religion") },
+              { value: "science", label: t("library.categories.science") },
+              { value: "politics", label: t("library.categories.politics") },
+              { value: "philosophy", label: t("library.categories.philosophy") },
+              { value: "inventions", label: t("library.categories.inventions") },
+              { value: "art", label: t("library.categories.art") },
+              { value: "literature", label: t("library.categories.literature") },
+              { value: "business", label: t("library.categories.business") },
             ].map((tab) => {
               const isActive = filterCategory === tab.value;
               return (
@@ -1339,8 +1339,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   key={tab.value}
                   onClick={() => setFilterCategory(tab.value)}
                   className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 outline-none ${isActive
-                      ? "text-white scale-105"
-                      : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
+                    ? "text-white scale-105"
+                    : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
                     }`}
                 >
                   {isActive && (
@@ -1360,13 +1360,13 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
             <button
               onClick={handleCreateAgentClick}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${isProUser
-                  ? "bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-[var(--accent)]/25"
-                  : "bg-gray-500 hover:bg-gray-600 shadow-gray-500/25 opacity-75 cursor-not-allowed"
+                ? "bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-[var(--accent)]/25"
+                : "bg-gray-500 hover:bg-gray-600 shadow-gray-500/25 opacity-75 cursor-not-allowed"
                 }`}
               title={!isProUser ? "Создание персонажей доступно только для Pro подписки" : ""}
             >
               <MdAdd size={18} />
-              <span>Создать персонажа</span>
+              <span>{t("library.createAgent")}</span>
               {!isProUser && (
                 <span className="ml-1 text-xs opacity-75">(Pro)</span>
               )}
@@ -1505,6 +1505,24 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                 </div>
               )}
 
+              {/* Превью выбранной иконки (если не загружено изображение) */}
+              {!chatAvatarPreview && chatAvatar && (
+                <div className="mb-6 flex justify-center">
+                  <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-xl border-4 border-[var(--accent)]/20">
+                    <div
+                      className="absolute inset-0 bg-center bg-cover"
+                      style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-white">
+                      {(() => {
+                        const SelectedIcon = avatarOptions.find(opt => opt.name === chatAvatar)?.icon || MdGroup;
+                        return <SelectedIcon className="text-4xl" style={{ transform: "scale(0.9)" }} />;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Иконки аватаров (используются, если не загружено изображение) */}
               {!chatAvatarPreview && (
                 <>
@@ -1525,12 +1543,16 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                       <button
                         key={name}
                         onClick={() => setChatAvatar(name)}
-                        className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-colors ${chatAvatar === name
-                            ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                            : "border-tg-border hover:border-tg-accent text-tg-text-secondary hover:text-tg-text"
+                        className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-colors relative overflow-hidden ${chatAvatar === name
+                          ? "border-[var(--accent)]"
+                          : "border-tg-border hover:border-tg-accent"
                           }`}
                       >
-                        <Icon className="text-xl" />
+                        <div
+                          className="absolute inset-0 bg-center bg-cover opacity-60"
+                          style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                        />
+                        <Icon className={`text-xl relative z-10 ${chatAvatar === name ? "text-[var(--accent)]" : "text-tg-text"}`} />
                       </button>
                     ))}
                   </div>
@@ -1627,7 +1649,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                           <div className="mb-6">
                             <div className="flex items-center justify-between mb-3">
                               <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
-                                <span>Созданные</span>
+                                <span>{t("library.categories.created")}</span>
                                 {createdPersonas.length > 0 && (
                                   <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
                                 )}
@@ -1663,8 +1685,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (
@@ -1791,8 +1813,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (
@@ -1927,8 +1949,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (
@@ -2062,8 +2084,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (
@@ -2168,7 +2190,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                           <div className="mb-6">
                             <div className="flex items-center justify-between mb-3">
                               <h3 className="text-lg sm:text-xl font-semibold text-tg-text flex items-center gap-2">
-                                <span>Созданные</span>
+                                <span>{t("library.categories.created")}</span>
                                 <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
                               </h3>
                             </div>
@@ -2202,8 +2224,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (
@@ -2339,8 +2361,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (
@@ -2469,8 +2491,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (
@@ -2602,8 +2624,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <div className="absolute top-3 right-3 z-20">
                                         <div
                                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-                                              ? "bg-[var(--accent)] border-[var(--accent)]"
-                                              : "border-gray-400 bg-tg-bg"
+                                            ? "bg-[var(--accent)] border-[var(--accent)]"
+                                            : "border-gray-400 bg-tg-bg"
                                             }`}
                                         >
                                           {isSelected && (

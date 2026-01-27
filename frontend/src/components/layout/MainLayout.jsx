@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import Sidebar from "../sidebar/Sidebar.jsx";
 import Chat from "../chat/Chat.jsx";
 import RightPanel from "../panels/RightPanel.jsx";
-import AISettingsPanel from "../panels/AISettingsPanel.jsx";
 
 /**
  * Основной компонент Layout для структуры приложения
@@ -47,9 +46,7 @@ function MainLayout({
   rightPanelRef,
   onCloseRightPanel,
   isRightPanelModal,
-  // AI Settings
-  isAISettingsVisible,
-  onCloseAISettings,
+
   // Layout state
   shouldRenderSidebar,
   sidebarShouldBeFullWidth,
@@ -112,12 +109,8 @@ function MainLayout({
         />
       ) : null}
 
-      {/* AI Settings Panel или Chat */}
-      {isAISettingsVisible ? (
-        <AISettingsPanel onClose={onCloseAISettings} />
-      ) : (
-        <>
-          {(!isUltraCompact || isCompactChatOpen || (isMediumScreen && !isUltraCompact && activeChatIdForChat)) ? (
+      {/* Chat */}
+      {(!isUltraCompact || isCompactChatOpen || (isMediumScreen && !isUltraCompact && activeChatIdForChat)) ? (
             <div
               className={`flex flex-1 overflow-hidden ${
                 isMediumScreenChatFullWidth ? "absolute inset-0 z-10" : ""
@@ -163,8 +156,6 @@ function MainLayout({
               )}
             </div>
           ) : null}
-        </>
-      )}
     </div>
   );
 }
@@ -207,9 +198,6 @@ MainLayout.propTypes = {
   rightPanelRef: PropTypes.object.isRequired,
   onCloseRightPanel: PropTypes.func.isRequired,
   isRightPanelModal: PropTypes.bool.isRequired,
-  // AI Settings
-  isAISettingsVisible: PropTypes.bool.isRequired,
-  onCloseAISettings: PropTypes.func.isRequired,
   // Layout state
   shouldRenderSidebar: PropTypes.bool.isRequired,
   sidebarShouldBeFullWidth: PropTypes.bool.isRequired,

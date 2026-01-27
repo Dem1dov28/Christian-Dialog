@@ -40,12 +40,11 @@ export const ChatsProvider = ({ children }) => {
   const { isAuthenticated, forceLogout, user, refreshUserData } = useAuth();
   const { triggerUpdate } = useSidebarUpdate();
   const [conversations, setConversations] = useState([]);
-  const [systemChat, setSystemChat] = useState(null);
   const [activeConversation, setActiveConversation] = useState(null);
-  
+
   // Ref для отслеживания активного чата в реальном времени (для проверки непрочитанных)
   const activeConversationRef = useRef(null);
-  
+
   // Ref для отслеживания новых пустых чатов (для автоматического удаления при переключении)
   const newlyCreatedEmptyChatsRef = useRef(new Set());
 
@@ -70,18 +69,18 @@ export const ChatsProvider = ({ children }) => {
       // КРИТИЧНО: Фильтруем только подписанные каналы перед добавлением в conversations
       const incoming = Array.isArray(incomingChannels)
         ? incomingChannels.filter((channel) => {
-            if (!channel || channel.id == null) {
+          if (!channel || channel.id == null) {
+            return false;
+          }
+          // Если это канал, проверяем подписку
+          if (channel.is_channel) {
+            const isSubscribed = channel.isSubscribed === true || channel.is_subscribed === true;
+            if (!isSubscribed) {
               return false;
             }
-            // Если это канал, проверяем подписку
-            if (channel.is_channel) {
-              const isSubscribed = channel.isSubscribed === true || channel.is_subscribed === true;
-              if (!isSubscribed) {
-                return false;
-              }
-            }
-            return true;
-          })
+          }
+          return true;
+        })
         : [];
 
       const incomingIds = new Set(incoming.map((channel) => channel.id));
@@ -127,17 +126,18 @@ export const ChatsProvider = ({ children }) => {
 
     const agentPayload = channel.agent
       ? {
-          id: channel.agent.id,
-          name: channel.agent.name,
-          image_url: channel.agent.image_url,
-          avatar_url: channel.agent.avatar_url,
-          color_class: channel.agent.color_class,
-          icon_name: channel.agent.icon_name,
-          description: channel.agent.description,
-        }
+        id: channel.agent.id,
+        name: channel.agent.name,
+        image_url: channel.agent.image_url,
+        avatar_url: channel.agent.avatar_url,
+        color_class: channel.agent.color_class,
+        icon_name: channel.agent.icon_name,
+        description: channel.agent.description,
+      }
       : null;
 
     const agentId = channel.agent_id ?? agentPayload?.id ?? null;
+    const channelId = `channel-${channel.id}`; // Добавляем префикс для уникальности
     const channelAvatar =
       channel.channel_avatar_url ||
       agentPayload?.image_url ||
@@ -152,8 +152,9 @@ export const ChatsProvider = ({ children }) => {
       channel.channel_icon_name || agentPayload?.icon_name || "notifications";
 
     return {
-      id: channel.id,
-      conversation_id: channel.id,
+      id: channelId,
+      conversation_id: channelId,
+      real_id: channel.id, // Сохраняем оригинальный числовой ID
       title:
         channel.title ||
         channel.channel_description ||
@@ -185,24 +186,24 @@ export const ChatsProvider = ({ children }) => {
     };
   }, []);
 
-const loadChannels = useCallback(
-  async (options = { includeHidden: false }) => {
-    if (!isAuthenticated) {
-      return;
-    }
+  const loadChannels = useCallback(
+    async (options = { includeHidden: false }) => {
+      if (!isAuthenticated) {
+        return;
+      }
 
-    // Защита от параллельных вызовов через ref (не вызывает пересоздание функции)
-    if (isLoadingChannelsRef.current) {
-      return;
-    }
+      // Защита от параллельных вызовов через ref (не вызывает пересоздание функции)
+      if (isLoadingChannelsRef.current) {
+        return;
+      }
 
-    try {
-      isLoadingChannelsRef.current = true;
-      setIsChannelsLoading(true);
-      setChannelsError(null);
+      try {
+        isLoadingChannelsRef.current = true;
+        setIsChannelsLoading(true);
+        setChannelsError(null);
 
-      // УДАЛЕНО - channels были удалены
-      const channelList = [];
+        // УДАЛЕНО - channels были удалены
+        const channelList = [];
 
         const formattedChannels =
           (channelList || []).map((channel) => formatChannel(channel)).filter(Boolean) ?? [];
@@ -219,7 +220,7 @@ const loadChannels = useCallback(
           }
         });
         let uniqueChannels = Array.from(channelMap.values());
-        
+
         // КРИТИЧНО: Удаляем дубликаты по названию (для случаев когда один канал создан несколько раз)
         const titleMap = new Map();
         uniqueChannels.forEach(ch => {
@@ -249,7 +250,7 @@ const loadChannels = useCallback(
         // Это позволяет пользователям видеть все доступные каналы и подписываться на них
         channelsRef.current = uniqueChannels;
         setChannels(uniqueChannels);
-        
+
         // КРИТИЧНО: Обновляем conversations - добавляем ТОЛЬКО подписанные каналы
         // Каналы должны появляться в списке чатов ТОЛЬКО после явной подписки
         const subscribedUniqueChannels = uniqueChannels.filter((ch) => {
@@ -257,7 +258,7 @@ const loadChannels = useCallback(
           const isSubscribed = ch.isSubscribed === true || ch.is_subscribed === true;
           return isSubscribed;
         });
-        
+
         // КРИТИЧНО: При обновлении conversations удаляем все неподписанные каналы
         // Это гарантирует, что в списке чатов будут только подписанные каналы
         setConversations((prev) => {
@@ -273,32 +274,32 @@ const loadChannels = useCallback(
             // Обычные чаты оставляем
             return true;
           });
-          
+
           // Теперь объединяем с новыми подписанными каналами
           const merged = mergeChannelsIntoConversations(prevWithoutUnsubscribedChannels, subscribedUniqueChannels, { replace: true });
           const prevChannelsCount = prevWithoutUnsubscribedChannels.filter(c => c.is_channel).length;
           const newChannelsCount = merged.filter(c => c.is_channel).length;
-          
+
           // Если количество каналов не изменилось и ID совпадают, не обновляем state
           if (prevChannelsCount === newChannelsCount && prevWithoutUnsubscribedChannels.length > 0) {
             const prevChannelIds = new Set(prevWithoutUnsubscribedChannels.filter(c => c.is_channel).map(c => c.id));
             const newChannelIds = new Set(merged.filter(c => c.is_channel).map(c => c.id));
-            if (prevChannelIds.size === newChannelIds.size && 
-                [...prevChannelIds].every(id => newChannelIds.has(id))) {
+            if (prevChannelIds.size === newChannelIds.size &&
+              [...prevChannelIds].every(id => newChannelIds.has(id))) {
               return prev;
             }
           }
-          
+
           return merged;
         });
-        
+
         // 📬 СИНХРОНИЗАЦИЯ НЕПРОЧИТАННЫХ ДЛЯ КАНАЛОВ:
         // После обновления conversations синхронизируем unread_count для каналов
         // Используем setTimeout чтобы обновить unreadCounts после того, как conversations обновится
         setTimeout(() => {
           setUnreadCounts((prevCounts) => {
             const newCounts = { ...prevCounts };
-            
+
             // Удаляем счетчики для неподписанных каналов
             Object.keys(newCounts).forEach(convId => {
               const convIdNum = parseInt(convId, 10);
@@ -308,7 +309,7 @@ const loadChannels = useCallback(
                 delete newCounts[convId];
               }
             });
-            
+
             // Добавляем/обновляем счетчики для подписанных каналов
             subscribedUniqueChannels.forEach((channel) => {
               if (channel.unread_count && channel.unread_count > 0) {
@@ -325,26 +326,26 @@ const loadChannels = useCallback(
                 delete newCounts[channel.id];
               }
             });
-            
+
             return newCounts;
           });
         }, 0);
-    } catch (error) {
-      console.error("Failed to load channels:", error);
-      setChannelsError(error.message || "Не удалось загрузить каналы");
-    } finally {
-      isLoadingChannelsRef.current = false;
-      setIsChannelsLoading(false);
-    }
-  },
+      } catch (error) {
+        console.error("Failed to load channels:", error);
+        setChannelsError(error.message || "Не удалось загрузить каналы");
+      } finally {
+        isLoadingChannelsRef.current = false;
+        setIsChannelsLoading(false);
+      }
+    },
     [isAuthenticated, mergeChannelsIntoConversations, formatChannel]
-);
+  );
 
   const subscribeToChannel = useCallback(
     async (channelId) => {
       try {
         const channelResponse = await apiClient.subscribeToChannel(channelId);
-        
+
         const formatted = formatChannel(channelResponse);
         if (!formatted) {
           console.error(`[subscribeToChannel] Не удалось отформатировать канал`);
@@ -376,7 +377,7 @@ const loadChannels = useCallback(
         setConversations((prev) => {
           const prevList = prev || [];
           const existingIndex = prevList.findIndex((conv) => conv.id === formatted.id);
-          
+
           let updated;
           if (existingIndex >= 0) {
             // Обновляем существующий канал
@@ -388,19 +389,19 @@ const loadChannels = useCallback(
             updated = [...prevList, formatted];
             console.log(`[subscribeToChannel] Добавлен новый канал в conversations`);
           }
-          
+
           console.log(`[subscribeToChannel] Обновлено conversations:`, updated.length, "всего,", updated.filter(c => c.is_channel).length, "каналов");
-          
+
           // КРИТИЧНО: Обновляем activeConversation, если это текущий активный канал
           if (activeConversation?.id === formatted.id) {
             const updatedActive = { ...activeConversation, ...formatted, isSubscribed: true };
             setActiveConversation(updatedActive);
             console.log(`[subscribeToChannel] Обновлен activeConversation для канала ${formatted.id}`);
           }
-          
+
           return updated;
         });
-        
+
         // Загружаем сообщения канала после обновления state, если это текущий активный канал
         // Используем setTimeout чтобы избежать проблем с порядком инициализации
         if (activeConversation?.id === formatted.id) {
@@ -507,7 +508,7 @@ const loadChannels = useCallback(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  
+
   // Состояние загрузки конкретного чата
   const [isChatLoading, setIsChatLoading] = useState(false);
   // Состояние готовности чата к рендерингу (все данные загружены)
@@ -517,29 +518,28 @@ const loadChannels = useCallback(
   const messageStateManager = useMessageState();
   const [pinnedChats, setPinnedChats] = useState([]);
   const [pinnedMessages, setPinnedMessages] = useState({});
-  const [isSystemChatHidden, setIsSystemChatHidden] = useState(() => {
-    try {
-      const userId = user?.id;
-      if (!userId) return false;
-      const stored = localStorage.getItem(`isSystemChatHidden_${userId}`);
-      return stored ? JSON.parse(stored) : false;
-    } catch {
-      return false;
-    }
-  });
 
   // Состояние для непрочитанных сообщений: { [conversationId]: count }
   const [unreadCounts, setUnreadCounts] = useState({});
+  
+  // Системный чат
+  const [systemChat, setSystemChat] = useState(null);
+  const [isSystemChatHidden, setIsSystemChatHidden] = useState(false);
+  
   // Кэшируем самый старый загруженный timestamp для каждого чата
   const oldestMessageTimestampRef = useRef({});
 
   // Хелпер функция для обновления сообщений конкретного чата
   const updateMessagesForConversation = useCallback(
     (conversationId, updater) => {
+      console.log("[ChatsContext] updateMessagesForConversation called with conversationId:", conversationId);
+      
       setMessagesByConversation((prevByConv) => {
         const prevMessages = prevByConv[conversationId] || [];
         const newMessages =
           typeof updater === "function" ? updater(prevMessages) : updater;
+        
+        console.log("[ChatsContext] updateMessagesForConversation setting", newMessages?.length || 0, "messages for conversation", conversationId);
 
         if (newMessages?.length > 0) {
           const oldest = newMessages[0];
@@ -665,11 +665,11 @@ const loadChannels = useCallback(
                 .replace(/<div[^>]*data-reply-to-id="[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi, "")
                 .replace(/<div[^>]*class="[^"]*reply-block[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
                 .replace(/<div[^>]*data-reply-to-id="[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "");
-              
+
               cleaned = cleaned.trim().replace(/^<\/div>\s*/i, "");
               cleaned = cleaned.trim().replace(/^<\/div>\s*<\/div>\s*/i, "");
               cleaned = cleaned.trim().replace(/^<\/div>\s*<\/div>\s*<\/div>\s*/i, "");
-              
+
               const decoded = cleaned
                 .replace(/&amp;/g, "&")    // Декодируем &amp; в & (сначала!)
                 .replace(/&lt;/g, "<")      // Декодируем &lt; в <
@@ -677,7 +677,7 @@ const loadChannels = useCallback(
                 .replace(/&quot;/g, '"')    // Декодируем &quot; в "
                 .replace(/&#039;/g, "'")    // Декодируем &#039; в '
                 .replace(/&#x27;/g, "'");   // Декодируем &#x27; в '
-              
+
               return decoded.trim();
             };
             const cleanText = getCleanText(newMessage);
@@ -735,8 +735,8 @@ const loadChannels = useCallback(
       let pinnedFromServer = Array.isArray(response?.pinned_chats)
         ? response.pinned_chats
         : Array.isArray(response)
-        ? response
-        : [];
+          ? response
+          : [];
 
       if (!pinnedFromServer.length) {
         try {
@@ -745,11 +745,11 @@ const loadChannels = useCallback(
             const parsedLegacy = JSON.parse(legacyStored);
             const legacyIds = Array.isArray(parsedLegacy)
               ? parsedLegacy
-                  .map((id) => {
-                    const numericId = Number(id);
-                    return Number.isNaN(numericId) ? null : numericId;
-                  })
-                  .filter((id) => id !== null)
+                .map((id) => {
+                  const numericId = Number(id);
+                  return Number.isNaN(numericId) ? null : numericId;
+                })
+                .filter((id) => id !== null)
               : [];
 
             if (legacyIds.length) {
@@ -770,11 +770,47 @@ const loadChannels = useCallback(
     }
   }, [isAuthenticated, user?.id]);
 
+  // Загрузить системный чат
+  const loadSystemChat = useCallback(async () => {
+    if (!isAuthenticated || !user?.id) {
+      return;
+    }
+
+    try {
+      // TODO: Implement system chat API when available
+      // For now, we'll set systemChat to null to indicate no system chat
+      console.log("System chat functionality not yet implemented");
+      setSystemChat(null);
+    } catch (error) {
+      console.error("Failed to load system chat:", error);
+      setSystemChat(null);
+    }
+  }, [isAuthenticated, user?.id]);
+
+  // Загрузить настройки пользователя
+  const loadUserSettings = async () => {
+    if (!user?.id) return;
+
+    // Пытаемся загрузить с сервера
+    try {
+      const userData = await apiClient.getCurrentUser();
+    } catch (error) {
+      console.log("Server load failed, using localStorage:", error);
+    }
+
+    // Fallback: загружаем из localStorage если сервер недоступен
+    try {
+      // localStorage loading logic would go here
+    } catch (error) {
+      console.error("Failed to load from localStorage:", error);
+    }
+  };
+
   // Синхронизируем ref с activeConversation для отслеживания в реальном времени
   useEffect(() => {
     activeConversationRef.current = activeConversation?.id || null;
   }, [activeConversation]);
-  
+
   // Ref для хранения функции deleteConversation (используется в useEffect после определения)
   const deleteConversationRef = useRef(null);
 
@@ -797,15 +833,15 @@ const loadChannels = useCallback(
     const currentMessages = messagesByConversation[activeConversation.id] || [];
     // Исключаем thinking-сообщения из расчета последнего ID
     const nonThinkingMessages = currentMessages.filter(m => {
-      const isThinking = m.is_thinking === true || 
-                        m.state === "thinking" || 
-                        String(m.id || '').startsWith('thinking_');
+      const isThinking = m.is_thinking === true ||
+        m.state === "thinking" ||
+        String(m.id || '').startsWith('thinking_');
       return !isThinking;
     });
-    const newLastMessageId = nonThinkingMessages.length > 0 
-      ? nonThinkingMessages[nonThinkingMessages.length - 1]?.id 
+    const newLastMessageId = nonThinkingMessages.length > 0
+      ? nonThinkingMessages[nonThinkingMessages.length - 1]?.id
       : null;
-    
+
     // Обновляем ref только если он изменился
     if (newLastMessageId !== lastMessageIdRef.current) {
       lastMessageIdRef.current = newLastMessageId;
@@ -858,12 +894,12 @@ const loadChannels = useCallback(
 
       try {
         isPollingRef.current = true;
-        
+
         // Определяем тип чата для правильного выбора API
         const isGroupChat = activeConversation?.is_group === true;
-        
+
         // Загружаем последние сообщения (только для проверки новых)
-        const messagesData = await (isGroupChat 
+        const messagesData = await (isGroupChat
           ? apiClient.getGroupChatMessages(currentConversationId, 0, 10000)
           : apiClient.getConversationMessages(currentConversationId, 0, 10000)
         ).catch((error) => {
@@ -895,14 +931,14 @@ const loadChannels = useCallback(
 
         if (messagesData && Array.isArray(messagesData) && messagesData.length > 0) {
           const newLastMessageId = messagesData[messagesData.length - 1]?.id;
-          
+
           // Если появилось новое сообщение (последнее сообщение изменилось)
           if (newLastMessageId && newLastMessageId !== lastMessageIdRef.current) {
             console.log(`[POLLING] Обнаружено новое сообщение в чате ${currentConversationId} (старый ID: ${lastMessageIdRef.current}, новый ID: ${newLastMessageId}), обновляю...`);
-            
+
             // Обновляем ref
             lastMessageIdRef.current = newLastMessageId;
-            
+
             // Обновляем сообщения, добавляя только новые
             updateMessagesForConversation(currentConversationId, (prev) => {
               // Фильтруем временные сообщения пользователя (temp_*), чтобы избежать дублирования
@@ -910,63 +946,63 @@ const loadChannels = useCallback(
                 // Исключаем временные сообщения, которые начинаются с "temp_"
                 return !(typeof m.id === 'string' && m.id.startsWith('temp_'));
               });
-              
+
               const existingIds = new Set(filteredPrev.map(m => m.id));
               const newMessages = messagesData.filter(m => !existingIds.has(m.id));
-              
+
               if (newMessages.length > 0) {
                 console.log(`[POLLING] Добавлено ${newMessages.length} новых сообщений`);
-                
+
                 // Проверяем, есть ли ответы от агента в новых сообщениях
                 const hasAgentResponses = newMessages.some(
-                  msg => !msg.is_from_user && 
-                         msg.content && 
-                         msg.content.trim().length > 0 &&
-                         !(msg.is_thinking === true || msg.state === "thinking" || String(msg.id || '').startsWith('thinking_'))
+                  msg => !msg.is_from_user &&
+                    msg.content &&
+                    msg.content.trim().length > 0 &&
+                    !(msg.is_thinking === true || msg.state === "thinking" || String(msg.id || '').startsWith('thinking_'))
                 );
-                
+
                 // Если есть ответы от агента, НЕ сохраняем thinking сообщения
                 // Сохраняем локальные thinking сообщения только если нет ответов
-                const localThinkingMessages = hasAgentResponses 
-                  ? [] 
+                const localThinkingMessages = hasAgentResponses
+                  ? []
                   : filteredPrev.filter(
-                      (msg) => {
-                        const isThinking = msg.is_thinking === true || 
-                                          msg.state === "thinking" || 
-                                          String(msg.id || '').startsWith('thinking_');
-                        return isThinking;
-                      }
-                    );
-                
+                    (msg) => {
+                      const isThinking = msg.is_thinking === true ||
+                        msg.state === "thinking" ||
+                        String(msg.id || '').startsWith('thinking_');
+                      return isThinking;
+                    }
+                  );
+
                 // Объединяем: существующие (без временных и без thinking) + новые + thinking (только если нет ответов)
                 const merged = [
                   ...filteredPrev.filter(m => {
-                    const isThinking = m.is_thinking === true || 
-                                      m.state === "thinking" || 
-                                      String(m.id || '').startsWith('thinking_');
+                    const isThinking = m.is_thinking === true ||
+                      m.state === "thinking" ||
+                      String(m.id || '').startsWith('thinking_');
                     return !isThinking;
-                  }), 
-                  ...newMessages, 
+                  }),
+                  ...newMessages,
                   ...localThinkingMessages
                 ];
-                
+
                 // Если есть ответы, дополнительно удаляем все thinking-сообщения
                 if (hasAgentResponses) {
                   return merged.filter(m => {
-                    const isThinking = m.is_thinking === true || 
-                                      m.state === "thinking" || 
-                                      String(m.id || '').startsWith('thinking_');
+                    const isThinking = m.is_thinking === true ||
+                      m.state === "thinking" ||
+                      String(m.id || '').startsWith('thinking_');
                     if (isThinking && m.id) {
                       messageStateManager.setReceivedState(m.id);
                     }
                     return !isThinking;
                   }).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 }
-                
+
                 // Сортируем по времени
                 return merged.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
               }
-              
+
               return filteredPrev;
             });
 
@@ -984,13 +1020,13 @@ const loadChannels = useCallback(
             triggerUpdate();
           }
         }
-        
+
         // Сбрасываем флаг polling после успешного выполнения
         isPollingRef.current = false;
       } catch (error) {
         // Обрабатываем ошибки polling
         isPollingRef.current = false;
-        
+
         // Если разговор не найден (404), останавливаем polling
         if (error?.status === 404 || error?.message?.includes('not found') || error?.errorData?.detail?.includes('not found')) {
           console.log(`[POLLING] Разговор не найден, останавливаем polling`);
@@ -1027,17 +1063,16 @@ const loadChannels = useCallback(
       setMessagesByConversation({});
       setActiveConversation(null);
       loadConversations();
-      loadSystemChat();
       loadUserSettings();
       loadChannels();
       loadPinnedChats();
+      loadSystemChat();
     } else if (!isAuthenticated) {
       // Очищаем чаты при выходе
       console.log(`🔄 [ChatsContext] Пользователь не авторизован, очищаем чаты`);
       setConversations([]);
       setMessagesByConversation({});
       setActiveConversation(null);
-      setSystemChat(null);
       setChatReady(false);
       setIsChatLoading(false);
       channelsRef.current = [];
@@ -1045,77 +1080,19 @@ const loadChannels = useCallback(
       setChannelsError(null);
       setPinnedChats([]);
     }
-  }, [isAuthenticated, user?.id, loadChannels, loadPinnedChats]); // Добавляем user?.id в зависимости
+  }, [isAuthenticated, user?.id]); // Удалены зависимости от функций, чтобы избежать бесконечного цикла
 
-  // Загрузить настройки пользователя
-  const loadUserSettings = async () => {
-    try {
-      const userId = user?.id;
-      if (!userId) return;
 
-      // Пытаемся загрузить с сервера
-      try {
-        const userData = await apiClient.getCurrentUser();
-        if (userData && userData.is_system_chat_hidden !== undefined) {
-          setIsSystemChatHidden(userData.is_system_chat_hidden);
-          console.log("Settings loaded from server");
-          return;
-        }
-      } catch (error) {
-        console.log("Server load failed, using localStorage:", error);
-      }
 
-      // Fallback: загружаем из localStorage если сервер недоступен
-      try {
-        const stored = localStorage.getItem(`isSystemChatHidden_${userId}`);
-        if (stored !== null) {
-          setIsSystemChatHidden(JSON.parse(stored));
-          console.log("Settings loaded from localStorage");
-        }
-      } catch (error) {
-        console.error("Failed to load from localStorage:", error);
-      }
-    } catch (error) {
-      console.error("Failed to load user settings:", error);
-    }
-  };
-  // Загрузить системный чат
-  const loadSystemChat = async () => {
-    try {
-      // Проверяем, есть ли токен аутентификации
-      const token = localStorage.getItem("auth_token");
-      if (!token) {
-        return;
-      }
-
-      const systemChatData = await apiClient.getSystemChat();
-
-      // Форматируем системный чат в том же формате, что и обычные чаты
-      const formattedSystemChat = {
-        id: systemChatData.id,
-        conversation_id: systemChatData.id,
-        title: systemChatData.title,
-        agent_id: null,
-        agent_name: null,
-        is_system_chat: true,
-        created_at: systemChatData.created_at,
-        updated_at: systemChatData.updated_at,
-      };
-
-      setSystemChat(formattedSystemChat);
-    } catch (error) {
-      // Не устанавливаем ошибку для системного чата, так как это не критично
-      console.error("Failed to load system chat:", error);
-    }
-  };
-
-  // Загрузить все разговоры
+  // Загрузить все разговорsы
   // Ref для отслеживания процесса загрузки чатов (защита от повторных запросов)
   const loadingConversationsRef = useRef(false);
   const lastLoadTimeRef = useRef(0);
   const RATE_LIMIT_DELAY = 60000; // 60 секунд
 
   const loadConversations = async () => {
+    console.log("[ChatsContext] loadConversations called");
+    
     // Защита от повторных одновременных запросов
     if (loadingConversationsRef.current) {
       console.log("[loadConversations] Загрузка уже идет, пропускаем дублирующий запрос");
@@ -1157,23 +1134,23 @@ const loadChannels = useCallback(
         }
       }
       console.log(`🔍 [ChatsContext] Получено групповых чатов: ${groupChatsData?.length || 0}`, groupChatsData);
-      
+
       // КРИТИЧЕСКАЯ ПРОВЕРКА: Фильтруем групповые чаты по user_id на фронтенде для дополнительной защиты
       const currentUserId = user?.id;
-      const filteredGroupChats = groupChatsData && Array.isArray(groupChatsData) 
+      const filteredGroupChats = groupChatsData && Array.isArray(groupChatsData)
         ? groupChatsData.filter((chat) => {
-            const chatUserId = chat.user_id;
-            // Разрешаем чаты без user_id (на случай задержки/совместимости), иначе сравниваем с текущим пользователем
-            const isOwnChat = chatUserId == null || chatUserId === currentUserId || String(chatUserId) === String(currentUserId);
-            if (!isOwnChat) {
-              console.warn(`🚫 [ChatsContext] ОТФИЛЬТРОВАН чужой чат: ID=${chat.id}, chat.user_id=${chatUserId}, currentUserId=${currentUserId}`);
-            }
-            return isOwnChat;
-          })
+          const chatUserId = chat.user_id;
+          // Разрешаем чаты без user_id (на случай задержки/совместимости), иначе сравниваем с текущим пользователем
+          const isOwnChat = chatUserId == null || chatUserId === currentUserId || String(chatUserId) === String(currentUserId);
+          if (!isOwnChat) {
+            console.warn(`🚫 [ChatsContext] ОТФИЛЬТРОВАН чужой чат: ID=${chat.id}, chat.user_id=${chatUserId}, currentUserId=${currentUserId}`);
+          }
+          return isOwnChat;
+        })
         : [];
-      
+
       console.log(`🔍 [ChatsContext] После фильтрации осталось групповых чатов: ${filteredGroupChats?.length || 0}`);
-      
+
       // Логируем каждый групповой чат для отладки
       if (filteredGroupChats && Array.isArray(filteredGroupChats)) {
         filteredGroupChats.forEach((chat, index) => {
@@ -1183,8 +1160,9 @@ const loadChannels = useCallback(
 
       // Объединяем и форматируем данные (используем отфильтрованные чаты)
       const formattedGroupChats = filteredGroupChats.map((groupChat) => ({
-        id: groupChat.id,
-        conversation_id: groupChat.id,
+        id: `group-${groupChat.id}`, // Добавляем префикс для уникальности
+        conversation_id: `group-${groupChat.id}`,
+        real_id: groupChat.id, // Сохраняем оригинальный числовой ID
         title: groupChat.title,
         agent_id: null,
         agent_name: null,
@@ -1210,18 +1188,18 @@ const loadChannels = useCallback(
           }
         }
       });
-      
+
       // Дополнительная проверка: удаляем дубликаты с одинаковым agent_id и очень близким временем создания
       const uniqueConversations = [];
       const agentTimeMap = new Map();
-      
+
       Array.from(uniqueById.values()).forEach((conv) => {
         // Для обычных чатов проверяем дубликаты по agent_id и времени
         if (conv.agent_id && !conv.is_group && !conv.is_channel) {
           const createdAt = conv.created_at ? new Date(conv.created_at).getTime() : 0;
           const timeKey = Math.floor(createdAt / 60000); // Округляем до минуты для более агрессивной проверки
           const key = `${conv.agent_id}-${timeKey}`;
-          
+
           if (!agentTimeMap.has(key)) {
             agentTimeMap.set(key, conv);
             uniqueConversations.push(conv);
@@ -1253,7 +1231,7 @@ const loadChannels = useCallback(
 
       console.log("Setting conversations:", mergedConversations);
       setConversations(mergedConversations);
-      
+
       // 📬 СИНХРОНИЗАЦИЯ НЕПРОЧИТАННЫХ С BACKEND:
       // Обновляем локальное состояние непрочитанных из данных с сервера
       const newUnreadCounts = {};
@@ -1262,13 +1240,13 @@ const loadChannels = useCallback(
           newUnreadCounts[conv.id] = conv.unread_count;
         }
       });
-      
+
       // 📬 ВАЖНО: Если пользователь находится в чате, сразу сбрасываем его счетчик
       // Это решает проблему с перезагрузкой страницы - непрочитанные не появляются для активного чата
       // КРИТИЧНО: Используем activeConversationRef.current вместо activeConversation?.id,
       // так как ref обновляется синхронно, а состояние - асинхронно
       let activeChatIdToReset = activeConversationRef.current;
-      
+
       // Если activeConversationRef еще не установлен (например, при первой загрузке),
       // проверяем localStorage - там может быть сохранен последний активный чат
       if (!activeChatIdToReset) {
@@ -1281,15 +1259,15 @@ const loadChannels = useCallback(
           console.error('Failed to read lastActiveChat from localStorage:', e);
         }
       }
-      
+
       if (activeChatIdToReset && newUnreadCounts[activeChatIdToReset]) {
         delete newUnreadCounts[activeChatIdToReset];
-        
+
         // Сбрасываем на backend
         const activeConv = mergedConversations.find(c => c.id === activeChatIdToReset);
         const isGroupChat = activeConv?.is_group || false;
         const isChannelChat = activeConv?.is_channel || false;
-        
+
         if (isChannelChat) {
           apiClient.post(`/channels/${activeChatIdToReset}/mark-as-read`).catch(err =>
             console.error('Failed to mark channel as read on load:', err)
@@ -1304,7 +1282,7 @@ const loadChannels = useCallback(
           );
         }
       }
-      
+
       setUnreadCounts(newUnreadCounts);
     } catch (error) {
       console.error("Failed to load conversations:", error);
@@ -1322,6 +1300,8 @@ const loadChannels = useCallback(
     }
   };
 
+
+
   // Ref для отслеживания активных запросов создания чата (защита от множественных вызовов)
   const creatingChatRef = useRef(new Set());
 
@@ -1337,14 +1317,14 @@ const loadChannels = useCallback(
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
       }
-      
+
       // Если все еще создается, значит что-то пошло не так
       if (creatingChatRef.current.has(agentId)) {
         console.error(`[createChat] Timeout waiting for chat creation for agent ${agentId}`);
         creatingChatRef.current.delete(agentId); // Принудительно сбрасываем
         throw new Error("Превышено время ожидания создания чата. Попробуйте еще раз.");
       }
-      
+
       // Пытаемся найти созданный чат в списке
       const existingChat = conversations.find(conv => conv.agent_id === agentId && !conv.is_group && !conv.is_channel);
       if (existingChat) {
@@ -1387,27 +1367,27 @@ const loadChannels = useCallback(
           existingDuplicate = existingChatById;
           return prev;
         }
-        
+
         // Также проверяем дубликаты по agent_id и очень недавнему времени создания (в пределах 2 секунд)
         // Это защищает от случаев, когда чат создается дважды с разными ID из-за ошибок
         const now = new Date().getTime();
         const chatCreatedAt = new Date(formattedChatData.created_at).getTime();
         const timeDiff = Math.abs(now - chatCreatedAt);
-        
+
         // Ищем недавно созданные чаты с тем же agent_id
         const recentDuplicate = prev.find((conv) => {
-          const sameAgent = (conv.agent_id === formattedChatData.agent_id || 
-                            conv.agent_id === Number(formattedChatData.agent_id));
+          const sameAgent = (conv.agent_id === formattedChatData.agent_id ||
+            conv.agent_id === Number(formattedChatData.agent_id));
           if (!sameAgent) return false;
-          
+
           // Проверяем, что чат был создан очень недавно (в пределах 2 секунд)
           const convCreatedAt = conv.created_at ? new Date(conv.created_at).getTime() : 0;
           const convTimeDiff = Math.abs(now - convCreatedAt);
-          
+
           // Если оба чата созданы очень недавно (в пределах 2 секунд) и с одним агентом - это дубликат
           return timeDiff < 2000 && convTimeDiff < 2000;
         });
-        
+
         if (recentDuplicate) {
           console.warn("[createChat] Recent duplicate chat found (same agent, created within 2s), skipping new and returning existing:", {
             existing: recentDuplicate.id,
@@ -1418,16 +1398,16 @@ const loadChannels = useCallback(
           // Возвращаем существующий список без изменений
           return prev;
         }
-        
+
         const newConversations = [formattedChatData, ...prev];
         console.log("[createChat] Updated conversations:", newConversations.length, "New chat:", formattedChatData);
         return newConversations;
       });
-      
+
       // Если найден дубликат, возвращаем существующий чат вместо нового
       if (existingDuplicate) {
         console.log("[createChat] Returning existing chat instead of newly created:", existingDuplicate.id);
-        
+
         // Проверяем, является ли существующий дубликат пустым (без сообщений)
         const existingMessagesCount = messagesByConversation[existingDuplicate.id]?.length ?? 0;
         const existingPinnedCount = pinnedMessages[existingDuplicate.id]?.length ?? 0;
@@ -1436,12 +1416,12 @@ const loadChannels = useCallback(
           newlyCreatedEmptyChatsRef.current.add(existingDuplicate.id);
           console.log(`[createChat] Существующий дубликат ${existingDuplicate.id} тоже пустой, добавляем в отслеживание`);
         }
-        
+
         // Триггерим обновление UI
         setTimeout(() => {
           triggerUpdate();
         }, 100);
-        
+
         // Устанавливаем как активный чат только если явно запрошено
         if (setAsActive) {
           setActiveConversation(existingDuplicate);
@@ -1456,7 +1436,7 @@ const loadChannels = useCallback(
           setChatReady(true);
           setIsChatLoading(false);
         }
-        
+
         return existingDuplicate;
       }
 
@@ -1487,14 +1467,14 @@ const loadChannels = useCallback(
       return formattedChatData;
     } catch (error) {
       console.error("Failed to create chat:", error);
-      
+
       // Специальная обработка ошибки 429 (Too Many Requests)
       if (error.status === 429 || error.response?.status === 429 || error.message?.includes('лимит') || error.message?.includes('429')) {
         // Пытаемся извлечь retry_after из разных мест ответа
-        const retryAfter = 
-          error.response?.data?.retry_after || 
-          error.response?.headers?.['retry-after'] || 
-          error.retryAfter || 
+        const retryAfter =
+          error.response?.data?.retry_after ||
+          error.response?.headers?.['retry-after'] ||
+          error.retryAfter ||
           60;
         const friendlyMessage = `Превышен лимит запросов. Пожалуйста, подождите ${retryAfter} секунд перед повторной попыткой.`;
         const rateLimitError = new Error(friendlyMessage);
@@ -1502,7 +1482,7 @@ const loadChannels = useCallback(
         rateLimitError.retryAfter = retryAfter;
         throw rateLimitError;
       }
-      
+
       throw error;
     } finally {
       // Всегда удаляем флаг создания, даже если произошла ошибка или найден дубликат
@@ -1545,17 +1525,15 @@ const loadChannels = useCallback(
     // КРИТИЧНО: Сохраняем ID активного чата В МОМЕНТ ОТПРАВКИ для проверки непрочитанных
     const activeConversationIdAtSend = activeConversation?.id;
 
-    // Проверяем, является ли это системным чатом
-    const isSystemChat =
-      activeConversation && activeConversation.is_system_chat;
+    // Находим разговор в списке
+    const conversation =
+      conversations.find((conv) => conv.id === targetConversationId);
 
-    if (!isSystemChat) {
-      // Проверяем лимит сообщений ПЕРЕД отправкой только для обычных чатов
-      const canSend = await checkMessageLimit();
-      if (!canSend) {
-        setShowUpgradeModal(true);
-        return;
-      }
+    // Проверяем лимит сообщений ПЕРЕД отправкой
+    const canSend = await checkMessageLimit();
+    if (!canSend) {
+      setShowUpgradeModal(true);
+      return;
     }
 
     // Создаем временное состояние сообщения для мгновенной обратной связи
@@ -1572,20 +1550,20 @@ const loadChannels = useCallback(
       state: "sending",
     };
 
-      // Обновляем локальное состояние сообщений для мгновенного отображения
-      // КРИТИЧНО: используем targetConversationId из замыкания
-      updateMessagesForConversation(targetConversationId, (prev) => [
-        ...prev,
-        tempUserMessage,
-      ]);
-      
-      // Убираем чат из списка новых пустых, так как теперь в нем есть сообщение
-      if (newlyCreatedEmptyChatsRef.current.has(targetConversationId)) {
-        newlyCreatedEmptyChatsRef.current.delete(targetConversationId);
-        console.log(`[sendMessage] Чат ${targetConversationId} больше не пустой (отправлено сообщение), убираем из отслеживания`);
-        // Триггерим обновление сайдбара, чтобы чат появился в списке
-        triggerUpdate();
-      }
+    // Обновляем локальное состояние сообщений для мгновенного отображения
+    // КРИТИЧНО: используем targetConversationId из замыкания
+    updateMessagesForConversation(targetConversationId, (prev) => [
+      ...prev,
+      tempUserMessage,
+    ]);
+
+    // Убираем чат из списка новых пустых, так как теперь в нем есть сообщение
+    if (newlyCreatedEmptyChatsRef.current.has(targetConversationId)) {
+      newlyCreatedEmptyChatsRef.current.delete(targetConversationId);
+      console.log(`[sendMessage] Чат ${targetConversationId} больше не пустой (отправлено сообщение), убираем из отслеживания`);
+      // Триггерим обновление сайдбара, чтобы чат появился в списке
+      triggerUpdate();
+    }
 
     // Мгновенно обновляем превью последнего сообщения в списке чатов
     updateConversationPreview(targetConversationId, message, true);
@@ -1623,9 +1601,13 @@ const loadChannels = useCallback(
     try {
       setIsLoading(true);
 
+      const numericId = typeof targetConversationId === 'string'
+        ? targetConversationId.replace(/^(group-|channel-|conv-)/, '')
+        : targetConversationId;
+
       // Для обычных чатов используем стандартный endpoint
       const responsePayload = {
-        conversation_id: targetConversationId,
+        conversation_id: numericId,
         agent_id: agentId,
         message: message,
         instant_feedback: true,
@@ -1636,48 +1618,48 @@ const loadChannels = useCallback(
       };
       response = await apiClient.sendMessage(responsePayload);
 
-      // Если это не системный чат, ждем ответа агента
-      if (!isSystemChat) {
-        // Обновляем состояние сообщения на "отправлено"
-        messageStateManager.setReceivedState(tempMessageId);
+      // Обновляем состояние сообщения на "отправлено"
+      messageStateManager.setReceivedState(tempMessageId);
 
-        // Удаляем временное сообщение пользователя ПЕРЕД загрузкой с сервера
-        // Это предотвращает дублирование сообщений
-        updateMessagesForConversation(targetConversationId, (prev) =>
-          prev.filter((m) => m.id !== tempMessageId)
-        );
+      if (!isSystemChat) {
+
+      // Удаляем временное сообщение пользователя ПЕРЕД загрузкой с сервера
+      // Это предотвращает дублирование сообщений
+      updateMessagesForConversation(targetConversationId, (prev) =>
+        prev.filter((m) => m.id !== tempMessageId)
+      );
 
         // Загружаем сообщения с сервера, чтобы получить ответ агента
-        await loadMessages(targetConversationId);
+      await loadMessages(targetConversationId);
 
         // КРИТИЧНО: После загрузки сообщений убеждаемся, что чат удален из списка новых пустых
-        // Это важно, так как после loadMessages состояние messagesByConversation обновляется
-        setTimeout(() => {
-          const messagesCount = messagesByConversation[targetConversationId]?.length ?? 0;
-          if (messagesCount > 0 && newlyCreatedEmptyChatsRef.current.has(targetConversationId)) {
-            newlyCreatedEmptyChatsRef.current.delete(targetConversationId);
-            console.log(`[sendMessage] После loadMessages: Чат ${targetConversationId} имеет ${messagesCount} сообщений, убираем из отслеживания`);
-            triggerUpdate();
-          }
-        }, 300);
+      // Это важно, так как после loadMessages состояние messagesByConversation обновляется
+      setTimeout(() => {
+        const messagesCount = messagesByConversation[targetConversationId]?.length ?? 0;
+        if (messagesCount > 0 && newlyCreatedEmptyChatsRef.current.has(targetConversationId)) {
+          newlyCreatedEmptyChatsRef.current.delete(targetConversationId);
+          console.log(`[sendMessage] После loadMessages: Чат ${targetConversationId} имеет ${messagesCount} сообщений, убираем из отслеживания`);
+          triggerUpdate();
+        }
+      }, 300);
 
-        // КРИТИЧНО: Удаляем ВСЕ thinking сообщения сразу после загрузки ответа
+      // КРИТИЧНО: Удаляем ВСЕ thinking сообщения сразу после загрузки ответа
         // Это должно происходить синхронно, чтобы избежать повторного появления индикатора
         updateMessagesForConversation(targetConversationId, (prev) => {
           // Проверяем, есть ли ответы от агента (не от пользователя и не thinking)
           const hasAgentResponses = prev.some(
-            msg => !msg.is_from_user && 
-                   msg.content && 
-                   msg.content.trim().length > 0 && 
-                   !(msg.is_thinking === true || msg.state === "thinking" || String(msg.id || '').startsWith('thinking_'))
+            msg => !msg.is_from_user &&
+              msg.content &&
+              msg.content.trim().length > 0 &&
+              !(msg.is_thinking === true || msg.state === "thinking" || String(msg.id || '').startsWith('thinking_'))
           );
-          
+
           // Если есть ответы, удаляем ВСЕ thinking сообщения без исключений
           if (hasAgentResponses) {
             const filtered = prev.filter((m) => {
-              const isThinking = m.is_thinking === true || 
-                                m.state === "thinking" || 
-                                String(m.id || '').startsWith('thinking_');
+              const isThinking = m.is_thinking === true ||
+                m.state === "thinking" ||
+                String(m.id || '').startsWith('thinking_');
               if (isThinking && m.id) {
                 // Обновляем состояние перед удалением
                 messageStateManager.setReceivedState(m.id);
@@ -1686,15 +1668,15 @@ const loadChannels = useCallback(
             });
             return filtered;
           }
-          
+
           // Если ответов еще нет, удаляем только thinking сообщения для этого tempMessageId
           return prev.filter((m) => {
-            const isThinkingForThisMessage = 
+            const isThinkingForThisMessage =
               m.id === `thinking_${tempMessageId}` ||
-              ((m.is_thinking === true || m.state === "thinking") && 
-               m.id && 
-               String(m.id).includes(String(tempMessageId)));
-            
+              ((m.is_thinking === true || m.state === "thinking") &&
+                m.id &&
+                String(m.id).includes(String(tempMessageId)));
+
             if (isThinkingForThisMessage && m.id) {
               messageStateManager.setReceivedState(m.id);
               return false;
@@ -1702,26 +1684,26 @@ const loadChannels = useCallback(
             return true;
           });
         });
-        
+
         // Дополнительная проверка: если есть ответы, еще раз удаляем все thinking-сообщения
         // Это защита от повторных вызовов loadMessages
         updateMessagesForConversation(targetConversationId, (prev) => {
           const hasAgentResponses = prev.some(
-            msg => !msg.is_from_user && 
-                   msg.content && 
-                   msg.content.trim().length > 0 && 
-                   !(msg.is_thinking === true || msg.state === "thinking" || String(msg.id || '').startsWith('thinking_'))
+            msg => !msg.is_from_user &&
+              msg.content &&
+              msg.content.trim().length > 0 &&
+              !(msg.is_thinking === true || msg.state === "thinking" || String(msg.id || '').startsWith('thinking_'))
           );
-          
+
           if (hasAgentResponses) {
             return prev.filter((m) => {
-              const isThinking = m.is_thinking === true || 
-                                m.state === "thinking" || 
-                                String(m.id || '').startsWith('thinking_');
+              const isThinking = m.is_thinking === true ||
+                m.state === "thinking" ||
+                String(m.id || '').startsWith('thinking_');
               return !isThinking;
             });
           }
-          
+
           return prev;
         });
 
@@ -1729,7 +1711,7 @@ const loadChannels = useCallback(
         // Backend автоматически увеличивает счетчик после генерации ответа AI
         // НЕ увеличиваем счетчик локально - полагаемся на синхронизацию с backend
         // Это позволяет корректно отображать количество ответов агентов (в групповых чатах может быть несколько)
-        
+
         // 📬 КРИТИЧНО: Перезагружаем список чатов ПОСЛЕ получения ответа агента
         // чтобы синхронизировать счетчики непрочитанных сообщений
         // Если пользователь переключился на другой чат, счетчик должен появиться
@@ -1767,6 +1749,28 @@ const loadChannels = useCallback(
             return hasChanges ? updatedMessages : prev;
           });
         }
+
+        // Для системного чата обновляем UI напрямую без вызова loadMessages
+        // Это предотвращает полный перерендер чата
+        if (response && response.message_id) {
+          // Обновляем сообщение с реальным ID от сервера
+          updateMessagesForConversation(targetConversationId, (prev) => {
+            return prev.map(msg =>
+              msg.id === tempMessageId
+                ? { ...msg, id: response.message_id, temp_message_id: null }
+                : msg
+            );
+          });
+
+          // Обновляем системный чат в списке conversations
+          setConversations(prev => {
+            return prev.map(conv =>
+              conv.id === targetConversationId
+                ? { ...conv, updated_at: new Date().toISOString() }
+                : conv
+            );
+          });
+        }
       }
 
       // Обновляем данные пользователя для актуализации счетчика сообщений
@@ -1783,20 +1787,20 @@ const loadChannels = useCallback(
       return response;
     } catch (error) {
       // Проверяем, является ли это ошибкой лимита сообщений (429)
-      const isMessageLimitError = 
-        error.status === 429 || 
+      const isMessageLimitError =
+        error.status === 429 ||
         error.message?.includes("Message limit exceeded") ||
         error.message?.includes("limit exceeded");
 
       if (isMessageLimitError) {
         // Для ошибки лимита показываем модальное окно вместо логирования
         setShowUpgradeModal(true);
-        
+
         // Удаляем временное сообщение из локального состояния
         updateMessagesForConversation(targetConversationId, (prev) =>
           prev.filter((msg) => msg.id !== tempMessageId)
         );
-        
+
         // Удаляем thinking сообщение если есть
         if (!isSystemChat) {
           updateMessagesForConversation(targetConversationId, (prev) =>
@@ -1857,7 +1861,7 @@ const loadChannels = useCallback(
           ]);
           updateConversationPreview(channelId, message.content, true);
           triggerUpdate();
-          
+
           // 📬 Перезагружаем список чатов и каналов для синхронизации счетчиков непрочитанных
           // После публикации сообщения счетчик увеличивается для всех подписчиков
           setTimeout(async () => {
@@ -2001,12 +2005,20 @@ const loadChannels = useCallback(
   // Загрузить сообщения разговора
   const loadMessages = useCallback(
     async (conversationId, { offset = 0, maxChars = 10000, isOlderLoad = false, beforeDate = null } = {}) => {
+      console.log("[ChatsContext] loadMessages called with conversationId:", conversationId, "offset:", offset, "isOlderLoad:", isOlderLoad);
+      
       try {
         setIsLoading(true);
-        
+
+        const numericId = typeof conversationId === 'string'
+          ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+          : conversationId;
+
         // Для обычных чатов используем стандартный метод
         let messagesData;
-        messagesData = await apiClient.getConversationMessages(conversationId, offset, maxChars, beforeDate);
+        messagesData = await apiClient.getConversationMessages(numericId, offset, maxChars, beforeDate);
+        
+        console.log("[ChatsContext] loadMessages received messagesData:", messagesData?.length || 0, "messages");
 
         // Для системного чата используем упрощенную логику без слияния
         const isSystemChat =
@@ -2035,37 +2047,37 @@ const loadChannels = useCallback(
               // Проверяем, нет ли дубликатов
               const existingIds = new Set(prev.map(m => m.id));
               const newMessages = (messagesData || []).filter(m => !existingIds.has(m.id));
-              
+
               if (newMessages.length === 0) {
                 console.warn(`[loadMessages] Нет новых сообщений для добавления (все дубликаты или пустой ответ)`);
                 return prev; // Возвращаем без изменений, если нет новых сообщений
               }
-              
+
               console.log(`[loadMessages] Добавляем ${newMessages.length} новых старых сообщений к ${prev.length} существующим`);
-              
+
               // Проверяем, есть ли ответы от агента в новых сообщениях
               const hasAgentResponses = newMessages.some(
                 msg => !msg.is_from_user && msg.content && msg.content.trim().length > 0
               );
-              
+
               // Если есть ответы от агента, НЕ сохраняем thinking сообщения
               // Фильтруем локальные thinking сообщения (если они есть)
-              const localThinkingMessages = hasAgentResponses 
-                ? [] 
+              const localThinkingMessages = hasAgentResponses
+                ? []
                 : prev.filter(
-                    (msg) => {
-                      const isThinking = msg.is_thinking === true || 
-                                        msg.state === "thinking" || 
-                                        String(msg.id || '').startsWith('thinking_');
-                      return isThinking;
-                    }
-                  );
+                  (msg) => {
+                    const isThinking = msg.is_thinking === true ||
+                      msg.state === "thinking" ||
+                      String(msg.id || '').startsWith('thinking_');
+                    return isThinking;
+                  }
+                );
 
               // Объединяем: новые старые сообщения + существующие (без thinking) + thinking (только если нет ответов)
               const mergedMessages = [...newMessages, ...prev.filter(m => {
-                const isThinking = m.is_thinking === true || 
-                                  m.state === "thinking" || 
-                                  String(m.id || '').startsWith('thinking_');
+                const isThinking = m.is_thinking === true ||
+                  m.state === "thinking" ||
+                  String(m.id || '').startsWith('thinking_');
                 return !isThinking;
               }), ...localThinkingMessages];
 
@@ -2082,7 +2094,7 @@ const loadChannels = useCallback(
 
                 return aIsThinking ? 1 : -1;
               });
-              
+
               // Проверяем, что первое сообщение действительно изменилось
               const newFirstMessage = sortedMessages[0];
               const oldFirstMessage = prev[0];
@@ -2098,34 +2110,34 @@ const loadChannels = useCallback(
               // Исключаем временные сообщения, которые начинаются с "temp_"
               return !(typeof msg.id === 'string' && msg.id.startsWith('temp_'));
             });
-            
+
             console.log(
               `[loadMessages] Первая загрузка для чата ${conversationId}: ` +
               `получено ${messagesData?.length || 0} сообщений, ` +
               `отфильтровано ${filteredServerMessages.length}, ` +
               `предыдущих в состоянии: ${messagesByConversation[conversationId]?.length || 0}`
             );
-            
+
             updateMessagesForConversation(conversationId, (prevMessages) => {
               // КРИТИЧНО: Если есть ответы от агента в загруженных сообщениях, удаляем thinking сообщения
               // Проверяем, есть ли ответы от агента в загруженных сообщениях
               const hasAgentResponses = filteredServerMessages.some(
                 msg => !msg.is_from_user && msg.content && msg.content.trim().length > 0
               );
-              
+
               // Если есть ответы от агента, НЕ сохраняем thinking сообщения
               // Фильтруем локальные thinking сообщения (если они есть)
               // Удаляем ВСЕ thinking сообщения, включая те, что начинаются с 'thinking_'
-              const localThinkingMessages = hasAgentResponses 
-                ? [] 
+              const localThinkingMessages = hasAgentResponses
+                ? []
                 : prevMessages.filter(
-                    (msg) => {
-                      const isThinking = msg.is_thinking === true || 
-                                        msg.state === "thinking" || 
-                                        String(msg.id).startsWith('thinking_');
-                      return isThinking;
-                    }
-                  );
+                  (msg) => {
+                    const isThinking = msg.is_thinking === true ||
+                      msg.state === "thinking" ||
+                      String(msg.id).startsWith('thinking_');
+                    return isThinking;
+                  }
+                );
 
               // Объединяем серверные сообщения с локальными thinking (только если нет ответов)
               // Также фильтруем thinking сообщения из серверных данных на всякий случай
@@ -2155,9 +2167,9 @@ const loadChannels = useCallback(
               if (hasAgentResponses) {
                 const beforeFilter = sortedMessages.length;
                 const filtered = sortedMessages.filter((m) => {
-                  const isThinking = m.is_thinking === true || 
-                                    m.state === "thinking" || 
-                                    String(m.id || '').startsWith('thinking_');
+                  const isThinking = m.is_thinking === true ||
+                    m.state === "thinking" ||
+                    String(m.id || '').startsWith('thinking_');
                   if (isThinking && m.id) {
                     messageStateManager.setReceivedState(m.id);
                   }
@@ -2169,14 +2181,14 @@ const loadChannels = useCallback(
                 );
                 return filtered;
               }
-              
+
               const finalCount = sortedMessages.length;
               console.log(
                 `[loadMessages] Финальное количество сообщений для чата ${conversationId}: ${finalCount}`
               );
               return sortedMessages;
             });
-            
+
             // Проверяем результат обновления через небольшую задержку
             // Используем функциональное обновление для получения актуального состояния
             setTimeout(() => {
@@ -2235,8 +2247,12 @@ const loadChannels = useCallback(
     async (channelId, { offset = 0, maxChars = 10000, lastN = true, beforeDate = null } = {}) => {
       try {
         setIsLoading(true);
+        const numericId = typeof channelId === 'string'
+          ? channelId.replace(/^(group-|channel-|conv-)/, '')
+          : channelId;
+
         const messagesData = await apiClient.getChannelMessages(
-          channelId,
+          numericId,
           offset,
           maxChars,
           lastN,
@@ -2284,16 +2300,16 @@ const loadChannels = useCallback(
       try {
         // Получаем текущие сообщения
         const currentMessages = messagesByConversation[channelId] || [];
-        
+
         // Находим самое старое загруженное сообщение (первое в списке)
         const oldestMessage = currentMessages.length > 0 ? currentMessages[0] : null;
         const beforeDate = oldestMessage?.created_at || null;
-        
+
         // Для каналов используем offset как fallback, но лучше использовать beforeDate
         const offset = beforeDate ? 0 : currentMessages.length;
-        
+
         console.log(`[loadOlderChannelMessages] Подгружаем старые сообщения канала ${channelId}, beforeDate=${beforeDate}, offset=${offset}, maxChars=${maxChars}`);
-        
+
         // Подгружаем старые сообщения с лимитом 10000 символов (lastN=false для использования offset/beforeDate)
         // Может вызываться многократно, пока не закончатся все сообщения
         await loadChannelMessages(channelId, { offset, maxChars: 10000, lastN: false, beforeDate });
@@ -2309,24 +2325,27 @@ const loadChannels = useCallback(
   // Выбрать разговор
   // Ref для хранения предыдущего активного чата
   const prevActiveConversationIdRef = useRef(null);
-  
+
   // Ref для отслеживания активных запросов выбора чата (защита от множественных вызовов)
   const selectingConversationRef = useRef(new Set());
   const lastSelectTimeRef = useRef({}); // Отслеживание времени последнего выбора для каждого чата
 
   const selectConversation = async (conversationId) => {
+    console.log("[ChatsContext] selectConversation called with conversationId:", conversationId);
+    console.log("[ChatsContext] Current conversations:", conversations.map(c => ({ id: c.id, title: c.title })));
+    
     // Проверяем, не выбран ли уже этот чат (предотвращаем перерендер)
     if (activeConversation && activeConversation.id === conversationId) {
       console.log(`✅ Чат ${conversationId} уже активен, пропускаем перерендер`);
       return;
     }
-    
+
     // Защита от множественных одновременных вызовов для одного чата
     if (selectingConversationRef.current.has(conversationId)) {
       console.log(`[selectConversation] Чат ${conversationId} уже выбирается, пропускаем дублирующий запрос`);
       return;
     }
-    
+
     // Защита от слишком частых запросов для одного чата (минимум 500ms между запросами)
     const now = Date.now();
     const lastSelectTime = lastSelectTimeRef.current[conversationId] || 0;
@@ -2334,11 +2353,11 @@ const loadChannels = useCallback(
       console.log(`[selectConversation] Слишком частый запрос для чата ${conversationId}, пропускаем`);
       return;
     }
-    
+
     // Отмечаем, что начинаем выбор этого чата
     selectingConversationRef.current.add(conversationId);
     lastSelectTimeRef.current[conversationId] = now;
-    
+
     // 🗑️ АВТОМАТИЧЕСКОЕ УДАЛЕНИЕ ПУСТЫХ ЧАТОВ:
     // Если переключаемся с пустого нового чата на другой - удаляем предыдущий пустой чат
     const previousConversationId = activeConversation?.id;
@@ -2348,7 +2367,7 @@ const loadChannels = useCallback(
         // Проверяем, действительно ли чат пустой
         const messagesCount = messagesByConversation[previousConversationId]?.length ?? 0;
         const pinnedCount = pinnedMessages[previousConversationId]?.length ?? 0;
-        
+
         if (messagesCount === 0 && pinnedCount === 0) {
           console.log(`[selectConversation] Автоматически удаляем пустой новый чат ${previousConversationId}`);
           try {
@@ -2366,67 +2385,72 @@ const loadChannels = useCallback(
         }
       }
     }
-    
+
     // 📬 ВАЖНО: НЕ сбрасываем счетчик для предыдущего чата при переключении
     // Счетчик должен сбрасываться только при ОТКРЫТИИ чата (когда он становится активным)
     // Это позволяет показывать бейджи для чатов, из которых пользователь вышел
     // Например: пользователь отправил сообщение в чат A, переключился на чат B,
     // агент ответил в чат A - должен появиться бейдж на чате A
-    
+
     // КРИТИЧНО: Обновляем activeConversationRef.current СРАЗУ при переключении,
     // чтобы при следующей загрузке списка чатов использовался правильный активный чат
     activeConversationRef.current = conversationId;
     prevActiveConversationIdRef.current = conversationId;
-    
+
     // 📬 Сохраняем текущий активный чат в localStorage для корректной работы при перезагрузке
     try {
       localStorage.setItem('lastActiveChat', conversationId.toString());
     } catch (e) {
       console.error('Failed to save lastActiveChat to localStorage:', e);
     }
-    
+
     // КРИТИЧНО: Проверяем, является ли чат новым пустым ДО сброса chatReady
     // Если чат новый и пустой, не сбрасываем chatReady (он уже установлен в createChat)
     const cachedMessagesCount = messagesByConversation[conversationId]?.length ?? 0;
     const cachedPinnedCount = pinnedMessages[conversationId]?.length ?? 0;
     const isNewEmptyChat = cachedMessagesCount === 0 && cachedPinnedCount === 0;
-    
+
     // Устанавливаем состояние загрузки
     setIsChatLoading(true);
     // Сбрасываем готовность только если чат НЕ новый пустой (для нового пустого chatReady уже установлен)
     if (!isNewEmptyChat) {
       setChatReady(false);
     }
-    
+
     try {
       // ЛОГИКА НЕПРОЧИТАННЫХ СООБЩЕНИЙ:
       // Сбрасываем счетчик непрочитанных локально
       resetUnreadCount(conversationId);
-      
+
       // Сбрасываем счетчик на backend (асинхронно, не блокируем UI)
       // Определяем тип чата для правильного API endpoint
-      const targetConversationEntry = conversations.find(c => c.id === conversationId);
+      const targetConversationEntry = conversations.find(c => String(c.id) === String(conversationId));
       const isGroupChat = targetConversationEntry?.is_group || false;
       const isChannelChat =
         targetConversationEntry?.is_channel ||
-        channelsRef.current.some((channel) => channel.id === conversationId);
+        channelsRef.current.some((channel) => String(channel.id) === String(conversationId));
+
+      // Получаем чистый ID для API
+      const numericId = typeof conversationId === 'string'
+        ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+        : conversationId;
 
       if (isChannelChat) {
         // Для каналов используем специальный endpoint
         apiClient
-          .post(`/channels/${conversationId}/mark-as-read`)
+          .post(`/channels/${numericId}/mark-as-read`)
           .catch((err) =>
             console.error("Failed to mark channel as read:", err)
           );
       } else if (isGroupChat) {
         apiClient
-          .post(`/multi-agent-chat/${conversationId}/mark-as-read`)
+          .post(`/multi-agent-chat/${numericId}/mark-as-read`)
           .catch((err) =>
             console.error("Failed to mark group chat as read:", err)
           );
       } else {
         apiClient
-          .post(`/conversations/${conversationId}/mark-as-read`)
+          .post(`/conversations/${numericId}/mark-as-read`)
           .catch((err) =>
             console.error("Failed to mark conversation as read:", err)
           );
@@ -2454,10 +2478,10 @@ const loadChannels = useCallback(
           // ПОСЛЕДОВАТЕЛЬНАЯ ЗАГРУЗКА: закрепленные -> история
           console.log(`🔄 [Chat Load] Шаг 1/2: Загрузка закрепленных сообщений для системного чата ${conversationId}`);
           await loadPinnedMessages(conversationId);
-          
+
           console.log(`🔄 [Chat Load] Шаг 2/2: Загрузка истории сообщений для системного чата ${conversationId}`);
           await loadMessages(conversationId);
-          
+
           // Чат готов к рендерингу
           console.log(`✅ [Chat Load] Системный чат ${conversationId} готов к отображению`);
           setChatReady(true);
@@ -2468,7 +2492,7 @@ const loadChannels = useCallback(
 
       // Сначала пытаемся найти разговор в локальном списке
       let localConversation = conversations.find(
-        (conv) => conv.id === conversationId
+        (conv) => String(conv.id) === String(conversationId)
       );
 
       // Если не найден локально, пытаемся загрузить с сервера
@@ -2488,12 +2512,12 @@ const loadChannels = useCallback(
           }
         } catch (error) {
           // Проверяем, является ли это ошибкой rate limit (429)
-          const isRateLimitError = error.status === 429 || 
-                                   error.message?.includes("429") || 
-                                   error.message?.includes("лимит") || 
-                                   error.message?.includes("Too Many Requests") ||
-                                   error.message?.includes("Превышен лимит");
-          
+          const isRateLimitError = error.status === 429 ||
+            error.message?.includes("429") ||
+            error.message?.includes("лимит") ||
+            error.message?.includes("Too Many Requests") ||
+            error.message?.includes("Превышен лимит");
+
           if (isRateLimitError) {
             // Это rate limit, не "Chat not found"
             const retryAfter = error.retryAfter || 60;
@@ -2503,7 +2527,7 @@ const loadChannels = useCallback(
             setIsChatLoading(false);
             throw new Error(`Превышен лимит запросов. Пожалуйста, подождите ${retryAfter} секунд перед повторной попыткой.`);
           }
-          
+
           // Если обычный API не работает, пробуем групповой
           try {
             const groupConversation = await apiClient.getGroupChat(conversationId);
@@ -2513,12 +2537,12 @@ const loadChannels = useCallback(
             };
           } catch (groupError) {
             // Проверяем, является ли это ошибкой rate limit (429)
-            const isGroupRateLimitError = groupError.status === 429 || 
-                                         groupError.message?.includes("429") || 
-                                         groupError.message?.includes("лимит") || 
-                                         groupError.message?.includes("Too Many Requests") ||
-                                         groupError.message?.includes("Превышен лимит");
-            
+            const isGroupRateLimitError = groupError.status === 429 ||
+              groupError.message?.includes("429") ||
+              groupError.message?.includes("лимит") ||
+              groupError.message?.includes("Too Many Requests") ||
+              groupError.message?.includes("Превышен лимит");
+
             if (isGroupRateLimitError) {
               // Это rate limit, не "Chat not found"
               const retryAfter = groupError.retryAfter || 60;
@@ -2528,7 +2552,7 @@ const loadChannels = useCallback(
               setIsChatLoading(false);
               throw new Error(`Превышен лимит запросов. Пожалуйста, подождите ${retryAfter} секунд перед повторной попыткой.`);
             }
-            
+
             // Если и групповой чат не найден, выбрасываем ошибку
             console.error(`Conversation ${conversationId} not found:`, groupError);
             setActiveConversation(null);
@@ -2545,12 +2569,12 @@ const loadChannels = useCallback(
         const isGroupConversation = !!localConversation.is_group;
         const isChannelConversation = !isGroupConversation && (
           !!localConversation.is_channel ||
-          channelsRef.current.some((channel) => channel.id === conversationId)
+          channelsRef.current.some((channel) => String(channel.id) === String(conversationId))
         );
 
         if (isChannelConversation) {
           const channelMeta = channelsRef.current.find(
-            (channel) => channel.id === conversationId
+            (channel) => String(channel.id) === String(conversationId)
           );
 
           let mergedChannel = {
@@ -2563,8 +2587,8 @@ const loadChannels = useCallback(
 
           if (channelMeta) {
             // Если есть channelMeta, используем его данные, но сохраняем важные данные из localConversation
-            mergedChannel = { 
-              ...channelMeta, 
+            mergedChannel = {
+              ...channelMeta,
               ...mergedChannel,
               // Сохраняем данные об иконке, цвете и аватаре из channelMeta (они более полные)
               iconName: channelMeta.iconName || mergedChannel.iconName || "notifications",
@@ -2609,7 +2633,7 @@ const loadChannels = useCallback(
           const isSubscribedFromMeta = channelMeta && (channelMeta.isSubscribed === true || channelMeta.is_subscribed === true);
           const isSubscribedFromMerged = mergedChannel.isSubscribed === true || mergedChannel.is_subscribed === true;
           const isSubscribed = isSubscribedFromMeta || isSubscribedFromMerged;
-          
+
           console.log(`[selectConversation] Проверка подписки для канала ${mergedChannel.title} (ID: ${conversationId}):`, {
             isSubscribedFromMeta,
             isSubscribedFromMerged,
@@ -2617,12 +2641,12 @@ const loadChannels = useCallback(
             channelMeta: channelMeta ? { isSubscribed: channelMeta.isSubscribed, is_subscribed: channelMeta.is_subscribed } : null,
             mergedChannel: { isSubscribed: mergedChannel.isSubscribed, is_subscribed: mergedChannel.is_subscribed }
           });
-          
+
           if (!isSubscribed) {
             console.log(`[selectConversation] ⚠️ Канал ${mergedChannel.title} (ID: ${conversationId}) не подписан, не добавляем в conversations`);
             // Устанавливаем активный канал для просмотра, но НЕ добавляем в список чатов
             setActiveConversation(mergedChannel);
-            
+
             if (!messagesByConversation[conversationId]) {
               updateMessagesForConversation(conversationId, []);
             }
@@ -2638,20 +2662,20 @@ const loadChannels = useCallback(
           // Канал подписан - добавляем в conversations
           console.log(`[selectConversation] ✅ Канал ${mergedChannel.title} (ID: ${conversationId}) подписан, добавляем в conversations`);
           setActiveConversation(mergedChannel);
-          
+
           // КРИТИЧНО: Убеждаемся, что канал действительно подписан перед добавлением
           const channelToAdd = {
             ...mergedChannel,
             isSubscribed: true,
             is_subscribed: true,
           };
-          
+
           setConversations((prev) => {
             // Проверяем, не добавлен ли уже этот канал
-            const existing = (prev || []).find(c => c.id === conversationId && c.is_channel);
+            const existing = (prev || []).find(c => String(c.id) === String(conversationId) && c.is_channel);
             if (existing) {
               // Обновляем существующий канал
-              return (prev || []).map(c => 
+              return (prev || []).map(c =>
                 c.id === conversationId && c.is_channel ? channelToAdd : c
               );
             }
@@ -2709,14 +2733,14 @@ const loadChannels = useCallback(
                 [conversationId]: [],
               }));
             }
-            
+
             // Чат готов к рендерингу СРАЗУ для нового пустого чата
             console.log(
               `✅ [Chat Load] Новый пустой чат ${conversationId} готов к отображению сразу`
             );
             setChatReady(true);
             setIsChatLoading(false);
-            
+
             // Загружаем данные в фоне (не блокируем UI)
             (async () => {
               try {
@@ -2792,26 +2816,26 @@ const loadChannels = useCallback(
       console.error("Failed to select conversation:", error);
       setChatReady(false);
       setIsChatLoading(false);
-      
+
       // Если ошибка авторизации, принудительно выходим
       if (error.message === "Unauthorized") {
         setError("Сессия истекла. Пожалуйста, войдите снова.");
         forceLogout();
       }
-      
+
       // Проверяем, является ли это ошибкой rate limit
-      const isRateLimitError = error.status === 429 || 
-                               error.message?.includes("429") || 
-                               error.message?.includes("лимит") || 
-                               error.message?.includes("Too Many Requests") ||
-                               error.message?.includes("Превышен лимит");
-      
+      const isRateLimitError = error.status === 429 ||
+        error.message?.includes("429") ||
+        error.message?.includes("лимит") ||
+        error.message?.includes("Too Many Requests") ||
+        error.message?.includes("Превышен лимит");
+
       if (isRateLimitError) {
         // Для rate limit ошибок показываем пользователю понятное сообщение
         const retryAfter = error.retryAfter || 60;
         setError(`Превышен лимит запросов. Пожалуйста, подождите ${retryAfter} секунд перед повторной попыткой.`);
       }
-      
+
       throw error;
     } finally {
       // Всегда удаляем из множества активных запросов при выходе (успех или ошибка)
@@ -2823,9 +2847,13 @@ const loadChannels = useCallback(
   const renameConversation = async (conversationId, newTitle) => {
     try {
       setIsLoading(true);
-      
+
+      const numericId = typeof conversationId === 'string'
+        ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+        : conversationId;
+
       // Обновляем название через API
-      await apiClient.put(`/conversations/${conversationId}/title`, {
+      await apiClient.put(`/conversations/${numericId}/title`, {
         title: newTitle,
       });
 
@@ -2847,7 +2875,7 @@ const loadChannels = useCallback(
 
       // Триггерим обновление сайдбара
       triggerUpdate();
-      
+
       console.log(`✅ Название чата ${conversationId} обновлено на: ${newTitle}`);
     } catch (error) {
       console.error("Failed to rename conversation:", error);
@@ -2878,21 +2906,25 @@ const loadChannels = useCallback(
       let otherChatsWithAgent = [];
       if (conversation && conversation.agent_id && !conversation.is_group && !conversation.is_channel) {
         otherChatsWithAgent = conversations.filter(
-          (conv) => 
-            conv.id !== conversationId && 
-            conv.agent_id === conversation.agent_id && 
-            !conv.is_group && 
+          (conv) =>
+            conv.id !== conversationId &&
+            conv.agent_id === conversation.agent_id &&
+            !conv.is_group &&
             !conv.is_channel &&
             !isNewlyCreatedEmptyChat(conv.id)
         );
       }
 
+      const numericId = typeof conversationId === 'string'
+        ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+        : conversationId;
+
       if (conversation && conversation.is_group) {
         // Удаляем групповой чат
-        await apiClient.deleteGroupChat(conversationId);
+        await apiClient.deleteGroupChat(numericId);
       } else {
         // Удаляем обычный чат
-        await apiClient.deleteConversation(conversationId);
+        await apiClient.deleteConversation(numericId);
       }
 
       // Удаляем из списка разговоров
@@ -2976,12 +3008,12 @@ const loadChannels = useCallback(
       setIsLoading(false);
     }
   }, [conversations, systemChat, pinnedChats, messagesByConversation, activeConversation, resetUnreadCount, triggerUpdate]);
-  
+
   // Сохраняем функцию deleteConversation в ref для использования в useEffect
   useEffect(() => {
     deleteConversationRef.current = deleteConversation;
   }, [deleteConversation]);
-  
+
   // Отслеживаем закрытие чата (когда activeConversation становится null) для удаления пустых чатов
   useEffect(() => {
     // Если активный чат закрывается (становится null), проверяем предыдущий чат
@@ -2993,7 +3025,7 @@ const loadChannels = useCallback(
           // Проверяем, действительно ли чат пустой
           const messagesCount = messagesByConversation[previousConversationId]?.length ?? 0;
           const pinnedCount = pinnedMessages[previousConversationId]?.length ?? 0;
-          
+
           if (messagesCount === 0 && pinnedCount === 0) {
             console.log(`[useEffect] Активный чат закрыт, автоматически удаляем пустой новый чат ${previousConversationId}`);
             // Удаляем чат асинхронно
@@ -3033,13 +3065,17 @@ const loadChannels = useCallback(
       console.log("isGroupChat:", isGroupChat);
       console.log("isSystemChat:", isSystemChat);
 
+      const numericId = typeof conversationId === 'string'
+        ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+        : conversationId;
+
       console.log("Calling API clearConversationMessages");
       // Очищаем сообщения через API в зависимости от типа чата
       if (isGroupChat) {
-        await apiClient.clearGroupConversationMessages(conversationId);
+        await apiClient.clearGroupConversationMessages(numericId);
       } else {
         // Для системного чата и обычных чатов используем тот же endpoint
-        await apiClient.clearConversationMessages(conversationId);
+        await apiClient.clearConversationMessages(numericId);
       }
       console.log("API call successful");
 
@@ -3086,14 +3122,18 @@ const loadChannels = useCallback(
 
       // Определяем тип чата по активному разговору
       const conversation = conversations.find(
-        (conv) => conv.id === conversationId
+        (conv) => String(conv.id) === String(conversationId)
       );
       const isGroupChat = conversation?.is_group;
 
+      const numericId = typeof conversationId === 'string'
+        ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+        : conversationId;
+
       if (isGroupChat) {
-        await apiClient.pinGroupMessage(conversationId, messageId);
+        await apiClient.pinGroupMessage(numericId, messageId);
       } else {
-        await apiClient.pinMessage(conversationId, messageId);
+        await apiClient.pinMessage(numericId, messageId);
       }
     } catch (error) {
       console.error("Failed to pin message:", error);
@@ -3119,10 +3159,14 @@ const loadChannels = useCallback(
       );
       const isGroupChat = conversation?.is_group;
 
+      const numericId = typeof conversationId === 'string'
+        ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+        : conversationId;
+
       if (isGroupChat) {
-        await apiClient.unpinGroupMessage(conversationId);
+        await apiClient.unpinGroupMessage(numericId);
       } else {
-        await apiClient.unpinMessage(conversationId);
+        await apiClient.unpinMessage(numericId);
       }
     } catch (error) {
       console.error("Failed to unpin message:", error);
@@ -3225,8 +3269,8 @@ const loadChannels = useCallback(
       const pinnedFromServer = Array.isArray(response?.pinned_chats)
         ? response.pinned_chats
         : Array.isArray(response)
-        ? response
-        : [];
+          ? response
+          : [];
       setPinnedChats(pinnedFromServer.map((id) => id.toString()));
     } catch (error) {
       console.error("Failed to pin chat:", error);
@@ -3250,8 +3294,8 @@ const loadChannels = useCallback(
       const pinnedFromServer = Array.isArray(response?.pinned_chats)
         ? response.pinned_chats
         : Array.isArray(response)
-        ? response
-        : [];
+          ? response
+          : [];
       setPinnedChats(pinnedFromServer.map((id) => id.toString()));
     } catch (error) {
       console.error("Failed to unpin chat:", error);
@@ -3447,8 +3491,9 @@ const loadChannels = useCallback(
         const backendAvatar = chatData.group_avatar || selectedAvatar;
 
         const groupChatItem = {
-          id: chatData.conversation_id,
-          conversation_id: chatData.conversation_id,
+          id: `group-${chatData.conversation_id}`,
+          conversation_id: `group-${chatData.conversation_id}`,
+          real_id: chatData.conversation_id,
           title: groupData.title,
           agent_id: null, // У групповых чатов нет одного агента
           agent_name: null,
@@ -3547,9 +3592,12 @@ const loadChannels = useCallback(
     }
 
     try {
-      setIsLoading(true);
+      const numericId = typeof targetConversationId === 'string'
+        ? targetConversationId.replace(/^(group-|channel-|conv-)/, '')
+        : targetConversationId;
+
       const messageData = {
-        conversation_id: targetConversationId.toString(),
+        conversation_id: numericId.toString(),
         message: message,
       };
 
@@ -3685,20 +3733,20 @@ const loadChannels = useCallback(
       return response;
     } catch (error) {
       // Проверяем, является ли это ошибкой лимита сообщений (429)
-      const isMessageLimitError = 
-        error.status === 429 || 
+      const isMessageLimitError =
+        error.status === 429 ||
         error.message?.includes("Message limit exceeded") ||
         error.message?.includes("limit exceeded");
 
       if (isMessageLimitError) {
         // Для ошибки лимита показываем модальное окно вместо логирования
         setShowUpgradeModal(true);
-        
+
         // Удаляем временное сообщение из локального состояния
         updateMessagesForConversation(targetConversationId, (prev) =>
           prev.filter((msg) => msg.id !== tempMessageId)
         );
-        
+
         // Удаляем thinking сообщение если есть
         if (!isSystemChat) {
           updateMessagesForConversation(targetConversationId, (prev) =>
@@ -3749,8 +3797,12 @@ const loadChannels = useCallback(
     async (conversationId, { offset = 0, maxChars = 10000, isOlderLoad = false, beforeDate = null } = {}) => {
       try {
         setIsLoading(true);
+        const numericId = typeof conversationId === 'string'
+          ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+          : conversationId;
+
         const messagesData = await apiClient.getGroupChatMessages(
-          conversationId,
+          numericId,
           offset,
           maxChars,
           beforeDate
@@ -3762,14 +3814,14 @@ const loadChannels = useCallback(
             // Проверяем, нет ли дубликатов
             const existingIds = new Set(prevMessages.map(m => m.id));
             const newMessages = (messagesData || []).filter(m => !existingIds.has(m.id));
-            
+
             if (newMessages.length === 0) {
               console.warn(`[loadGroupMessages] Нет новых сообщений для добавления (все дубликаты или пустой ответ)`);
               return prevMessages; // Возвращаем без изменений, если нет новых сообщений
             }
-            
+
             console.log(`[loadGroupMessages] Добавляем ${newMessages.length} новых старых сообщений к ${prevMessages.length} существующим`);
-            
+
             // Фильтруем локальные thinking сообщения
             const localThinkingMessages = prevMessages.filter(
               (msg) => msg.is_thinking === true || msg.state === "thinking"
@@ -3791,14 +3843,14 @@ const loadChannels = useCallback(
 
               return aIsThinking ? 1 : -1;
             });
-            
+
             // Проверяем, что первое сообщение действительно изменилось
             const newFirstMessage = sorted[0];
             const oldFirstMessage = prevMessages[0];
             if (oldFirstMessage && newFirstMessage && newFirstMessage.id === oldFirstMessage.id) {
               console.warn(`[loadGroupMessages] ПРЕДУПРЕЖДЕНИЕ: Первое сообщение не изменилось после подгрузки! Возможно, бэкенд вернул те же сообщения.`);
             }
-            
+
             return sorted;
           });
         } else {
@@ -3821,8 +3873,8 @@ const loadChannels = useCallback(
             const localThinkingMessages = hasAgentResponses
               ? []
               : prevMessages.filter(
-                  (msg) => msg.is_thinking === true || msg.state === "thinking"
-                );
+                (msg) => msg.is_thinking === true || msg.state === "thinking"
+              );
 
             // Фильтруем временные сообщения пользователя (с состоянием "sending")
             const tempUserMessages = prevMessages.filter(
@@ -3884,7 +3936,7 @@ const loadChannels = useCallback(
         // Получаем актуальные сообщения через функцию, чтобы избежать проблем с замыканием
         const getCurrentMessages = () => messagesByConversation[conversationId] || [];
         const currentMessages = getCurrentMessages();
-        
+
         // Находим самое старое загруженное сообщение (первое в списке, так как сообщения отсортированы от старых к новым)
         const oldestMessage = currentMessages.length > 0 ? currentMessages[0] : null;
         const storedOldest =
@@ -3892,20 +3944,20 @@ const loadChannels = useCallback(
           oldestMessage?.created_at ||
           null;
         const beforeDate = storedOldest;
-        
+
         if (!beforeDate) {
           console.warn(`[loadOlderMessages] Нет beforeDate для чата ${conversationId}, пропускаем подгрузку`);
           return;
         }
-        
+
         // Определяем, является ли это групповым чатом
-        const conversation = conversations.find(c => c.id === conversationId) || 
-                           (activeConversation?.id === conversationId ? activeConversation : null);
+        const conversation = conversations.find(c => c.id === conversationId) ||
+          (activeConversation?.id === conversationId ? activeConversation : null);
         const isGroupChat = conversation?.is_group === true;
-        
+
         const beforeLength = currentMessages.length;
         console.log(`[loadOlderMessages] Подгружаем старые сообщения ${isGroupChat ? 'группы' : 'чата'} ${conversationId}, beforeDate=${beforeDate}, maxChars=${maxChars}, текущее количество: ${beforeLength}`);
-        
+
         if (isGroupChat) {
           // Для групп используем loadGroupMessages с лимитом 10000 символов
           // Передаем beforeDate для правильной последовательности
@@ -3915,28 +3967,28 @@ const loadChannels = useCallback(
           // Передаем beforeDate для правильной последовательности
           await loadMessages(conversationId, { beforeDate, maxChars: 10000, isOlderLoad: true });
         }
-        
+
         // Проверяем, добавились ли новые сообщения
         // Используем несколько попыток для проверки обновления state
         let afterMessages = getCurrentMessages();
         let afterLength = afterMessages.length;
         let attempts = 0;
         const MAX_STATE_CHECK_ATTEMPTS = 5;
-        
+
         while (attempts < MAX_STATE_CHECK_ATTEMPTS && afterLength === beforeLength) {
           await new Promise((resolve) => setTimeout(resolve, 100));
           afterMessages = getCurrentMessages();
           afterLength = afterMessages.length;
           attempts++;
         }
-        
+
         const addedCount = afterLength - beforeLength;
-        
+
         if (addedCount > 0) {
           const newOldestMessage = afterMessages[0];
           console.log(`[loadOlderMessages] ✅ Добавлено ${addedCount} новых старых сообщений, теперь всего: ${afterLength}`);
           console.log(`[loadOlderMessages] Самое старое сообщение: ID=${newOldestMessage?.id}, дата=${newOldestMessage?.created_at}`);
-          
+
           // Проверяем, что первое сообщение действительно изменилось
           if (oldestMessage && newOldestMessage && newOldestMessage.id === oldestMessage.id) {
             console.error(`[loadOlderMessages] ❌ КРИТИЧЕСКАЯ ОШИБКА: Первое сообщение не изменилось после подгрузки ${addedCount} сообщений!`);
@@ -3948,7 +4000,7 @@ const loadChannels = useCallback(
           if (currentOldest) {
             console.warn(`[loadOlderMessages] Текущее самое старое сообщение: ID=${currentOldest.id}, дата=${currentOldest.created_at}`);
             console.warn(`[loadOlderMessages] beforeDate был: ${beforeDate}`);
-            
+
             // Если первое сообщение не изменилось и beforeDate был правильным, значит достигнут край истории
             if (currentOldest.id === oldestMessage?.id && currentOldest.created_at === beforeDate) {
               console.warn(`[loadOlderMessages] Достигнут край истории - нет более старых сообщений`);
@@ -3971,7 +4023,7 @@ const loadChannels = useCallback(
   const continueGroupDialogue = async (conversationId) => {
     // КРИТИЧНО: Сохраняем conversationId в замыкании
     const targetConversationId = conversationId;
-    
+
     // Объявляем tempMessageId перед try блоком, чтобы она была доступна в catch
     let tempMessageId = null;
 
@@ -4262,17 +4314,17 @@ const loadChannels = useCallback(
     if (!newlyCreatedEmptyChatsRef.current.has(conversationId)) {
       return false;
     }
-    
+
     // Дополнительно проверяем, действительно ли чат пустой
     const messagesCount = messagesByConversation[conversationId]?.length ?? 0;
     const pinnedCount = pinnedMessages[conversationId]?.length ?? 0;
-    
+
     // Если есть сообщения, убираем из списка отслеживания
     if (messagesCount > 0 || pinnedCount > 0) {
       newlyCreatedEmptyChatsRef.current.delete(conversationId);
       return false;
     }
-    
+
     return true;
   }, [messagesByConversation, pinnedMessages]);
 
@@ -4338,6 +4390,8 @@ const loadChannels = useCallback(
     incrementUnreadCount,
     resetUnreadCount,
     getUnreadCount,
+    // Функция для обновления сообщений конкретного чата
+    updateMessagesForConversation,
     // Функция для проверки новых пустых чатов
     isNewlyCreatedEmptyChat,
     // Mock-функция для демонстрации

@@ -122,6 +122,7 @@
     "groupChatWith": "Group chat with {{count}} participants",
     "startNewChat": "Start a new chat",
     "startNewConversation": "Start a new conversation with one of the available agents",
+    "savedMessages": "Saved Messages",
     "pinnedMessages": "Pinned messages",
     "information": "Information",
     "agentSettings": "Agent settings",
@@ -158,11 +159,14 @@
     "whatWillHappen": "What will happen:",
     "chatWillDisappear": "Chat will disappear from conversation list",
     "allMessagesSaved": "All messages and data will be saved",
+    "savedMessagesRemains": "The \"Saved Messages\" feature will remain available",
     "howToRestore": "How to restore:",
     "method1": "Method 1:",
     "goToMenu": "Go to AIgram menu",
+    "selectSavedMessages": "Select \"Saved Messages\" section",
     "method2": "Method 2:",
     "openProfile": "Open user profile",
+    "findSavedMessages": "Find \"Saved Messages\" section",
     "aiAssistant": "AI Assistant",
     "aiPanel": "AI Panel",
     "agent": "Agent",
@@ -211,6 +215,9 @@
     "needLogin": "You need to log in",
     "noActiveChat": "No active chat",
     "messageNotFound": "Message not found",
+    "messageSaved": "Message saved to saved messages",
+    "messageAlreadySaved": "Message already saved",
+    "saveMessageError": "Failed to save message",
     "messageDeleted": "Message deleted",
     "deleteMessageError": "Failed to delete message",
     "groupChatOnly": "This feature is only available for group chats",
@@ -279,6 +286,9 @@
     "messagesNotFound": "Messages not found",
     "apiAccessActivated": "API access successfully activated!",
     "apiAccessError": "Error updating API access",
+    "systemChatLoadError": "Failed to load saved messages",
+    "systemChatNotAvailable": "Saved messages temporarily unavailable",
+    "navigationError": "Error navigating to saved messages",
     "pinnedInFolder": "Pinned in this folder",
     "pinnedGlobally": "Pinned globally",
     "editFolder": "Edit folder",
@@ -427,12 +437,14 @@
       "danger": "Danger Zone"
     },
     "menu": {
+      "saved_messages": "Saved Messages",
       "subscription_status": "Subscription Status",
       "usage_statistics": "Usage Statistics",
       "appearance": "Appearance",
       "notifications": "Notifications",
       "privacy": "Privacy",
       "language": "Language",
+      
       "data_export": "Data Export",
       "tell_friend": "Tell a Friend",
       "rate_app": "Rate AIgram",
@@ -653,31 +665,32 @@
     }
   },
   "personalization": {
-    "title": "Personalization",
-    "description": "Make AI behavior, style and interface personal for each user.",
-    "enable": {
-      "label": "Enable personalization",
-      "description": "Allows AI to consider your style, goals and preferences in every response."
-    },
-    "userName": {
-      "label": "Username",
-      "description": "How should AI address you?",
-      "placeholder": "Enter name or nickname"
-    },
-    "profession": {
-      "label": "Profession",
-      "description": "Specify your profession or occupation",
-      "placeholder": "Enter profession or occupation"
-    },
-    "interests": {
-      "label": "More about you",
-      "description": "Tell us about your interests, goals and preferences",
-      "placeholder": "For example: interested in programming, studying machine learning, working on a startup..."
-    },
-    "rules": {
-      "title": "Custom rules",
-      "description": "Manage your custom rules and preferences",
-      "label": "Custom rules"
+      "title": "Personalization",
+      "description": "Make AI behavior, style and interface personal for each user.",
+      "enable": {
+        "label": "Enable personalization",
+        "description": "Allows AI to consider your style, goals and preferences in every response."
+      },
+      "userName": {
+        "label": "Username",
+        "description": "How should AI address you?",
+        "placeholder": "Enter name or nickname"
+      },
+      "profession": {
+        "label": "Profession",
+        "description": "Specify your profession or occupation",
+        "placeholder": "Enter profession or occupation"
+      },
+      "interests": {
+        "label": "More about you",
+        "description": "Tell us about your interests, goals and preferences",
+        "placeholder": "For example: interested in programming, studying machine learning, working on a startup..."
+      },
+      "rules": {
+        "title": "Custom rules",
+        "description": "Manage your custom rules and preferences",
+        "label": "Custom rules"
+      }
     }
   },
   "storage": {
@@ -698,7 +711,8 @@
     "agentMemory": "Long-term agent memory",
     "agentMemoryDesc": "Each AI character can store separate information about you — goals, tasks, preferences.",
     "clearContext": "Clear context memory",
-    "clearContextDesc": "Erases the context of all previous conversations. AI will start learning your style from scratch.",
+    "clearContextDesc": "Erases the context of all previous conversations. AI will start learning your style from scratch."
+    },
     "selectCategory": "Select a setting category"
   },
   "agentCustomize": {

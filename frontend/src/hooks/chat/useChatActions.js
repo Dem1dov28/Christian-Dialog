@@ -11,6 +11,7 @@ export function useChatActions({
   chatTitle,
   systemChat,
   loadMessages,
+  updateMessagesForConversation,
   deleteMessage,
   showError,
   showSuccess,
@@ -110,27 +111,33 @@ export function useChatActions({
           is_from_user: message.is_from_user,
         };
 
-        await apiClient.saveMessageToSavedMessages(saveData);
+        const savedMessage = await apiClient.saveMessageToSavedMessages(saveData);
 
-        if (systemChat?.id) {
+        if (systemChat?.id && savedMessage && updateMessagesForConversation) {
           try {
-            await loadMessages(systemChat.id);
+            // Мягко обновляем локальное состояние Saved Messages, добавляя сохраненное сообщение
+            // вместо полной перезагрузки через loadMessages
+            updateMessagesForConversation(systemChat.id, (prev) => {
+              // Проверяем, нет ли уже такого сообщения (на случай гонки или дублей)
+              if (prev.some(msg => msg.id === savedMessage.id)) return prev;
+              return [...prev, savedMessage];
+            });
           } catch (error) {
-            console.error("Failed to reload Saved Messages after save:", error);
+            console.error("Failed to optimistically update Saved Messages after save:", error);
           }
         }
 
         if (!silent) {
           showSuccess(t("chat.messageSaved", { defaultValue: "Сообщение сохранено" }));
         }
-        return true;
+        return savedMessage;
       } catch (error) {
         if (silent) {
           console.error("Failed to save message:", error);
         } else {
           showError(
             error?.response?.data?.detail ||
-              t("chat.saveError", { defaultValue: "Не удалось сохранить сообщение" })
+            t("chat.saveError", { defaultValue: "Не удалось сохранить сообщение" })
           );
         }
         return false;
@@ -143,6 +150,7 @@ export function useChatActions({
       chatTitle,
       systemChat,
       loadMessages,
+      updateMessagesForConversation,
       showError,
       showSuccess,
       t,
@@ -164,7 +172,7 @@ export function useChatActions({
         console.error("Failed to delete message:", error);
         showError(
           error?.response?.data?.detail ||
-            t("chat.deleteError", { defaultValue: "Не удалось удалить сообщение" })
+          t("chat.deleteError", { defaultValue: "Не удалось удалить сообщение" })
         );
       }
     },

@@ -209,7 +209,7 @@ const CollectionModal = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm ${
         isShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
       }`}
       style={{ paddingTop: '120px', paddingBottom: '20px' }}

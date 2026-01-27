@@ -12,7 +12,6 @@ export default function HeaderMenu({
   onReport,
   onClearHistory,
   onDeleteChat,
-  onSavedMessages,
   onUnsubscribeChannel,
   onEditGroupChat,
   isRightPanelOpen,
@@ -128,24 +127,6 @@ export default function HeaderMenu({
           >
             <MdPerson className="text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" />
             <span className="text-sm">{t("profile.title")}</span>
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            className="w-full text-left flex items-center px-3 py-2 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-            onClick={async (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              console.log("Saved Messages clicked in HeaderMenu");
-              if (typeof onSavedMessages === "function") {
-                await onSavedMessages();
-              }
-              closeMenu();
-            }}
-          >
-            <MdBookmark className="text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" />
-            <span className="text-sm">{t("chat.savedMessages")}</span>
           </button>
         </li>
         <li>

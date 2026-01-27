@@ -95,6 +95,7 @@ async def search_messages(
 ):
     """Поиск сообщений по всем чатам пользователя (обычным и групповым)"""
     try:
+        logger.info(f"Starting search for user {current_user.id} with query: '{q}'")
         result = search_service.search_messages(
             query=q,
             user_id=current_user.id,
@@ -105,7 +106,7 @@ async def search_messages(
         logger.info(f"Search messages: query='{q}', found={result['total']} for user {current_user.id}")
         return result
     except Exception as e:
-        logger.error(f"Error searching messages: {e}", exc_info=True)
+        logger.error(f"Error searching messages for user {current_user.id} with query '{q}': {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ошибка поиска"

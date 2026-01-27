@@ -10,16 +10,16 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
   const { createUserAgent, updateUserAgent, isLoading } = useAgents();
   const { showSuccess, showError } = useNotification();
   const { t } = useLanguage();
-  
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [instructions, setInstructions] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const fileInputRef = useRef(null);
-  
+
   const isEditMode = !!agentToEdit;
-  
+
   // Заполняем форму данными агента при редактировании
   React.useEffect(() => {
     if (agentToEdit) {
@@ -45,18 +45,18 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
     if (file) {
       // Проверяем размер файла (макс 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        showError("Файл слишком большой. Максимальный размер: 5MB");
+        showError(t("library.createModal.errorTooLarge"));
         return;
       }
-      
+
       // Проверяем тип файла
       if (!file.type.startsWith("image/")) {
-        showError("Пожалуйста, выберите изображение");
+        showError(t("library.createModal.errorNotImage"));
         return;
       }
-      
+
       setAvatarFile(file);
-      
+
       // Создаем превью
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -68,17 +68,17 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
-      showError("Введите имя персонажа");
+      showError(t("library.createModal.errorEmptyName"));
       return;
     }
-    
+
     if (!instructions.trim()) {
-      showError("Введите промпт для персонажа");
+      showError(t("library.createModal.errorEmptyPrompt"));
       return;
     }
-    
+
     try {
       let agent;
       if (isEditMode) {
@@ -93,7 +93,7 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
           updateData.avatar = avatarFile;
         }
         agent = await updateUserAgent(agentToEdit.id, updateData);
-        showSuccess(`Персонаж "${agent.name}" успешно обновлен!`);
+        showSuccess(t("library.createModal.successUpdated", { name: agent.name }));
       } else {
         // Создание нового агента
         agent = await createUserAgent({
@@ -102,24 +102,24 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
           instructions: instructions.trim(),
           avatar: avatarFile,
         });
-        showSuccess(`Персонаж "${agent.name}" успешно создан!`);
+        showSuccess(t("library.createModal.successCreated", { name: agent.name }));
       }
-      
+
       // Сбрасываем форму
       setName("");
       setDescription("");
       setInstructions("");
       setAvatarFile(null);
       setAvatarPreview(null);
-      
+
       if (onSuccess) {
         onSuccess(agent);
       }
-      
+
       onClose();
     } catch (error) {
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} agent:`, error);
-      showError(error.message || `Не удалось ${isEditMode ? 'обновить' : 'создать'} персонажа`);
+      showError(error.message || t(isEditMode ? "library.createModal.errorUpdate" : "library.createModal.errorCreate"));
     }
   };
 
@@ -140,20 +140,24 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
     <div className="create-agent-modal-overlay" onClick={handleClose}>
       <div className="create-agent-modal" onClick={(e) => e.stopPropagation()}>
         <div className="create-agent-modal-header">
-          <h2>{isEditMode ? "Редактировать персонажа" : "Создать персонажа"}</h2>
-          <button 
-            className="create-agent-modal-close" 
+          <h2>
+            {isEditMode
+              ? t("library.createModal.titleEdit")
+              : t("library.createModal.titleCreate")}
+          </h2>
+          <button
+            className="create-agent-modal-close"
             onClick={handleClose}
             disabled={isLoading}
           >
             <MdClose size={24} />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="create-agent-form">
           {/* Аватар */}
           <div className="create-agent-avatar-section">
-            <div 
+            <div
               className="create-agent-avatar-preview"
               onClick={() => fileInputRef.current?.click()}
             >
@@ -162,7 +166,7 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
               ) : (
                 <div className="create-agent-avatar-placeholder">
                   <MdAddAPhoto size={32} />
-                  <span>Добавить фото</span>
+                  <span>{t("library.createModal.addPhoto")}</span>
                 </div>
               )}
             </div>
@@ -174,69 +178,79 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
               style={{ display: "none" }}
             />
             <p className="create-agent-avatar-hint">
-              Нажмите, чтобы загрузить фото персонажа
+              {t("library.createModal.uploadHint")}
             </p>
           </div>
-          
+
           {/* Имя */}
           <div className="create-agent-field">
-            <label htmlFor="agent-name">Имя персонажа *</label>
+            <label htmlFor="agent-name">{t("library.createModal.nameLabel")}</label>
             <input
               id="agent-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Например: Мой помощник"
+              placeholder={t("library.createModal.namePlaceholder")}
               maxLength={100}
               required
             />
           </div>
-          
+
           {/* Описание */}
           <div className="create-agent-field">
-            <label htmlFor="agent-description">Описание</label>
+            <label htmlFor="agent-description">
+              {t("library.createModal.descriptionLabel")}
+            </label>
             <input
               id="agent-description"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Краткое описание персонажа"
+              placeholder={t("library.createModal.descriptionPlaceholder")}
               maxLength={500}
             />
           </div>
-          
+
           {/* Промпт */}
           <div className="create-agent-field">
-            <label htmlFor="agent-instructions">Промпт (инструкции) *</label>
+            <label htmlFor="agent-instructions">
+              {t("library.createModal.promptLabel")}
+            </label>
             <textarea
               id="agent-instructions"
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Опишите, как должен вести себя персонаж. Например: Ты дружелюбный помощник, который всегда готов помочь с вопросами по программированию..."
+              placeholder={t("library.createModal.promptPlaceholder")}
               rows={6}
               required
             />
             <p className="create-agent-field-hint">
-              Промпт определяет поведение и характер персонажа
+              {t("library.createModal.promptHint")}
             </p>
           </div>
-          
+
           {/* Кнопки */}
           <div className="create-agent-actions">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="create-agent-cancel-btn"
               onClick={handleClose}
               disabled={isLoading}
             >
-              Отмена
+              {t("library.createModal.cancel")}
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="create-agent-submit-btn"
               disabled={isLoading || !name.trim() || !instructions.trim()}
             >
-              {isLoading ? (isEditMode ? "Сохранение..." : "Создание...") : (isEditMode ? "Сохранить" : "Создать")}
+              {isLoading
+                ? isEditMode
+                  ? t("library.createModal.saving")
+                  : t("library.createModal.creating")
+                : isEditMode
+                  ? t("library.createModal.save")
+                  : t("library.createModal.create")}
             </button>
           </div>
         </form>

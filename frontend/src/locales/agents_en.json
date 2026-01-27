@@ -1,5 +1,193 @@
 {
   "agents": {
+    "Марк Аврелий": {
+      "name": "Marcus Aurelius",
+      "description": "Roman Emperor and Stoic philosopher; author of 'Meditations'."
+    },
+    "Илон Маск": {
+      "name": "Elon Musk",
+      "description": "Entrepreneur; founder of SpaceX, head of Tesla and X (Twitter)."
+    },
+    "Павел Дуров": {
+      "name": "Pavel Durov",
+      "description": "Founder of Telegram and VK; entrepreneur and privacy advocate."
+    },
+    "Владимир Зеленский": {
+      "name": "Volodymyr Zelenskyy",
+      "description": "President of Ukraine; statesman, former actor and producer."
+    },
+    "Дональд Трамп": {
+      "name": "Donald Trump",
+      "description": "45th and 47th President of the USA, entrepreneur and billionaire."
+    },
+    "Александр Македонский": {
+      "name": "Alexander the Great",
+      "description": "King of Macedonia and one of history's greatest military commanders."
+    },
+    "Альберт Эйнштейн": {
+      "name": "Albert Einstein",
+      "description": "Theoretical physicist, developer of the theory of relativity."
+    },
+    "Будда": {
+      "name": "Buddha",
+      "description": "Spiritual teacher, founder of Buddhism; the Awakened One."
+    },
+    "Владимир Ленин": {
+      "name": "Vladimir Lenin",
+      "description": "Revolutionary, politician, founder of the Soviet state."
+    },
+    "Джордж Вашингтон": {
+      "name": "George Washington",
+      "description": "1st President of the USA, Commander-in-Chief of the Continental Army."
+    },
+    "Гай Юлий Цезарь": {
+      "name": "Julius Caesar",
+      "description": "Roman general, politician, writer and dictator."
+    },
+    "Жанна д'Арк": {
+      "name": "Joan of Arc",
+      "description": "National heroine of France, warrior and symbol of resistance."
+    },
+    "Иисус": {
+      "name": "Jesus",
+      "description": "Central figure of Christianity, preacher and teacher."
+    },
+    "Иосиф Сталин": {
+      "name": "Joseph Stalin",
+      "description": "Soviet leader who headed the USSR from the mid-1920s to 1953."
+    },
+    "Клеопатра": {
+      "name": "Cleopatra",
+      "description": "The last queen of the Ptolemaic Kingdom of Egypt."
+    },
+    "Христофор Колумб": {
+      "name": "Christopher Columbus",
+      "description": "Italian explorer who opened the Americas to European exploration."
+    },
+    "Леонардо да Винчи": {
+      "name": "Leonardo da Vinci",
+      "description": "Renaissance polymath; painter, scientist and engineer."
+    },
+    "Мартин Лютер Кинг-младший": {
+      "name": "Martin Luther King Jr.",
+      "description": "Civil rights leader, Nobel Peace Prize laureate."
+    },
+    "Наполеон Бонапарт": {
+      "name": "Napoleon Bonaparte",
+      "description": "French Emperor and military commander, one of the greatest in history."
+    },
+    "Стив Джобс": {
+      "name": "Steve Jobs",
+      "description": "Co-founder of Apple, visionary and pioneer of the personal computer era."
+    },
+    "Уинстон Черчилль": {
+      "name": "Winston Churchill",
+      "description": "Prime Minister of the UK, orator and wartime leader."
+    },
+    "Чингисхан": {
+      "name": "Genghis Khan",
+      "description": "Founder and first Great Khan of the Mongol Empire."
+    },
+    "Чарльз Дарвин": {
+      "name": "Charles Darwin",
+      "description": "English naturalist, developer of the theory of evolution."
+    },
+    "Винсент Ван Гог": {
+      "name": "Vincent van Gogh",
+      "description": "Dutch Post-Impressionist painter, master of emotional art."
+    },
+    "Уильям Шекспир": {
+      "name": "William Shakespeare",
+      "description": "The greatest English poet and playwright, the Bard of Avon."
+    },
+    "Вольфганг Амадей Моцарт": {
+      "name": "Wolfgang Amadeus Mozart",
+      "description": "Austrian composer, one of the greatest in musical history."
+    },
+    "Зигмунд Фрейд": {
+      "name": "Sigmund Freud",
+      "description": "Austrian neurologist, founder of psychoanalysis."
+    },
+    "Исаак Ньютон": {
+      "name": "Isaac Newton",
+      "description": "English physicist and mathematician, discoverer of gravity."
+    },
+    "Карл Маркс": {
+      "name": "Karl Marx",
+      "description": "German philosopher and economist, author of 'Das Kapital'."
+    },
+    "Лев Толстой": {
+      "name": "Leo Tolstoy",
+      "description": "Great Russian writer and moral philosopher."
+    },
+    "Людвиг ван Бетховен": {
+      "name": "Ludwig van Beethoven",
+      "description": "German composer, titan of music and symbol of spirit."
+    },
+    "Михаил Булгаков": {
+      "name": "Mikhail Bulgakov",
+      "description": "Russian writer and playwright, author of 'The Master and Margarita'."
+    },
+    "Михаил Ломоносов": {
+      "name": "Mikhail Lomonosov",
+      "description": "First Russian world-class scientist, polymath."
+    },
+    "Пабло Пикассо": {
+      "name": "Pablo Picasso",
+      "description": "Spanish painter, co-founder of Cubism."
+    },
+    "Сальвадор Дали": {
+      "name": "Salvador Dalí",
+      "description": "Spanish surrealist painter, master of provocation."
+    },
+    "Сократ": {
+      "name": "Socrates",
+      "description": "Ancient Greek philosopher, founder of Western philosophy."
+    },
+    "Фёдор Достоевский": {
+      "name": "Fyodor Dostoevsky",
+      "description": "Great Russian writer, explorer of the human soul."
+    },
+    "Конфуций": {
+      "name": "Confucius",
+      "description": "Chinese philosopher, founder of Confucianism."
+    },
+    "Махатма Ганди": {
+      "name": "Mahatma Gandhi",
+      "description": "Leader of the Indian independence movement, apostle of nonviolence."
+    },
+    "Николай Коперник": {
+      "name": "Nicolaus Copernicus",
+      "description": "Polish astronomer, creator of the heliocentric model."
+    },
+    "Мария Склодовская-Кюри": {
+      "name": "Marie Curie",
+      "description": "Physicist and chemist, first woman to win a Nobel Prize."
+    },
+    "Никола Тесла": {
+      "name": "Nikola Tesla",
+      "description": "Inventor in the field of electrical and radio engineering."
+    },
+    "Архимед": {
+      "name": "Archimedes",
+      "description": "Ancient Greek mathematician, physicist and engineer."
+    },
+    "Елизавета II": {
+      "name": "Elizabeth II",
+      "description": "Queen of the UK, reigned for over 70 years."
+    },
+    "Маргарет Тэтчер": {
+      "name": "Margaret Thatcher",
+      "description": "First female Prime Minister of the UK, the 'Iron Lady'."
+    },
+    "Франклин Делано Рузвельт": {
+      "name": "Franklin D. Roosevelt",
+      "description": "32nd US President who led the country through the Great Depression."
+    },
+    "Генри Форд": {
+      "name": "Henry Ford",
+      "description": "American industrialist, creator of the assembly line."
+    },
     "Владимир Путин": {
       "name": "Vladimir Putin",
       "description": "President of Russia, responds in an official style"
@@ -10,39 +198,19 @@
     },
     "Фридрих Ницше": {
       "name": "Friedrich Nietzsche",
-      "description": "German philosopher, author of the concept of the Übermensch"
+      "description": "German philosopher, author of the Übermensch concept"
     },
     "Учитель английского": {
       "name": "English Teacher",
       "description": "Corrects English and briefly explains grammar rules."
     },
-    "Владимир Зеленский": {
-      "name": "Volodymyr Zelenskyy",
-      "description": "President of Ukraine; statesman and politician, former actor and producer."
-    },
-    "Дональд Трамп": {
-      "name": "Donald Trump",
-      "description": "45th and 47th President of the USA, entrepreneur and billionaire."
-    },
-    "Илон Маск": {
-      "name": "Elon Musk",
-      "description": "Entrepreneur; founder of SpaceX, head of Tesla and X (Twitter)."
-    },
-    "Павел Дуров": {
-      "name": "Pavel Durov",
-      "description": "Founder of Telegram and VKontakte; entrepreneur, product manager, privacy advocate."
-    },
-    "Марк Аврелий": {
-      "name": "Marcus Aurelius",
-      "description": "Roman emperor and Stoic philosopher; author of 'Meditations'."
-    },
     "Толкователь сновидений": {
       "name": "Dream Interpreter",
-      "description": "Experienced specialist in dream interpretation combining classic dream books and modern psychology."
+      "description": "Experienced specialist in dream interpretation."
     },
     "Поиск в интернете": {
       "name": "Web Search",
-      "description": "Searches for current information on the internet using DuckDuckGo."
+      "description": "Searches for up-to-date information on the web."
     },
     "Таймер и напоминания": {
       "name": "Timer & Reminders",
@@ -50,24 +218,39 @@
     },
     "Конвертер валют": {
       "name": "Currency Converter",
-      "description": "Converts currencies using current exchange rates."
+      "description": "Converts currencies with current exchange rates."
     },
     "Учет покупок": {
       "name": "Purchase Tracker",
-      "description": "Records expenses, shows recent purchases and summary by categories."
+      "description": "Records expenses and shows a summary."
     },
     "Создатель тестов": {
       "name": "Test Creator",
-      "description": "Creates interactive tests on any topic to check knowledge."
+      "description": "Creates interactive tests to check knowledge."
     },
     "Ту-ду лист": {
       "name": "Todo List",
-      "description": "Helps plan tasks by analyzing the task journal."
+      "description": "Helps plan tasks and stay organized."
     },
     "Кулинарный советник": {
       "name": "Culinary Advisor",
-      "description": "Provides recipes, cooking tips and information about preparing dishes."
+      "description": "Provides recipes and cooking tips."
+    },
+    "Помощник по коду": {
+      "name": "Code Assistant",
+      "description": "Helps write, debug, and optimize code in various programming languages."
+    },
+    "Аналитик данных": {
+      "name": "Data Analyst",
+      "description": "Helps analyze data, create charts, and draw conclusions."
+    },
+    "Творческий писатель": {
+      "name": "Creative Writer",
+      "description": "Helps with writing stories, articles, scripts, and other creative content."
+    },
+    "Генератор изображений": {
+      "name": "Image Generator",
+      "description": "Creates images based on text descriptions."
     }
   }
 }
-

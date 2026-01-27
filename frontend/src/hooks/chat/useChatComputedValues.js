@@ -202,8 +202,19 @@ export function useChatComputedValues({
     );
 
     const translatedAgent = translateAgent(currentAgent);
+    
+    // Проверяем, является ли название стандартным "Чат с ..." или "Chat with ..."
+    const isDefaultTitle = activeConversation.title && (
+      activeConversation.title.startsWith("Чат с ") || 
+      activeConversation.title.startsWith("Chat with ")
+    );
+
+    if (activeConversation.title && activeConversation.title.trim() && !isDefaultTitle) {
+      return activeConversation.title;
+    }
+
     if (agentConversations.length <= 1) {
-      return translatedAgent.name;
+      return t("chat.chatWith", { name: translatedAgent.name });
     }
 
     // Находим индекс текущего разговора среди всех разговоров с агентом

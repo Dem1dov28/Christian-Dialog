@@ -18,7 +18,7 @@ class UserAgentService(BaseService):
     """
     
     # Стандартная модель для всех созданных персонажей
-    DEFAULT_MODEL = "openrouter/google/gemini-2.0-flash-001"
+    DEFAULT_MODEL = "tngtech/deepseek-r1t2-chimera:free"
     DEFAULT_CATEGORY = "created"
     DEFAULT_TEMPERATURE = 0.7
     

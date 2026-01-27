@@ -258,7 +258,7 @@ export default function Chat({
   } = messageSelectionHook;
   // highlightTimeoutRef, topVisibleDate, dateUpdateTimeoutRef, datePosition, 
   // isDateVisible, dateHideTimeoutRef, scrollButtonPosition теперь в useChatMessages
-  
+
   // purchaseMode, purchases, purchasesLoading, purchaseSort, isFilterOpen, purchaseCategoryFilter
   // теперь в usePurchaseTracker (интеграция ниже, после определения isPurchaseTrackerChat)
   // todos, todosLoading, quickTodoDrafts, addingCardSections, isAddingSection,
@@ -275,6 +275,9 @@ export default function Chat({
     messages: messagesFromContext,
     conversations,
     pinnedMessages,
+    showUpgradeModal,
+    setShowUpgradeModal,
+    checkMessageLimit,
     clearConversationMessages,
     selectConversation,
     createChat,
@@ -295,6 +298,7 @@ export default function Chat({
     subscribeToChannel,
     unsubscribeFromChannel,
     getMessagesByConversationId,
+    updateMessagesForConversation,
   } = useChats();
   const { isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useNotification();
@@ -330,7 +334,7 @@ export default function Chat({
 
   // Определяем, выбран ли чат
   const isChatSelected = activeChatId !== null && activeConversation !== null;
-  
+
   // Используем effectiveActiveConversation для проверок канала
   const isSubscribedChannel =
     isChannelChat &&
@@ -338,11 +342,11 @@ export default function Chat({
       effectiveActiveConversation?.is_subscribed === true);
   const canWriteChannel = isChannelChat
     ? !!(
-        effectiveActiveConversation?.can_write ||
-        (effectiveActiveConversation?.channel_owner_id != null &&
-          user?.id != null &&
-          Number(effectiveActiveConversation.channel_owner_id) === Number(user.id))
-      )
+      effectiveActiveConversation?.can_write ||
+      (effectiveActiveConversation?.channel_owner_id != null &&
+        user?.id != null &&
+        Number(effectiveActiveConversation.channel_owner_id) === Number(user.id))
+    )
     : false;
   const isReadOnlyChannel = isChannelChat && !canWriteChannel;
 
@@ -381,7 +385,7 @@ export default function Chat({
   const currentAgent = currentAgentId ? getAgent(currentAgentId) : null;
 
 
-  
+
   // УДАЛЕНО - проверки для удаленных инструментов:
   // - isPurchaseTrackerChat
   // - isNotesChat
@@ -406,7 +410,7 @@ export default function Chat({
   // - useTravelJournal
   // - useDietitianJournal
   // - usePurchaseTrackerEffects
-  
+
   // Заглушки для переменных, которые могут использоваться в других местах
   const currentPurchaseMode = "chat";
   const currentNoteMode = "chat";
@@ -417,7 +421,7 @@ export default function Chat({
 
   // handleQuickAddTodo, handleDeleteSection, handleAddColumn, handleSubmitNewSection
   // теперь в useTodoJournal
-  
+
   // editingSectionId, editingSectionTitle, handleSubmitRenameSectionWithEditing, handleTodoDragEndExtended теперь в useTodoJournal
 
   // Интеграция хука useCyclingPrompts для управления циклическими промптами
@@ -484,14 +488,14 @@ export default function Chat({
 
   const channelColorClass = isChannelChat
     ? effectiveActiveConversation?.colorClass ||
-      "bg-blue-500 dark:bg-blue-600"
+    "bg-blue-500 dark:bg-blue-600"
     : null;
   const channelAvatar = isChannelChat
     ? effectiveActiveConversation?.imageSrc ||
-      effectiveActiveConversation?.channel_avatar_url ||
-      currentAgent?.image_url ||
-      currentAgent?.avatar_url ||
-      null
+    effectiveActiveConversation?.channel_avatar_url ||
+    currentAgent?.image_url ||
+    currentAgent?.avatar_url ||
+    null
     : null;
   const ChannelIconComponent = isChannelChat
     ? getIconComponent(effectiveActiveConversation?.iconName || "notifications")
@@ -499,27 +503,29 @@ export default function Chat({
   const IconComponent = isChannelChat
     ? ChannelIconComponent || MdNotifications
     : currentAgent
-    ? getIconComponent(currentAgent.icon_name)
-    : MdStar;
+      ? getIconComponent(currentAgent.icon_name)
+      : MdStar;
 
   // Выбираем разговор при смене активного чата
   useEffect(() => {
+    console.log("[Chat.jsx] useEffect triggered", { activeChatId, activeConversationId: activeConversation?.id, conversationsLength: conversations.length });
+    
     // КРИТИЧНО: Убрали conversations и selectConversation из зависимостей
     // чтобы не срабатывать при обновлении списка чатов после генерации
     // Используем только activeChatId и activeConversation
     if (activeChatId) {
       // Находим разговор по ID чата (не по agent_id)
       const conversation = conversations.find(
-        (conv) => conv.id === activeChatId
+        (conv) => String(conv.id) === String(activeChatId)
       );
-      
+
       // Также проверяем системный чат
-      const isSystemChat = systemChat && systemChat.id === activeChatId;
+      const isSystemChat = systemChat && String(systemChat.id) === String(activeChatId);
 
       if (conversation || isSystemChat) {
         const targetConversation = conversation || systemChat;
         // Проверяем, что это не тот же разговор, что уже активен
-        if (!activeConversation || activeConversation.id !== targetConversation.id) {
+        if (!activeConversation || String(activeConversation.id) !== String(targetConversation.id)) {
           selectConversation(targetConversation.id);
         }
       }
@@ -630,6 +636,7 @@ export default function Chat({
     sendGroupMessage,
     loadMessages,
     loadGroupMessages,
+    updateMessagesForConversation,
     onMessageSent,
     showError,
     showSuccess,
@@ -691,6 +698,7 @@ export default function Chat({
     chatTitle,
     systemChat,
     loadMessages,
+    updateMessagesForConversation,
     deleteMessage,
     showError,
     showSuccess,
@@ -721,6 +729,7 @@ export default function Chat({
     selectedIds,
     clearSelection,
     loadMessages,
+    updateMessagesForConversation,
     systemChat,
     pinnedMessagesArray,
     currentPinIndex,
@@ -796,7 +805,7 @@ export default function Chat({
 
   // handleKeyPress, handleFileSelect, handleDrop, handleDragEnter, handleDragLeave, 
   // handleDragOver, handleRemoveFile, handlePaste теперь в useChatInput
-  
+
   // Обработчик вставки изображений из буфера обмена теперь в useClipboardPaste
 
   // formatFileSize, getFileIcon, uploadFileWithProgress теперь в utils/fileUtils.js
@@ -819,6 +828,8 @@ export default function Chat({
     isLoading,
     setIsDialogueLoading,
     continueGroupDialogue,
+    checkMessageLimit,
+    setShowUpgradeModal,
     onToggleRightPanel,
     onOpenChatSearch,
     showError,
@@ -1016,11 +1027,10 @@ export default function Chat({
   return (
     <main
       ref={mainRef}
-      className={`${mainContainerClassName} transition-all ${
-        isDragging && !isChannelChat
-          ? "ring-4 ring-[var(--accent)] ring-offset-0 border-2 border-[var(--accent)]"
-          : ""
-      }`}
+      className={`${mainContainerClassName} transition-all ${isDragging && !isChannelChat
+        ? "ring-4 ring-[var(--accent)] ring-offset-0 border-2 border-[var(--accent)]"
+        : ""
+        }`}
       style={{
         ...(isDragging && !isChannelChat ? {
           backgroundColor: "var(--bg-primary)",
@@ -1087,48 +1097,47 @@ export default function Chat({
 
       <div
         ref={containerRefCallback}
-          className={`flex-1 flex flex-col overflow-y-auto chat-bg relative shadow-inner min-w-0 max-w-full chat-container ${
-            isInlineLibraryOpen ? "" : (
-              isJournalChat && isChatSelected ? "" : "px-3 sm:px-6 py-2 sm:py-4"
-            )
+        className={`flex-1 flex flex-col overflow-y-auto chat-bg relative shadow-inner min-w-0 max-w-full chat-container ${isInlineLibraryOpen ? "" : (
+          isJournalChat && isChatSelected ? "" : "px-3 sm:px-6 py-2 sm:py-4"
+        )
           } ${selectionActive ? "select-none" : ""}`}
-          style={{
-            minHeight: "0", // Важно для flex-контейнеров
-            height: "100%", // Убеждаемся, что контейнер занимает всю высоту
-            opacity: isScrollReady || isInlineLibraryOpen ? 1 : 0,
-            transition: isScrollReady ? "opacity 0.15s ease-in" : "none",
-            // Добавляем padding-bottom, чтобы последнее сообщение не перекрывалось блоком ввода
-            // УДАЛЕНО - проверки для журналов инструментов (все инструменты удалены)
-            paddingBottom: isChatSelected && !isInlineLibraryOpen ? "80px" : undefined,
-          }}
-          data-scroll-to-bottom="true"
-          onContextMenu={(e) => {
-            // Предотвращаем браузерное контекстное меню только при правом клике
-            if (e.button === 2) {
-              e.preventDefault();
-            }
-          }}
-          onClick={(e) => {
-            // НЕ блокируем события - позволяем выделению текста работать
-            // Глобальный обработчик закроет меню при необходимости
-          }}
-          onScroll={(e) => {
+        style={{
+          minHeight: "0", // Важно для flex-контейнеров
+          height: "100%", // Убеждаемся, что контейнер занимает всю высоту
+          opacity: isScrollReady || isInlineLibraryOpen ? 1 : 0,
+          transition: isScrollReady ? "opacity 0.15s ease-in" : "none",
+          // Добавляем padding-bottom, чтобы последнее сообщение не перекрывалось блоком ввода
+          // УДАЛЕНО - проверки для журналов инструментов (все инструменты удалены)
+          paddingBottom: isChatSelected && !isInlineLibraryOpen ? "80px" : undefined,
+        }}
+        data-scroll-to-bottom="true"
+        onContextMenu={(e) => {
+          // Предотвращаем браузерное контекстное меню только при правом клике
+          if (e.button === 2) {
+            e.preventDefault();
+          }
+        }}
+        onClick={(e) => {
+          // НЕ блокируем события - позволяем выделению текста работать
+          // Глобальный обработчик закроет меню при необходимости
+        }}
+        onScroll={(e) => {
           if (contextMenu.visible) {
             setContextMenu({ ...contextMenu, visible: false });
             setActiveMessageId(null);
           }
-          
+
           // Показываем дату при скролле (работает для всех типов скролла - колесо мыши, scrollbar, touch)
           // Используем requestAnimationFrame для более надежного отслеживания
           requestAnimationFrame(() => {
             if (topVisibleDate && !isInlineLibraryOpen && windowedMessages.length > 0) {
               setIsDateVisible(true);
-              
+
               // Очищаем предыдущий таймер скрытия
               if (dateHideTimeoutRef.current) {
                 clearTimeout(dateHideTimeoutRef.current);
               }
-              
+
               // Устанавливаем таймер для скрытия даты после остановки скролла
               dateHideTimeoutRef.current = setTimeout(() => {
                 setIsDateVisible(false);
@@ -1157,44 +1166,44 @@ export default function Chat({
               <div className="flex-1 flex flex-col" style={{ minHeight: 0, overflow: "hidden", height: "100%" }} />
             ) : windowedMessages.length > 0 ? (
               <>
-                    {/* Компонент отображения даты в верхней части чата */}
-                    <ChatDateIndicator
-                      topVisibleDate={topVisibleDate}
-                      datePosition={datePosition}
-                      isDateVisible={isDateVisible}
-                      theme={theme === "pastel" ? "light" : theme === "dark" ? "dark" : "light"}
-                    />
-                    {/* Кнопка скролла вниз */}
-                    {showScrollButton && (
-                      <button
-                        onClick={handleScrollDownClick}
-                        className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
-                        aria-label="Scroll down"
-                      >
-                        <MdArrowDownward size={22} />
-                      </button>
-                    )}
-                    <ChatMessagesList
-                      windowedMessages={windowedMessages}
-                      selectedMessagesSet={selectedMessagesSet}
-                      highlightedMessageId={highlightedMessageId}
-                      activeMessageId={activeMessageId}
-                      messageRefs={messageRefs}
-                      theme={theme === "pastel" ? "light" : theme === "dark" ? "dark" : "light"}
-                      selectionActive={selectionActive}
-                      isSelecting={isSelecting}
-                      onMessageClick={handleMessageClick}
-                      onMessageTouchStart={handleMessageTouchStart}
-                      onMessageTouchMove={handleMessageTouchMove}
-                      onMessageTouchEnd={handleMessageTouchEnd}
-                      onMessageTouchCancel={handleMessageTouchCancel}
-                      openMenuAtEventWithChecks={openMenuAtEventWithChecks}
-                      handleMessageMouseDown={handleMessageMouseDown}
-                      handleMessageMouseEnter={handleMessageMouseEnter}
-                      handleMessageMouseUp={handleMessageMouseUp}
-                      handleContentMouseDown={handleContentMouseDown}
-                      handleOriginalChatClick={handleOriginalChatClick}
-                    />
+                {/* Компонент отображения даты в верхней части чата */}
+                <ChatDateIndicator
+                  topVisibleDate={topVisibleDate}
+                  datePosition={datePosition}
+                  isDateVisible={isDateVisible}
+                  theme={theme === "pastel" ? "light" : theme === "dark" ? "dark" : "light"}
+                />
+                {/* Кнопка скролла вниз */}
+                {showScrollButton && (
+                  <button
+                    onClick={handleScrollDownClick}
+                    className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+                    aria-label="Scroll down"
+                  >
+                    <MdArrowDownward size={22} />
+                  </button>
+                )}
+                <ChatMessagesList
+                  windowedMessages={windowedMessages}
+                  selectedMessagesSet={selectedMessagesSet}
+                  highlightedMessageId={highlightedMessageId}
+                  activeMessageId={activeMessageId}
+                  messageRefs={messageRefs}
+                  theme={theme === "pastel" ? "light" : theme === "dark" ? "dark" : "light"}
+                  selectionActive={selectionActive}
+                  isSelecting={isSelecting}
+                  onMessageClick={handleMessageClick}
+                  onMessageTouchStart={handleMessageTouchStart}
+                  onMessageTouchMove={handleMessageTouchMove}
+                  onMessageTouchEnd={handleMessageTouchEnd}
+                  onMessageTouchCancel={handleMessageTouchCancel}
+                  openMenuAtEventWithChecks={openMenuAtEventWithChecks}
+                  handleMessageMouseDown={handleMessageMouseDown}
+                  handleMessageMouseEnter={handleMessageMouseEnter}
+                  handleMessageMouseUp={handleMessageMouseUp}
+                  handleContentMouseDown={handleContentMouseDown}
+                  handleOriginalChatClick={handleOriginalChatClick}
+                />
               </>
             ) : (
               <ChatEmptyState emptyStatePrompt={emptyStatePrompt} language={language} />
@@ -1297,40 +1306,40 @@ export default function Chat({
 
       {/* Форма отправки сообщения / CTA подписки / Формы журналов */}
       <ChatInputSection
-            isChatSelected={isChatSelected}
-            isInlineLibraryOpen={isInlineLibraryOpen}
-            isChannelChat={isChannelChat}
-            // УДАЛЕНО - onCreateNewNote (инструмент удален)
-            // УДАЛЕНО - isSubscribedChannel, isChannelChatAndNotSubscribed, subscribeToChannel (каналы удалены)
-            isLoading={isLoading}
-            activeConversation={effectiveActiveConversation}
-            currentAgentId={currentAgentId}
-            showSuccess={showSuccess}
-            showError={showError}
-            t={t}
-            inputValue={inputValue}
-            replyToMessage={replyToMessage}
-            attachedFiles={attachedFiles}
-            uploadProgress={uploadProgress}
-            isDragging={isDragging}
-            isDialogueLoading={isDialogueLoading}
-            textareaRef={textareaRef}
-            fileInputRef={fileInputRef}
-            handleInputChange={handleInputChange}
-            handleKeyPress={handleKeyPress}
-            handleFileSelect={handleFileSelect}
-            handleRemoveFile={handleRemoveFile}
-            handlePaste={handlePaste}
-            handleDrop={handleDrop}
-            handleDragOver={handleDragOver}
-            handleDragEnter={handleDragEnter}
-            handleDragLeave={handleDragLeave}
-            handleSendMessage={handleSendMessage}
-            handleCancelGeneration={handleCancelGeneration}
-            setReplyToMessage={setReplyToMessage}
-            isReadOnlyChannel={isReadOnlyChannel}
-            messagePlaceholder={messagePlaceholder}
-          />
+        isChatSelected={isChatSelected}
+        isInlineLibraryOpen={isInlineLibraryOpen}
+        isChannelChat={isChannelChat}
+        // УДАЛЕНО - onCreateNewNote (инструмент удален)
+        // УДАЛЕНО - isSubscribedChannel, isChannelChatAndNotSubscribed, subscribeToChannel (каналы удалены)
+        isLoading={isLoading}
+        activeConversation={effectiveActiveConversation}
+        currentAgentId={currentAgentId}
+        showSuccess={showSuccess}
+        showError={showError}
+        t={t}
+        inputValue={inputValue}
+        replyToMessage={replyToMessage}
+        attachedFiles={attachedFiles}
+        uploadProgress={uploadProgress}
+        isDragging={isDragging}
+        isDialogueLoading={isDialogueLoading}
+        textareaRef={textareaRef}
+        fileInputRef={fileInputRef}
+        handleInputChange={handleInputChange}
+        handleKeyPress={handleKeyPress}
+        handleFileSelect={handleFileSelect}
+        handleRemoveFile={handleRemoveFile}
+        handlePaste={handlePaste}
+        handleDrop={handleDrop}
+        handleDragOver={handleDragOver}
+        handleDragEnter={handleDragEnter}
+        handleDragLeave={handleDragLeave}
+        handleSendMessage={handleSendMessage}
+        handleCancelGeneration={handleCancelGeneration}
+        setReplyToMessage={setReplyToMessage}
+        isReadOnlyChannel={isReadOnlyChannel}
+        messagePlaceholder={messagePlaceholder}
+      />
 
       {/* Библиотека чатов */}
       <ClearChatModal

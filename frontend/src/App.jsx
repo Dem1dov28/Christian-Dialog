@@ -61,8 +61,6 @@ function MainApp() {
     setIsInlineLibraryOpen,
     isPricingPageVisible,
     setIsPricingPageVisible,
-    isAISettingsVisible,
-    setIsAISettingsVisible,
     targetMessageId,
     setTargetMessageId,
     isCompactChatOpen,
@@ -91,6 +89,7 @@ function MainApp() {
 
   const {
     conversations,
+    systemChat,
     activeConversation,
     messages,
     isLoading,
@@ -137,8 +136,6 @@ function MainApp() {
     pinMessageInChat,
     unpinMessageFromChat,
     scrollToMessage,
-    systemChat,
-    toggleSystemChatVisibility,
     unsubscribeFromChannel,
   } = useChats();
   const { getAgent, agents, isLoading: isAgentsLoading } = useAgents();
@@ -161,7 +158,6 @@ function MainApp() {
     isRightPanelVisible,
     setIsRightPanelVisible,
     setIsProfileVisible,
-    setIsAISettingsVisible,
     rightPanelRef,
   });
 
@@ -180,8 +176,6 @@ function MainApp() {
     closeRightPanelWithAnimation,
     openProfile,
     closeProfile,
-    openAISettings,
-    closeAISettings,
   } = panelHandlers;
 
   const {
@@ -217,7 +211,6 @@ function MainApp() {
     setIsMediumScreenSidebarVisible,
     setIsInlineLibraryOpen,
     setIsLibraryWithSidebar,
-    setIsAISettingsVisible,
     isRightPanelModal,
     setIsRightPanelVisible,
     systemChat,
@@ -281,6 +274,11 @@ function MainApp() {
       unsubscribeFromChannel(activeConversation.id);
     }
   }, [activeConversation, unsubscribeFromChannel]);
+
+  // Обработчик скрытия чата (заглушка)
+  const handleHideChat = useCallback(() => {
+    console.log("handleHideChat called - not implemented yet");
+  }, []);
 
   // Используем хуки для обработчиков папок
   const folderHandlers = useFolderHandlers({
@@ -366,27 +364,24 @@ function MainApp() {
     [handleCreateNewChat, getFolderByChatId, setActiveFolder]
   );
 
-  const handleHideChat = async ({ chatId, conversationId }) => {
-    try {
-      await toggleSystemChatVisibility();
-      console.log("System chat hidden");
-    } catch (error) {
-      console.error("Failed to hide system chat:", error);
-    }
-  };
 
-  // Эффект для отслеживания завершения первичной загрузки
+  // Эффект для отслеживания полной загрузки главной страницы
   React.useEffect(() => {
-    // Ждем, пока оба флага загрузки станут false И данные появятся в стейте
-    if (!isLoading && !isAgentsLoading && (agents.length > 0 || conversations.length > 0)) {
+    // Проверяем, что все критические данные загружены
+    const isAuthLoaded = !isLoading;
+    const areAgentsLoaded = !isAgentsLoading && agents.length >= 0; // Может быть 0 агентов
+    const areConversationsLoaded = !isLoading && conversations.length >= 0; // Может быть 0 чатов
+    const areFoldersLoaded = folders.length >= 0; // Может быть 0 папок
+    
+    // Все основные данные загружены
+    if (isAuthLoaded && areAgentsLoaded && areConversationsLoaded && areFoldersLoaded) {
       setIsInitialLoadComplete(true);
     }
-  }, [isLoading, isAgentsLoading, agents.length, conversations.length]);
+  }, [isLoading, isAgentsLoading, agents.length, conversations.length, folders.length]);
 
-  // Показываем 3D лоадер ТОЛЬКО при первичной загрузке после авторизации
-  // Убираем условие (isLoading || isAgentsLoading) во второй части, чтобы не было "проскока" старого интерфейса
+  // Показываем 3D лоадер до полной загрузки главной страницы
   if (!isInitialLoadComplete) {
-    return <LoadingScreen />;
+    return <LoadingScreen isVisible={true} />;
   }
 
   const shouldRenderSidebar =
@@ -407,16 +402,7 @@ function MainApp() {
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
         onProfileClick={openProfile}
-        onAISettingsClick={openAISettings}
-        onSavedMessagesClick={async () => {
-          if (systemChat) {
-            console.log("Opening Saved Messages from DrawerMenu:", systemChat);
-            await selectConversation(systemChat.id);
-            handleChatSelect(systemChat.id);
-          } else {
-            console.log("System chat not available");
-          }
-        }}
+        
       />
       
       {/* Основной Layout компонент */}
@@ -469,8 +455,6 @@ function MainApp() {
         rightPanelRef={rightPanelRef}
         onCloseRightPanel={closeRightPanel}
         isRightPanelModal={isRightPanelModal}
-        isAISettingsVisible={isAISettingsVisible}
-        onCloseAISettings={closeAISettings}
         shouldRenderSidebar={shouldRenderSidebar}
         sidebarShouldBeFullWidth={sidebarShouldBeFullWidth}
         isMediumScreenChatFullWidth={isMediumScreenChatFullWidth}
@@ -609,10 +593,9 @@ function MainApp() {
 // Компонент для защищенных маршрутов
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const { t } = useLanguage();
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen isVisible={true} />;
   }
 
   return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -621,10 +604,9 @@ function ProtectedRoute({ children }) {
 // Компонент для публичных маршрутов (только для неавторизованных)
 function PublicRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const { t } = useLanguage();
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen isVisible={true} />;
   }
 
   return !isAuthenticated ? children : <Navigate to="/" replace />;
@@ -648,6 +630,9 @@ export default function App() {
               <ChatsProvider>
                 <NotificationProvider>
 <ImageModalProvider>
+                {/* Preloader для заранее загрузки 3D ресурсов */}
+                <LoadingScreen.Preloader />
+                
                 <Router
                   future={{
                     v7_startTransition: true,

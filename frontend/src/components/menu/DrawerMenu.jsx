@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 import {
   FiUser,
-  FiBookmark,
   FiSettings,
   FiMoon,
   FiSun,
@@ -106,7 +105,7 @@ const Overlay = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity"
+      className="fixed inset-0 z-[100] bg-black bg-opacity-50 transition-opacity"
       onClick={onClose}
     />
   );
@@ -119,7 +118,7 @@ const SheetContent = ({ isOpen, onClose, children }) => {
       <Overlay isOpen={isOpen} onClose={onClose} />
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 h-full w-full max-w-[340px] transform bg-[var(--bg-secondary)] shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-[110] h-full w-full max-w-[340px] transform bg-[var(--bg-secondary)] shadow-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ width: "min(340px, 90vw)" }}
@@ -141,8 +140,6 @@ export function DrawerMenu({
   isOpen = false,
   onClose = () => {},
   onProfileClick = () => {},
-  onAISettingsClick = () => {},
-  onSavedMessagesClick = () => {},
   logoScale = 2,
 }) {
   const { user, logout } = useAuth();
@@ -208,8 +205,6 @@ export function DrawerMenu({
 
   const menuItems = [
     { id: "profile", label: t("profile.title"), icon: FiUser },
-    { id: "saved", label: t("profile.menu.saved_messages"), icon: FiBookmark },
-    { id: "ai-settings", label: t("profile.menu.api_settings"), icon: FiCpu },
   ];
 
   const toggleItems = [
@@ -239,7 +234,6 @@ export function DrawerMenu({
 
   const bottomItems = [
     { id: "report-issue", label: t("profile.menu.help"), icon: FiAlertTriangle },
-    { id: "about", label: t("profile.menu.rate_app"), icon: FiInfo },
     { id: "logout", label: t("profile.menu.logout"), icon: FiLogOut, onClick: handleLogout },
   ];
 
@@ -255,20 +249,6 @@ export function DrawerMenu({
         return;
       }
 
-      // Специальная обработка для Saved Messages
-      if (item.id === "saved") {
-        onSavedMessagesClick();
-        onClose();
-        return;
-      }
-
-      // Специальная обработка для AI Settings
-      if (item.id === "ai-settings") {
-        onAISettingsClick();
-        onClose();
-        return;
-      }
-
       // Если у элемента есть onClick функция, вызываем её
       if (item.onClick) {
         item.onClick();
@@ -278,10 +258,7 @@ export function DrawerMenu({
     [
       handleRipple,
       onProfileClick,
-      onSavedMessagesClick,
-      onAISettingsClick,
       onClose,
-
     ]
   );
 
@@ -409,7 +386,7 @@ export function DrawerMenu({
                 className="h-[1em] w-auto object-contain origin-center"
                 style={{ transform: `scale(${logoScale})` }}
               />
-              <span>AIgram 1.0.0</span>
+              <span>Epochal Dialoge 1.0.0</span>
             </p>
           </div>
         </div>
