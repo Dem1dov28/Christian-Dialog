@@ -41,11 +41,88 @@ export function useChatScrollHandlers({
 
     // Используем requestAnimationFrame для более точного отслеживания позиции скролла
     let rafId = null;
+    let scrollDebounceTimer = null;
+    
     const onScroll = () => {
       // Отменяем предыдущий кадр, если он еще не выполнен
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
+      
+      // Debounce для тяжелых операций (обновление даты, подгрузка сообщений)
+      if (scrollDebounceTimer) {
+        clearTimeout(scrollDebounceTimer);
+      }
+      
+      scrollDebounceTimer = setTimeout(() => {
+        // Тяжелые операции выполняются с debounce (не чаще чем раз в 100ms)
+        updateDatePosition();
+        
+        // Подгрузка предыдущих сообщений при прокрутке вверх (с защитами)
+        if (activeConversation?.id) {
+          // Стандартное поведение: scrollTop близко к 0 = top (старые сообщения)
+          // Проверяем, находится ли скролл в пределах верхних 20% контента
+          const scrollPos = getScrollPosition(true);
+          const nearTop = scrollPos.scrollTop <= scrollPos.scrollHeight * 0.2;
+          if (nearTop) {
+            if (suppressTopLoadRef.current) return;
+            if (topLoadCooldownRef.current) return;
+            // Не даём подгружать слишком часто при быстром скролле
+            topLoadCooldownRef.current = true;
+            setTimeout(() => {
+              topLoadCooldownRef.current = false;
+            }, 500);
+
+            // Сохраняем предыдущую высоту скролла, чтобы компенсировать смещение
+            prevScrollHeightRef.current = scrollPos.scrollHeight;
+            pendingTopAdjustRef.current = true;
+
+            // Подгружаем старые сообщения с backend при достижении начала загруженных
+            if (activeConversation?.id) {
+              const currentWindowSize =
+                chatWindowSizes[activeConversation.id] || 10;
+              const totalLoaded = visibleMessages.length;
+
+              // Если достигли 80% загруженных сообщений, подгружаем еще старые
+              if (currentWindowSize >= totalLoaded * 0.8) {
+                if (isChannelChat) {
+                  console.log(
+                    `[Chat] Подгружаем старые сообщения канала ${activeConversation.id}`
+                  );
+                  loadOlderChannelMessages(activeConversation.id, {
+                    maxChars: 10000,
+                  }).catch((err) => {
+                    console.error("Failed to load older channel messages:", err);
+                  });
+                } else {
+                  // Для обычных чатов, групп и Saved Messages
+                  console.log(
+                    `[Chat] Подгружаем старые сообщения чата ${activeConversation.id}`
+                  );
+                  loadOlderMessages(activeConversation.id, {
+                    maxChars: 10000,
+                  }).catch((err) => {
+                    console.error("Failed to load older messages:", err);
+                  });
+                }
+              }
+            }
+
+            setChatWindowSizes((prev) => {
+              // Для каналов дефолтный размер окна 20, для остальных - 75
+              const defaultSize = isChannelChat ? 20 : 75;
+              // Для каналов увеличиваем окно на 15 сообщений, для остальных - на 75
+              const incrementStep = isChannelChat ? 15 : 75;
+              const current = prev[activeConversation.id] || defaultSize;
+              const canGrow = current < visibleMessages.length;
+              if (!canGrow) return prev;
+              const next = Math.min(visibleMessages.length, current + incrementStep);
+              if (next === current) return prev;
+              return { ...prev, [activeConversation.id]: next };
+            });
+          }
+        }
+      }, 100); // Debounce 100ms для тяжелых операций
 
       // Используем requestAnimationFrame для синхронизации с рендерингом браузера
       rafId = requestAnimationFrame(() => {
@@ -84,9 +161,6 @@ export function useChatScrollHandlers({
         }
 
         prevScrollTopRef.current = currentScrollTop;
-
-        // Обновляем позицию даты при скролле
-        updateDatePosition();
 
         // Показываем дату при скролле (для любого типа скролла - колесо мыши, scrollbar, touch)
         if (topVisibleDate && !isInlineLibraryOpen && windowedMessages.length > 0) {
@@ -174,70 +248,6 @@ export function useChatScrollHandlers({
             }
           });
         }
-
-        // Подгрузка предыдущих сообщений при прокрутке вверх (с защитами)
-        if (activeConversation?.id) {
-          // Стандартное поведение: scrollTop близко к 0 = top (старые сообщения)
-          // Проверяем, находится ли скролл в пределах верхних 20% контента
-          const nearTop = scrollPos.scrollTop <= scrollPos.scrollHeight * 0.2;
-          if (nearTop) {
-            if (suppressTopLoadRef.current) return;
-            if (topLoadCooldownRef.current) return;
-            // Не даём подгружать слишком часто при быстром скролле
-            topLoadCooldownRef.current = true;
-            setTimeout(() => {
-              topLoadCooldownRef.current = false;
-            }, 250);
-
-            // Сохраняем предыдущую высоту скролла, чтобы компенсировать смещение
-            prevScrollHeightRef.current = scrollPos.scrollHeight;
-            pendingTopAdjustRef.current = true;
-
-            // Подгружаем старые сообщения с backend при достижении начала загруженных
-            if (activeConversation?.id) {
-              const currentWindowSize =
-                chatWindowSizes[activeConversation.id] || 10;
-              const totalLoaded = visibleMessages.length;
-
-              // Если достигли 80% загруженных сообщений, подгружаем еще старые
-              if (currentWindowSize >= totalLoaded * 0.8) {
-                if (isChannelChat) {
-                  console.log(
-                    `[Chat] Подгружаем старые сообщения канала ${activeConversation.id}`
-                  );
-                  loadOlderChannelMessages(activeConversation.id, {
-                    maxChars: 10000,
-                  }).catch((err) => {
-                    console.error("Failed to load older channel messages:", err);
-                  });
-                } else {
-                  // Для обычных чатов, групп и Saved Messages
-                  console.log(
-                    `[Chat] Подгружаем старые сообщения чата ${activeConversation.id}`
-                  );
-                  loadOlderMessages(activeConversation.id, {
-                    maxChars: 10000,
-                  }).catch((err) => {
-                    console.error("Failed to load older messages:", err);
-                  });
-                }
-              }
-            }
-
-            setChatWindowSizes((prev) => {
-              // Для каналов дефолтный размер окна 20, для остальных - 75
-              const defaultSize = isChannelChat ? 20 : 75;
-              // Для каналов увеличиваем окно на 15 сообщений, для остальных - на 75
-              const incrementStep = isChannelChat ? 15 : 75;
-              const current = prev[activeConversation.id] || defaultSize;
-              const canGrow = current < visibleMessages.length;
-              if (!canGrow) return prev;
-              const next = Math.min(visibleMessages.length, current + incrementStep);
-              if (next === current) return prev;
-              return { ...prev, [activeConversation.id]: next };
-            });
-          }
-        }
       });
     };
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -247,10 +257,11 @@ export function useChatScrollHandlers({
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
-      // Очищаем таймеры при размонтировании
-      if (dateHideTimeoutRef.current) {
-        clearTimeout(dateHideTimeoutRef.current);
+      // Очищаем debounce таймер
+      if (scrollDebounceTimer) {
+        clearTimeout(scrollDebounceTimer);
       }
+      // Очищаем таймеры при размонтировании
       if (dateHideTimeoutRef.current) {
         clearTimeout(dateHideTimeoutRef.current);
       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+﻿import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSpring, animated } from "@react-spring/web";
 import { useOptimizedMessageAnimations } from "../../hooks/message/useOptimizedMessageAnimations";
 import { useChats } from "../../contexts/ChatsContext";
@@ -666,19 +666,16 @@ export default function LeftMessage({
       }
     );
 
-    // Раздел "Рекомендации"
-    formatted = formatted.replace(/(?:---|\*\*\*)\s*\n/gi, '');
-
     // Обрабатываем рекомендации - они могут быть с заголовком "### Рекомендации:" или просто "Рекомендации:" или с эмодзи
     formatted = formatted.replace(
-      /(?:###\s*)?(?:💡\s*)?Рекомендации:\s*\n([^\n]+(?:\n(?!###|\d+\.\s*Вопрос|Если хотите|Если нужна)[^\n]+)*)/gi,
+      /(?:###\s*)?(?:💡\s*)?Рекомендации:\s*([^\n]+(?:\\n(?!###|\d+\.\s*Вопрос|Если хотите|Если нужна)[^\n]+)*)/gi,
       '<div class="test-analytics-recommendations"><div class="test-analytics-recommendations-title">💡 Рекомендации:</div><div class="test-analytics-recommendations-body">$1</div></div>'
     );
 
     // Если рекомендации не были обработаны выше, обрабатываем их отдельно
     if (!formatted.includes('test-analytics-recommendations')) {
       // Ищем блок рекомендаций - может быть с эмодзи или без
-      const recommendationsPattern = /(?:^|\n)\s*(?:💡\s*)?Рекомендации:\s*\n((?:[-•]\s*[^\n]+(?:\n|$))+)/i;
+      const recommendationsPattern = /(?:^|\\n)\s*(?:💡\s*)?Рекомендации:\s*((?:[-•]\s*[^\n]+(?:\\n|$))+)/i;
       const recommendationsMatch = formatted.match(recommendationsPattern);
       if (recommendationsMatch) {
         const recommendationsContent = recommendationsMatch[1];
@@ -1429,16 +1426,15 @@ export default function LeftMessage({
               return null;
             }
 
-            // Логирование для отладки (всегда, не только в development)
-            // Логируем ВСЕ сообщения длиннее 50 символов для отладки
-            if (displayText && typeof displayText === 'string' && displayText.length > 50) {
+            // Логирование для отладки (только в development)
+            // Убираем избыточное логирование в production для улучшения производительности
+            if (process.env.NODE_ENV === 'development' && displayText && typeof displayText === 'string' && displayText.length > 50) {
               const hasDiv = displayText.includes('<div');
               const hasLink = displayText.includes('<a ');
               const startsWithTag = displayText.trim().startsWith('<');
               const hasAnyTag = /<[a-z][^>]*>/i.test(displayText);
 
-              // Логируем все сообщения, которые могут содержать HTML
-              // ВАЖНО: логируем ПОЛНОЕ содержимое для отладки
+              // Логируем только в development режиме
               console.log('[LeftMessage] Content check:', {
                 hasHTMLTags,
                 textLength: displayText.length,
@@ -1446,8 +1442,7 @@ export default function LeftMessage({
                 hasLink,
                 startsWithTag,
                 hasAnyTag,
-                firstChars: displayText.substring(0, 300),
-                fullText: displayText  // Логируем полный текст для отладки
+                firstChars: displayText.substring(0, 100)  // Уменьшаем объем логов
               });
             }
 

@@ -1214,7 +1214,8 @@ export const ChatsProvider = ({ children }) => {
                 console.warn(`[loadConversations] Replaced duplicate chat: old ID=${existing.id}, new ID=${conv.id}`);
               }
             } else {
-              console.warn(`[loadConversations] Duplicate chat by agent_id and time found, keeping existing: ${existing.id}, skipping: ${conv.id}`);
+              // Normal duplicate handling - no need to warn for expected duplicates
+              // console.debug(`[loadConversations] Duplicate chat by agent_id and time found, keeping existing: ${existing.id}, skipping: ${conv.id}`);
             }
           }
         } else {
@@ -1345,7 +1346,7 @@ export const ChatsProvider = ({ children }) => {
       const formattedChatData = {
         id: chatData.id || chatData.conversation_id,
         conversation_id: chatData.id || chatData.conversation_id,
-        title: chatData.title || chatData.agent_name || `Чат с агентом ${agentId}`,
+        title: chatData.title || chatData.agent_name || null, // Не устанавливаем дефолтный заголовок здесь, пусть useChatComputedValues обработает
         agent_id: chatData.agent_id || agentId,
         agent_name: chatData.agent_name || null,
         is_group: false,
@@ -1567,6 +1568,9 @@ export const ChatsProvider = ({ children }) => {
 
     // Мгновенно обновляем превью последнего сообщения в списке чатов
     updateConversationPreview(targetConversationId, message, true);
+
+    // Проверяем, является ли чат системным
+    const isSystemChat = conversation?.is_system_chat || systemChat?.id === targetConversationId;
 
     // Если это не системный чат, добавляем thinking сообщение СРАЗУ
     if (!isSystemChat) {
@@ -2329,6 +2333,9 @@ export const ChatsProvider = ({ children }) => {
   // Ref для отслеживания активных запросов выбора чата (защита от множественных вызовов)
   const selectingConversationRef = useRef(new Set());
   const lastSelectTimeRef = useRef({}); // Отслеживание времени последнего выбора для каждого чата
+  
+  // Ref для отслеживания достижения конца истории сообщений
+  const reachedHistoryEndRef = useRef({});
 
   const selectConversation = async (conversationId) => {
     console.log("[ChatsContext] selectConversation called with conversationId:", conversationId);
@@ -3949,6 +3956,12 @@ export const ChatsProvider = ({ children }) => {
           console.warn(`[loadOlderMessages] Нет beforeDate для чата ${conversationId}, пропускаем подгрузку`);
           return;
         }
+        
+        // Проверяем, не достигли ли мы уже конца истории для этого чата
+        if (reachedHistoryEndRef.current[conversationId]) {
+          console.log(`[loadOlderMessages] Уже достигнут конец истории для чата ${conversationId}, пропускаем`);
+          return;
+        }
 
         // Определяем, является ли это групповым чатом
         const conversation = conversations.find(c => c.id === conversationId) ||
@@ -3956,7 +3969,10 @@ export const ChatsProvider = ({ children }) => {
         const isGroupChat = conversation?.is_group === true;
 
         const beforeLength = currentMessages.length;
-        console.log(`[loadOlderMessages] Подгружаем старые сообщения ${isGroupChat ? 'группы' : 'чата'} ${conversationId}, beforeDate=${beforeDate}, maxChars=${maxChars}, текущее количество: ${beforeLength}`);
+        // Уменьшаем частоту логирования для улучшения производительности
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[loadOlderMessages] Подгружаем старые сообщения ${isGroupChat ? 'группы' : 'чата'} ${conversationId}, beforeDate=${beforeDate}, maxChars=${maxChars}, текущее количество: ${beforeLength}`);
+        }
 
         if (isGroupChat) {
           // Для групп используем loadGroupMessages с лимитом 10000 символов
@@ -3986,29 +4002,39 @@ export const ChatsProvider = ({ children }) => {
 
         if (addedCount > 0) {
           const newOldestMessage = afterMessages[0];
-          console.log(`[loadOlderMessages] ✅ Добавлено ${addedCount} новых старых сообщений, теперь всего: ${afterLength}`);
-          console.log(`[loadOlderMessages] Самое старое сообщение: ID=${newOldestMessage?.id}, дата=${newOldestMessage?.created_at}`);
+          // Уменьшаем логирование в production
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[loadOlderMessages] ✅ Добавлено ${addedCount} новых старых сообщений, теперь всего: ${afterLength}`);
+            console.log(`[loadOlderMessages] Самое старое сообщение: ID=${newOldestMessage?.id}, дата=${newOldestMessage?.created_at}`);
+          }
 
           // Проверяем, что первое сообщение действительно изменилось
           if (oldestMessage && newOldestMessage && newOldestMessage.id === oldestMessage.id) {
             console.error(`[loadOlderMessages] ❌ КРИТИЧЕСКАЯ ОШИБКА: Первое сообщение не изменилось после подгрузки ${addedCount} сообщений!`);
             console.error(`[loadOlderMessages] Это означает, что новые сообщения добавились, но не в начало списка. Проверьте логику сортировки.`);
-          }
-        } else {
-          const currentOldest = afterMessages[0];
-          console.warn(`[loadOlderMessages] ⚠️ Новые сообщения не добавились (было: ${beforeLength}, стало: ${afterLength})`);
-          if (currentOldest) {
-            console.warn(`[loadOlderMessages] Текущее самое старое сообщение: ID=${currentOldest.id}, дата=${currentOldest.created_at}`);
-            console.warn(`[loadOlderMessages] beforeDate был: ${beforeDate}`);
-
-            // Если первое сообщение не изменилось и beforeDate был правильным, значит достигнут край истории
-            if (currentOldest.id === oldestMessage?.id && currentOldest.created_at === beforeDate) {
-              console.warn(`[loadOlderMessages] Достигнут край истории - нет более старых сообщений`);
-            } else {
-              console.error(`[loadOlderMessages] ❌ ПРОБЛЕМА: beforeDate не совпадает с датой первого сообщения или первое сообщение изменилось, но новые не добавились!`);
-            }
           } else {
-            console.error(`[loadOlderMessages] ❌ КРИТИЧЕСКАЯ ОШИБКА: Нет сообщений в чате после подгрузки!`);
+            const currentOldest = afterMessages[0];
+            // Уменьшаем логирование в production
+            if (process.env.NODE_ENV === 'development') {
+              console.warn(`[loadOlderMessages] ⚠️ Новые сообщения не добавились (было: ${beforeLength}, стало: ${afterLength})`);
+              if (currentOldest) {
+                console.warn(`[loadOlderMessages] Текущее самое старое сообщение: ID=${currentOldest.id}, дата=${currentOldest.created_at}`);
+                console.warn(`[loadOlderMessages] beforeDate был: ${beforeDate}`);
+                
+                // Если первое сообщение не изменилось и beforeDate был правильным, значит достигнут край истории
+                if (currentOldest.id === oldestMessage?.id && currentOldest.created_at === beforeDate) {
+                  console.warn(`[loadOlderMessages] Достигнут край истории - нет более старых сообщений`);
+                  // Отмечаем, что достигли конца истории для этого чата
+                  reachedHistoryEndRef.current[conversationId] = true;
+                } else {
+                  console.error(`[loadOlderMessages] ❌ ПРОБЛЕМА: beforeDate не совпадает с датой первого сообщения или первое сообщение изменилось, но новые не добавились!`);
+                }
+              } else {
+                if (process.env.NODE_ENV === 'development') {
+                  console.error(`[loadOlderMessages] ❌ КРИТИЧЕСКАЯ ОШИБКА: Нет сообщений в чате после подгрузки!`);
+                }
+              }
+            }
           }
         }
       } catch (error) {
@@ -4020,7 +4046,7 @@ export const ChatsProvider = ({ children }) => {
   );
 
   // Продолжить диалог между агентами в групповом чате
-  const continueGroupDialogue = async (conversationId) => {
+  const continueGroupDialogue = useCallback(async (conversationId) => {
     // КРИТИЧНО: Сохраняем conversationId в замыкании
     const targetConversationId = conversationId;
 
@@ -4117,11 +4143,12 @@ export const ChatsProvider = ({ children }) => {
         messageStateManager.setErrorState(tempMessageId, error.message);
 
         // Удаляем thinking сообщения при ошибке
-        updateMessagesForConversation(targetConversationId, (prev) =>
-          prev.filter(
-            (m) => !String(m.id).startsWith(`thinking_continue_${tempMessageId}`)
-          )
-        );
+        const filterMessages = (prev) => {
+          return prev.filter(function(m) {
+            return !String(m.id).startsWith('thinking_continue_' + tempMessageId);
+          });
+        };
+        updateMessagesForConversation(targetConversationId, filterMessages);
       }
 
       if (error.message === "Unauthorized") {
@@ -4134,7 +4161,7 @@ export const ChatsProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [conversations, messageStateManager, updateMessagesForConversation, setError, forceLogout, loadConversations, loadSystemChat]);
 
   // Переключить видимость системного чата
   const toggleSystemChatVisibility = async () => {

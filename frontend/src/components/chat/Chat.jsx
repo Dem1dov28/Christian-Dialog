@@ -14,7 +14,6 @@ import LeftMessage from "./LeftMessage";
 import RightMessage from "./RightMessage";
 import ChatLibrary from "./ChatLibrary";
 import ChatLibraryInline from "./ChatLibraryInline";
-import ReplyMessage from "./ReplyMessage";
 import HeaderMenu from "./HeaderMenu";
 import ReportModal from "./ReportModal";
 import ClearChatModal from "./ClearChatModal";
@@ -52,6 +51,7 @@ import { useChatScrollInitialization } from "../../hooks/chat/useChatScrollIniti
 import { useChatLifecycle } from "../../hooks/chat/useChatLifecycle";
 import { useChatHelpers } from "../../hooks/chat/useChatHelpers";
 import { useChatDateInitialization } from "../../hooks/chat/useChatDateInitialization";
+import { useChatInputLayout } from "../../hooks/chat/useChatInputLayout";
 // УДАЛЕНО - импорты удаленных компонентов для инструментов
 import { formatTime, formatDateHeader, getCleanText } from "../../utils/formatters";
 import { formatFileSize, getFileIcon, uploadFileWithProgress } from "../../utils/fileUtils";
@@ -675,6 +675,15 @@ export default function Chat({
     validateFile,
   } = chatInputHook;
 
+  // Интеграция хука useChatInputLayout для динамического управления layout
+  const chatInputLayoutHook = useChatInputLayout({
+    containerRef,
+    replyToMessage,
+    attachedFiles,
+    forceScrollToBottom,
+    getScrollPosition,
+  });
+
   // Интеграция хука useChatHelpers для простых вспомогательных обработчиков
   const { handleCancelGeneration } = useChatHelpers({
     setIsDialogueLoading,
@@ -740,6 +749,8 @@ export default function Chat({
     showError,
     showSuccess,
     t,
+    getScrollPosition,
+    forceScrollToBottom,
   });
 
   // Извлекаем значения из хука
@@ -1106,9 +1117,8 @@ export default function Chat({
           height: "100%", // Убеждаемся, что контейнер занимает всю высоту
           opacity: isScrollReady || isInlineLibraryOpen ? 1 : 0,
           transition: isScrollReady ? "opacity 0.15s ease-in" : "none",
-          // Добавляем padding-bottom, чтобы последнее сообщение не перекрывалось блоком ввода
-          // УДАЛЕНО - проверки для журналов инструментов (все инструменты удалены)
-          paddingBottom: isChatSelected && !isInlineLibraryOpen ? "80px" : undefined,
+          // Динамический padding-bottom управляется через useChatInputLayout
+          // Статический padding удален в пользу динамического расчета
         }}
         data-scroll-to-bottom="true"
         onContextMenu={(e) => {
@@ -1294,16 +1304,6 @@ export default function Chat({
         document.body
       )}
 
-      {/* Компонент ответа на сообщение - показываем только если выбран чат */}
-      {isChatSelected && replyToMessage && (
-        <ReplyMessage
-          message={replyToMessage}
-          onClose={() => setReplyToMessage(null)}
-          onScrollToMessage={scrollToMessageLocal}
-          highlightedMessageId={highlightedMessageId}
-        />
-      )}
-
       {/* Форма отправки сообщения / CTA подписки / Формы журналов */}
       <ChatInputSection
         isChatSelected={isChatSelected}
@@ -1339,6 +1339,8 @@ export default function Chat({
         setReplyToMessage={setReplyToMessage}
         isReadOnlyChannel={isReadOnlyChannel}
         messagePlaceholder={messagePlaceholder}
+        highlightedMessageId={highlightedMessageId}
+        scrollToMessageLocal={scrollToMessageLocal}
       />
 
       {/* Библиотека чатов */}

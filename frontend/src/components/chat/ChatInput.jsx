@@ -57,7 +57,16 @@ function ChatInput({
               <div
                 key={fileObj.id}
                 className="flex items-center gap-2 px-3 py-2 bg-transparent rounded-lg border-transparent"
-                style={{ backgroundColor: 'transparent' }}
+                style={{ 
+                  backgroundColor: 'rgba(0, 0, 0, 0.15)', 
+                  backdropFilter: 'blur(12px) saturate(180%)', 
+                  WebkitBackdropFilter: 'blur(12px) saturate(180%)', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)', 
+                  boxShadow: '0 2px 15px rgba(0, 0, 0, 0.15)',
+                  width: '200px',
+                  maxWidth: '200px',
+                  minWidth: '200px'
+                }}
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-[var(--text-white)] truncate">{fileObj.name}</p>
@@ -80,7 +89,7 @@ function ChatInput({
 
       {/* Upload Progress */}
       {uploadProgress && (
-        <div className="px-3 py-2 bg-transparent border-transparent" style={{ backgroundColor: 'transparent', padding: '0.5rem 0.75rem' }}>
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-transparent border-transparent" style={{ backgroundColor: 'transparent', padding: '0.5rem 0.75rem' }}>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-transparent rounded-full h-2 overflow-hidden" style={{ backgroundColor: 'transparent' }}>
               <div
@@ -97,11 +106,74 @@ function ChatInput({
 
       {/* Reply Message Block */}
       {replyToMessage && (
-        <div className="px-3 py-2 bg-transparent border-transparent" style={{ backgroundColor: 'transparent', padding: '0.5rem 0.75rem' }}>
-          <ReplyMessage
-            message={replyToMessage}
-            onClose={onCloseReply}
-          />
+        <div 
+          className="chat-input-transparent border-transparent"
+          style={{ 
+            backgroundColor: 'transparent', 
+            background: 'transparent',
+            padding: 0,
+            border: 'none',
+            margin: 0,
+            width: '100%'
+          }}
+        >
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 chat-input-transparent chat-input-frosted">
+            {/* Reply Icon */}
+            <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-[var(--text-gray)]">
+              {React.createElement(getActionIcon("reply"), { className: "w-4 h-4 sm:w-5 sm:h-5 transform -scale-x-100" })}
+            </div>
+
+            {/* Reply Content */}
+            <div className="flex-1 relative max-w-[calc(100%-100px)]">
+              <div
+                className="w-full px-3 py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] text-sm sm:text-base cursor-pointer"
+                style={{ 
+                  backgroundColor: "var(--reply-bg-light)",
+                  whiteSpace: "pre-wrap"
+                }}
+                title={t("chat.goToMessage")}
+              >
+                <p className="font-medium text-[var(--accent)] text-xs sm:text-sm truncate select-none mb-1">
+                  {replyToMessage.author_name || t("chat.replyToMessage")}
+                </p>
+                <p className="text-[var(--text-white)] text-xs sm:text-sm select-none">
+                  {(() => {
+                    const getCleanText = (content) => {
+                      if (!content || typeof content !== "string") return "";
+                      let cleaned = content
+                        .replace(/<div[^>]*class="[^"]*reply-block[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi, "")
+                        .replace(/<div[^>]*data-reply-to-id="[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi, "")
+                        .replace(/<div[^>]*class="[^"]*reply-block[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
+                        .replace(/<div[^>]*data-reply-to-id="[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "");
+                      cleaned = cleaned.trim().replace(/^<\/div>\s*/i, "");
+                      cleaned = cleaned.trim().replace(/^<\/div>\s*<\/div>\s*/i, "");
+                      cleaned = cleaned.trim().replace(/^<\/div>\s*<\/div>\s*<\/div>\s*/i, "");
+                      const decoded = cleaned
+                        .replace(/&amp;/g, "&")
+                        .replace(/&lt;/g, "<")
+                        .replace(/&gt;/g, ">")
+                        .replace(/&quot;/g, '"')
+                        .replace(/&#039;/g, "'")
+                        .replace(/&#x27;/g, "'");
+                      return decoded.trim();
+                    };
+                    const cleanContent = getCleanText(replyToMessage.content);
+                    const maxLength = window.innerWidth < 640 ? 40 : 80;
+                    return cleanContent.length <= maxLength ? cleanContent : cleanContent.substring(0, maxLength) + "...";
+                  })()}
+                </p>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={onCloseReply}
+              className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-[var(--text-gray)] hover:text-[var(--text-white)] hover:bg-[var(--bg-secondary)]/30 transition-colors chat-input-button-visible"
+              title={t("chat.cancelReply")}
+            >
+              {React.createElement(getActionIcon("close"), { className: "w-4 h-4 sm:w-5 sm:h-5" })}
+            </button>
+          </div>
         </div>
       )}
 
