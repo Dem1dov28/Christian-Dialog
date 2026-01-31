@@ -15,6 +15,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useModal } from "../../contexts/ModalContext.jsx";
 import apiClient from "../../services/api";
 import logo from "../../assets/images/logo.png";
 
@@ -145,6 +146,7 @@ export function DrawerMenu({
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const { t, language } = useLanguage();
+  const { openSupportModal } = useModal(); // Добавлено
 
   const getThemeDisplayName = () => {
     if (language === "ru") {
@@ -233,7 +235,7 @@ export function DrawerMenu({
   ];
 
   const bottomItems = [
-    { id: "report-issue", label: t("profile.menu.help"), icon: FiAlertTriangle },
+    { id: "support", label: t("profile.menu.help"), icon: FiAlertTriangle, onClick: openSupportModal }, // Изменено
     { id: "logout", label: t("profile.menu.logout"), icon: FiLogOut, onClick: handleLogout },
   ];
 
@@ -252,6 +254,7 @@ export function DrawerMenu({
       // Если у элемента есть onClick функция, вызываем её
       if (item.onClick) {
         item.onClick();
+        onClose(); // Закрываем меню после действия
       }
       // Здесь можно добавить логику навигации или другие действия
     },

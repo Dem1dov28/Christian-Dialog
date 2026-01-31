@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import apiClient from "../../services/api";
 
 /**
  * Хук для обработчиков модальных окон чата
@@ -164,26 +165,30 @@ export function useChatModalHandlers({
     setIsReportModalOpen(false);
   }, [setIsReportModalOpen]);
 
+
   /**
    * Обработчик отправки жалобы
    */
   const handleSubmitReport = useCallback(
-    async (reportText) => {
+    async (reportData) => {
       try {
-        // TODO: Отправить жалобу на сервер
+        // Отправляем жалобу через API
+        await apiClient.createReport({
+          text: reportData.description,
+          category: reportData.category,
+          chat_id: activeChatId,
+        });
 
         // Показываем уведомление об успехе
         showSuccess(t("chat.complaintSent"));
-
-        // Здесь можно добавить API вызов для отправки жалобы
-        // await apiClient.post('/reports', { text: reportText, chatId: activeChatId });
       } catch (error) {
         console.error("Ошибка при отправке жалобы:", error);
         showError(t("chat.complaintError"));
       }
     },
-    [showError, showSuccess, t]
+    [activeChatId, showError, showSuccess, t]
   );
+
 
   return {
     handleShowProfile,

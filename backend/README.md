@@ -69,6 +69,13 @@ pip install -r requirements.txt
 SECRET_KEY=your-super-secret-key
 OPENROUTER_API_KEY=your-openrouter-api-key
 ALLOWED_ORIGINS=http://localhost:5173
+
+# Для отправки жалоб на почту (опционально)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+REPORT_SENDER_EMAIL=your-email@gmail.com
+REPORT_SENDER_PASSWORD=your-app-password
+REPORT_RECIPIENT_EMAIL=admin@yoursite.com
 ```
 
 **Настройка базы данных (PostgreSQL обязателен):**

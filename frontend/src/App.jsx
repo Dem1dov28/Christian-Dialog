@@ -29,9 +29,11 @@ import {
 } from "./contexts/SidebarUpdateContext.jsx";
 import { ImageModalProvider } from "./contexts/ImageModalContext.jsx";
 import { PanelWidthProvider } from "./contexts/PanelWidthContext.jsx";
+import { ModalProvider } from "./contexts/ModalContext.jsx";
 import FolderManager from "./components/chat/FolderManager.jsx";
 import MainLayout from "./components/layout/MainLayout.jsx";
 import LoadingScreen from "./components/loading/LoadingScreen.jsx";
+import GlobalSupportModal from "./components/modals/GlobalSupportModal.jsx";
 import { useGlobalLongPress } from "./hooks/common/useGlobalLongPress.js";
 import { useAppState } from "./hooks/common/useAppState.js";
 import { usePanelHandlers } from "./hooks/common/usePanelHandlers.js";
@@ -466,6 +468,7 @@ function MainApp() {
       />
 
       {/* Modals */}
+      <GlobalSupportModal />
       <CollectionModal
         isOpen={isCollectionModalOpen}
         onClose={() => setIsCollectionModalOpen(false)}
@@ -626,6 +629,7 @@ export default function App() {
         <AgentsProvider>
           <SidebarUpdateProvider>
             <PanelWidthProvider>
+            <ModalProvider>
             <FoldersProvider>
               <ChatsProvider>
                 <NotificationProvider>
@@ -700,6 +704,7 @@ export default function App() {
                 </NotificationProvider>
               </ChatsProvider>
             </FoldersProvider>
+            </ModalProvider>
             </PanelWidthProvider>
           </SidebarUpdateProvider>
         </AgentsProvider>

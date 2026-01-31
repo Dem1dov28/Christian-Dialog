@@ -1290,6 +1290,7 @@ export default function Chat({
             }}
             onShowProfile={handleShowProfile}
             onReport={handleReport}
+            onOpenReportModal={openReportModal}
             onClearHistory={handleClearHistory}
             onDeleteChat={handleDeleteChat}
             onSavedMessages={handleSavedMessages}
@@ -1360,6 +1361,8 @@ export default function Chat({
         onClose={handleCloseReportModal}
         onSubmit={handleSubmitReport}
       />
+
+
 
       {/* Модальное окно редактирования группового чата */}
       {activeConversation?.is_group && (

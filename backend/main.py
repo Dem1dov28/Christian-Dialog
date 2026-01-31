@@ -40,6 +40,8 @@ from api.trips import create_trip_endpoints
 from api.attraction_visits import create_attraction_visit_endpoints
 from api.geocoding import create_geocoding_endpoints
 from api.wikipedia_attractions import create_wikipedia_attractions_endpoints
+from api.reports import create_reports_endpoints
+from api.support import create_support_endpoints
 from services.agent_service import AgentService
 from services.user_agent_service import UserAgentService
 from services.budget_service import BudgetService
@@ -159,6 +161,8 @@ create_trip_endpoints(app, trip_service)
 create_attraction_visit_endpoints(app, attraction_visit_service)
 create_geocoding_endpoints(app, geocoding_service)
 create_wikipedia_attractions_endpoints(app, wikipedia_service)
+create_reports_endpoints(app)
+create_support_endpoints(app)
 # create_pinned_messages_endpoints(app, pinned_messages_service)  # Файл не существует
 
 

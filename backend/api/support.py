@@ -1,4 +1,4 @@
-﻿from typing import Optional, List
+from typing import Optional
 from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlmodel import Session, select
 from datetime import datetime
@@ -15,26 +15,24 @@ from core.dependencies import get_current_active_user, get_session
 logger = logging.getLogger(__name__)
 
 
-class ReportCreate(BaseModel):
-    message_id: Optional[int] = None
-    text: str
+class SupportRequest(BaseModel):
+    subject: str
+    message: str
     category: Optional[str] = None
-    chat_id: Optional[int] = None
 
 
-class ReportResponse(BaseModel):
+class SupportResponse(BaseModel):
     id: int
     user_id: int
-    message_id: Optional[int]
-    chat_id: Optional[int]
-    text: str
+    subject: str
+    message: str
     category: Optional[str]
     created_at: datetime
     status: str
 
 
-def send_report_email(report_data: dict, user: User):
-    """Фоновая задача для отправки жалобы на почту"""
+def send_support_email(support_data: dict, user: User):
+    """Фоновая задача для отправки запроса в поддержку на почту"""
     try:
         # Получаем настройки из переменных окружения
         smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
@@ -51,22 +49,22 @@ def send_report_email(report_data: dict, user: User):
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = recipient_email
-        msg['Subject'] = f"Новая жалоба от пользователя {user.username or user.email}"
+        msg['Subject'] = f"[Поддержка] {support_data.get('subject', 'Новый запрос')}"
         
         # Формируем тело письма
         body = f"""
-Получена новая жалоба:
+Получен новый запрос в службу поддержки:
 
 Пользователь: {user.full_name or user.username or user.email}
 Email: {user.email}
 ID пользователя: {user.id}
 
-Категория: {report_data.get('category', 'Не указана')}
-ID чата: {report_data.get('chat_id', 'Не указан')}
-ID сообщения: {report_data.get('message_id', 'Не указано')}
+Категория: {support_data.get('category', 'Не указана')}
 
-Текст жалобы:
-{report_data.get('text', '')}
+Тема: {support_data.get('subject', 'Без темы')}
+
+Сообщение:
+{support_data.get('message', '')}
 
 Дата: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """
@@ -81,78 +79,66 @@ ID сообщения: {report_data.get('message_id', 'Не указано')}
         server.sendmail(sender_email, recipient_email, text)
         server.quit()
         
-        logger.info(f"Report email sent successfully to {recipient_email}")
+        logger.info(f"Support email sent successfully to {recipient_email}")
         
     except Exception as e:
-        logger.error(f"Failed to send report email: {e}", exc_info=True)
+        logger.error(f"Failed to send support email: {e}", exc_info=True)
 
 
-def create_reports_endpoints(app, db_session: Session = Depends(get_session)):
-    """Создает эндпоинты для работы с жалобами"""
+def create_support_endpoints(app, db_session: Session = Depends(get_session)):
+    """Создает эндпоинты для работы с запросами в поддержку"""
     
-    @app.post("/api/reports", response_model=ReportResponse)
-    async def create_report(
-        report_data: ReportCreate,
+    @app.post("/api/support", response_model=SupportResponse)
+    async def create_support_request(
+        support_data: SupportRequest,
         background_tasks: BackgroundTasks,
         current_user: User = Depends(get_current_active_user),
         db: Session = Depends(get_session)
     ):
-        """Создать новую жалобу"""
+        """Создать новый запрос в службу поддержки"""
         try:
-            # Создаем запись в базе данных (можно расширить модель)
-            report_record = {
-                "user_id": current_user.id,
-                "message_id": report_data.message_id,
-                "chat_id": report_data.chat_id,
-                "text": report_data.text,
-                "category": report_data.category,
-                "created_at": datetime.now(),
-                "status": "pending"
-            }
-            
             # Отправляем письмо в фоне
-            background_tasks.add_task(send_report_email, report_data.dict(), current_user)
+            background_tasks.add_task(send_support_email, support_data.dict(), current_user)
             
             # Логируем успешное создание
-            logger.info(f"Report created for user {current_user.id}: {report_data.text[:50]}...")
+            logger.info(f"Support request created for user {current_user.id}: {support_data.subject}")
             
             # Возвращаем успешный ответ
-            return ReportResponse(
+            return SupportResponse(
                 id=1,  # Можно заменить на реальный ID из БД
                 user_id=current_user.id,
-                message_id=report_data.message_id,
-                chat_id=report_data.chat_id,
-                text=report_data.text,
-                category=report_data.category,
+                subject=support_data.subject,
+                message=support_data.message,
+                category=support_data.category,
                 created_at=datetime.now(),
                 status="sent"
             )
             
         except Exception as e:
-            logger.error(f"Error creating report: {e}", exc_info=True)
+            logger.error(f"Error creating support request: {e}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Не удалось отправить жалобу"
+                detail="Не удалось отправить запрос в службу поддержки"
             )
     
-    @app.get("/api/reports", response_model=List[ReportResponse])
-    async def get_user_reports(
+    @app.get("/api/support", response_model=list[SupportResponse])
+    async def get_user_support_requests(
         current_user: User = Depends(get_current_active_user),
         db: Session = Depends(get_session)
     ):
-        """Получить все жалобы текущего пользователя"""
+        """Получить все запросы текущего пользователя в поддержку"""
         # Пока возвращаем пустой список, можно расширить модель в БД
         return []
     
-    @app.get("/api/reports/{report_id}", response_model=ReportResponse)
-    async def get_report(
-        report_id: int,
+    @app.get("/api/support/{request_id}", response_model=SupportResponse)
+    async def get_support_request(
+        request_id: int,
         current_user: User = Depends(get_current_active_user),
         db: Session = Depends(get_session)
     ):
-        """Получить конкретную жалобу по ID"""
+        """Получить конкретный запрос по ID"""
         # Пока возвращаем заглушку
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Жалоба не найдена"
+            detail="Запрос не найден"
         )

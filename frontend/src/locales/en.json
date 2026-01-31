@@ -762,5 +762,42 @@
     "messages": "Messages",
     "createdAt": "Created at",
     "messageCount": "Message count"
+  },
+  "support": {
+    "title": "Support Service",
+    "subtitle": "Describe your question or issue",
+    "selectCategory": "Select category",
+    "categoryHelp": "This will help us process your request faster",
+    "subjectLabel": "Request subject",
+    "subjectPlaceholder": "Briefly describe the essence of the question",
+    "messageLabel": "Detailed description",
+    "messagePlaceholder": "Describe your question or issue in detail...",
+    "sending": "Sending...",
+    "send": "Send to support",
+    "requestSent": "Request sent to support service",
+    "requestError": "Failed to send request",
+    "responseTime": "We will respond within 24 hours",
+    "categories": {
+      "technical": {
+        "label": "Technical issue",
+        "description": "Application operation problems, errors, bugs"
+      },
+      "account": {
+        "label": "Account issues",
+        "description": "Login, registration, access recovery"
+      },
+      "feature": {
+        "label": "Feature request",
+        "description": "Ideas for application improvement"
+      },
+      "billing": {
+        "label": "Payment and subscription",
+        "description": "Questions about payment, subscription, tariffs"
+      },
+      "other": {
+        "label": "Other",
+        "description": "Any other questions"
+      }
+    }
   }
 }

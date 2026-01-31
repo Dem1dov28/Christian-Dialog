@@ -348,8 +348,8 @@ export function useChatActions({
   const handleReport = useCallback(
     async (messageId, reportText) => {
       try {
-        // TODO: Реализовать API для отправки жалобы
-        await apiClient.post("/reports", {
+        // Отправляем жалобу через API
+        await apiClient.createReport({
           message_id: messageId,
           text: reportText,
           chat_id: activeConversation?.id,
