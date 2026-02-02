@@ -146,7 +146,7 @@ export function DrawerMenu({
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const { t, language } = useLanguage();
-  const { openSupportModal } = useModal(); // Добавлено
+  const { openSupportModal, openReportModal } = useModal(); // Добавлено
 
   const getThemeDisplayName = () => {
     if (language === "ru") {

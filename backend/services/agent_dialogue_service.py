@@ -94,14 +94,17 @@ class AgentDialogueService(BaseService):
                 first_response = await self.agent_service.generate_response(
                     first_agent["id"], 
                     enhanced_context,
-                    conversation_id=str(conversation_id),
+                    conversation_id=f"{conversation_id}_agent_{first_agent['id']}",
                     is_multi_agent=True,
                     language=language
                 )
                 
                 # Сохраняем ответ первого агента
+                # Если ответ - словарь (например, с картинкой), берем только текст для сохранения в БД
+                first_response_text = first_response.get("text", "") if isinstance(first_response, dict) else str(first_response)
+                
                 first_message = self._save_agent_message(
-                    session, conversation_id, first_response, first_agent["id"]
+                    session, conversation_id, first_response_text, first_agent["id"]
                 )
                 
                 responses.append(self._create_response_dict(
@@ -224,7 +227,7 @@ class AgentDialogueService(BaseService):
                     agent_response = await self.agent_service.generate_response(
                         agent["id"], 
                         context,
-                        conversation_id=str(conversation_id),
+                        conversation_id=f"{conversation_id}_agent_{agent['id']}",
                         is_multi_agent=True,
                         language=language
                     )
@@ -255,7 +258,7 @@ class AgentDialogueService(BaseService):
                         agent_response = await self.agent_service.generate_response(
                             agent["id"], 
                             strict_context,
-                            conversation_id=str(conversation_id),
+                            conversation_id=f"{conversation_id}_agent_{agent['id']}",
                             is_multi_agent=True,
                             language=language
                         )
@@ -274,9 +277,12 @@ class AgentDialogueService(BaseService):
                             )
                             continue  # Пропускаем этого агента, если все еще повторяется
                     
-                    # Сохраняем ответ агента
+                    # Сохраняем ответ
+                    # Если ответ - словарь (например, с картинкой), берем только текст для сохранения в БД
+                    agent_response_text = agent_response.get("text", "") if isinstance(agent_response, dict) else str(agent_response)
+                    
                     agent_message = self._save_agent_message(
-                        session, conversation_id, agent_response, agent["id"]
+                        session, conversation_id, agent_response_text, agent["id"]
                     )
                     
                     responses.append(self._create_response_dict(
@@ -369,7 +375,7 @@ class AgentDialogueService(BaseService):
             continuation_response = await self.agent_service.generate_response(
                 next_agent["id"], 
                 context,
-                conversation_id=str(conversation_id),
+                conversation_id=f"{conversation_id}_agent_{next_agent['id']}",
                 is_multi_agent=True,
                 language=language
             )
@@ -395,7 +401,7 @@ class AgentDialogueService(BaseService):
                 continuation_response = await self.agent_service.generate_response(
                     next_agent["id"], 
                     strict_context,
-                    conversation_id=str(conversation_id),
+                    conversation_id=f"{conversation_id}_agent_{next_agent['id']}",
                     is_multi_agent=True,
                     language=language
                 )
@@ -451,7 +457,7 @@ class AgentDialogueService(BaseService):
                         final_agent["id"], 
                         f"Продолжи диалог естественно. Контекст:\n{final_context}\n\n"
                         "ВАЖНО: НЕ ПОВТОРЯЙ дословно то, что уже сказали другие. Выражай свои мысли оригинально.",
-                        conversation_id=str(conversation_id),
+                        conversation_id=f"{conversation_id}_agent_{final_agent['id']}",
                         is_multi_agent=True,
                         language=language
                     )
@@ -574,7 +580,7 @@ class AgentDialogueService(BaseService):
                 continuation_response = await self.agent_service.generate_response(
                     agent["id"], 
                     f"Продолжи диалог естественно, основываясь на контексте:\n{context}",
-                    conversation_id=str(conversation_id),
+                    conversation_id=f"{conversation_id}_agent_{agent['id']}",
                     is_multi_agent=True,
                     language=language  # Передаем язык для ответа агента
                 )
@@ -600,7 +606,7 @@ class AgentDialogueService(BaseService):
                     continuation_response = await self.agent_service.generate_response(
                         agent["id"], 
                         strict_context,
-                        conversation_id=str(conversation_id),
+                        conversation_id=f"{conversation_id}_agent_{agent['id']}",
                         is_multi_agent=True,
                         language=language
                     )
@@ -628,7 +634,7 @@ class AgentDialogueService(BaseService):
                             final_agent["id"], 
                             f"Продолжи диалог естественно. Контекст:\n{final_context}\n\n"
                             "ВАЖНО: НЕ ПОВТОРЯЙ дословно то, что уже сказали другие. Выражай свои мысли оригинально.",
-                            conversation_id=str(conversation_id),
+                            conversation_id=f"{conversation_id}_agent_{final_agent['id']}",
                             is_multi_agent=True,
                             language=language  # Передаем язык для ответа агента
                         )

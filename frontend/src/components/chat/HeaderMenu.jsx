@@ -196,9 +196,9 @@ export default function HeaderMenu({
                     console.error("Failed to subscribe to channel:", error);
                     showError(
                       error.message ||
-                        t("library.subscribeChannelError", {
-                          defaultValue: "Не удалось подписаться на канал",
-                        })
+                      t("library.subscribeChannelError", {
+                        defaultValue: "Не удалось подписаться на канал",
+                      })
                     );
                   }
                 }

@@ -3,6 +3,7 @@ import { MdClose, MdSearch, MdCheck } from "react-icons/md";
 import { MdPerson } from "react-icons/md";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
 
 /**
  * Библиотека персонажей - отдельный компонент для выбора и добавления персонажей
@@ -30,7 +31,7 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
         name: translatedAgent.name,
         description: translatedAgent.description || "",
         iconName: agent.icon_name || "person",
-        imageSrc: agent.image_url || agent.avatar_url,
+        imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url, "low"),
         colorClass: agent.color_class || "bg-blue-500",
         category: agent.category || "characters",
       };

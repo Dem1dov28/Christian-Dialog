@@ -6,6 +6,7 @@ import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
 import CreateAgentModal from "../agent/CreateAgentModal";
 import DeleteAgentModal from "../agent/DeleteAgentModal";
 import PersonaDetailModal from "../modals/PersonaDetailModal";
@@ -504,17 +505,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     const personasMap = allAgents.map((agent) => {
       const translatedAgent = translateAgent(agent);
       // Формируем полный URL для аватара, если это относительный путь
-      let imageSrc = translatedAgent.image_url || translatedAgent.avatar_url;
-      // Фильтруем пустые значения
-      if (imageSrc && imageSrc !== "null" && imageSrc !== "undefined" && imageSrc.trim() !== "") {
-        if (!imageSrc.startsWith("http") && !imageSrc.startsWith("/images/")) {
-          // Если это относительный путь от API (например, /static/user_agents/...), добавляем базовый URL API
-          const baseURL = apiClient?.baseURL || apiClient?.client?.baseURL || "http://localhost:8000";
-          imageSrc = `${baseURL}${imageSrc.startsWith("/") ? imageSrc : `/${imageSrc}`}`;
-        }
-      } else {
-        imageSrc = null;
-      }
+      let imageSrc = getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "medium");
       return {
         id: translatedAgent.id,
         name: translatedAgent.name,

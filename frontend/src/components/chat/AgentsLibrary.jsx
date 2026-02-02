@@ -3,6 +3,7 @@ import { MdClose, MdSearch, MdCheck } from "react-icons/md";
 import { MdSmartToy } from "react-icons/md";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
 
 /**
  * Библиотека агентов - отдельный компонент для выбора и добавления агентов
@@ -52,7 +53,7 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
         name: translatedAgent.name,
         description: translatedAgent.description || "",
         iconName: agent.icon_name || "auto_awesome",
-        imageSrc: agent.image_url || agent.avatar_url,
+        imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url, "low"),
         colorClass: agent.color_class || "bg-blue-500",
         category: agent.category || "agents",
       };

@@ -235,6 +235,52 @@ html:not(.dark) .chat-scrollbar.overflow-y-auto {
   opacity: 0.8;
 }
 
+/* Almost invisible scrollbar for textarea */
+.textarea-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.textarea-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.textarea-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.textarea-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.textarea-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Light theme for textarea scrollbar */
+html:not(.dark) .textarea-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+html:not(.dark) .textarea-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+html:not(.dark) .textarea-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Firefox support for textarea scrollbar */
+.textarea-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+html:not(.dark) .textarea-scrollbar {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
 /* Chat container specific - disable smooth scroll */
 .chat-container {
   scroll-behavior: auto !important;

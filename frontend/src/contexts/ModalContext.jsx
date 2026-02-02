@@ -4,6 +4,7 @@ const ModalContext = createContext(undefined);
 
 export function ModalProvider({ children }) {
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const openSupportModal = () => {
     setIsSupportModalOpen(true);
@@ -12,12 +13,24 @@ export function ModalProvider({ children }) {
   const closeSupportModal = () => {
     setIsSupportModalOpen(false);
   };
+  
+  const openReportModal = () => {
+    setIsReportModalOpen(true);
+  };
+  
+  const closeReportModal = () => {
+    setIsReportModalOpen(false);
+  };
 
   const value = {
     isSupportModalOpen,
     setIsSupportModalOpen,
     openSupportModal,
     closeSupportModal,
+    isReportModalOpen,
+    setIsReportModalOpen,
+    openReportModal,
+    closeReportModal,
   };
 
   return (

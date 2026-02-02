@@ -306,7 +306,11 @@ export default function AIPanel({
           imageSrc:
             activeConversation.imageSrc ||
             activeConversation.channel_avatar_url ||
-            getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url),
+            getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url, "medium"),
+          originalImageSrc:
+            activeConversation.imageSrc ||
+            activeConversation.channel_avatar_url ||
+            getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url, "high"),
           ChatInfo:
             activeConversation.channel_description ||
             activeConversation.preview ||
@@ -383,7 +387,8 @@ export default function AIPanel({
           name: translatedAgent.name,
           colorClass: translatedAgent.color_class || "bg-purple-500",
           iconName: translatedAgent.icon_name || "psychology",
-          imageSrc: getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url),
+          imageSrc: getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "medium"),
+          originalImageSrc: getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "high"),
           ChatInfo:
             translatedAgent.description || t("chat.startNewChat"),
           model: translatedAgent.model,
@@ -413,7 +418,7 @@ export default function AIPanel({
     t,
   ]);
 
-  const { name, colorClass, iconName, ChatInfo, imageSrc } = currentChat.info;
+  const { name, colorClass, iconName, ChatInfo, imageSrc, originalImageSrc } = currentChat.info;
 
   // Функция для получения React Icon компонента по имени
   const getIconComponent = (iconName) => {
@@ -780,7 +785,7 @@ export default function AIPanel({
     <ImageModal
       isOpen={isImageModalOpen}
       image={{
-        imageUrl: imageSrc,
+        imageUrl: originalImageSrc || imageSrc,
         displayName: currentAgent.name,
       }}
       onClose={() => setIsImageModalOpen(false)}

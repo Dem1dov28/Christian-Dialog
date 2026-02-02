@@ -136,7 +136,7 @@ function ChatInput({
                 <p className="font-medium text-[var(--accent)] text-xs sm:text-sm truncate select-none mb-1">
                   {replyToMessage.author_name || t("chat.replyToMessage")}
                 </p>
-                <p className="text-[var(--text-white)] text-xs sm:text-sm select-none">
+                <p className="text-[var(--text-white)] text-xs sm:text-sm select-none truncate whitespace-nowrap overflow-hidden">
                   {(() => {
                     const getCleanText = (content) => {
                       if (!content || typeof content !== "string") return "";
@@ -227,8 +227,12 @@ function ChatInput({
               onKeyPress={onKeyPress}
               placeholder={messagePlaceholder || t("chat.typeMessage", { defaultValue: "Введите сообщение..." })}
               disabled={isReadOnlyChannel || isLoading || isDialogueLoading}
-              className="w-full px-3 py-1.5 sm:py-2 pr-10 sm:pr-12 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] placeholder-[var(--text-gray)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] max-h-[200px] text-sm sm:text-base"
+              className="w-full py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] placeholder-[var(--text-gray)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] max-h-[200px] text-sm sm:text-base textarea-scrollbar"
               rows={1}
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(255, 255, 255, 0.1) transparent',
+              }}
             />
           </div>
 

@@ -21,7 +21,7 @@ import { TbUserCog } from "react-icons/tb";
 import { useChats } from "../../contexts/ChatsContext";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
+import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
   const { conversations } = useChats();
@@ -198,10 +198,11 @@ const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
     } else {
       // Для обычных чатов
       const agent = chat.agent_id ? getAgent(chat.agent_id) : null;
-      if (agent && (agent.image_url || agent.avatar_url)) {
+      const agentAvatar = getAgentAvatarUrl(agent?.image_url, agent?.avatar_url, "low");
+      if (agentAvatar) {
         return {
           type: "image",
-          src: agent.image_url || agent.avatar_url,
+          src: agentAvatar,
         };
       }
       return {

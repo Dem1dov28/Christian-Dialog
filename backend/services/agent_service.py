@@ -5,6 +5,7 @@ import re
 
 from models.agent import Agent, AgentCreate, AgentPublic
 from models.conversation import Conversation
+from models.multi_agent_conversation import MultiAgentConversation
 from services.base_service import BaseService
 from services.langchain_service import LangChainService
 from services.image_generation_service import ImageGenerationService
@@ -515,29 +516,43 @@ class AgentService(BaseService):
                     # Пытаемся извлечь оригинальный conversation_id из строки вида "74_agent_5"
                     if "_agent_" in str(conversation_id):
                         original_conv_id = int(str(conversation_id).split("_agent_")[0])
+                        is_multi_agent = True  # Принудительно выставляем флаг для групповых чатов
                     else:
                         original_conv_id = int(conversation_id)
                     
                     # Всегда загружаем правила и модель из БД при каждом запросе
                     with self.get_session() as session:
-                        conversation = session.get(Conversation, original_conv_id)
-                        if conversation:
-                            rules = conversation.get_user_rules()
-                            user_rules = rules if rules else []  # Всегда передаем список, даже пустой
-                            if user_rules:
-                                logger.debug(f"✅ Загружено {len(user_rules)} правил пользователя для беседы {original_conv_id}: {user_rules}")
+                        if is_multi_agent:
+                            # Для мульти-агентных чатов ищем в соответствующей таблице
+                            conversation = session.get(MultiAgentConversation, original_conv_id)
+                            if conversation:
+                                logger.debug(f"✅ Найдена групповая беседа {original_conv_id}")
+                                # У MultiAgentConversation пока нет своих правил пользователя или выбора модели
+                                user_rules = []
+                                conversation_model = None
                             else:
-                                logger.debug(f"📋 Правил пользователя нет для беседы {original_conv_id} (пустой список)")
-                            
-                            # Получаем модель из чата (если установлена)
-                            conversation_model = conversation.selected_model
-                            if conversation_model:
-                                logger.debug(f"🎯 Используется модель из чата для беседы {original_conv_id}: {conversation_model}")
-                            else:
-                                logger.debug(f"📋 Модель из чата не установлена для беседы {original_conv_id}, будет использована модель агента")
+                                logger.debug(f"⚠️ Групповая беседа {original_conv_id} не найдена в таблице MultiAgentConversation")
+                                user_rules = []
                         else:
-                            logger.debug(f"⚠️ Беседа {original_conv_id} не найдена в БД")
-                            user_rules = []  # Передаем пустой список, чтобы обновить системное сообщение
+                            # Для обычных чатов ищем в таблице Conversation
+                            conversation = session.get(Conversation, original_conv_id)
+                            if conversation:
+                                rules = conversation.get_user_rules()
+                                user_rules = rules if rules else []  # Всегда передаем список, даже пустой
+                                if user_rules:
+                                    logger.debug(f"✅ Загружено {len(user_rules)} правил пользователя для беседы {original_conv_id}: {user_rules}")
+                                else:
+                                    logger.debug(f"📋 Правил пользователя нет для беседы {original_conv_id} (пустой список)")
+                                
+                                # Получаем модель из чата (если установлена)
+                                conversation_model = conversation.selected_model
+                                if conversation_model:
+                                    logger.debug(f"🎯 Используется модель из чата для беседы {original_conv_id}: {conversation_model}")
+                                else:
+                                    logger.debug(f"📋 Модель из чата не установлена для беседы {original_conv_id}, будет использована модель агента")
+                            else:
+                                logger.debug(f"⚠️ Беседа {original_conv_id} не найдена в БД")
+                                user_rules = []  # Передаем пустой список, чтобы обновить системное сообщение
                 except (ValueError, TypeError) as e:
                     # conversation_id не число или ошибка парсинга - пропускаем правила
                     logger.debug(f"⚠️ conversation_id '{conversation_id}' не является числом: {e}")
@@ -676,10 +691,44 @@ class AgentService(BaseService):
                 language=detected_language,  # Передаем язык для ответа
             )
             
-            # Проверяем, что ответ не пустой
-            if not llm_response or (isinstance(llm_response, str) and len(llm_response.strip()) == 0):
-                logger.warning(f"⚠️ [GENERATE RESPONSE] LangChain вернул пустой ответ, используем fallback")
-                llm_response = "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз."
+            # Словарь сообщений об ошибках, которые мы хотим перехватить для повторной попытки
+            error_messages = [
+                "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз.",
+                "Извините, произошла ошибка при обработке вашего запроса.",
+                "Извините, выбранная модель недоступна",
+                "Извините, в данный момент сервис временно недоступен"
+            ]
+            
+            is_error = not llm_response or (isinstance(llm_response, str) and (len(llm_response.strip()) == 0))
+            if not is_error and isinstance(llm_response, str):
+                for msg in error_messages:
+                    if msg in llm_response:
+                        is_error = True
+                        break
+            
+            # Если ответ пустой или содержит ошибку, пробуем "второй шанс" с Trinity
+            if is_error:
+                ultimate_model = "arcee-ai/trinity-large-preview:free"
+                if model_to_use != ultimate_model:
+                    logger.warning(f"⚠️ [GENERATE RESPONSE] LangChain вернул ошибку или пустой ответ для {agent.get('name')}. Пробуем 'второй шанс' с {ultimate_model}...")
+                    try:
+                        llm_response = await self.langchain_service.generate_response(
+                            agent_name=agent["name"],
+                            instructions=agent_instructions,
+                            user_message=enhanced_message,
+                            conversation_id=unique_conversation_id,
+                            model=ultimate_model,
+                            user_rules=user_rules,
+                            image_attachments=image_attachments,
+                            language=detected_language,
+                        )
+                        logger.info(f"✅ [GENERATE RESPONSE] 'Второй шанс' для {agent.get('name')} через {ultimate_model} успешен!")
+                    except Exception as fallback_err:
+                        logger.error(f"❌ [GENERATE RESPONSE] Даже 'второй шанс' с {ultimate_model} провалился: {fallback_err}")
+                
+                # Если после всех попыток все еще пусто, возвращаем стандартную заглушку
+                if not llm_response or (isinstance(llm_response, str) and len(llm_response.strip()) == 0):
+                    llm_response = "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз."
             
             logger.debug(f"✅ [GENERATE RESPONSE] LangChain вернул ответ длиной {len(str(llm_response))} символов")
             return llm_response
@@ -794,7 +843,7 @@ class AgentService(BaseService):
                 except Exception as e:
                     logger.warning(f"Ошибка при получении правил пользователя для беседы {conversation_id}: {e}")
             
-            return await self.langchain_service.generate_response_with_tools(
+            llm_response = await self.langchain_service.generate_response_with_tools(
                 agent_name=agent["name"],
                 instructions=agent["instructions"],
                 user_message=message,
@@ -803,6 +852,48 @@ class AgentService(BaseService):
                 model=agent.get("model"),  # Передаем модель агента
                 user_rules=user_rules  # Передаем правила пользователя
             )
+
+            # Словарь сообщений об ошибках, которые мы хотим перехватить для повторной попытки
+            error_messages = [
+                "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз.",
+                "Извините, произошла ошибка при обработке вашего запроса.",
+                "Извините, выбранная модель недоступна",
+                "Извините, в данный момент сервис временно недоступен"
+            ]
+            
+            is_error = not llm_response or (isinstance(llm_response, str) and (len(llm_response.strip()) == 0))
+            if not is_error and isinstance(llm_response, str):
+                for msg in error_messages:
+                    if msg in llm_response:
+                        is_error = True
+                        break
+            
+            # Если ответ пустой или содержит ошибку, пробуем "второй шанс" с Trinity
+            if is_error:
+                ultimate_model = "arcee-ai/trinity-large-preview:free"
+                current_model = agent.get("model")
+                if current_model != ultimate_model:
+                    logger.warning(f"⚠️ [TOOLS FALLBACK] Ошибка в ответе {agent.get('name')} с инструментами. Пробуем 'второй шанс' с {ultimate_model}...")
+                    try:
+                        # При повторной попытке используем обычную генерацию (без инструментов), 
+                        # так как инструменты могли быть причиной ошибки, а Trinity - сверхнадежная модель для текста
+                        llm_response = await self.langchain_service.generate_response(
+                            agent_name=agent["name"],
+                            instructions=agent["instructions"],
+                            user_message=message,
+                            conversation_id=unique_conversation_id,
+                            model=ultimate_model,
+                            user_rules=user_rules
+                        )
+                        logger.info(f"✅ [TOOLS FALLBACK] 'Второй шанс' для {agent.get('name')} успешен!")
+                    except Exception as fallback_err:
+                        logger.error(f"❌ [TOOLS FALLBACK] Даже 'второй шанс' провалился: {fallback_err}")
+                
+                # Если все еще пусто, возвращаем стандартную заглушку
+                if not llm_response or (isinstance(llm_response, str) and len(llm_response.strip()) == 0):
+                    llm_response = "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз."
+            
+            return llm_response
         except Exception as e:
             logger.error(f"Ошибка при генерации ответа с инструментами для агента {agent_id}: {e}", exc_info=True)
             raise ValueError(f"Не удалось сгенерировать ответ с инструментами для агента {agent_id}: {e}") from e

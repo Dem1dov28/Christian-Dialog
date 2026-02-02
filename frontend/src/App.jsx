@@ -34,6 +34,8 @@ import FolderManager from "./components/chat/FolderManager.jsx";
 import MainLayout from "./components/layout/MainLayout.jsx";
 import LoadingScreen from "./components/loading/LoadingScreen.jsx";
 import GlobalSupportModal from "./components/modals/GlobalSupportModal.jsx";
+import ReportModalNew from "./components/modals/ReportModalNew.jsx";
+import SupportModalNew from "./components/modals/SupportModalNew.jsx";
 import { useGlobalLongPress } from "./hooks/common/useGlobalLongPress.js";
 import { useAppState } from "./hooks/common/useAppState.js";
 import { usePanelHandlers } from "./hooks/common/usePanelHandlers.js";
@@ -41,6 +43,9 @@ import { useLibraryHandlers } from "./hooks/common/useLibraryHandlers.js";
 import { useChatHandlers } from "./hooks/chat/useChatHandlers.js";
 import { useModalHandlers } from "./hooks/modal/useModalHandlers.js";
 import { useFolderHandlers } from "./hooks/common/useFolderHandlers.js";
+import { useModal } from "./contexts/ModalContext.jsx";
+import apiClient from "./services/api";
+import { useNotification } from "./contexts/NotificationContext.jsx";
 
 // Компонент для основного приложения
 function MainApp() {
@@ -154,6 +159,8 @@ function MainApp() {
     addAgentToFolder,
   } = useFolders();
   const { t } = useLanguage();
+  const { isReportModalOpen, closeReportModal, isSupportModalOpen, closeSupportModal } = useModal();
+  const { showSuccess, showError } = useNotification();
 
   // Используем хуки для обработчиков
   const panelHandlers = usePanelHandlers({
@@ -281,6 +288,26 @@ function MainApp() {
   const handleHideChat = useCallback(() => {
     console.log("handleHideChat called - not implemented yet");
   }, []);
+
+  const handleReportSubmit = async (reportData) => {
+    try {
+      await apiClient.post("/api/reports", reportData);
+      showSuccess(t("report.success", "Ваша жалоба будет рассмотрена в течение 24 часов"));
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      showError(t("errors.reportSubmission", "Не удалось отправить жалобу"));
+    }
+  };
+
+  const handleSupportSubmit = async (supportData) => {
+    try {
+      await apiClient.post("/api/support", supportData);
+      showSuccess(t("support.requestSent", "Запрос отправлен в службу поддержки"));
+    } catch (error) {
+      console.error("Error submitting support request:", error);
+      showError(t("support.requestError", "Не удалось отправить запрос"));
+    }
+  };
 
   // Используем хуки для обработчиков папок
   const folderHandlers = useFolderHandlers({
@@ -468,7 +495,16 @@ function MainApp() {
       />
 
       {/* Modals */}
-      <GlobalSupportModal />
+      <ReportModalNew
+        isOpen={isReportModalOpen}
+        onClose={closeReportModal}
+        onSubmit={handleReportSubmit}
+      />
+      <SupportModalNew
+        isOpen={isSupportModalOpen}
+        onClose={closeSupportModal}
+        onSubmit={handleSupportSubmit}
+      />
       <CollectionModal
         isOpen={isCollectionModalOpen}
         onClose={() => setIsCollectionModalOpen(false)}

@@ -135,7 +135,7 @@ function ChatHeader({
             </div>
           )
         ) : (() => {
-          const agentAvatarUrl = getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url);
+          const agentAvatarUrl = getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url, "low");
           return agentAvatarUrl ? (
             <img
               key={agentAvatarUrl}

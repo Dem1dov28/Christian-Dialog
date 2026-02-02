@@ -1,4 +1,4 @@
-﻿from typing import Optional, List
+from typing import Optional
 from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlmodel import Session, select
 from datetime import datetime
@@ -14,24 +14,25 @@ from core.dependencies import get_current_active_user, get_session
 
 logger = logging.getLogger(__name__)
 
-
+# Модель для создания жалобы
 class ReportCreate(BaseModel):
     message_id: Optional[int] = None
     text: str
-    category: Optional[str] = None
     chat_id: Optional[int] = None
+    category: Optional[str] = None
 
-
+# Модель для ответа о жалобе
 class ReportResponse(BaseModel):
     id: int
-    user_id: int
     message_id: Optional[int]
-    chat_id: Optional[int]
     text: str
+    chat_id: Optional[int]
     category: Optional[str]
+    user_id: int
     created_at: datetime
-    status: str
 
+    class Config:
+        from_attributes = True
 
 def send_report_email(report_data: dict, user: User):
     """Фоновая задача для отправки жалобы на почту"""
@@ -44,18 +45,18 @@ def send_report_email(report_data: dict, user: User):
         recipient_email = os.getenv("REPORT_RECIPIENT_EMAIL")
         
         if not all([sender_email, sender_password, recipient_email]):
-            logger.warning("SMTP settings not configured. Skipping email notification.")
+            logger.warning("SMTP settings not configured for reports. Skipping email notification.")
             return
         
         # Создаем сообщение
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = recipient_email
-        msg['Subject'] = f"Новая жалоба от пользователя {user.username or user.email}"
+        msg['Subject'] = f"[Жалоба] {report_data.get('category', 'Новая жалоба')}"
         
         # Формируем тело письма
         body = f"""
-Получена новая жалоба:
+Получена новая жалоба от пользователя:
 
 Пользователь: {user.full_name or user.username or user.email}
 Email: {user.email}
@@ -86,73 +87,102 @@ ID сообщения: {report_data.get('message_id', 'Не указано')}
     except Exception as e:
         logger.error(f"Failed to send report email: {e}", exc_info=True)
 
-
-def create_reports_endpoints(app, db_session: Session = Depends(get_session)):
-    """Создает эндпоинты для работы с жалобами"""
-    
+# Создание эндпоинтов для reports
+def create_reports_endpoints(app):
     @app.post("/api/reports", response_model=ReportResponse)
     async def create_report(
         report_data: ReportCreate,
         background_tasks: BackgroundTasks,
         current_user: User = Depends(get_current_active_user),
-        db: Session = Depends(get_session)
+        session: Session = Depends(get_session)
     ):
-        """Создать новую жалобу"""
+        """
+        Создание жалобы на сообщение/чат
+        """
         try:
-            # Создаем запись в базе данных (можно расширить модель)
-            report_record = {
-                "user_id": current_user.id,
-                "message_id": report_data.message_id,
-                "chat_id": report_data.chat_id,
-                "text": report_data.text,
-                "category": report_data.category,
-                "created_at": datetime.now(),
-                "status": "pending"
-            }
+            # Проверяем, что текст жалобы не пустой
+            if not report_data.text or not report_data.text.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Текст жалобы не может быть пустым"
+                )
+            
+            # Проверяем, существует ли сообщение (если указан message_id)
+            if report_data.message_id:
+                from models.message import Message
+                message_statement = select(Message).where(Message.id == report_data.message_id)
+                message = session.exec(message_statement).first()
+                if not message:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Сообщение не найдено"
+                    )
             
             # Отправляем письмо в фоне
             background_tasks.add_task(send_report_email, report_data.dict(), current_user)
             
-            # Логируем успешное создание
-            logger.info(f"Report created for user {current_user.id}: {report_data.text[:50]}...")
-            
-            # Возвращаем успешный ответ
-            return ReportResponse(
-                id=1,  # Можно заменить на реальный ID из БД
-                user_id=current_user.id,
+            # Создаем объект жалобы (временно без сохранения в БД, так как нет модели Report)
+            report_response = ReportResponse(
+                id=1,  # Временный ID
                 message_id=report_data.message_id,
-                chat_id=report_data.chat_id,
                 text=report_data.text,
+                chat_id=report_data.chat_id,
                 category=report_data.category,
-                created_at=datetime.now(),
-                status="sent"
+                user_id=current_user.id,
+                created_at=datetime.utcnow()
             )
             
+            logger.info(f"Report created by user {current_user.id} and email task added")
+            
+            return report_response
+            
+        except HTTPException:
+            raise
         except Exception as e:
-            logger.error(f"Error creating report: {e}", exc_info=True)
+            logger.error(f"Error creating report: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Не удалось отправить жалобу"
+                detail="Внутренняя ошибка сервера при создании жалобы"
             )
-    
-    @app.get("/api/reports", response_model=List[ReportResponse])
-    async def get_user_reports(
+        
+    @app.get("/api/reports", response_model=list[ReportResponse])
+    async def get_reports(
         current_user: User = Depends(get_current_active_user),
-        db: Session = Depends(get_session)
+        session: Session = Depends(get_session)
     ):
-        """Получить все жалобы текущего пользователя"""
-        # Пока возвращаем пустой список, можно расширить модель в БД
-        return []
-    
+        """
+        Получение всех жалоб пользователя
+        """
+        try:
+            # Временно возвращаем пустой список, так как модель Report не реализована
+            return []
+        except Exception as e:
+            logger.error(f"Error getting reports: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Внутренняя ошибка сервера при получении жалоб"
+            )
+        
     @app.get("/api/reports/{report_id}", response_model=ReportResponse)
     async def get_report(
         report_id: int,
         current_user: User = Depends(get_current_active_user),
-        db: Session = Depends(get_session)
+        session: Session = Depends(get_session)
     ):
-        """Получить конкретную жалобу по ID"""
-        # Пока возвращаем заглушку
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Жалоба не найдена"
-        )
+        """
+        Получение конкретной жалобы по ID
+        """
+        try:
+            # Временно возвращаем ошибку, так как модель Report не реализована
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Жалоба не найдена"
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting report {report_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Внутренняя ошибка сервера при получении жалобы"
+            )

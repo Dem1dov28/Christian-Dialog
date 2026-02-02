@@ -10,6 +10,7 @@ export function useChatInputLayout({
   attachedFiles,
   forceScrollToBottom,
   getScrollPosition,
+  textareaRef,
 }) {
   // Ref для отслеживания предыдущего состояния скролла
   const wasAtBottomRef = useRef(false);
@@ -29,7 +30,7 @@ export function useChatInputLayout({
   }, [getScrollPosition]);
 
   /**
-   * Вычисляет необходимый padding-bottom в зависимости от наличия reply и файлов
+   * Вычисляет необходимый padding-bottom в зависимости от наличия reply, файлов и высоты textarea
    */
   const calculatePaddingBottom = useCallback(() => {
     const hasReply = !!replyToMessage;
@@ -51,8 +52,21 @@ export function useChatInputLayout({
       }
     }
     
+    // Дополнительный padding для высоты textarea сверх базовой
+    if (textareaRef?.current) {
+      const textarea = textareaRef.current;
+      const currentHeight = textarea.offsetHeight || 0;
+      // Базовая высота textarea (минимальная)
+      const baseTextareaHeight = window.innerWidth < 640 ? 36 : 40; // min-h-[36px] sm:min-h-[40px]
+      
+      if (currentHeight > baseTextareaHeight) {
+        // Добавляем разницу между текущей высотой и базовой
+        paddingBottom += (currentHeight - baseTextareaHeight);
+      }
+    }
+    
     return `${paddingBottom}px`;
-  }, [replyToMessage, attachedFiles.length]);
+  }, [replyToMessage, attachedFiles.length, textareaRef]);
 
   /**
    * Обновляет padding-bottom контейнера чата
@@ -133,6 +147,23 @@ export function useChatInputLayout({
     updateContainerPadding,
     forceScrollToBottom
   ]);
+
+  // Отслеживаем изменения высоты textarea для динамического обновления padding
+  useEffect(() => {
+    const updatePaddingForTextareaHeight = () => {
+      updateContainerPadding();
+    };
+
+    // Создаем ResizeObserver для отслеживания изменений размера textarea
+    if (textareaRef?.current) {
+      const resizeObserver = new ResizeObserver(updatePaddingForTextareaHeight);
+      resizeObserver.observe(textareaRef.current);
+      
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, [textareaRef, updateContainerPadding]);
 
   // Инициализация начального состояния
   useEffect(() => {

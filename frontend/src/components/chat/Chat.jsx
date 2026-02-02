@@ -509,7 +509,7 @@ export default function Chat({
   // Выбираем разговор при смене активного чата
   useEffect(() => {
     console.log("[Chat.jsx] useEffect triggered", { activeChatId, activeConversationId: activeConversation?.id, conversationsLength: conversations.length });
-    
+
     // КРИТИЧНО: Убрали conversations и selectConversation из зависимостей
     // чтобы не срабатывать при обновлении списка чатов после генерации
     // Используем только activeChatId и activeConversation
@@ -682,6 +682,7 @@ export default function Chat({
     attachedFiles,
     forceScrollToBottom,
     getScrollPosition,
+    textareaRef,
   });
 
   // Интеграция хука useChatHelpers для простых вспомогательных обработчиков

@@ -301,9 +301,24 @@ class SearchService(BaseService):
                 "group_avatar": None,
             }
         else:
+            # Агент не найден - пытаемся извлечь имя из заголовка разговора
+            agent_name = "Неизвестный агент"
+            if conversation and conversation.title:
+                # Убираем префиксы "Чат с ", "Chat with " из заголовка
+                title = conversation.title
+                prefixes = ["Чат с ", "Тестовый чат с ", "Текстовый чат с ", "Chat with ", "Test chat with ", "Text chat with "]
+                for prefix in prefixes:
+                    if title.startswith(prefix):
+                        agent_name = title[len(prefix):]
+                        break
+                else:
+                    # Если префикса нет, используем заголовок как есть
+                    if title:
+                        agent_name = title
+            
             return {
                 "agent_avatar": None,
-                "agent_name": "Неизвестный агент",
+                "agent_name": agent_name,
                 "agent_color": "bg-blue-500",
                 "agent_icon": "psychology",
                 "group_avatar": None,
@@ -500,7 +515,9 @@ class SearchService(BaseService):
             select(Conversation)
             .where(
                 Conversation.user_id == user_id,
-                or_(*search_conditions)
+                or_(*search_conditions),
+                # Исключаем системные чаты (Saved Messages) из результатов поиска
+                Conversation.is_system_chat == False
             )
         )
         
@@ -754,7 +771,9 @@ class SearchService(BaseService):
                 .where(
                     accessible_conversations_condition,
                     or_(*search_conditions),
-                    Message.is_deleted == False
+                    Message.is_deleted == False,
+                    # Исключаем системные чаты (Saved Messages) из результатов поиска
+                    Conversation.is_system_chat == False
                 )
             )
             
@@ -849,7 +868,9 @@ class SearchService(BaseService):
                 or_(
                     Conversation.title.ilike(f"{query_escaped}%"),
                     Conversation.title.ilike(f"%{query_escaped}%")
-                )
+                ),
+                # Исключаем системные чаты (Saved Messages) из результатов поиска
+                Conversation.is_system_chat == False
             )
             .order_by(Conversation.updated_at.desc())
             .limit(limit // 2)
@@ -867,7 +888,9 @@ class SearchService(BaseService):
                     Message.content.ilike(f"{query_escaped}%"),
                     Message.content.ilike(f"%{query_escaped}%")
                 ),
-                Message.is_deleted == False
+                Message.is_deleted == False,
+                # Исключаем системные чаты (Saved Messages) из результатов поиска
+                Conversation.is_system_chat == False
             )
             .order_by(Message.created_at.desc())
             .limit(limit // 2)

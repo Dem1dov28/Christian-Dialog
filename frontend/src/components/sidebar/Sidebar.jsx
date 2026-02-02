@@ -905,7 +905,7 @@ const Sidebar = ({
           : t("chat.chatWith", { name: translatedAgent.name }),
         colorClass: agent.color_class || "bg-purple-500",
         iconName: agent.icon_name || "psychology",
-        imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url),
+        imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url, "low"),
         unreadCount: getUnreadCount(conversation.id),
         agentId: agent.id,
         conversationId: conversation.id,
@@ -1138,7 +1138,7 @@ const Sidebar = ({
       const channelAvatar =
         conversation.imageSrc ||
         conversation.channel_avatar_url ||
-        getAgentAvatarUrl(resolvedAgent?.image_url, resolvedAgent?.avatar_url);
+        getAgentAvatarUrl(resolvedAgent?.image_url, resolvedAgent?.avatar_url, "low");
       const colorClass =
         conversation.colorClass ||
         resolvedAgent?.color_class ||
@@ -1512,7 +1512,7 @@ const Sidebar = ({
               colorClass:
                 agent?.color_class || "bg-purple-500 dark:bg-purple-600",
               iconName: agent?.icon_name || "psychology",
-              imageSrc: getAgentAvatarUrl(agent?.image_url, agent?.avatar_url),
+              imageSrc: getAgentAvatarUrl(agent?.image_url, agent?.avatar_url, "low"),
               unreadCount: getUnreadCount(conversation.id),
               agentId: agent?.id,
               conversationId: conversation.id,

@@ -170,10 +170,9 @@ class LangChainService:
         try:
             memory = self._get_memory(conversation_id)
             
-            # Если Memory уже имеет историю, не загружаем из БД (избегаем дублирования)
-            if memory.chat_memory.messages:
-                logger.debug(f"Memory для беседы {conversation_id} уже имеет историю, пропускаем загрузку из БД")
-                return
+            # Всегда очищаем память перед загрузкой, чтобы гарантировать актуальность и избежать дубликатов
+            # Особенно важно для групповых чатов, где контент меняется динамически
+            memory.chat_memory.clear()
             
             # Импортируем здесь чтобы избежать циклических зависимостей
             from models.message import Message
@@ -278,13 +277,15 @@ class LangChainService:
                             logger.info(f"✅ Текст из файлов добавлен к сообщению {msg.id} (длина: {len(message_content)} символов)")
                 
                 # Добавляем сообщение в Memory с извлеченным текстом из файлов
-                if msg.is_from_user:
-                    memory.chat_memory.add_user_message(message_content)
-                else:
-                    memory.chat_memory.add_ai_message(message_content)
+                if message_content and str(message_content).strip():
+                    if msg.is_from_user:
+                        memory.chat_memory.add_user_message(message_content)
+                    else:
+                        # Сообщения от агентов (в групповом чате уже содержат имя)
+                        memory.chat_memory.add_ai_message(message_content)
             
             if messages:
-                logger.debug(f"Загружено {len(messages)} сообщений из БД для беседы {conversation_id}")
+                logger.debug(f"📜 [LANGCHAIN] Загружено {len(messages)} сообщений из БД для беседы {conversation_id}")
         except Exception as e:
             logger.warning(f"Не удалось загрузить историю из БД для беседы {conversation_id}: {e}", exc_info=True)
     
@@ -338,7 +339,7 @@ class LangChainService:
                 base_url=openrouter_config["base_url"],
                 default_headers=openrouter_config["default_headers"],
                 streaming=False,
-                timeout=30.0
+                timeout=90.0
             )
         elif max_tokens != model_config["max_tokens"]:
             # Если нужно изменить max_tokens для текущей модели
@@ -515,10 +516,31 @@ class LangChainService:
                 logger.debug(f"Системное сообщение обновлено для беседы {conversation_id} (правила не проверялись)")
             
             # Добавляем историю из Memory (без системного сообщения, оно уже добавлено)
+            # Фильтруем системные сообщения и ограничиваем количество
             history_messages = [msg for msg in memory.chat_memory.messages if not isinstance(msg, SystemMessage)]
-            # Ограничиваем количество сообщений для контекста
             max_context = config.MAX_CONTEXT_MESSAGES
-            for msg in history_messages[-max_context:]:
+            
+            # ВАЖНО: Проверяем, не является ли последнее сообщение в истории дубликатом текущего сообщения.
+            # В групповых чатах сообщение сохраняется в БД ДО вызова генерации, 
+            # поэтому оно попадает в историю при загрузке.
+            current_history = history_messages[-max_context:]
+            
+            # Извлекаем текст текущего сообщения пользователя для сравнения
+            current_user_text = user_message
+            if isinstance(user_message, list):
+                text_parts = [item.get("text", "") for item in user_message if isinstance(item, dict) and item.get("type") == "text"]
+                current_user_text = " ".join(text_parts) if text_parts else ""
+            
+            # Если последнее сообщение в истории - это сообщение пользователя, которое
+            # является подстрокой или совпадает с текущим сообщением, пропускаем его из ОТПРАВКИ (не из памяти)
+            if current_history and isinstance(current_history[-1], HumanMessage):
+                last_hist_text = str(current_history[-1].content)
+                # В групповом чате текущее сообщение содержит инструкции, т.е. оно длиннее и начинается с текста пользователя
+                if current_user_text.startswith(last_hist_text) or (len(last_hist_text) > 0 and last_hist_text in current_user_text):
+                    logger.debug(f"Удалено дублирующееся сообщение пользователя из истории перед отправкой в LLM")
+                    current_history.pop()
+            
+            for msg in current_history:
                 messages.append(msg)
             
             # Добавляем текущее сообщение пользователя
@@ -557,26 +579,50 @@ class LangChainService:
             
             # Асинхронный вызов LLM через LangChain
             actual_model = model or config.get_model_config()["model"]
-            logger.info(f"📤 Отправляем запрос через LangChain к модели '{actual_model}' для агента '{agent_name}'")
-            logger.debug(f"Количество сообщений в контексте: {len(messages)}, есть изображения: {bool(image_attachments)}")
+            logger.info(f"📤 [LANGCHAIN] Отправляем запрос для '{agent_name}' (модель: {actual_model})")
             
-            # Используем ainvoke для асинхронного вызова
             response = await llm.ainvoke(messages)
+            
+            # Если ответ пустой, пробуем fallback
+            if not response.content or str(response.content).strip() == "":
+                actual_fallback = self._get_fallback_model(actual_model) or config.get_model_config()["model"]
+                logger.warning(f"⚠️ [LANGCHAIN] Модель {actual_model} вернула ПУСТОЙ ответ. Пробуем fallback: {actual_fallback}")
+                
+                fallback_response = await self._try_with_fallback_model(
+                    fallback_model=actual_fallback,
+                    agent_name=agent_name,
+                    instructions=instructions,
+                    user_message=user_message,
+                    conversation_id=conversation_id,
+                    user_rules=user_rules,
+                    image_attachments=image_attachments,
+                    language=language
+                )
+                
+                # Если и fallback вернул пустой ответ, пробуем последний шанс - супер-надежную модель
+                if not fallback_response or str(fallback_response).strip() == "":
+                    ultimate_fallback = "arcee-ai/trinity-large-preview:free"
+                    logger.warning(f"⚠️ [LANGCHAIN] Fallback модель {actual_fallback} тоже вернула пустой ответ. Пробуем ULTIMATE fallback: {ultimate_fallback}")
+                    return await self._try_with_fallback_model(
+                        fallback_model=ultimate_fallback,
+                        agent_name=agent_name,
+                        instructions=instructions,
+                        user_message=user_message,
+                        conversation_id=conversation_id,
+                        user_rules=user_rules,
+                        image_attachments=image_attachments,
+                        language=language
+                    )
+                return fallback_response
             
             response_text = response.content
             logger.debug(f"Получен ответ через LangChain для агента {agent_name}")
             
             # Сохраняем сообщения в Memory
-            # ВАЖНО: Для сообщений с изображениями сохраняем только текстовую часть
+            # ВАЖНО: Мы НЕ сохраняем здесь user_message повторно, так как оно уже есть в БД
+            # и будет загружено при следующем вызове _load_history_from_db.
+            # Сохраняем только ответ ассистента.
             if conversation_id:
-                # Извлекаем текстовую часть из сообщения, если оно содержит изображения
-                user_message_text = user_message
-                if isinstance(user_message, list):
-                    # Если это список (сообщение с изображениями), извлекаем текстовую часть
-                    text_parts = [item.get("text", "") for item in user_message if isinstance(item, dict) and item.get("type") == "text"]
-                    user_message_text = " ".join(text_parts) if text_parts else str(user_message)
-                
-                memory.chat_memory.add_user_message(user_message_text)
                 memory.chat_memory.add_ai_message(response_text)
             
             return response_text
@@ -686,8 +732,9 @@ class LangChainService:
                         if isinstance(item, dict) and item.get("type") == "text"
                     ]
                     detected_language = LanguageDetector.detect(" ".join(text_parts))
-            except Exception:
-                detected_language = None
+            except Exception as e:
+                logger.warning(f"Ошибка детекции языка: {e}")
+                detected_language = "ru" # Дефолтный язык
         
         if conversation_id and detected_language:
             for related_id in self._related_conversation_ids(conversation_id):
@@ -801,10 +848,11 @@ class LangChainService:
             "x-ai/grok-4-fast": "x-ai/grok-4",
             "x-ai/grok-4": "x-ai/grok-3-mini",
             # DeepSeek fallbacks
-            "nex-agi/deepseek-v3.1-nex-n1:free": "deepseek/deepseek-chat-v3.1",
-            "deepseek/deepseek-v3.2": "deepseek/deepseek-chat-v3.1",
-            "tngtech/deepseek-r1t2-chimera:free": "deepseek/deepseek-chat-v3.1",
-            "deepseek/deepseek-r1-0528:free": "deepseek/deepseek-chat-v3.1",
+            "nex-agi/deepseek-v3.1-nex-n1:free": "arcee-ai/trinity-large-preview:free",
+            "deepseek/deepseek-v3.2": "arcee-ai/trinity-large-preview:free",
+            "tngtech/deepseek-r1t2-chimera:free": "arcee-ai/trinity-large-preview:free",
+            "tngtech/deepseek-r1t2-cchimera:free": "arcee-ai/trinity-large-preview:free",
+            "deepseek/deepseek-r1-0528:free": "arcee-ai/trinity-large-preview:free",
             # Gemini fallbacks
             "google/gemini-3-flash-preview": "google/gemini-2.5-flash",
             "google/gemini-3-pro-image-preview": "google/gemini-2.5-pro",
@@ -1237,7 +1285,39 @@ class LangChainService:
                 # Если инструментов нет, используем обычную генерацию
                 logger.debug(f"Инструменты не предоставлены, используется обычная генерация для агента {agent_name}")
                 response = await llm.ainvoke(messages)
-                response_text = response.content
+            # Если ответ пустой, считаем это ошибкой и пробуем fallback
+            if not response.content or str(response.content).strip() == "":
+                actual_fallback = self._get_fallback_model(actual_model) or config.get_model_config()["model"]
+                logger.warning(f"⚠️ [LANGCHAIN] Модель {actual_model} вернула ПУСТОЙ ответ для агента {agent_name}. Пробуем fallback: {actual_fallback}")
+                
+                fallback_response = await self._try_with_fallback_model(
+                    fallback_model=actual_fallback,
+                    agent_name=agent_name,
+                    instructions=instructions,
+                    user_message=user_message,
+                    conversation_id=conversation_id,
+                    user_rules=user_rules,
+                    image_attachments=None,
+                    language=language
+                )
+                
+                # Если и fallback вернул пустой ответ, пробуем последний шанс - супер-надежную модель
+                if not fallback_response or str(fallback_response).strip() == "":
+                    ultimate_fallback = "arcee-ai/trinity-large-preview:free"
+                    logger.warning(f"⚠️ [LANGCHAIN] Fallback модель {actual_fallback} тоже вернула пустой ответ. Пробуем ULTIMATE fallback: {ultimate_fallback}")
+                    return await self._try_with_fallback_model(
+                        fallback_model=ultimate_fallback,
+                        agent_name=agent_name,
+                        instructions=instructions,
+                        user_message=user_message,
+                        conversation_id=conversation_id,
+                        user_rules=user_rules,
+                        image_attachments=None,
+                        language=language
+                    )
+                return fallback_response
+
+            response_text = response.content # Ensure response_text is set for the next check
             
             logger.debug(f"Получен ответ через LangChain (с инструментами) для агента {agent_name}")
             

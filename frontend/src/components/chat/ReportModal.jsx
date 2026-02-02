@@ -103,32 +103,53 @@ export default function ReportModal({ isOpen, onClose, onSubmit }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
-      <div 
-        className="frosted-glass rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-160px)] overflow-y-auto border"
+    <div
+      className="fixed inset-0 flex items-center justify-center z-[100] p-4"
+      style={{
+        paddingTop: '120px',
+        paddingBottom: '20px',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      <div
+        className="rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-160px)] overflow-y-auto"
         style={{
-          borderColor: "rgba(255, 255, 255, 0.1)",
+          backgroundColor: "var(--bg-primary)",
+          border: "1px solid var(--border-color)",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3), 0 0 1px rgba(0, 0, 0, 0.1)",
         }}
       >
         {/* Header */}
-        <div className="relative px-6 py-4 border-b" style={{ borderColor: "var(--border-color)" }}>
+        <div
+          className="relative px-6 py-5 border-b"
+          style={{
+            borderColor: "var(--border-color)",
+            background: "linear-gradient(to bottom, var(--bg-primary), var(--bg-secondary))",
+          }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                <MdReport className="text-white text-lg" />
+              <div
+                className="w-11 h-11 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
+                style={{
+                  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
+                }}
+              >
+                <MdReport className="text-white text-xl" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-[var(--text-white)]">
+                <h3 className="text-lg font-semibold" style={{ color: "var(--text-white)" }}>
                   {t("report.title")}
                 </h3>
-                <p className="text-sm text-[var(--text-gray)]">
+                <p className="text-sm" style={{ color: "var(--text-gray)" }}>
                   {t("report.subtitle")}
                 </p>
               </div>
             </div>
             <button
               onClick={handleClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200"
+              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200"
               style={{
                 color: "var(--text-gray)",
               }}
@@ -141,21 +162,21 @@ export default function ReportModal({ isOpen, onClose, onSubmit }) {
                 e.currentTarget.style.color = "var(--text-gray)";
               }}
             >
-              <MdClose className="text-lg" />
+              <MdClose className="text-xl" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4">
+        <div className="px-6 py-5">
           {step === 1 ? (
             // Step 1: Category Selection
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-[var(--text-white)] mb-2">
+                <h4 className="text-sm font-semibold mb-2" style={{ color: "var(--text-white)" }}>
                   {t("report.selectCategory")}
                 </h4>
-                <p className="text-xs text-[var(--text-gray)] mb-4">
+                <p className="text-xs mb-4" style={{ color: "var(--text-gray)" }}>
                   {t("report.categoryHelp")}
                 </p>
               </div>
@@ -167,32 +188,39 @@ export default function ReportModal({ isOpen, onClose, onSubmit }) {
                     <button
                       key={category.id}
                       onClick={() => handleCategorySelect(category.id)}
-                      className="flex items-start gap-3 p-4 rounded-xl transition-all duration-200 group"
+                      className="flex items-start gap-4 p-4 rounded-xl transition-all duration-200 group"
                       style={{
                         border: "1px solid var(--border-color)",
+                        backgroundColor: "var(--bg-secondary)",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "var(--accent)";
-                        e.currentTarget.style.backgroundColor = "var(--hover-bg)";
+                        e.currentTarget.style.borderColor = "#ef4444";
+                        e.currentTarget.style.backgroundColor = "var(--bg-tertiary)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.15)";
+                        e.currentTarget.style.transform = "translateY(-2px)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.borderColor = "var(--border-color)";
-                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.backgroundColor = "var(--bg-secondary)";
+                        e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.05)";
+                        e.currentTarget.style.transform = "translateY(0)";
                       }}
                     >
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${category.color} transition-colors`}
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200"
                         style={{
-                          backgroundColor: "var(--bg-tertiary)",
+                          backgroundColor: "rgba(239, 68, 68, 0.1)",
+                          color: "#ef4444",
                         }}
                       >
-                        <IconComponent className="text-lg" />
+                        <IconComponent className="text-xl" />
                       </div>
                       <div className="flex-1 text-left">
-                        <h5 className="text-sm font-medium text-[var(--text-white)]">
+                        <h5 className="text-sm font-semibold mb-1" style={{ color: "var(--text-white)" }}>
                           {category.label}
                         </h5>
-                        <p className="text-xs text-[var(--text-gray)] mt-1">
+                        <p className="text-xs leading-relaxed" style={{ color: "var(--text-gray)" }}>
                           {category.description}
                         </p>
                       </div>
@@ -203,59 +231,69 @@ export default function ReportModal({ isOpen, onClose, onSubmit }) {
             </div>
           ) : (
             // Step 2: Description
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="flex items-center gap-3 mb-4">
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200"
                   style={{
                     color: "var(--text-gray)",
+                    backgroundColor: "var(--bg-secondary)",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                     e.currentTarget.style.color = "var(--text-white)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.backgroundColor = "var(--bg-secondary)";
                     e.currentTarget.style.color = "var(--text-gray)";
                   }}
                 >
-                  <MdClose className="text-lg rotate-45" />
+                  <MdClose className="text-xl rotate-45" />
                 </button>
                 <div>
-                  <h4 className="text-sm font-medium text-[var(--text-white)]">
+                  <h4 className="text-sm font-semibold" style={{ color: "var(--text-white)" }}>
                     {
                       REPORT_CATEGORIES.find((c) => c.id === selectedCategory)
                         ?.label
                     }
                   </h4>
-                  <p className="text-xs text-[var(--text-gray)]">
+                  <p className="text-xs" style={{ color: "var(--text-gray)" }}>
                     {t("report.describeProblem")}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-[var(--text-white)]">
+                <label className="block text-sm font-semibold" style={{ color: "var(--text-white)" }}>
                   {t("report.descriptionLabel")}
                 </label>
                 <textarea
                   value={reportText}
                   onChange={(e) => setReportText(e.target.value)}
-                  className="w-full h-32 px-4 py-3 rounded-xl resize-none text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  className="w-full h-36 px-4 py-3 rounded-xl resize-none text-sm transition-all duration-200 focus:outline-none"
                   style={{
-                    backgroundColor: "var(--bg-primary)",
-                    border: "1px solid var(--border-color)",
+                    backgroundColor: "var(--bg-secondary)",
+                    border: "2px solid var(--border-color)",
                     color: "var(--text-white)",
+                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#ef4444";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(239, 68, 68, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border-color)";
+                    e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.05)";
                   }}
                   placeholder={t("report.descriptionPlaceholder")}
                   maxLength={500}
                   disabled={isSubmitting}
                 />
-                <div className="flex justify-between items-center text-xs text-[var(--text-gray)]">
+                <div className="flex justify-between items-center text-xs" style={{ color: "var(--text-gray)" }}>
                   <span>{t("report.beSpecific")}</span>
-                  <span>{reportText.length}/500</span>
+                  <span className="font-medium">{reportText.length}/500</span>
                 </div>
               </div>
 
@@ -265,19 +303,23 @@ export default function ReportModal({ isOpen, onClose, onSubmit }) {
                   type="button"
                   onClick={handleBack}
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200"
+                  className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200"
                   style={{
                     color: "var(--text-gray)",
+                    backgroundColor: "var(--bg-secondary)",
+                    border: "1px solid var(--border-color)",
                   }}
                   onMouseEnter={(e) => {
                     if (!isSubmitting) {
                       e.currentTarget.style.color = "var(--text-white)";
                       e.currentTarget.style.backgroundColor = "var(--hover-bg)";
+                      e.currentTarget.style.borderColor = "var(--text-gray)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.color = "var(--text-gray)";
-                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.backgroundColor = "var(--bg-secondary)";
+                    e.currentTarget.style.borderColor = "var(--border-color)";
                   }}
                 >
                   {t("report.back")}
@@ -285,7 +327,10 @@ export default function ReportModal({ isOpen, onClose, onSubmit }) {
                 <button
                   type="submit"
                   disabled={!reportText.trim() || isSubmitting}
-                  className="flex-1 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed transition-all duration-200 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+                  className="flex-1 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 rounded-xl flex items-center justify-center gap-2"
+                  style={{
+                    boxShadow: !reportText.trim() || isSubmitting ? "none" : "0 4px 12px rgba(239, 68, 68, 0.3)",
+                  }}
                 >
                   {isSubmitting ? (
                     <>
@@ -305,15 +350,15 @@ export default function ReportModal({ isOpen, onClose, onSubmit }) {
         </div>
 
         {/* Footer */}
-        <div 
-          className="px-6 py-3 border-t"
+        <div
+          className="px-6 py-4 border-t"
           style={{
-            backgroundColor: "var(--bg-tertiary)",
+            backgroundColor: "var(--bg-secondary)",
             borderColor: "var(--border-color)",
           }}
         >
-          <p className="text-xs text-[var(--text-gray)] text-center">
-            {t("report.success")}
+          <p className="text-xs text-center" style={{ color: "var(--text-gray)" }}>
+            💡 {t("report.success")}
           </p>
         </div>
       </div>

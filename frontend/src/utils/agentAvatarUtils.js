@@ -4,14 +4,25 @@ import apiClient from "../services/api";
  * Формирует полный URL для аватара агента
  * @param {string|null|undefined} imageUrl - URL изображения из image_url
  * @param {string|null|undefined} avatarUrl - URL изображения из avatar_url
+ * @param {string} quality - Качество изображения ('low', 'medium', 'high')
  * @returns {string|null} - Полный URL или null если изображения нет
  */
-export function getAgentAvatarUrl(imageUrl, avatarUrl) {
-  const url = imageUrl || avatarUrl;
+export function getAgentAvatarUrl(imageUrl, avatarUrl, quality = "high") {
+  let url = imageUrl || avatarUrl;
 
   // Фильтруем пустые значения
   if (!url || url === "null" || url === "undefined" || (typeof url === "string" && url.trim() === "")) {
     return null;
+  }
+
+  // Если это путь к статическим файлам приложения (начинается с /images/agents/)
+  // и не содержит уже подпапок _low или _medium
+  if (url.startsWith("/images/agents/") && !url.includes("/_low/") && !url.includes("/_medium/")) {
+    if (quality === "low") {
+      url = url.replace("/images/agents/", "/images/agents/_low/");
+    } else if (quality === "medium") {
+      url = url.replace("/images/agents/", "/images/agents/_medium/");
+    }
   }
 
   // Если URL уже абсолютный (http/https), возвращаем как есть
@@ -32,11 +43,12 @@ export function getAgentAvatarUrl(imageUrl, avatarUrl) {
 /**
  * Получить URL аватара из объекта агента
  * @param {Object} agent - Объект агента
+ * @param {string} quality - Качество изображения ('low', 'medium', 'high')
  * @returns {string|null} - Полный URL или null
  */
-export function getAgentAvatarUrlFromAgent(agent) {
+export function getAgentAvatarUrlFromAgent(agent, quality = "high") {
   if (!agent) return null;
-  return getAgentAvatarUrl(agent.image_url, agent.avatar_url);
+  return getAgentAvatarUrl(agent.image_url, agent.avatar_url, quality);
 }
 
 /**

@@ -677,7 +677,7 @@ const SearchWithAvatar = forwardRef(
           preview: preview,
           colorClass: agent.color_class || "bg-[var(--accent)]",
           iconName: agent.icon_name || "psychology",
-          imageSrc: agent.image_url || agent.avatar_url,
+          imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url, "low"),
           unreadCount: 0,
           agentId: agent.id,
           conversationId: conversation.id,
@@ -753,9 +753,7 @@ const SearchWithAvatar = forwardRef(
         const channelAvatar =
           conversation.imageSrc ||
           conversation.channel_avatar_url ||
-          resolvedAgent?.image_url ||
-          resolvedAgent?.avatar_url ||
-          null;
+          getAgentAvatarUrl(resolvedAgent?.image_url, resolvedAgent?.avatar_url, "low");
         const colorClass =
           conversation.colorClass ||
           conversation.color_class ||
@@ -1203,7 +1201,7 @@ const SearchWithAvatar = forwardRef(
                                 >
                                   <div className="flex-shrink-0 mr-3">
                                     {(() => {
-                                      const avatarUrl = getAgentAvatarUrl(agent.image_url, agent.avatar_url);
+                                      const avatarUrl = getAgentAvatarUrl(agent.image_url, agent.avatar_url, "low");
                                       return avatarUrl ? (
                                         <img
                                           src={avatarUrl}
@@ -1216,7 +1214,7 @@ const SearchWithAvatar = forwardRef(
                                         />
                                       ) : null;
                                     })()}
-                                    {!getAgentAvatarUrl(agent.image_url, agent.avatar_url) && (
+                                    {!getAgentAvatarUrl(agent.image_url, agent.avatar_url, "low") && (
                                       <div
                                         className={`w-12 h-12 rounded-full ${agent.color_class ||
                                           "bg-[var(--accent)]"
@@ -1321,7 +1319,7 @@ const SearchWithAvatar = forwardRef(
                                 <div className="flex-shrink-0 mr-3">
                                   {message.agent_avatar ? (
                                     <img
-                                      src={message.agent_avatar}
+                                      src={getAgentAvatarUrl(message.agent_avatar, null, "low")}
                                       alt={message.agent_name}
                                       className="w-12 h-12 rounded-full object-cover shadow-md select-none"
                                     />
