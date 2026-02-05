@@ -158,7 +158,7 @@ const ClearChatModal = ({
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] ${
         isShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
       }`}
       style={{ paddingTop: '120px', paddingBottom: '20px' }}
@@ -215,15 +215,15 @@ const ClearChatModal = ({
             </div>
 
             {/* Заголовок */}
-            <h2 className="text-xl font-semibold text-[var(--text-white)]">{t("chat.clearChat")}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t("chat.clearChat")}</h2>
           </div>
 
           {/* Описание */}
           <div className="mb-6">
-            <p className="text-[var(--text-white)] text-base leading-relaxed mb-2">
+            <p className="text-gray-900 dark:text-white text-base leading-relaxed mb-2">
               {t("modals.clearChat.confirm", { name: chatName || t("common.deletedAccount") })}
             </p>
-            <p className="text-[var(--text-white)] text-sm">{t("modals.clearChat.cannotUndo")}</p>
+            <p className="text-gray-900 dark:text-white text-sm">{t("modals.clearChat.cannotUndo")}</p>
           </div>
 
           {/* Кнопки */}

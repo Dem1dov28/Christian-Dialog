@@ -10,10 +10,13 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, System
 # TODO: Мигрировать на новое API LangChain в будущем
 from langchain.memory import ConversationBufferWindowMemory
 
-# Подавляем предупреждения о deprecated API для ConversationBufferWindowMemory
-# LangChainDeprecationWarning может отсутствовать в некоторых версиях, поэтому подавляем все предупреждения LangChain
-warnings.filterwarnings("ignore", message=".*deprecated.*", category=UserWarning)
-warnings.filterwarnings("ignore", message=".*DeprecationWarning.*")
+# Подавляем предупреждения о deprecated API для ConversationBufferWindowMemory (в частности, LangChainDeprecationWarning)
+try:
+    from langchain_core._api import LangChainDeprecationWarning
+    warnings.simplefilter("ignore", LangChainDeprecationWarning)
+except ImportError:
+    # Fallback для старых версий
+    warnings.filterwarnings("ignore", message=".*deprecated.*", category=UserWarning)
 
 from langchain_config import config
 from core.language_detector import LanguageDetector
@@ -601,7 +604,7 @@ class LangChainService:
                 
                 # Если и fallback вернул пустой ответ, пробуем последний шанс - супер-надежную модель
                 if not fallback_response or str(fallback_response).strip() == "":
-                    ultimate_fallback = "arcee-ai/trinity-large-preview:free"
+                    ultimate_fallback = "deepseek/deepseek-chat-v3.1"
                     logger.warning(f"⚠️ [LANGCHAIN] Fallback модель {actual_fallback} тоже вернула пустой ответ. Пробуем ULTIMATE fallback: {ultimate_fallback}")
                     return await self._try_with_fallback_model(
                         fallback_model=ultimate_fallback,
@@ -639,6 +642,19 @@ class LangChainService:
                 (error_type == "PermissionDeniedError" and "403" in error_message)
             )
             
+            # Проверяем, является ли это ошибкой подключения к API
+            is_connection_error = (
+                "connection error" in error_message.lower() or
+                "connection timeout" in error_message.lower() or
+                "connection refused" in error_message.lower() or
+                "apiconnectionerror" in error_message.lower() or
+                "readerror" in error_message.lower() or
+                "timeout" in error_message.lower() or
+                "connecterror" in error_message.lower() or
+                "connection aborted" in error_message.lower() or
+                "server disconnected" in error_message.lower()
+            )
+            
             # Если это ошибка ограничения региона и используется OpenAI модель, пробуем модель другого провайдера
             if is_country_restriction and model and model.startswith("openai/"):
                 cross_provider_fallback = self._get_cross_provider_fallback(model)
@@ -657,6 +673,25 @@ class LangChainService:
                         )
                     except Exception as cross_provider_error:
                         logger.error(f"Ошибка при использовании модели другого провайдера {cross_provider_fallback}: {cross_provider_error}", exc_info=True)
+            
+            # Если это ошибка подключения к API, также пробуем использовать fallback модель
+            if is_connection_error and model:
+                fallback_model = self._get_fallback_model(model)
+                if fallback_model and fallback_model != model:
+                    logger.info(f"Обнаружена ошибка подключения к API. Пробуем fallback модель: {fallback_model} вместо {model}")
+                    try:
+                        return await self._try_with_fallback_model(
+                            fallback_model=fallback_model,
+                            agent_name=agent_name,
+                            instructions=instructions,
+                            user_message=user_message,
+                            conversation_id=conversation_id,
+                            user_rules=user_rules,
+                            image_attachments=image_attachments,
+                            language=language
+                        )
+                    except Exception as fallback_error:
+                        logger.error(f"Ошибка при использовании fallback модели {fallback_model} для исправления ошибки подключения: {fallback_error}", exc_info=True)
             
             # Пытаемся использовать fallback модель при ошибке
             if model:
@@ -837,7 +872,12 @@ class LangChainService:
             "openai/gpt-5.2": "openai/gpt-4o-mini",
             "openai/gpt-5": "openai/gpt-4o-mini",
             "openai/gpt-4o-mini": "openai/gpt-3.5-turbo",
+            "openai/gpt-3.5-turbo": "deepseek/deepseek-chat-v3.1",
             "openai/gpt-4.1-mini": "openai/gpt-3.5-turbo",
+            "openai/gpt-4o": "openai/gpt-4o-mini",
+            "openai/gpt-4-turbo": "openai/gpt-4o",
+            "openai/gpt-3.5-turbo-0125": "openai/gpt-3.5-turbo",
+            "openai/gpt-3.5-turbo-1106": "openai/gpt-3.5-turbo",
             # Anthropic fallbacks
             "anthropic/claude-opus-4.5": "anthropic/claude-sonnet-4.5",
             "anthropic/claude-sonnet-4.5": "anthropic/claude-haiku-4.5",
@@ -848,11 +888,13 @@ class LangChainService:
             "x-ai/grok-4-fast": "x-ai/grok-4",
             "x-ai/grok-4": "x-ai/grok-3-mini",
             # DeepSeek fallbacks
+            "tngtech/deepseek-r1t2-chimera:free": "arcee-ai/trinity-large-preview:free",
+            "arcee-ai/trinity-large-preview:free": "tngtech/deepseek-r1t-chimera:free",
+            "tngtech/deepseek-r1t-chimera:free": "deepseek/deepseek-r1-0528:free",
+            "deepseek/deepseek-r1-0528:free": "deepseek/deepseek-chat-v3.1",
             "nex-agi/deepseek-v3.1-nex-n1:free": "arcee-ai/trinity-large-preview:free",
             "deepseek/deepseek-v3.2": "arcee-ai/trinity-large-preview:free",
-            "tngtech/deepseek-r1t2-chimera:free": "arcee-ai/trinity-large-preview:free",
             "tngtech/deepseek-r1t2-cchimera:free": "arcee-ai/trinity-large-preview:free",
-            "deepseek/deepseek-r1-0528:free": "arcee-ai/trinity-large-preview:free",
             # Gemini fallbacks
             "google/gemini-3-flash-preview": "google/gemini-2.5-flash",
             "google/gemini-3-pro-image-preview": "google/gemini-2.5-pro",
@@ -907,6 +949,10 @@ class LangChainService:
                 return f"Извините, запрос занял слишком много времени. Пожалуйста, попробуйте снова."
             elif "api key" in error_message.lower() or "authentication" in error_message.lower():
                 return f"Извините, проблема с аутентификацией API. Пожалуйста, обратитесь к администратору."
+            elif "connection error" in error_message.lower() or "connection timeout" in error_message.lower() or "connection refused" in error_message.lower():
+                return f"Извините, произошла ошибка подключения к API. Пожалуйста, попробуйте еще раз или выберите другую модель. Возможно, модель временно недоступна или возникла сетевая проблема."
+            elif "apiconnectionerror" in error_message.lower():
+                return f"Извините, произошла ошибка подключения к API. Пожалуйста, попробуйте еще раз или выберите другую модель. Возможно, модель временно недоступна или возникла сетевая проблема."
             else:
                 # Для других ошибок показываем общее сообщение
                 return f"Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз или выберите другую модель."
@@ -1303,7 +1349,7 @@ class LangChainService:
                 
                 # Если и fallback вернул пустой ответ, пробуем последний шанс - супер-надежную модель
                 if not fallback_response or str(fallback_response).strip() == "":
-                    ultimate_fallback = "arcee-ai/trinity-large-preview:free"
+                    ultimate_fallback = "deepseek/deepseek-chat-v3.1"
                     logger.warning(f"⚠️ [LANGCHAIN] Fallback модель {actual_fallback} тоже вернула пустой ответ. Пробуем ULTIMATE fallback: {ultimate_fallback}")
                     return await self._try_with_fallback_model(
                         fallback_model=ultimate_fallback,
@@ -1334,8 +1380,43 @@ class LangChainService:
             return response_text
             
         except Exception as e:
-            logger.error(f"Ошибка в generate_response_with_tools для агента {agent_name}: {e}", exc_info=True)
-            return self._generate_fallback_response(agent_name, user_message)
+            error_message = str(e)
+            error_type = type(e).__name__
+            logger.error(f"Ошибка в generate_response_with_tools для агента {agent_name} с моделью {model}: {error_type}: {error_message}", exc_info=True)
+            
+            # Проверяем, является ли это ошибкой подключения к API
+            is_connection_error = (
+                "connection error" in error_message.lower() or
+                "connection timeout" in error_message.lower() or
+                "connection refused" in error_message.lower() or
+                "apiconnectionerror" in error_message.lower() or
+                "readerror" in error_message.lower() or
+                "timeout" in error_message.lower() or
+                "connecterror" in error_message.lower() or
+                "connection aborted" in error_message.lower() or
+                "server disconnected" in error_message.lower()
+            )
+            
+            # Если это ошибка подключения к API и указана модель, пробуем использовать fallback
+            if is_connection_error and model:
+                fallback_model = self._get_fallback_model(model)
+                if fallback_model and fallback_model != model:
+                    logger.info(f"Обнаружена ошибка подключения к API в generate_response_with_tools. Пробуем fallback модель: {fallback_model} вместо {model}")
+                    try:
+                        return await self._try_with_fallback_model(
+                            fallback_model=fallback_model,
+                            agent_name=agent_name,
+                            instructions=instructions,
+                            user_message=user_message,
+                            conversation_id=conversation_id,
+                            user_rules=user_rules,
+                            image_attachments=None,  # В tools-методе изображения не поддерживаются
+                            language=language
+                        )
+                    except Exception as fallback_error:
+                        logger.error(f"Ошибка при использовании fallback модели {fallback_model} для исправления ошибки подключения: {fallback_error}", exc_info=True)
+            
+            return self._generate_fallback_response(agent_name, user_message, error_message, error_type)
     
     async def test_connection(self) -> bool:
         """Тестировать подключение к OpenRouter API через LangChain

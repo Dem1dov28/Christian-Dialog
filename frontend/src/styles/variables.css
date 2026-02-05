@@ -122,7 +122,7 @@
   --active-bg: rgba(76, 73, 93, 0.95);
   --button-hover-bg: #564f6f;
   --active-bg-chat: #802bb1;
-  --accent: #802bb1;
+  --accent: #a546dd;
   --accent-hover: #9d4fd8;
   --border-color: rgba(209, 215, 224, 0.28);
   --icon-color: #d1d7e0;
@@ -329,7 +329,7 @@
 
   /* Акцент и сообщения */
   --active-bg-chat: #ffaaa5;
-  --accent: #ffaaa5;
+  --accent: #f48883;
   --accent-hover: #ffbfc0;
 
   --msg-left-time-color: #6B7280;

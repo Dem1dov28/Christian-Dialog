@@ -209,7 +209,7 @@ class AgentService(BaseService):
         try:
             with self.get_session() as session:
                 # Используем стандартную модель для всех персонажей
-                default_model = "google/gemini-2.0-flash-001"
+                default_model = "tngtech/deepseek-r1t2-chimera:free"
                 
                 db_agent = Agent(
                     name=name,
@@ -690,45 +690,6 @@ class AgentService(BaseService):
                 image_attachments=image_attachments,  # Передаем изображения для моделей с vision
                 language=detected_language,  # Передаем язык для ответа
             )
-            
-            # Словарь сообщений об ошибках, которые мы хотим перехватить для повторной попытки
-            error_messages = [
-                "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз.",
-                "Извините, произошла ошибка при обработке вашего запроса.",
-                "Извините, выбранная модель недоступна",
-                "Извините, в данный момент сервис временно недоступен"
-            ]
-            
-            is_error = not llm_response or (isinstance(llm_response, str) and (len(llm_response.strip()) == 0))
-            if not is_error and isinstance(llm_response, str):
-                for msg in error_messages:
-                    if msg in llm_response:
-                        is_error = True
-                        break
-            
-            # Если ответ пустой или содержит ошибку, пробуем "второй шанс" с Trinity
-            if is_error:
-                ultimate_model = "arcee-ai/trinity-large-preview:free"
-                if model_to_use != ultimate_model:
-                    logger.warning(f"⚠️ [GENERATE RESPONSE] LangChain вернул ошибку или пустой ответ для {agent.get('name')}. Пробуем 'второй шанс' с {ultimate_model}...")
-                    try:
-                        llm_response = await self.langchain_service.generate_response(
-                            agent_name=agent["name"],
-                            instructions=agent_instructions,
-                            user_message=enhanced_message,
-                            conversation_id=unique_conversation_id,
-                            model=ultimate_model,
-                            user_rules=user_rules,
-                            image_attachments=image_attachments,
-                            language=detected_language,
-                        )
-                        logger.info(f"✅ [GENERATE RESPONSE] 'Второй шанс' для {agent.get('name')} через {ultimate_model} успешен!")
-                    except Exception as fallback_err:
-                        logger.error(f"❌ [GENERATE RESPONSE] Даже 'второй шанс' с {ultimate_model} провалился: {fallback_err}")
-                
-                # Если после всех попыток все еще пусто, возвращаем стандартную заглушку
-                if not llm_response or (isinstance(llm_response, str) and len(llm_response.strip()) == 0):
-                    llm_response = "Извините, не удалось сгенерировать ответ. Пожалуйста, попробуйте еще раз."
             
             logger.debug(f"✅ [GENERATE RESPONSE] LangChain вернул ответ длиной {len(str(llm_response))} символов")
             return llm_response

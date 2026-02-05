@@ -11,6 +11,10 @@ import {
   FiCpu,
   FiLogOut,
   FiDroplet,
+  FiLayers,
+  FiChevronDown,
+  FiChevronUp,
+  FiCheck,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -24,81 +28,7 @@ const cn = (...classes) => {
   return classes.filter(Boolean).join(" ");
 };
 
-// Улучшенная реализация Switch компонента с эластичным баунсом
-const Switch = ({ checked, onChange, className, ...props }) => {
-  const [isPressed, setIsPressed] = useState(false);
 
-  const handleClick = (e) => {
-    // Останавливаем всплытие события, чтобы не вызвать onClick на родителе
-    e.stopPropagation();
-    
-    // Передаем координаты клика для circular reveal
-    const x = e.clientX;
-    const y = e.clientY;
-    
-    onChange(!checked, { x, y });
-  };
-
-  return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full",
-        "border-2 border-transparent transition-all duration-300 ease-out",
-        "focus:outline-none",
-        "hover:scale-105 active:scale-95",
-        checked 
-          ? "bg-[var(--accent)] shadow-lg" 
-          : "bg-gray-600 shadow-md shadow-gray-900/20",
-        isPressed && "scale-95",
-        className
-      )}
-      onClick={handleClick}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
-      onMouseLeave={() => setIsPressed(false)}
-      {...props}
-    >
-      {/* Основной переключатель с эластичным баунсом */}
-      <span
-        className={cn(
-          "pointer-events-none relative z-10 block h-5 w-5 rounded-full bg-white",
-          "shadow-xl ring-0 transition-all duration-500",
-          checked 
-            ? "translate-x-[20px] scale-100" 
-            : "translate-x-[2px] scale-100",
-          isPressed && "scale-90"
-        )}
-        style={{
-          transitionTimingFunction: "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
-        }}
-      />
-      
-      {/* Градиентный эффект на фоне */}
-      <span
-        className={cn(
-          "absolute inset-0 rounded-full opacity-0 transition-opacity duration-300",
-          checked && "opacity-100"
-        )}
-        style={{
-          background: 'linear-gradient(135deg, rgba(64, 224, 208, 0.2) 0%, rgba(0, 206, 209, 0.1) 100%)',
-        }}
-      />
-      
-      {/* Градиентный эффект на фоне */}
-      <span
-        className={cn(
-          "absolute inset-0 rounded-full opacity-0 transition-opacity duration-300",
-          checked && "opacity-100"
-        )}
-        style={{
-          background: 'linear-gradient(135deg, rgba(64, 224, 208, 0.2) 0%, rgba(0, 206, 209, 0.1) 100%)',
-        }}
-      />
-    </button>
-  );
-};
 
 // Overlay компонент
 const Overlay = ({ isOpen, onClose }) => {
@@ -139,37 +69,17 @@ const SheetContent = ({ isOpen, onClose, children }) => {
 
 export function DrawerMenu({
   isOpen = false,
-  onClose = () => {},
-  onProfileClick = () => {},
+  onClose = () => { },
+  onProfileClick = () => { },
   logoScale = 2,
 }) {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const { t, language } = useLanguage();
   const { openSupportModal, openReportModal } = useModal(); // Добавлено
+  const [isThemeExpanded, setIsThemeExpanded] = useState(false);
 
-  const getThemeDisplayName = () => {
-    if (language === "ru") {
-      if (theme === "light") return "Светлая";
-      if (theme === "dark") return "Тёмная";
-      if (theme === "blue") return "Синяя";
-      if (theme === "pastel") return "Пастельная";
-      return theme;
-    }
-    // en / default
-    if (theme === "light") return "Light";
-    if (theme === "dark") return "Dark";
-    if (theme === "blue") return "Blue";
-    if (theme === "pastel") return "Pastel";
-    return theme;
-  };
 
-  const getNextTheme = () => {
-    if (theme === "light") return "dark";
-    if (theme === "dark") return "blue";
-    if (theme === "blue") return "pastel";
-    return "light";
-  };
 
   const handleLogout = async () => {
     try {
@@ -209,30 +119,7 @@ export function DrawerMenu({
     { id: "profile", label: t("profile.title"), icon: FiUser },
   ];
 
-  const toggleItems = [
-    {
-      id: "theme",
-      label: `${t("settings.theme")} · ${getThemeDisplayName()}`,
-      icon:
-        theme === "light"
-          ? FiSun
-          : theme === "dark"
-          ? FiMoon
-          : theme === "blue"
-          ? FiDroplet
-          : FiSun,
-      // Визуально считаем "включён" любую не-светлую тему
-      checked: theme !== "light",
-      onChange: (newValue, coords) => {
-        const next = getNextTheme();
-        if (coords) {
-          setTheme(next, coords);
-        } else {
-          setTheme(next);
-        }
-      },
-    },
-  ];
+
 
   const bottomItems = [
     { id: "support", label: t("profile.menu.help"), icon: FiAlertTriangle, onClick: openSupportModal }, // Изменено
@@ -321,38 +208,72 @@ export function DrawerMenu({
                 );
               })}
 
-              {/* Toggles */}
+              {/* Theme Selection */}
               <div className="mt-0">
-                {toggleItems.map((item) => {
-                  const IconComponent = item.icon;
-                  return (
-                    <div
-                      key={item.id}
-                      role="menuitem"
-                      className={cn(
-                        "w-full flex items-center justify-between gap-3 px-5 h-[48px]",
-                        "text-[var(--text-white)] text-[15px] font-normal select-none",
-                        "transition-colors hover:bg-[var(--hover-bg)] cursor-pointer"
-                      )}
-                      onClick={(e) => {
-                        // Получаем координаты клика для circular reveal
-                        const x = e.clientX;
-                        const y = e.clientY;
-                        item.onChange(!item.checked, { x, y });
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <IconComponent className="w-5 h-5 flex-shrink-0 text-[var(--text-gray)]" />
-                        <span>{item.label}</span>
-                      </div>
-                      <Switch
-                        checked={item.checked}
-                        onChange={item.onChange}
-                        aria-label={item.label}
-                      />
+                <div
+                  role="menuitem"
+                  className={cn(
+                    "w-full flex flex-col justify-center px-0 min-h-[48px]",
+                    "text-[var(--text-white)] text-[15px] font-normal select-none",
+                    "transition-colors"
+                  )}
+                >
+                  <button
+                    onClick={() => setIsThemeExpanded(!isThemeExpanded)}
+                    className={cn(
+                      "w-full flex items-center justify-between gap-3 px-5 h-[48px]",
+                      "text-[var(--text-white)] text-[15px] font-normal select-none",
+                      "transition-colors hover:bg-[var(--hover-bg)] cursor-pointer"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      {theme === 'light' ? <FiSun className="w-5 h-5 flex-shrink-0 text-[var(--text-gray)]" /> :
+                        theme === 'dark' ? <FiMoon className="w-5 h-5 flex-shrink-0 text-[var(--text-gray)]" /> :
+                          theme === 'blue' ? <FiDroplet className="w-5 h-5 flex-shrink-0 text-[var(--text-gray)]" /> :
+                            <FiLayers className="w-5 h-5 flex-shrink-0 text-[var(--text-gray)]" />
+                      }
+                      <span>{t("settings.theme")}</span>
                     </div>
-                  );
-                })}
+                    {isThemeExpanded ? (
+                      <FiChevronUp className="w-4 h-4 text-[var(--text-gray)]" />
+                    ) : (
+                      <FiChevronDown className="w-4 h-4 text-[var(--text-gray)]" />
+                    )}
+                  </button>
+
+                  <div className={cn(
+                    "overflow-hidden transition-all duration-300 ease-in-out flex flex-col",
+                    isThemeExpanded ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0 bg-transparent"
+                  )}>
+                    {[
+                      { id: 'dark', label: t('settings.themes.dark'), icon: FiMoon },
+                      { id: 'light', label: t('settings.themes.light'), icon: FiSun },
+                      { id: 'blue', label: t('settings.themes.blue'), icon: FiDroplet },
+                      { id: 'pastel', label: t('settings.themes.pastel'), icon: FiLayers }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 px-5 pl-12 h-[40px]",
+                          "text-[var(--text-white)] text-[14px] font-normal select-none",
+                          "transition-colors hover:bg-[var(--hover-bg)] cursor-pointer",
+                          theme === item.id && "bg-[var(--active-bg)] text-[var(--accent)]"
+                        )}
+                        onClick={(e) => {
+                          const x = e.clientX;
+                          const y = e.clientY;
+                          setTheme(item.id, { x, y });
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className={cn("w-4 h-4", theme === item.id ? "text-[var(--accent)]" : "text-[var(--text-gray)]")} />
+                          <span>{item.label}</span>
+                        </div>
+                        {theme === item.id && <FiCheck className="w-4 h-4 text-[var(--accent)]" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Bottom Items */}

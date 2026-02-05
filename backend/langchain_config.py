@@ -27,9 +27,9 @@ class LangChainConfig:
     def get_model_config(self) -> dict:
         """Возвращает конфигурацию для используемой модели"""
         return {
-            "model": "deepseek/deepseek-chat",
+            "model": "tngtech/deepseek-r1t2-chimera:free",
             "temperature": 0.7,
-            "max_tokens": 200
+            "max_tokens": 2048
         }
     
     def get_vision_model_config(self) -> dict:

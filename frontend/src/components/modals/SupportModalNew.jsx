@@ -309,6 +309,19 @@ export default function SupportModalNew({ isOpen, onClose, onSubmit }) {
                 </div>
               </div>
 
+              {/* VPN Information Block */}
+              <div
+                className="p-3 rounded-xl"
+                style={{
+                  backgroundColor: "rgba(59, 130, 246, 0.1)",
+                  border: "1px solid rgba(59, 130, 246, 0.3)",
+                }}
+              >
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-gray)" }}>
+                  ℹ️ {t("support.vpnInfo", "Если вы используете VPN или ваше сообщение не было отправлено пишите прямо на почту")} <a href="mailto:support@sentiensapps.online" className="font-medium" style={{ color: "#3b82f6" }}>support@sentiensapps.online</a>
+                </p>
+              </div>
+
               {/* Submit Button */}
               <div className="pt-2">
                 <button

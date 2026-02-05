@@ -46,7 +46,7 @@ function ChatInput({
   t,
   // AI model check
   isAIModelChat,
-  }) {
+}) {
   return (
     <div className="chat-input-transparent" style={{ padding: 0, margin: 0 }}>
       {/* File Preview - показываем когда есть прикрепленные файлы */}
@@ -57,11 +57,11 @@ function ChatInput({
               <div
                 key={fileObj.id}
                 className="flex items-center gap-2 px-3 py-2 bg-transparent rounded-lg border-transparent"
-                style={{ 
-                  backgroundColor: 'rgba(0, 0, 0, 0.15)', 
-                  backdropFilter: 'blur(12px) saturate(180%)', 
-                  WebkitBackdropFilter: 'blur(12px) saturate(180%)', 
-                  border: '1px solid rgba(255, 255, 255, 0.1)', 
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                  backdropFilter: 'blur(12px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   boxShadow: '0 2px 15px rgba(0, 0, 0, 0.15)',
                   width: '200px',
                   maxWidth: '200px',
@@ -106,10 +106,10 @@ function ChatInput({
 
       {/* Reply Message Block */}
       {replyToMessage && (
-        <div 
+        <div
           className="chat-input-transparent border-transparent"
-          style={{ 
-            backgroundColor: 'transparent', 
+          style={{
+            backgroundColor: 'transparent',
             background: 'transparent',
             padding: 0,
             border: 'none',
@@ -127,7 +127,7 @@ function ChatInput({
             <div className="flex-1 relative max-w-[calc(100%-100px)]">
               <div
                 className="w-full px-3 py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] text-sm sm:text-base cursor-pointer"
-                style={{ 
+                style={{
                   backgroundColor: "var(--reply-bg-light)",
                   whiteSpace: "pre-wrap"
                 }}
@@ -178,10 +178,10 @@ function ChatInput({
       )}
 
       {/* Message Input Form */}
-      <div 
+      <div
         className="chat-input-transparent border-transparent"
-        style={{ 
-          backgroundColor: 'transparent', 
+        style={{
+          backgroundColor: 'transparent',
           background: 'transparent',
           padding: 0,
           border: 'none',

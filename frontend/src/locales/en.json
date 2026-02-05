@@ -411,7 +411,13 @@
   "settings": {
     "settings": "Settings",
     "language": "Language",
-    "theme": "Dark Theme",
+    "theme": "Theme",
+    "themes": {
+      "light": "Light (Turquoise)",
+      "dark": "Dark (Purple)",
+      "blue": "Dark (Rose)",
+      "pastel": "Light (Pastel)"
+    },
     "profile": "Profile",
     "notifications": "Notifications"
   },
@@ -626,6 +632,7 @@
     "sending": "Sending...",
     "send": "Send complaint",
     "success": "Your complaint will be reviewed within 24 hours",
+    "vpnInfo": "If you are using VPN or your message was not sent, please write directly to email",
     "categories": {
       "inappropriate": {
         "label": "Inappropriate content",
@@ -778,6 +785,7 @@
     "requestSent": "Request sent to support service",
     "requestError": "Failed to send request",
     "responseTime": "We will respond within 24 hours",
+    "vpnInfo": "If you are using VPN or your message was not sent, please write directly to email",
     "categories": {
       "technical": {
         "label": "Technical issue",
