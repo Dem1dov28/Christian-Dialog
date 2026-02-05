@@ -1,1 +1,1 @@
-"""Тесты для AIgram Backend"""
+"""Тесты для Epochal Dialoge Backend"""

@@ -33,24 +33,14 @@ from api.pinned_chats import create_pinned_chats_endpoints
 from api.search import router as search_router
 from api.auth import router as auth_router
 from api.budgets import create_budget_endpoints
-from api.savings_goals import create_savings_goal_endpoints
-from api.recurring_payments import create_recurring_payment_endpoints
 from api.attractions import create_attractions_endpoints
-from api.trips import create_trip_endpoints
 from api.attraction_visits import create_attraction_visit_endpoints
-from api.geocoding import create_geocoding_endpoints
-from api.wikipedia_attractions import create_wikipedia_attractions_endpoints
 from api.reports import create_reports_endpoints
 from api.support import create_support_endpoints
 from services.agent_service import AgentService
 from services.user_agent_service import UserAgentService
 from services.budget_service import BudgetService
-from services.savings_goal_service import SavingsGoalService
-from services.recurring_payment_service import RecurringPaymentService
-from services.trip_service import TripService
 from services.attraction_visit_service import AttractionVisitService
-from services.geocoding_service import GeocodingService
-from services.wikipedia_service import WikipediaService
 from services.conversation_service import ConversationService
 from services.multi_agent_chat_service import MultiAgentChatService
 from services.folder_service import FolderService
@@ -79,12 +69,7 @@ multi_agent_chat_service = MultiAgentChatService(agent_service)
 folder_service = FolderService()
 pinned_chats_service = PinnedChatsService()
 budget_service = BudgetService()
-savings_goal_service = SavingsGoalService()
-recurring_payment_service = RecurringPaymentService()
-trip_service = TripService()
 attraction_visit_service = AttractionVisitService()
-geocoding_service = GeocodingService()
-wikipedia_service = WikipediaService()
 # pinned_messages_service = PinnedMessagesService()  # Файл не существует
 
 
@@ -154,13 +139,8 @@ create_multi_agent_chat_endpoints(app, multi_agent_chat_service)
 create_folder_endpoints(app, folder_service)
 create_pinned_chats_endpoints(app, pinned_chats_service)
 create_budget_endpoints(app, budget_service)
-create_savings_goal_endpoints(app, savings_goal_service)
-create_recurring_payment_endpoints(app, recurring_payment_service)
 create_attractions_endpoints(app)
-create_trip_endpoints(app, trip_service)
 create_attraction_visit_endpoints(app, attraction_visit_service)
-create_geocoding_endpoints(app, geocoding_service)
-create_wikipedia_attractions_endpoints(app, wikipedia_service)
 create_reports_endpoints(app)
 create_support_endpoints(app)
 # create_pinned_messages_endpoints(app, pinned_messages_service)  # Файл не существует
@@ -225,7 +205,7 @@ async def test_search():
 @app.get("/")
 def read_root():
     """Главная страница веб-интерфейса"""
-    return {"message": "AIgram Backend API", "docs": "/docs"}
+    return {"message": "Epochal Dialoge Backend API", "docs": "/docs"}
 
 
 @app.get("/api")

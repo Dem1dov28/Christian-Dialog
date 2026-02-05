@@ -1,4 +1,4 @@
-import React from "react";
+  import React from "react";
 import PropTypes from "prop-types";
 import Sidebar from "../sidebar/Sidebar.jsx";
 import Chat from "../chat/Chat.jsx";
@@ -21,7 +21,6 @@ function MainLayout({
   onDeleteChat,
   onCreateNewChat,
   onOpenFolderManager,
-  onAddToCollection,
   onPinToTop,
   onDeleteAgent,
   onUnsubscribeChannel,
@@ -73,7 +72,6 @@ function MainLayout({
           onDeleteChat={onDeleteChat}
           onCreateNewChat={onCreateNewChat}
           onOpenFolderManager={onOpenFolderManager}
-          onAddToCollection={onAddToCollection}
           onPinToTop={onPinToTop}
           onDeleteAgent={onDeleteAgent}
           onUnsubscribeChannel={onUnsubscribeChannel}
@@ -98,7 +96,6 @@ function MainLayout({
           onDeleteChat={onDeleteChat}
           onCreateNewChat={onCreateNewChat}
           onOpenFolderManager={onOpenFolderManager}
-          onAddToCollection={onAddToCollection}
           onPinToTop={onPinToTop}
           onDeleteAgent={onDeleteAgent}
           onUnsubscribeChannel={onUnsubscribeChannel}
@@ -173,7 +170,6 @@ MainLayout.propTypes = {
   onDeleteChat: PropTypes.func.isRequired,
   onCreateNewChat: PropTypes.func.isRequired,
   onOpenFolderManager: PropTypes.func.isRequired,
-  onAddToCollection: PropTypes.func.isRequired,
   onPinToTop: PropTypes.func.isRequired,
   onDeleteAgent: PropTypes.func.isRequired,
   onUnsubscribeChannel: PropTypes.func.isRequired,

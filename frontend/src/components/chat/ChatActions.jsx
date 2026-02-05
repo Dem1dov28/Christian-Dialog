@@ -113,16 +113,6 @@ const ChatActions = ({
       }
     >
       <ul className="select-none divide-y divide-[var(--border-light)] dark:divide-[var(--border-dark)]">
-        <li>
-          <button
-            type="button"
-            className="w-full text-left flex items-center px-3 py-2 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-            onClick={handleAction(onAddToCollection)}
-          >
-            {React.createElement(getActionIcon("addToFolder"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" })}
-            <span className="text-sm">{t("chat.addToFolderAction")}</span>
-          </button>
-        </li>
         {isModelChat && onRenameChat && (
           <li>
             <button

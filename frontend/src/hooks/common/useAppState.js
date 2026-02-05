@@ -19,7 +19,6 @@ export function useAppState() {
   const [isCompactChatOpen, setIsCompactChatOpen] = useState(false);
 
   // Состояния модальных окон
-  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [isFolderManagerOpen, setIsFolderManagerOpen] = useState(false);
   const [isDeleteChatModalOpen, setIsDeleteChatModalOpen] = useState(false);
   const [modalData, setModalData] = useState({});
@@ -122,8 +121,6 @@ export function useAppState() {
     setIsCompactChatOpen,
 
     // Модальные окна
-    isCollectionModalOpen,
-    setIsCollectionModalOpen,
     isFolderManagerOpen,
     setIsFolderManagerOpen,
     isDeleteChatModalOpen,

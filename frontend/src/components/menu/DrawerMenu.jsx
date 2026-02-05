@@ -12,6 +12,7 @@ import {
   FiLogOut,
   FiDroplet,
   FiLayers,
+  FiGlobe,
   FiChevronDown,
   FiChevronUp,
   FiCheck,
@@ -75,9 +76,10 @@ export function DrawerMenu({
 }) {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { openSupportModal, openReportModal } = useModal(); // Добавлено
   const [isThemeExpanded, setIsThemeExpanded] = useState(false);
+  const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
 
 
 
@@ -240,13 +242,13 @@ export function DrawerMenu({
                       <FiChevronDown className="w-4 h-4 text-[var(--text-gray)]" />
                     )}
                   </button>
-
+              
                   <div className={cn(
                     "overflow-hidden transition-all duration-300 ease-in-out flex flex-col",
                     isThemeExpanded ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0 bg-transparent"
                   )}>
-                    {[
-                      { id: 'dark', label: t('settings.themes.dark'), icon: FiMoon },
+                    {[{
+                      id: 'dark', label: t('settings.themes.dark'), icon: FiMoon },
                       { id: 'light', label: t('settings.themes.light'), icon: FiSun },
                       { id: 'blue', label: t('settings.themes.blue'), icon: FiDroplet },
                       { id: 'pastel', label: t('settings.themes.pastel'), icon: FiLayers }
@@ -270,6 +272,72 @@ export function DrawerMenu({
                           <span>{item.label}</span>
                         </div>
                         {theme === item.id && <FiCheck className="w-4 h-4 text-[var(--accent)]" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Language Selection */}
+              <div className="mt-0">
+                <div
+                  role="menuitem"
+                  className={cn(
+                    "w-full flex flex-col justify-center px-0 min-h-[48px]",
+                    "text-[var(--text-white)] text-[15px] font-normal select-none",
+                    "transition-colors"
+                  )}
+                >
+                  <button
+                    onClick={() => setIsLanguageExpanded(!isLanguageExpanded)}
+                    className={cn(
+                      "w-full flex items-center justify-between gap-3 px-5 h-[48px]",
+                      "text-[var(--text-white)] text-[15px] font-normal select-none",
+                      "transition-colors hover:bg-[var(--hover-bg)] cursor-pointer"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FiGlobe className="w-5 h-5 flex-shrink-0 text-[var(--text-gray)]" />
+                      <span>{t("settings.language")}</span>
+                    </div>
+                    {isLanguageExpanded ? (
+                      <FiChevronUp className="w-4 h-4 text-[var(--text-gray)]" />
+                    ) : (
+                      <FiChevronDown className="w-4 h-4 text-[var(--text-gray)]" />
+                    )}
+                  </button>
+              
+                  <div className={cn(
+                    "overflow-hidden transition-all duration-300 ease-in-out flex flex-col",
+                    isLanguageExpanded ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0 bg-transparent"
+                  )}>
+                    {[{
+                      code: 'ru', name: t("profile.language_ru"), flag: '🇷🇺' },
+                      { code: 'en', name: t("profile.language_en"), flag: '🇺🇸' }
+                    ].map((lang) => (
+                      <button
+                        key={lang.code}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 px-5 pl-12 h-[40px]",
+                          "text-[var(--text-white)] text-[14px] font-normal select-none",
+                          "transition-colors hover:bg-[var(--hover-bg)] cursor-pointer",
+                          language === lang.code && "bg-[var(--accent)]/20 text-[var(--accent)]"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLanguage(lang.code);
+                          setIsLanguageExpanded(false);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{lang.flag}</span>
+                          <span className="text-[var(--text-white)] font-medium">
+                            {lang.name}
+                          </span>
+                        </div>
+                        {language === lang.code && (
+                          <FiCheck className="w-4 h-4 text-[var(--accent)]" />
+                        )}
                       </button>
                     ))}
                   </div>
@@ -306,7 +374,7 @@ export function DrawerMenu({
             <p className="text-[var(--text-gray)] text-[13px] text-center font-normal flex items-center justify-center gap-2">
               <img
                 src={logo}
-                alt="AIgram"
+                alt="Epochal Dialoge"
                 className="h-[1em] w-auto object-contain origin-center"
                 style={{ transform: `scale(${logoScale})` }}
               />

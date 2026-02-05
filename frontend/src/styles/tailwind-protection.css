@@ -1,4 +1,4 @@
-/* Защита от Tailwind CSS сброса стилей для AIgram */
+/* Защита от Tailwind CSS сброса стилей для Epochal Dialoge */
 
 /* Восстановление стилей для кнопки чатов */
 button[data-id="chats"] {

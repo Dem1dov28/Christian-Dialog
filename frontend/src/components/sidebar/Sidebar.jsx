@@ -74,7 +74,6 @@ const Sidebar = ({
   onDeleteChat,
   onOpenFolderManager,
   // ChatActions callbacks
-  onAddToCollection,
   onPinToTop,
   onDeleteAgent,
   onUnsubscribeChannel,
@@ -1852,7 +1851,6 @@ const Sidebar = ({
                     onChatSelect={onChatSelect}
                     activeChatId={activeChatId}
                     onDeleteChat={onDeleteChat}
-                    onAddToCollection={onAddToCollection}
                     onPinToTop={onPinToTop}
                     onDeleteAgent={onDeleteAgent}
                     onUnsubscribeChannel={onUnsubscribeChannel}

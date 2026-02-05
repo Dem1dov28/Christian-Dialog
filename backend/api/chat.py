@@ -21,7 +21,7 @@ from services.file_storage_service import FileStorageService
 from services.file_validation_service import FileValidationService
 from services.virus_scan_service import VirusScanService
 from services.file_extraction_service import FileExtractionService
-from services.test_answer_service import TestAnswerService
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class CheckTestAnswersRequest(BaseModel):
 
 def create_chat_endpoints(app, agent_service, conversation_service: ConversationService, folder_service=None):
     # Инициализируем сервис для работы с ответами на тесты
-    test_answer_service = TestAnswerService()
+
     """Создать эндпоинты для чата"""
     
     def verify_conversation_access(
@@ -967,11 +967,6 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                     
                     # Извлекаем base64 данные
                     image_base64 = agent_image_data.get("base64")
-                    if not image_base64 and agent_image_data.get("url"):
-                        # Если нет base64, но есть URL, скачиваем изображение
-                        from services.image_generation_service import ImageGenerationService
-                        img_service = ImageGenerationService()
-                        image_base64 = await img_service.download_image_as_base64(agent_image_data["url"])
                     
                     if image_base64:
                         # Декодируем base64

@@ -8,7 +8,6 @@ from models.conversation import Conversation
 from models.multi_agent_conversation import MultiAgentConversation
 from services.base_service import BaseService
 from services.langchain_service import LangChainService
-from services.image_generation_service import ImageGenerationService
 from core.language_detector import LanguageDetector
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,6 @@ class AgentService(BaseService):
         super().__init__()
         self.active_agents: Dict[int, Dict[str, Any]] = {}
         self.langchain_service = LangChainService()
-        self.image_generation_service = ImageGenerationService()
     
     def initialize_agents(self) -> None:
         """Инициализация агентов из базы данных"""
@@ -408,27 +406,6 @@ class AgentService(BaseService):
         
         return None
     
-    def _is_image_generation_request(self, message: str) -> bool:
-        """Проверяет, является ли запрос запросом на генерацию изображения"""
-        if not message:
-            return False
-        
-        message_lower = message.lower().strip()
-        
-        # Список ключевых слов для действий
-        action_keywords = ["сгенерируй", "создай", "нарисуй", "покажи", "сделай", "generate", "create", "draw", "show", "make"]
-        # Список ключевых слов для изображений
-        image_keywords = ["картинку", "картинка", "изображение", "рисунок", "рисунка", "фото", "picture", "image", "images"]
-        
-        # Проверяем наличие ключевых слов
-        has_action = any(keyword in message_lower for keyword in action_keywords)
-        has_image = any(keyword in message_lower for keyword in image_keywords)
-        
-        result = has_action and has_image
-        if result:
-            logger.debug(f"🔍 [IMAGE DETECTION] Запрос определен как запрос на генерацию изображения: '{message_lower[:50]}...'")
-        
-        return result
     
     async def generate_response(
         self, 
@@ -594,76 +571,6 @@ class AgentService(BaseService):
             # Инициализируем enhanced_message с исходным сообщением
             enhanced_message = message
 
-            # Проверяем, является ли запрос запросом на генерацию изображения
-            message_text = enhanced_message
-            if isinstance(enhanced_message, list):
-                # Извлекаем текстовую часть из сообщения
-                text_parts = [
-                    item.get("text", "")
-                    for item in enhanced_message
-                    if isinstance(item, dict) and item.get("type") == "text"
-                ]
-                message_text = " ".join(text_parts) if text_parts else str(enhanced_message)
-            
-            if self._is_image_generation_request(message_text):
-                logger.info(f"🎨 [IMAGE GENERATION] Обнаружен запрос на генерацию изображения: {message_text[:100]}")
-                try:
-                    # Генерируем изображение
-                    image_result = await self.image_generation_service.generate_image(
-                        prompt=message_text,
-                        size="1024x1024",
-                        quality="standard"
-                    )
-                    
-                    if image_result and image_result.get("url"):
-                        # Скачиваем изображение и преобразуем в base64
-                        image_base64 = await self.image_generation_service.download_image_as_base64(
-                            image_result["url"]
-                        )
-                        
-                        if image_base64:
-                            # Возвращаем структуру с текстом и изображением
-                            response_text = "Вот сгенерированное изображение по вашему запросу."
-                            if image_result.get("revised_prompt"):
-                                response_text += f"\n\nУлучшенный промпт: {image_result['revised_prompt']}"
-                            
-                            logger.info(f"✅ [IMAGE GENERATION] Изображение успешно сгенерировано и скачано, текст ответа: '{response_text[:50]}...'")
-                            
-                            result = {
-                                "text": response_text,
-                                "image": {
-                                    "base64": image_base64,
-                                    "url": image_result["url"],
-                                    "revised_prompt": image_result.get("revised_prompt")
-                                }
-                            }
-                            logger.debug(f"📤 [IMAGE GENERATION] Возвращаем результат: text={len(response_text)} символов, image={'есть' if result.get('image') else 'нет'}")
-                            return result
-                        else:
-                            # Если не удалось скачать, возвращаем URL
-                            logger.warning(f"⚠️ [IMAGE GENERATION] Не удалось скачать изображение, возвращаем URL")
-                            response_text = f"Изображение сгенерировано! URL: {image_result['url']}"
-                            return {
-                                "text": response_text,
-                                "image": {
-                                    "url": image_result["url"],
-                                    "revised_prompt": image_result.get("revised_prompt")
-                                }
-                            }
-                    else:
-                        # Если генерация не удалась, возвращаем понятное сообщение
-                        logger.warning("⚠️ [IMAGE GENERATION] Не удалось сгенерировать изображение")
-                        # Возвращаем сообщение пользователю о том, что генерация недоступна
-                        return "Извините, генерация изображений временно недоступна. Пожалуйста, убедитесь, что установлен OPENAI_API_KEY в настройках сервера."
-                except Exception as e:
-                    logger.error(f"❌ [IMAGE GENERATION] Ошибка при генерации изображения: {e}", exc_info=True)
-                    # Возвращаем понятное сообщение об ошибке
-                    error_message = str(e)
-                    if "OPENAI_API_KEY" in error_message or "api key" in error_message.lower():
-                        return "Извините, генерация изображений недоступна. Необходимо настроить OPENAI_API_KEY в настройках сервера."
-                    else:
-                        return f"Извините, произошла ошибка при генерации изображения: {error_message}. Пожалуйста, попробуйте позже."
-            
             # Используем LangChain сервис для генерации ответа
             # ВАЖНО: передаём enhanced_message, чтобы RAG-контекст (журнал задач, покупки и т.п.)
             # действительно участвовал в генерации ответа даже без инструментов

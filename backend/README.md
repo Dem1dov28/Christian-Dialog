@@ -1,6 +1,6 @@
-# AIgram Backend
+# Epochal Dialoge Backend
 
-Backend для приложения AIgram - платформы для общения с ИИ-агентами.
+Backend для приложения Epochal Dialoge - платформы для общения с ИИ-агентами.
 
 ## 📁 Структура проекта
 

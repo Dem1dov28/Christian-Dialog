@@ -6,7 +6,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import DrawerMenu from "./components/menu/DrawerMenu.jsx";
-import CollectionModal from "./components/chat/CollectionModal.jsx";
 import DeleteChatModal from "./components/chat/DeleteChatModal.jsx";
 import PricingPage from "./pages/PricingPage/PricingPage.jsx";
 import UpgradeModal from "./components/modals/UpgradeModal.jsx";
@@ -72,8 +71,6 @@ function MainApp() {
     setTargetMessageId,
     isCompactChatOpen,
     setIsCompactChatOpen,
-    isCollectionModalOpen,
-    setIsCollectionModalOpen,
     isFolderManagerOpen,
     setIsFolderManagerOpen,
     isDeleteChatModalOpen,
@@ -234,7 +231,6 @@ function MainApp() {
 
   // Используем хуки для обработчиков модальных окон
   const modalHandlers = useModalHandlers({
-    setIsCollectionModalOpen,
     setIsDeleteChatModalOpen,
     // УДАЛЕНО - setIsUnsubscribeChannelModalOpen, setUnsubscribeChannelData (channels были удалены)
     setModalData,
@@ -253,12 +249,10 @@ function MainApp() {
   });
 
   const {
-    handleAddToCollection,
     handlePinToTop: handlePinToTopBase,
     handleDeleteAgent,
     handleConfirmDeleteChat: handleConfirmDeleteChatBase,
     handleCloseDeleteModal,
-    handleCollectionAdd,
     handleCreateFolderFromModal,
     handleOpenFolderManager,
     handleCloseFolderManager,
@@ -447,7 +441,6 @@ function MainApp() {
         onDeleteChat={handleDeleteChat}
         onCreateNewChat={handleCreateNewChatWithFolder}
         onOpenFolderManager={handleOpenFolderManager}
-        onAddToCollection={handleAddToCollection}
         onPinToTop={handlePinToTop}
         onDeleteAgent={handleDeleteAgent}
         onUnsubscribeChannel={handleUnsubscribeChannel}
@@ -504,16 +497,6 @@ function MainApp() {
         isOpen={isSupportModalOpen}
         onClose={closeSupportModal}
         onSubmit={handleSupportSubmit}
-      />
-      <CollectionModal
-        isOpen={isCollectionModalOpen}
-        onClose={() => setIsCollectionModalOpen(false)}
-        onAddToCollection={handleCollectionAdd}
-        agentId={modalData?.agentId}
-        conversationId={modalData?.conversationId}
-        chatId={modalData?.chatId}
-        folders={folders}
-        onCreateFolder={handleCreateFolderFromModal}
       />
 
       <DeleteChatModal
