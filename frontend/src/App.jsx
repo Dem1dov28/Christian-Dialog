@@ -13,6 +13,7 @@ import ConnectionStatus from "./components/common/ConnectionStatus.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 import Index from "./pages/Index.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import { Toaster } from "./components/ui/toaster.jsx";
@@ -688,6 +689,14 @@ export default function App() {
                         element={
                           <PublicRoute>
                             <ForgotPassword />
+                          </PublicRoute>
+                        }
+                      />
+                      <Route
+                        path="/reset-password"
+                        element={
+                          <PublicRoute>
+                            <ResetPassword />
                           </PublicRoute>
                         }
                       />

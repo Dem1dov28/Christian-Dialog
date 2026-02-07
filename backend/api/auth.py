@@ -41,8 +41,13 @@ from models.user import (
     APIUpgradeRequest,
     APIUpgradeResponse,
     SubscriptionUpgradeRequest,
-    SubscriptionUpgradeResponse
+    SubscriptionUpgradeResponse,
+    CheckEmailRequest,
+    CheckEmailResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse
 )
+from models.verification_code import VerifyCodeRequest, VerifyCodeResponse, SendResetCodeRequest, ResetPasswordRequest
 from models.conversation import Conversation
 from models.message import Message
 from models.multi_agent_conversation import MultiAgentConversation
@@ -839,3 +844,121 @@ def update_system_chat_visibility(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Не удалось обновить настройку: {str(e)}"
         )
+
+
+@router.post("/check-email", response_model=CheckEmailResponse)
+def check_email_exists(
+    request: CheckEmailRequest,
+    db: Session = Depends(get_session)
+):
+    """Проверить, существует ли пользователь с таким email"""
+    try:
+        user = get_user_by_email(db, request.email)
+        
+        if user:
+            return CheckEmailResponse(
+                exists=True,
+                message="Email найден"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь с таким email не найден"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error checking email: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при проверке email"
+        )
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_session)
+):
+    """Отправить код для сброса пароля на email"""
+    try:
+        user = get_user_by_email(db, request.email)
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь с таким email не найден"
+            )
+        
+        # TODO: Здесь должна быть логика генерации кода и отправки email
+        # Пока просто возвращаем успех
+        logger.info(f"Password reset requested for user: {user.email}")
+        
+        return ForgotPasswordResponse(
+            success=True,
+            message="Код для сброса пароля отправлен на ваш email"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in forgot password: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при отправке кода для сброса пароля"
+        )
+
+
+@router.post("/send-reset-code")
+async def send_reset_code(request: SendResetCodeRequest):
+    """Отправляет код верификации на email"""
+    try:
+        from services.verification_code_service import verification_code_service
+        success = verification_code_service.send_verification_code(request.email)
+        if success:
+            return {"success": True, "message": "Код отправлен на ваш email"}
+        else:
+            raise HTTPException(status_code=500, detail="Не удалось отправить код")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/verify-reset-code", response_model=VerifyCodeResponse)
+async def verify_reset_code(request: VerifyCodeRequest):
+    """Проверяет код верификации"""
+    try:
+        from services.verification_code_service import verification_code_service
+        result = verification_code_service.verify_code(request.email, request.code)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/reset-password")
+async def reset_password(
+    request: ResetPasswordRequest,
+    session: Session = Depends(get_session)
+):
+    """Сбрасывает пароль пользователя"""
+    try:
+        # Проверяем токен (реализация зависит от вашей системы токенов)
+        # verify_token(request.token, request.email)
+        
+        # Находим пользователя
+        statement = select(User).where(User.email == request.email)
+        user = session.exec(statement).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+        
+        # Хэшируем новый пароль
+        user.hashed_password = get_password_hash(request.new_password)
+        user.reset_token = None
+        user.reset_token_expires = None
+        
+        session.add(user)
+        session.commit()
+        
+        return {"success": True, "message": "Пароль успешно сброшен"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

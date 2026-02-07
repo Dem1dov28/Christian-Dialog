@@ -19,7 +19,4 @@ from .budget import Budget, BudgetPublic, BudgetCreate, BudgetUpdate
 from .savings_goal import SavingsGoal, SavingsGoalPublic, SavingsGoalCreate, SavingsGoalUpdate
 from .recurring_payment import RecurringPayment, RecurringPaymentPublic, RecurringPaymentCreate, RecurringPaymentUpdate
 from .attraction import Attraction
-from .budget import Budget, BudgetPublic, BudgetCreate, BudgetUpdate
-from .savings_goal import SavingsGoal, SavingsGoalPublic, SavingsGoalCreate, SavingsGoalUpdate
-from .recurring_payment import RecurringPayment, RecurringPaymentPublic, RecurringPaymentCreate, RecurringPaymentUpdate
-from .attraction import Attraction
+from .verification_code import VerificationCode, VerificationCodeCreate, VerifyCodeRequest, VerifyCodeResponse

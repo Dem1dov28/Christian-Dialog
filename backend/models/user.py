@@ -264,3 +264,25 @@ class SubscriptionStatusResponse(SQLModel):
     api_access: bool
     can_upgrade: bool
     can_downgrade: bool
+
+
+class CheckEmailRequest(SQLModel):
+    """Модель для запроса проверки email"""
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+
+class CheckEmailResponse(SQLModel):
+    """Модель для ответа проверки email"""
+    exists: bool
+    message: str
+
+
+class ForgotPasswordRequest(SQLModel):
+    """Модель для запроса сброса пароля"""
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+
+class ForgotPasswordResponse(SQLModel):
+    """Модель для ответа на запрос сброса пароля"""
+    success: bool
+    message: str

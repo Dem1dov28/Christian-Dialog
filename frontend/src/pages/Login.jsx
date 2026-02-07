@@ -16,6 +16,8 @@ const Login = () => {
     password: "",
   });
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const googleLocale = language === "ru" ? "ru" : "en";
 
@@ -25,16 +27,27 @@ const Login = () => {
       [e.target.name]: e.target.value,
     });
     setError(""); // Очищаем ошибку при изменении полей
+    setEmailError("");
+    setPasswordError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Предотвращаем стандартное поведение формы
+    e.stopPropagation();
+    
+    // Очищаем предыдущие ошибки
     setError("");
+    setEmailError("");
+    setPasswordError("");
 
     try {
+      // Попытка входа - если успешна, AuthContext изменит isAuthenticated и произойдет редирект
       await login(formData);
-      // После успешного логина пользователь автоматически перенаправится
+      // После успешного логина пользователь автоматически перенаправится через PublicRoute
     } catch (error) {
+      // При ошибке НЕ меняется isAuthenticated, поэтому компонент остается на месте
       // Извлекаем понятное сообщение об ошибке
       let errorMessage = error.message || t("auth.login.error");
       
@@ -42,9 +55,20 @@ const Login = () => {
       if (error.status === 429 || errorMessage.includes("лимит") || errorMessage.includes("429")) {
         const retryAfter = error.retryAfter || 60;
         errorMessage = errorMessage || `Превышен лимит запросов. Пожалуйста, подождите ${retryAfter} секунд перед повторной попыткой.`;
+        setError(errorMessage);
+      } else if (error.status === 401 || errorMessage.includes("Неверный") || errorMessage.includes("пароль")) {
+        // Для 401 или ошибок "Неверный email или пароль"
+        // Показываем ошибки для каждого поля
+        if (language === "ru") {
+          setEmailError("Email не зарегистрирован");
+          setPasswordError("Пароль неверный");
+        } else {
+          setEmailError("Email is not registered");
+          setPasswordError("Incorrect password");
+        }
+      } else {
+        setError(errorMessage);
       }
-      
-      setError(errorMessage);
     }
   };
 
@@ -121,6 +145,11 @@ const Login = () => {
                   autoComplete="email"
                   className="transition-all duration-300 hover:bg-input/70 hover:border-primary/30 focus:bg-input/80 focus:scale-[1.01] focus:shadow-[0_0_0_4px_rgba(var(--primary),0.15),0_2px_12px_rgba(var(--primary),0.2)] focus:border-primary/50 group-hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
                 />
+                {emailError && (
+                  <p className="text-red-500 text-sm mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                    {emailError}
+                  </p>
+                )}
               </div>
 
               <div className="group relative">
@@ -136,6 +165,11 @@ const Login = () => {
                   autoComplete="current-password"
                   className="transition-all duration-300 hover:bg-input/70 hover:border-primary/30 focus:bg-input/80 focus:scale-[1.01] focus:shadow-[0_0_0_4px_rgba(var(--primary),0.15),0_2px_12px_rgba(var(--primary),0.2)] focus:border-primary/50 group-hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
                 />
+                {passwordError && (
+                  <p className="text-red-500 text-sm mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                    {passwordError}
+                  </p>
+                )}
               </div>
             </div>
 

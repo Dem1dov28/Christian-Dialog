@@ -296,5 +296,30 @@ export class AuthAPI {
       can_downgrade: (userData.subscription_tier || "free") !== "free",
     };
   }
+
+  // Проверить существование email
+  async checkEmailExists(email) {
+    return this.client.post("/auth/check-email", { email });
+  }
+
+  // Отправить код для сброса пароля
+  async sendPasswordResetCode(email) {
+    return this.client.post("/auth/forgot-password", { email });
+  }
+
+  // Отправить код верификации
+  async sendResetCode(email) {
+    return this.client.post("/auth/send-reset-code", { email });
+  }
+
+  // Проверить код верификации
+  async verifyResetCode(email, code) {
+    return this.client.post("/auth/verify-reset-code", { email, code });
+  }
+
+  // Сбросить пароль
+  async resetPassword(email, token, newPassword) {
+    return this.client.post("/auth/reset-password", { email, token, new_password: newPassword });
+  }
 }
 
