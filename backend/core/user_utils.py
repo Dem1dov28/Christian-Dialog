@@ -22,7 +22,7 @@ def create_user_response(user: User) -> UserResponse:
         api_key=user.api_key,
         expires_at=user.expires_at,
         messages_cycle_started_at=getattr(user, "messages_cycle_started_at", None),
-        is_system_chat_hidden=getattr(user, "is_system_chat_hidden", False),
+
         pinned_chats=user.get_pinned_chat_ids() if hasattr(user, "get_pinned_chat_ids") else [],
         auth_provider=getattr(user, "auth_provider", "local"),
     )

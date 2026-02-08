@@ -57,9 +57,7 @@ from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID
 
 logger = logging.getLogger(__name__)
 
-# Модель для обновления настройки системного чата
-class SystemChatVisibilityRequest(BaseModel):
-    is_hidden: bool
+
 
 
 class GoogleAuthRequest(BaseModel):
@@ -84,6 +82,42 @@ google_request_adapter = google_requests.Request()
 def register_user(user_data: UserCreate, db: Session = Depends(get_session)):
     """Регистрация нового пользователя"""
     try:
+        if not hasattr(user_data, 'code') or not user_data.code:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Требуется код подтверждения email"
+            )
+        
+        # Проверяем код верификации
+        if user_data.code:
+            from services.verification_code_service import verification_code_service
+            from sqlmodel import select
+            from models.verification_code import VerificationCode
+            
+            # Проверяем, что код существует и валиден
+            # Используем существующую сессию db вместо создания новой
+            from datetime import datetime
+            statement = select(VerificationCode).where(
+                VerificationCode.email == user_data.email,
+                VerificationCode.code == user_data.code,
+                VerificationCode.is_used == False,
+                VerificationCode.expires_at > datetime.utcnow()
+            )
+            
+            verification_code = db.exec(statement).first()
+            
+            if not verification_code:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Неверный или просроченный код подтверждения"
+                )
+            
+            # Помечаем код как использованный
+            verification_code.is_used = True
+            verification_code.used_at = datetime.utcnow()
+            db.add(verification_code)
+            db.commit()
+        
         user = create_user(db, user_data)
         return create_user_response(user)
     except HTTPException:
@@ -362,9 +396,7 @@ def update_current_user(
             )
         current_user.hashed_password = get_password_hash(user_update.password)
     
-    if user_update.is_system_chat_hidden is not None:
-        current_user.is_system_chat_hidden = user_update.is_system_chat_hidden
-    
+
     # Исправлено: используем текущее время, а не created_at
     current_user.updated_at = datetime.utcnow()
     
@@ -821,29 +853,6 @@ def check_message_limit(
         )
 
 
-@router.put("/system-chat-visibility", response_model=UserResponse)
-def update_system_chat_visibility(
-    request: SystemChatVisibilityRequest,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_session)
-):
-    """Обновить настройку видимости системного чата"""
-    try:
-        current_user.is_system_chat_hidden = request.is_hidden
-        current_user.updated_at = datetime.utcnow()
-        
-        db.add(current_user)
-        db.commit()
-        db.refresh(current_user)
-        
-        return create_user_response(current_user)
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Error updating system chat visibility for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Не удалось обновить настройку: {str(e)}"
-        )
 
 
 @router.post("/check-email", response_model=CheckEmailResponse)
@@ -908,17 +917,55 @@ def forgot_password(
         )
 
 
+@router.post("/send-registration-code")
+async def send_registration_code(request: SendResetCodeRequest, db: Session = Depends(get_session)):
+    """Отправляет код верификации на email для регистрации"""
+    try:
+        # Проверяем, что пользователя с таким email НЕ существует
+        user = get_user_by_email(db, request.email)
+        if user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пользователь с таким email уже зарегистрирован"
+            )
+
+        from services.verification_code_service import verification_code_service
+        success = verification_code_service.send_registration_code(request.email)
+        if success:
+            return {"success": True, "message": "Код отправлен на ваш email"}
+        else:
+            raise HTTPException(status_code=500, detail="Не удалось отправить код")
+    except HTTPException:
+        # Пробрасываем HTTPException
+        raise
+    except Exception as e:
+        logger.error(f"Error in send_registration_code: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/send-reset-code")
-async def send_reset_code(request: SendResetCodeRequest):
+async def send_reset_code(request: SendResetCodeRequest, db: Session = Depends(get_session)):
     """Отправляет код верификации на email"""
     try:
+        # Проверяем, существует ли пользователь с таким email
+        user = get_user_by_email(db, request.email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь с таким email не найден"
+            )
+
         from services.verification_code_service import verification_code_service
         success = verification_code_service.send_verification_code(request.email)
         if success:
             return {"success": True, "message": "Код отправлен на ваш email"}
         else:
             raise HTTPException(status_code=500, detail="Не удалось отправить код")
+    except HTTPException:
+        # Пробрасываем HTTPException
+        raise
     except Exception as e:
+        logger.error(f"Error in send_reset_code: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

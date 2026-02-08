@@ -1545,29 +1545,7 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             )
         return {"ok": True}
     
-    @app.put("/system-chat-visibility", response_model=UserResponse)
-    def update_system_chat_visibility(
-        request: SystemChatVisibilityRequest,
-        current_user: User = Depends(get_current_active_user),
-        db: Session = Depends(get_session)
-    ):
-        """Обновить настройку видимости системного чата"""
-        try:
-            current_user.is_system_chat_hidden = request.is_hidden
-            current_user.updated_at = datetime.utcnow()
-            
-            db.add(current_user)
-            db.commit()
-            db.refresh(current_user)
-            
-            return create_user_response(current_user)
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error updating system chat visibility: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Не удалось обновить настройку"
-            )
+
     
     @app.post("/conversations/{conversation_id}/mark-as-read")
     def mark_conversation_as_read(

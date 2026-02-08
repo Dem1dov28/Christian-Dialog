@@ -19,7 +19,7 @@ export class AuthAPI {
     const formData = new URLSearchParams();
     formData.append('username', credentials.email || credentials.username); // Поддержка обоих вариантов для обратной совместимости
     formData.append('password', credentials.password);
-    
+
     const url = `${this.client.baseURL}/auth/login`;
     const config = {
       method: 'POST',
@@ -42,10 +42,10 @@ export class AuthAPI {
         } catch (e) {
           errorData = {};
         }
-        
+
         // Извлекаем сообщение об ошибке из различных форматов ответа
         let errorMessage = `HTTP error! status: ${response.status}`;
-        
+
         if (errorData.detail) {
           if (typeof errorData.detail === "string") {
             errorMessage = errorData.detail;
@@ -64,12 +64,12 @@ export class AuthAPI {
         } else if (errorData.message) {
           errorMessage = errorData.message;
         }
-        
+
         // Если токен истек, очищаем его
         if (response.status === 401) {
           this.client.setToken(null);
         }
-        
+
         const error = new Error(errorMessage);
         error.status = response.status;
         error.response = errorData;
@@ -165,10 +165,10 @@ export class AuthAPI {
         } catch (e) {
           errorData = {};
         }
-        
+
         // Извлекаем сообщение об ошибке из различных форматов ответа
         let errorMessage = `HTTP error! status: ${response.status}`;
-        
+
         if (errorData.detail) {
           if (typeof errorData.detail === "string") {
             errorMessage = errorData.detail;
@@ -187,7 +187,7 @@ export class AuthAPI {
         } else if (errorData.message) {
           errorMessage = errorData.message;
         }
-        
+
         const error = new Error(errorMessage);
         error.status = response.status;
         error.response = errorData;
@@ -310,6 +310,11 @@ export class AuthAPI {
   // Отправить код верификации
   async sendResetCode(email) {
     return this.client.post("/auth/send-reset-code", { email });
+  }
+
+  // Отправить код для регистрации
+  async sendRegistrationCode(email) {
+    return this.client.post("/auth/send-registration-code", { email });
   }
 
   // Проверить код верификации

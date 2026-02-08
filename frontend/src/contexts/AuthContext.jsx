@@ -14,14 +14,15 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [usageStats, setUsageStats] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Проверяем токен при загрузке приложения
   useEffect(() => {
     console.log("[AuthContext] useEffect triggered, isInitialized:", isInitialized);
-    
+
     // Защита от повторных вызовов в React StrictMode
     if (isInitialized) return;
 
@@ -107,7 +108,7 @@ export const AuthProvider = ({ children }) => {
           setUsageStats(null);
         }
       }
-      setIsLoading(false);
+      setIsInitializing(false);
       setIsInitialized(true);
     };
 
@@ -266,7 +267,7 @@ export const AuthProvider = ({ children }) => {
 
   // Принудительная переинициализация аутентификации
   const reinitializeAuth = async () => {
-    setIsLoading(true);
+    setIsInitializing(true);
     setIsInitialized(false);
 
     const token = localStorage.getItem("auth_token");
@@ -294,7 +295,7 @@ export const AuthProvider = ({ children }) => {
       setUsageStats(null);
     }
 
-    setIsLoading(false);
+    setIsInitializing(false);
     setIsInitialized(true);
   };
 
@@ -360,15 +361,15 @@ export const AuthProvider = ({ children }) => {
         setUser((prev) =>
           prev
             ? {
-                ...prev,
-                subscription_tier:
-                  response.subscription_tier ?? prev.subscription_tier,
-                messages_limit:
-                  typeof response.messages_limit === "number"
-                    ? response.messages_limit
-                    : prev.messages_limit,
-                expires_at: response.expires_at ?? prev.expires_at,
-              }
+              ...prev,
+              subscription_tier:
+                response.subscription_tier ?? prev.subscription_tier,
+              messages_limit:
+                typeof response.messages_limit === "number"
+                  ? response.messages_limit
+                  : prev.messages_limit,
+              expires_at: response.expires_at ?? prev.expires_at,
+            }
             : prev
         );
 
@@ -454,6 +455,7 @@ export const AuthProvider = ({ children }) => {
     user,
     isAuthenticated,
     isLoading,
+    isInitializing,
     usageStats,
     login,
     loginWithGoogle,

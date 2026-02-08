@@ -396,7 +396,7 @@ function MainApp() {
     const areAgentsLoaded = !isAgentsLoading && agents.length >= 0; // Может быть 0 агентов
     const areConversationsLoaded = !isLoading && conversations.length >= 0; // Может быть 0 чатов
     const areFoldersLoaded = folders.length >= 0; // Может быть 0 папок
-    
+
     // Все основные данные загружены
     if (isAuthLoaded && areAgentsLoaded && areConversationsLoaded && areFoldersLoaded) {
       setIsInitialLoadComplete(true);
@@ -409,7 +409,7 @@ function MainApp() {
   }
 
   const shouldRenderSidebar =
-    isProfileVisible || 
+    isProfileVisible ||
     (isUltraCompact && !isCompactChatOpen) ||
     (!isUltraCompact && !isMediumScreen) || // На больших экранах (>750px) всегда показываем
     (isMediumScreen && !isUltraCompact && (!activeChatId || isMediumScreenSidebarVisible || isLibraryWithSidebar)); // На средних (550-750px)
@@ -426,9 +426,9 @@ function MainApp() {
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
         onProfileClick={openProfile}
-        
+
       />
-      
+
       {/* Основной Layout компонент */}
       <MainLayout
         searchRef={searchRef}
@@ -467,12 +467,12 @@ function MainApp() {
         onBack={
           isShowBackButton
             ? () => {
-                if (isUltraCompact) {
-                  setIsCompactChatOpen(false);
-                } else if (isMediumScreen && !isUltraCompact) {
-                  setIsMediumScreenSidebarVisible(true);
-                }
+              if (isUltraCompact) {
+                setIsCompactChatOpen(false);
+              } else if (isMediumScreen && !isUltraCompact) {
+                setIsMediumScreenSidebarVisible(true);
               }
+            }
             : undefined
         }
         rightPanelRef={rightPanelRef}
@@ -551,19 +551,19 @@ function MainApp() {
           deleteChatData.agentId
             ? getAgent(deleteChatData.agentId)?.icon_name
             : conversations.find(
-                (conv) => conv.id === deleteChatData.conversationId
-              )?.group_avatar || "group"
+              (conv) => conv.id === deleteChatData.conversationId
+            )?.group_avatar || "group"
         }
         agentColor={
           deleteChatData.agentId
             ? (() => {
-                const colorClass = getAgent(deleteChatData.agentId)?.color_class || "purple-500";
-                // Убираем префиксы bg- и dark:bg- для модального окна
-                return colorClass
-                  .replace(/^bg-/, "")
-                  .replace(/dark:bg-/, "")
-                  .split(" ")[0] || "purple-500";
-              })()
+              const colorClass = getAgent(deleteChatData.agentId)?.color_class || "purple-500";
+              // Убираем префиксы bg- и dark:bg- для модального окна
+              return colorClass
+                .replace(/^bg-/, "")
+                .replace(/dark:bg-/, "")
+                .split(" ")[0] || "purple-500";
+            })()
             : "purple-500"
         }
         agentImage={
@@ -626,9 +626,9 @@ function ProtectedRoute({ children }) {
 
 // Компонент для публичных маршрутов (только для неавторизованных)
 function PublicRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isInitializing } = useAuth();
 
-  if (isLoading) {
+  if (isInitializing) {
     return <LoadingScreen isVisible={true} />;
   }
 
@@ -646,97 +646,97 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-        <AgentsProvider>
-          <SidebarUpdateProvider>
-            <PanelWidthProvider>
-            <ModalProvider>
-            <FoldersProvider>
-              <ChatsProvider>
-                <NotificationProvider>
-<ImageModalProvider>
-                {/* Preloader для заранее загрузки 3D ресурсов */}
-                <LoadingScreen.Preloader />
-                
-                <Router
-                  future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true,
-                  }}
-                >
-                  <GlobalLongPressHandler />
-                  <ConnectionStatus />
-                  <div className="flex h-screen overflow-hidden items-center justify-center">
-                    <Routes>
-                      {/* Публичные маршруты */}
-                      <Route
-                        path="/login"
-                        element={
-                          <PublicRoute>
-                            <Login />
-                          </PublicRoute>
-                        }
-                      />
-                      <Route
-                        path="/register"
-                        element={
-                          <PublicRoute>
-                            <Register />
-                          </PublicRoute>
-                        }
-                      />
-                      <Route
-                        path="/forgot-password"
-                        element={
-                          <PublicRoute>
-                            <ForgotPassword />
-                          </PublicRoute>
-                        }
-                      />
-                      <Route
-                        path="/reset-password"
-                        element={
-                          <PublicRoute>
-                            <ResetPassword />
-                          </PublicRoute>
-                        }
-                      />
-                      <Route
-                        path="/welcome"
-                        element={
-                          <PublicRoute>
-                            <Index />
-                          </PublicRoute>
-                        }
-                      />
+          <AgentsProvider>
+            <SidebarUpdateProvider>
+              <PanelWidthProvider>
+                <ModalProvider>
+                  <FoldersProvider>
+                    <ChatsProvider>
+                      <NotificationProvider>
+                        <ImageModalProvider>
+                          {/* Preloader для заранее загрузки 3D ресурсов */}
+                          <LoadingScreen.Preloader />
 
-                      {/* Защищенные маршруты */}
-                      <Route
-                        path="/"
-                        element={
-                          <ProtectedRoute>
-                            <MainApp />
-                          </ProtectedRoute>
-                        }
-                      />
+                          <Router
+                            future={{
+                              v7_startTransition: true,
+                              v7_relativeSplatPath: true,
+                            }}
+                          >
+                            <GlobalLongPressHandler />
+                            <ConnectionStatus />
+                            <div className="flex h-screen overflow-hidden items-center justify-center">
+                              <Routes>
+                                {/* Публичные маршруты */}
+                                <Route
+                                  path="/login"
+                                  element={
+                                    <PublicRoute>
+                                      <Login />
+                                    </PublicRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/register"
+                                  element={
+                                    <PublicRoute>
+                                      <Register />
+                                    </PublicRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/forgot-password"
+                                  element={
+                                    <PublicRoute>
+                                      <ForgotPassword />
+                                    </PublicRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/reset-password"
+                                  element={
+                                    <PublicRoute>
+                                      <ResetPassword />
+                                    </PublicRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/welcome"
+                                  element={
+                                    <PublicRoute>
+                                      <Index />
+                                    </PublicRoute>
+                                  }
+                                />
+
+                                {/* Защищенные маршруты */}
+                                <Route
+                                  path="/"
+                                  element={
+                                    <ProtectedRoute>
+                                      <MainApp />
+                                    </ProtectedRoute>
+                                  }
+                                />
 
 
-                      {/* 404 маршрут */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                                {/* 404 маршрут */}
+                                <Route path="*" element={<NotFound />} />
+                              </Routes>
 
-                    {/* Toast уведомления */}
-                    <Toaster />
-                  </div>
-                </Router>
-                  </ImageModalProvider>
-                </NotificationProvider>
-              </ChatsProvider>
-            </FoldersProvider>
-            </ModalProvider>
-            </PanelWidthProvider>
-          </SidebarUpdateProvider>
-        </AgentsProvider>
-      </AuthProvider>
+                              {/* Toast уведомления */}
+                              <Toaster />
+                            </div>
+                          </Router>
+                        </ImageModalProvider>
+                      </NotificationProvider>
+                    </ChatsProvider>
+                  </FoldersProvider>
+                </ModalProvider>
+              </PanelWidthProvider>
+            </SidebarUpdateProvider>
+          </AgentsProvider>
+        </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

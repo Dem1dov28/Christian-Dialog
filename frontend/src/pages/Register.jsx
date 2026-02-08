@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { AuthBackground } from "@/components/auth/AuthBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import api from "@/services/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ const Register = () => {
     code: "",
   });
   const [error, setError] = useState("");
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -27,6 +30,35 @@ const Register = () => {
     setError(""); // Очищаем ошибку при изменении полей
   };
 
+  const handleSendCode = async () => {
+    setError("");
+
+    // Валидация email
+    if (!formData.email) {
+      setError("Введите email для получения кода");
+      return;
+    }
+
+    setIsSendingCode(true);
+
+    try {
+      await api.sendRegistrationCode(formData.email);
+      setIsCodeSent(true);
+      setError("");
+    } catch (error) {
+      console.error("Error sending code:", error);
+      let errorMessage = error.message || "Не удалось отправить код";
+
+      if (error.status === 400) {
+        errorMessage = error.message || "Пользователь с таким email уже зарегистрирован";
+      }
+
+      setError(errorMessage);
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -34,6 +66,12 @@ const Register = () => {
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError(t("auth.register.passwordsNotMatch"));
+      return;
+    }
+
+    // Проверяем, что код был введен
+    if (!formData.code) {
+      setError("Введите код подтверждения, отправленный на вашу почту");
       return;
     }
 
@@ -48,13 +86,13 @@ const Register = () => {
     } catch (error) {
       // Извлекаем понятное сообщение об ошибке
       let errorMessage = error.message || t("auth.register.error");
-      
+
       // Для ошибок лимита запросов показываем пользователю понятное сообщение
       if (error.status === 429 || errorMessage.includes("лимит") || errorMessage.includes("429")) {
         const retryAfter = error.retryAfter || 60;
         errorMessage = errorMessage || `Превышен лимит запросов. Пожалуйста, подождите ${retryAfter} секунд перед повторной попыткой.`;
       }
-      
+
       setError(errorMessage);
     }
   };
@@ -68,9 +106,9 @@ const Register = () => {
         <div className="relative backdrop-blur-2xl bg-card/30 border border-white/10 rounded-[2rem] p-6 sm:p-8 [@media(max-height:629px)]:p-3 [@media(max-height:629px)]:sm:p-4 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5),0_-4px_24px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-700 ease-out ring-1 ring-white/5 before:absolute before:inset-0 before:rounded-[2rem] before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none">
           {/* Logo */}
           <div className="text-center mb-6 sm:mb-8 [@media(max-height:629px)]:mb-3 [@media(max-height:629px)]:sm:mb-4">
-            <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 [@media(max-height:629px)]:mb-2 [@media(max-height:629px)]:hidden shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
-              <img 
-                src="/AI-gram-icon.png" 
+            <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 [@media(max-height:700px)]:mb-2 [@media(max-height:700px)]:hidden shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
+              <img
+                src="/AI-gram-icon.png"
                 alt="Epochal Dialoge"
                 className="w-10 h-10 object-contain transition-transform duration-500 group-hover:scale-110"
               />
@@ -177,10 +215,10 @@ const Register = () => {
                   variant="glass"
                   size="default"
                   className="whitespace-nowrap border-white/10 hover:bg-card/60 h-12 px-6 transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95"
-                  onClick={() => {}}
-                  disabled={isLoading}
+                  onClick={handleSendCode}
+                  disabled={isLoading || isSendingCode || !formData.email}
                 >
-                  {t("auth.register.sendCode")}
+                  {isSendingCode ? "Отправка..." : isCodeSent ? "Отправлено ✓" : t("auth.register.sendCode")}
                 </Button>
               </div>
             </div>
@@ -218,16 +256,16 @@ const Register = () => {
           {/* Login Link */}
           <p className="text-center text-sm text-muted-foreground mt-6 [@media(max-height:629px)]:mt-3">
             {t("auth.register.alreadyHaveAccount")}{" "}
-              <a
-                href="/login"
-                className="text-primary hover:text-primary/90 font-bold transition-all duration-300 hover:underline decoration-primary/60 underline-offset-4 hover:-translate-y-0.5 inline-block hover:drop-shadow-[0_2px_8px_rgba(var(--primary),0.3)]"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/login");
-                }}
-              >
-                {t("auth.register.loginCTA")}
-              </a>
+            <a
+              href="/login"
+              className="text-primary hover:text-primary/90 font-bold transition-all duration-300 hover:underline decoration-primary/60 underline-offset-4 hover:-translate-y-0.5 inline-block hover:drop-shadow-[0_2px_8px_rgba(var(--primary),0.3)]"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/login");
+              }}
+            >
+              {t("auth.register.loginCTA")}
+            </a>
           </p>
         </div>
       </div>

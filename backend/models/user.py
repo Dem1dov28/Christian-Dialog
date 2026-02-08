@@ -36,6 +36,7 @@ class UserCreate(SQLModel):
         description="Желаемый username пользователя (если не указан, генерируется автоматически)"
     )
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
+    code: Optional[str] = Field(default=None, min_length=6, max_length=6, description="Код подтверждения email")
 
 
 class UserUpdate(SQLModel):
@@ -44,6 +45,7 @@ class UserUpdate(SQLModel):
     full_name: Optional[str] = Field(default=None, max_length=100)
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
     password: Optional[str] = Field(default=None, min_length=6, max_length=100)
+
 
 
 class User(UserBase, table=True):
@@ -82,6 +84,8 @@ class User(UserBase, table=True):
         index=True,
     )
     pinned_chats: str = Field(default="[]", description="JSON список ID закрепленных чатов")
+    
+
     
     # Связи
     folders: List["Folder"] = Relationship(back_populates="user")
@@ -188,6 +192,7 @@ class UserResponse(UserBase):
     expires_at: Optional[datetime] = None
     messages_cycle_started_at: Optional[datetime] = None
     pinned_chats: List[int] = []
+
 
 
 class Token(SQLModel):

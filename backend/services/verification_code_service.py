@@ -59,6 +59,47 @@ class VerificationCodeService(BaseService):
             logger.error(f"Error sending verification code to {email}: {str(e)}")
             return False
     
+    def send_registration_code(self, email: str) -> bool:
+        """Send verification code for registration"""
+        try:
+            code = self.generate_verification_code()
+            self.cleanup_old_codes(email)
+            expires_at = datetime.utcnow() + timedelta(minutes=15)
+            
+            verification_code = VerificationCode(
+                email=email,
+                code=code,
+                expires_at=expires_at
+            )
+            
+            with self.get_session() as session:
+                session.add(verification_code)
+                session.commit()
+                session.refresh(verification_code)
+            
+            subject = "Код подтверждения для регистрации"
+            body = f"""
+Ваш код подтверждения: {code}
+
+Используйте этот код для завершения регистрации на сайте EpochalDialog.
+Код действителен в течение 15 минут.
+
+Если вы не регистрировались на нашем сайте, проигнорируйте это сообщение.
+"""
+            
+            success = email_service.send_email(subject, body, email)
+            
+            if success:
+                logger.info(f"Registration verification code sent to {email}")
+            else:
+                logger.error(f"Failed to send registration verification code to {email}")
+                
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error sending registration verification code to {email}: {str(e)}")
+            return False
+    
     def verify_code(self, email: str, code: str) -> VerifyCodeResponse:
         try:
             with self.get_session() as session:

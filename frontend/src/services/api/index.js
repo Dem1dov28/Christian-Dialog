@@ -73,6 +73,7 @@ class UnifiedAPI {
     this.checkEmailExists = (email) => auth.checkEmailExists(email);
     this.sendPasswordResetCode = (email) => auth.sendPasswordResetCode(email);
     this.sendResetCode = (email) => auth.sendResetCode(email);
+    this.sendRegistrationCode = (email) => auth.sendRegistrationCode(email);
     this.verifyResetCode = (email, code) => auth.verifyResetCode(email, code);
     this.resetPassword = (email, token, newPassword) => auth.resetPassword(email, token, newPassword);
 
@@ -91,7 +92,7 @@ class UnifiedAPI {
     this.sendMessage = (messageData) => chats.sendMessage(messageData);
     this.getConversations = (agentId, offset, limit) => chats.getConversations(agentId, offset, limit);
     this.getConversation = (conversationId) => chats.getConversation(conversationId);
-    this.getConversationMessages = (conversationId, offset, maxChars, beforeDate) => 
+    this.getConversationMessages = (conversationId, offset, maxChars, beforeDate) =>
       chats.getConversationMessages(conversationId, offset, maxChars, beforeDate);
     this.deleteConversation = (conversationId) => chats.deleteConversation(conversationId);
     this.clearConversationMessages = (conversationId) => chats.clearConversationMessages(conversationId);
@@ -112,10 +113,10 @@ class UnifiedAPI {
     this.getGroupChat = (conversationId) => groupChats.getGroupChat(conversationId);
     this.getGroupChatAgents = (conversationId) => groupChats.getGroupChatAgents(conversationId);
     this.sendGroupMessage = (messageData) => groupChats.sendGroupMessage(messageData);
-    this.getGroupChatMessages = (conversationId, offset, maxChars, beforeDate) => 
+    this.getGroupChatMessages = (conversationId, offset, maxChars, beforeDate) =>
       groupChats.getGroupChatMessages(conversationId, offset, maxChars, beforeDate);
     this.deleteGroupChat = (conversationId) => groupChats.deleteGroupChat(conversationId);
-    this.continueGroupDialogue = (conversationId, language, isChatActive) => 
+    this.continueGroupDialogue = (conversationId, language, isChatActive) =>
       groupChats.continueGroupDialogue(conversationId, language, isChatActive);
     this.clearGroupConversationMessages = (conversationId) => groupChats.clearGroupConversationMessages(conversationId);
 
@@ -154,7 +155,7 @@ class UnifiedAPI {
 
     // Search методы
     this.searchConversations = (query, limit, sortBy) => search.searchConversations(query, limit, sortBy);
-    this.searchMessagesInConversation = (conversationId, query, limit, filterType, sortBy) => 
+    this.searchMessagesInConversation = (conversationId, query, limit, filterType, sortBy) =>
       search.searchMessagesInConversation(conversationId, query, limit, filterType, sortBy);
     this.searchMessages = (query, limit, sortBy) => search.searchMessages(query, limit, sortBy);
     this.globalSearch = (query, limit, sortBy) => search.globalSearch(query, limit, sortBy);
@@ -172,7 +173,7 @@ class UnifiedAPI {
 
     // Attractions методы
     this.getAttractionsByCity = (city, country, limit) => attractions.getAttractionsByCity(city, country, limit);
-    this.getAttractionsByCoordinates = (latitude, longitude, radius, limit) => 
+    this.getAttractionsByCoordinates = (latitude, longitude, radius, limit) =>
       attractions.getAttractionsByCoordinates(latitude, longitude, radius, limit);
     this.getWikipediaAttractions = (city, country, limit) => attractions.getWikipediaAttractions(city, country, limit);
     this.getWikipediaAttractionDetail = (title) => attractions.getWikipediaAttractionDetail(title);

@@ -33,14 +33,33 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Предотвращаем стандартное поведение формы
     e.stopPropagation();
-    
+
     // Очищаем предыдущие ошибки
     setError("");
     setEmailError("");
     setPasswordError("");
+
+    // Локальная валидация перед попыткой входа
+    if (!formData.email || !formData.email.trim()) {
+      if (language === "ru") {
+        setEmailError("Пожалуйста, введите email");
+      } else {
+        setEmailError("Please enter your email");
+      }
+      return; // Останавливаем выполнение, не пытаемся войти
+    }
+
+    if (!formData.password || !formData.password.trim()) {
+      if (language === "ru") {
+        setPasswordError("Пожалуйста, введите пароль");
+      } else {
+        setPasswordError("Please enter your password");
+      }
+      return; // Останавливаем выполнение, не пытаемся войти
+    }
 
     try {
       // Попытка входа - если успешна, AuthContext изменит isAuthenticated и произойдет редирект
@@ -50,7 +69,7 @@ const Login = () => {
       // При ошибке НЕ меняется isAuthenticated, поэтому компонент остается на месте
       // Извлекаем понятное сообщение об ошибке
       let errorMessage = error.message || t("auth.login.error");
-      
+
       // Для ошибок лимита запросов показываем пользователю понятное сообщение
       if (error.status === 429 || errorMessage.includes("лимит") || errorMessage.includes("429")) {
         const retryAfter = error.retryAfter || 60;
@@ -86,14 +105,14 @@ const Login = () => {
     } catch (error) {
       // Извлекаем понятное сообщение об ошибке
       let errorMessage = error.message || t("auth.login.googleError") || "Google authentication failed";
-      
+
       // Специальная обработка для ошибок Google OAuth
       if (errorMessage.includes("Invalid Google token") || errorMessage.includes("origin is not allowed")) {
         errorMessage = "Ошибка конфигурации Google OAuth. Пожалуйста, обратитесь к администратору.";
       } else if (errorMessage.includes("Google authentication is not configured")) {
         errorMessage = "Google аутентификация не настроена. Используйте обычный вход.";
       }
-      
+
       setError(errorMessage);
     }
   };
@@ -108,8 +127,8 @@ const Login = () => {
           {/* Logo */}
           <div className="text-center mb-6 sm:mb-8 [@media(max-height:629px)]:mb-3 [@media(max-height:629px)]:sm:mb-4">
             <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 [@media(max-height:629px)]:mb-2 [@media(max-height:629px)]:hidden shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
-              <img 
-                src="/AI-gram-icon.png" 
+              <img
+                src="/AI-gram-icon.png"
                 alt="Epochal Dialoge"
                 className="w-10 h-10 object-contain transition-transform duration-500 group-hover:scale-110"
               />
