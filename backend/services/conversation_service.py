@@ -134,48 +134,12 @@ class ConversationService(BaseService):
                         agent_name = (agent.name or "").lower()
                         agent_category = (agent.category or "").lower()
                         
-                        # Определяем категорию модели на основе имени агента
-                        model_category = None
-                        if "chatgpt" in agent_name or "gpt" in agent_name:
-                            model_category = "ChatGPT"
-                        elif "claude" in agent_name:
-                            model_category = "Claude"
-                        elif "grok" in agent_name:
-                            model_category = "Grok"
-                        elif "deepseek" in agent_name or "deep seek" in agent_name:
-                            model_category = "DeepSeek"
-                        elif "gemini" in agent_name:
-                            model_category = "Gemini"
-                        
-                        # Если не удалось определить по имени, проверяем категорию агента
-                        if not model_category and "models" in agent_category:
-                            # Пытаемся определить по категории
-                            if "chatgpt" in agent_category or "gpt" in agent_category:
-                                model_category = "ChatGPT"
-                            elif "claude" in agent_category:
-                                model_category = "Claude"
-                            elif "grok" in agent_category:
-                                model_category = "Grok"
-                            elif "deepseek" in agent_category or "deep seek" in agent_category:
-                                model_category = "DeepSeek"
-                            elif "gemini" in agent_category:
-                                model_category = "Gemini"
-                        
-                        # Выбираем самую слабую модель для категории (последняя в списке)
-                        if model_category == "ChatGPT":
-                            default_model = "openai/gpt-3.5-turbo"  # Самая слабая модель ChatGPT
-                        elif model_category == "Claude":
-                            default_model = "anthropic/claude-3.7-sonnet:thinking"  # Самая слабая модель Claude
-                        elif model_category == "Grok":
-                            default_model = "x-ai/grok-3-mini"  # Самая слабая модель Grok
-                        elif model_category == "DeepSeek":
-                            default_model = "deepseek/deepseek-r1-0528:free"  # Самая слабая модель DeepSeek
-                        elif model_category == "Gemini":
-                            default_model = "google/gemini-2.5-pro"  # Самая слабая модель Gemini
+                        # Все агенты используют одну модель
+                        default_model = "tngtech/deepseek-r1t2-chimera:free"
                 
                 # Если не удалось определить модель для категории, используем общую самую слабую
                 if not default_model:
-                    default_model = "openai/gpt-3.5-turbo"  # Общая самая слабая модель по умолчанию
+                    default_model = "arcee-ai/trinity-large-preview:free"  # Общая самая слабая модель по умолчанию
                 
                 # Всегда создаем новый разговор - каждый чат должен быть независимым
                 conversation = Conversation(
