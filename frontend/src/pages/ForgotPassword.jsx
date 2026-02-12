@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthBackground } from "@/components/auth/AuthBackground";
@@ -10,6 +10,7 @@ import { useNotification } from "@/contexts/NotificationContext";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +19,16 @@ const ForgotPassword = () => {
   const [codeError, setCodeError] = useState("");
   const { t } = useLanguage();
   const { showNotification } = useNotification();
+
+  // Pre-fill email if coming from profile
+  useEffect(() => {
+    const passedEmail = location.state?.email;
+    const fromProfile = location.state?.fromProfile;
+    
+    if (passedEmail && fromProfile) {
+      setEmail(passedEmail);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

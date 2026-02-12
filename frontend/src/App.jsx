@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import DrawerMenu from "./components/menu/DrawerMenu.jsx";
 import DeleteChatModal from "./components/chat/DeleteChatModal.jsx";
@@ -625,14 +626,20 @@ function ProtectedRoute({ children }) {
 }
 
 // Компонент для публичных маршрутов (только для неавторизованных)
-function PublicRoute({ children }) {
+function PublicRoute({ children, allowAuthenticated = false }) {
   const { isAuthenticated, isInitializing } = useAuth();
+  const location = useLocation();
 
   if (isInitializing) {
     return <LoadingScreen isVisible={true} />;
   }
 
-  return !isAuthenticated ? children : <Navigate to="/" replace />;
+  // Allow authenticated users to access forgot-password when coming from profile
+  if (isAuthenticated && !allowAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 }
 
 // Компонент для глобальной обработки long press
@@ -687,7 +694,7 @@ export default function App() {
                                 <Route
                                   path="/forgot-password"
                                   element={
-                                    <PublicRoute>
+                                    <PublicRoute allowAuthenticated={true}>
                                       <ForgotPassword />
                                     </PublicRoute>
                                   }

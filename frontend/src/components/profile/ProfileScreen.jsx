@@ -12,6 +12,9 @@ import {
   FiShare2,
   FiStar,
   FiChevronRight,
+  FiLock,
+  FiTrash2,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -21,20 +24,28 @@ import apiClient from "../../services/api";
 import SubscriptionStatus from "./SubscriptionStatus";
 import UsageStatistics from "./UsageStatistics";
 import { useMaxWidth } from "../../hooks/common/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 // i18n function stub for localization - теперь используем LanguageContext
 
 const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect }) => {
-  const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData } = useAuth();
+  const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData, deleteUserAccount, logoutAllDevices } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { showSuccess, showError } = useNotification();
+  const { clearAllConversations } = useChats();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isPrivacyMenuOpen, setIsPrivacyMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
   const [isShown, setIsShown] = useState(false);
   const [hasFetchedStats, setHasFetchedStats] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [showDeleteDataModal, setShowDeleteDataModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
   const isNarrowViewport = useMaxWidth(549);
 
   // Управление рендерингом и анимацией
@@ -108,6 +119,85 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
       }
     } catch (error) {
       console.error("Logout error:", error);
+    }
+  };
+
+  // Privacy panel handlers
+  const handleUpdateUsername = async () => {
+    if (!newUsername.trim() || newUsername.trim() === user?.username) {
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await updateUser({ username: newUsername.trim() });
+      showSuccess(t("profile.privacy.usernameUpdated"));
+      setNewUsername("");
+    } catch (error) {
+      console.error("Failed to update username:", error);
+      showError(error.message || "Failed to update username");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = () => {
+    // Navigate to forgot password page with user's email pre-filled
+    navigate("/forgot-password", { 
+      state: { 
+        email: user?.email || "",
+        fromProfile: true
+      } 
+    });
+    onClose();
+  };
+
+  const handleDeleteData = async () => {
+    try {
+      setIsLoading(true);
+      await clearAllConversations();
+      showSuccess(t("profile.privacy.dataDeleted"));
+      setShowDeleteDataModal(false);
+    } catch (error) {
+      console.error("Failed to delete data:", error);
+      showError(error.message || "Failed to delete data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deleteAccountPassword.trim()) {
+      showError(t("profile.privacy.passwordRequired"));
+      return;
+    }
+    try {
+      setIsLoading(true);
+      if (deleteUserAccount) {
+        await deleteUserAccount(deleteAccountPassword);
+      }
+      showSuccess(t("profile.privacy.accountDeleted"));
+      setShowDeleteAccountModal(false);
+      await logout();
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      showError(error.message || "Failed to delete account");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogoutAllDevices = async () => {
+    try {
+      setIsLoading(true);
+      await logoutAllDevices();
+      showSuccess(t("profile.privacy.loggedOutAllDevices"));
+      // После выхода со всех устройств выполняем локальный выход
+      await logout();
+    } catch (error) {
+      console.error("Failed to logout from all devices:", error);
+      showError(error.message || "Failed to logout from all devices");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -217,9 +307,17 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           label: t("profile.menu.privacy"),
           icon: FiShield,
           onPress: () => {
-            // TODO: Navigate to PrivacySettingsScreen
-            console.log("Navigate to Privacy Settings");
+            setIsPrivacyMenuOpen(!isPrivacyMenuOpen);
           },
+          rightElement: (
+            <div className="flex items-center gap-2">
+              {isPrivacyMenuOpen ? (
+                <FiChevronRight className="w-4 h-4 text-[var(--text-dim)] transform rotate-90" />
+              ) : (
+                <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
+              )}
+            </div>
+          ),
         },
         {
           id: "language",
@@ -380,6 +478,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
             {flatMenuItems.map((item, itemIndex) => {
               const IconComponent = item.icon;
               const isLanguageItem = item.id === "language";
+              const isPrivacyItem = item.id === "privacy";
               return (
                 <div key={item.id}>
                   <button
@@ -450,6 +549,130 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                       </div>
                     </div>
                   )}
+
+                  {/* Privacy menu dropdown */}
+                  {isPrivacyItem && (
+                    <div
+                      className={`overflow-hidden bg-[var(--bg-secondary)] border-t transition-all duration-300 ease-out ${
+                        isPrivacyMenuOpen
+                          ? "max-h-[500px] opacity-100 translate-y-0 border-[var(--border-color)]"
+                          : "max-h-0 opacity-0 -translate-y-2 border-transparent pointer-events-none"
+                      }`}
+                      style={{
+                        transitionProperty: "max-height, opacity, transform, border-color",
+                      }}
+                    >
+                      <div className="divide-y divide-[var(--border-color)]">
+                        {/* Update Username */}
+                        <div className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <FiUser className="w-5 h-5 text-[var(--text-dim)]" />
+                            <span className="text-[var(--text-white)] font-medium">
+                              {t("profile.privacy.updateUsername")}
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newUsername}
+                              onChange={(e) => setNewUsername(e.target.value)}
+                              placeholder={t("profile.privacy.usernamePlaceholder")}
+                              className="flex-1 px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateUsername();
+                              }}
+                              disabled={isLoading || !newUsername.trim()}
+                              className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isLoading ? t("profile.privacy.saving") : t("profile.privacy.save")}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Reset Password */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleResetPassword();
+                          }}
+                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FiLock className="w-5 h-5 text-[var(--text-dim)]" />
+                            <span className="text-[var(--text-white)] font-medium">
+                              {t("profile.privacy.resetPassword")}
+                            </span>
+                          </div>
+                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
+                        </button>
+
+                        {/* Delete Data */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDeleteDataModal(true);
+                          }}
+                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FiTrash2 className="w-5 h-5 text-orange-500" />
+                            <div className="text-left">
+                              <span className="text-[var(--text-white)] font-medium block">
+                                {t("profile.privacy.deleteData")}
+                              </span>
+                              <span className="text-[var(--text-dim)] text-xs">
+                                {t("profile.privacy.deleteDataDescription")}
+                              </span>
+                            </div>
+                          </div>
+                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
+                        </button>
+
+                        {/* Delete Account */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDeleteAccountModal(true);
+                          }}
+                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FiAlertTriangle className="w-5 h-5 text-red-500" />
+                            <div className="text-left">
+                              <span className="text-red-500 font-medium block">
+                                {t("profile.privacy.deleteAccount")}
+                              </span>
+                              <span className="text-[var(--text-dim)] text-xs">
+                                {t("profile.privacy.deleteAccountWarning")}
+                              </span>
+                            </div>
+                          </div>
+                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
+                        </button>
+
+                        {/* Logout All Devices */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLogoutAllDevices();
+                          }}
+                          disabled={isLoading}
+                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors disabled:opacity-50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FiLogOut className="w-5 h-5 text-[var(--text-dim)]" />
+                            <span className="text-[var(--text-white)] font-medium">
+                              {t("profile.privacy.logoutAllDevices")}
+                            </span>
+                          </div>
+                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -506,6 +729,107 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   Обновить ($5/мес)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Data Confirmation Modal */}
+      {showDeleteDataModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-primary)] rounded-lg p-6 w-96 max-w-[90vw]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[var(--text-white)]">
+                {t("profile.privacy.deleteData")}
+              </h3>
+              <button
+                onClick={() => setShowDeleteDataModal(false)}
+                className="text-[var(--text-dim)] hover:text-[var(--text-white)]"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-orange-500">
+                <FiAlertTriangle className="w-6 h-6" />
+                <p className="text-sm text-[var(--text-white)]">
+                  {t("profile.privacy.confirmDeleteData")}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDeleteDataModal(false)}
+                  className="flex-1 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-white)] rounded-lg hover:bg-[var(--hover-bg)] transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={handleDeleteData}
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? t("common.loading") : t("profile.privacy.deleteData")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-primary)] rounded-lg p-6 w-96 max-w-[90vw]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-red-500">
+                {t("profile.privacy.deleteAccount")}
+              </h3>
+              <button
+                onClick={() => setShowDeleteAccountModal(false)}
+                className="text-[var(--text-dim)] hover:text-[var(--text-white)]"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-red-500">
+                <FiAlertTriangle className="w-6 h-6" />
+                <p className="text-sm text-[var(--text-white)]">
+                  {t("profile.privacy.confirmDeleteAccount")}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-[var(--text-dim)] mb-1">
+                  {t("profile.privacy.enterPassword")}
+                </label>
+                <input
+                  type="password"
+                  value={deleteAccountPassword}
+                  onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                  placeholder="••••••"
+                  className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDeleteAccountModal(false)}
+                  className="flex-1 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-white)] rounded-lg hover:bg-[var(--hover-bg)] transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={isLoading || !deleteAccountPassword.trim()}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? t("common.loading") : t("profile.privacy.deleteAccount")}
                 </button>
               </div>
             </div>

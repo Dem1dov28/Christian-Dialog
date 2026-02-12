@@ -24,6 +24,7 @@ from core.auth import (
     update_user_last_login,
     get_password_hash,
     get_user_by_email,
+    verify_password,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from core.dependencies import get_current_active_user
@@ -51,6 +52,16 @@ from models.verification_code import VerifyCodeRequest, VerifyCodeResponse, Send
 from models.conversation import Conversation
 from models.message import Message
 from models.multi_agent_conversation import MultiAgentConversation
+from models.agent import Agent
+from models.attraction_visit import AttractionVisit
+from models.budget import Budget
+from models.file_attachment import FileAttachment
+from models.folder import Folder
+from models.recurring_payment import RecurringPayment
+
+from models.savings_goal import SavingsGoal
+from models.trip import Trip
+from models.user_channel_subscription import UserChannelSubscription
 from pydantic import BaseModel
 
 from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID
@@ -396,6 +407,20 @@ def update_current_user(
             )
         current_user.hashed_password = get_password_hash(user_update.password)
     
+    if user_update.username is not None:
+        # Проверяем, что username не занят другим пользователем
+        from sqlmodel import select
+        statement = select(User).where(
+            User.username == user_update.username,
+            User.id != current_user.id
+        )
+        existing_user = db.exec(statement).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пользователь с таким username уже существует"
+            )
+        current_user.username = user_update.username
 
     # Исправлено: используем текущее время, а не created_at
     current_user.updated_at = datetime.utcnow()
@@ -1009,3 +1034,184 @@ async def reset_password(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class DeleteAccountRequest(BaseModel):
+    """Запрос на удаление аккаунта"""
+    password: str
+
+
+class DeleteAccountResponse(BaseModel):
+    """Ответ при удалении аккаунта"""
+    success: bool
+    message: str
+
+
+@router.post("/delete-account", response_model=DeleteAccountResponse)
+async def delete_account(
+    request: DeleteAccountRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session)
+):
+    """Удаление аккаунта пользователя со всеми данными"""
+    try:
+        logger.info(f"Starting account deletion for user id: {current_user.id}")
+        
+        # Проверяем пароль
+        if not verify_password(request.password, current_user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Неверный пароль"
+            )
+        
+        logger.info("Password verified successfully")
+        
+        user_id = current_user.id
+        
+        # Удаляем все данные пользователя в правильном порядке
+        logger.info(f"Deleting user data for user {user_id}")
+        
+        # 1. Удаляем файлы (сначала, т.к. они ссылаются на другие сущности)
+        statement = select(FileAttachment).where(FileAttachment.user_id == user_id)
+        files = db.exec(statement).all()
+        logger.info(f"Found {len(files)} files to delete")
+        for file in files:
+            db.delete(file)
+        
+        # 2. Удаляем сообщения из мульти-агентных чатов
+        statement = select(Message).where(Message.multi_agent_conversation_id.isnot(None))
+        multi_messages = db.exec(statement).all()
+        # Фильтруем только те, что принадлежат пользователю
+        user_multi_messages = [msg for msg in multi_messages if hasattr(msg, 'multi_agent_conversation') and msg.multi_agent_conversation and msg.multi_agent_conversation.user_id == user_id]
+        logger.info(f"Found {len(user_multi_messages)} multi-agent messages to delete")
+        for message in user_multi_messages:
+            db.delete(message)
+        
+        # 2.5. Удаляем все отчеты пользователя (должно быть до удаления разговоров из-за внешнего ключа)
+        # statement = select(Report).where(Report.user_id == user_id)
+        # reports = db.exec(statement).all()
+        # logger.info(f"Found {len(reports)} reports to delete")
+        # for report in reports:
+        #     db.delete(report)
+        
+        # 4. Удаляем все разговоры пользователя
+        statement = select(Conversation).where(Conversation.user_id == user_id)
+        conversations = db.exec(statement).all()
+        logger.info(f"Found {len(conversations)} conversations to delete")
+        for conversation in conversations:
+            db.delete(conversation)
+        
+        # 5. Удаляем все мульти-агентные разговоры
+        statement = select(MultiAgentConversation).where(MultiAgentConversation.user_id == user_id)
+        multi_conversations = db.exec(statement).all()
+        logger.info(f"Found {len(multi_conversations)} multi-agent conversations to delete")
+        for conversation in multi_conversations:
+            db.delete(conversation)
+        
+        # 6. Удаляем пользовательские агенты
+        statement = select(Agent).where(Agent.user_id == user_id)
+        user_agents = db.exec(statement).all()
+        logger.info(f"Found {len(user_agents)} user agents to delete")
+        for agent in user_agents:
+            db.delete(agent)
+        
+        # 7. Удаляем поездки
+        statement = select(Trip).where(Trip.user_id == user_id)
+        trips = db.exec(statement).all()
+        logger.info(f"Found {len(trips)} trips to delete")
+        for trip in trips:
+            db.delete(trip)
+        
+        # 8. Удаляем бюджеты
+        statement = select(Budget).where(Budget.user_id == user_id)
+        budgets = db.exec(statement).all()
+        logger.info(f"Found {len(budgets)} budgets to delete")
+        for budget in budgets:
+            db.delete(budget)
+        
+        # 9. Удаляем цели накоплений
+        statement = select(SavingsGoal).where(SavingsGoal.user_id == user_id)
+        savings_goals = db.exec(statement).all()
+        logger.info(f"Found {len(savings_goals)} savings goals to delete")
+        for goal in savings_goals:
+            db.delete(goal)
+        
+        # 10. Удаляем регулярные платежи
+        statement = select(RecurringPayment).where(RecurringPayment.user_id == user_id)
+        recurring_payments = db.exec(statement).all()
+        logger.info(f"Found {len(recurring_payments)} recurring payments to delete")
+        for payment in recurring_payments:
+            db.delete(payment)
+        
+        # 11. Удаляем посещения достопримечательностей
+        statement = select(AttractionVisit).where(AttractionVisit.user_id == user_id)
+        visits = db.exec(statement).all()
+        logger.info(f"Found {len(visits)} attraction visits to delete")
+        for visit in visits:
+            db.delete(visit)
+        
+        # 12. Удаляем подписки на каналы
+        statement = select(UserChannelSubscription).where(UserChannelSubscription.user_id == user_id)
+        subscriptions = db.exec(statement).all()
+        logger.info(f"Found {len(subscriptions)} channel subscriptions to delete")
+        for subscription in subscriptions:
+            db.delete(subscription)
+        
+        # 13. Удаляем папки
+        statement = select(Folder).where(Folder.user_id == user_id)
+        folders = db.exec(statement).all()
+        logger.info(f"Found {len(folders)} folders to delete")
+        for folder in folders:
+            db.delete(folder)
+        
+        # Удаляем пользователя
+        logger.info(f"Deleting user {user_id}")
+        db.delete(current_user)
+        db.commit()
+        logger.info(f"Account deletion completed for user {user_id}")
+        
+        logger.info(f"User account deleted: id={user_id}")
+        
+        return DeleteAccountResponse(
+            success=True,
+            message="Аккаунт успешно удален"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting account: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Не удалось удалить аккаунт")
+
+
+class LogoutAllDevicesResponse(BaseModel):
+    """Ответ при выходе со всех устройств"""
+    success: bool
+    message: str
+
+
+@router.post("/logout-all", response_model=LogoutAllDevicesResponse)
+async def logout_all_devices(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session)
+):
+    """Выход со всех устройств путем обновления секрета для токенов"""
+    try:
+        # Генерируем новый токен-секрет для пользователя
+        # Это инвалидирует все существующие токены
+        current_user.token_secret = token_urlsafe(32)
+        current_user.updated_at = datetime.utcnow()
+        
+        db.add(current_user)
+        db.commit()
+        
+        logger.info(f"User logged out from all devices: id={current_user.id}")
+        
+        return LogoutAllDevicesResponse(
+            success=True,
+            message="Вы вышли со всех устройств"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error logging out from all devices: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Не удалось выполнить выход со всех устройств")

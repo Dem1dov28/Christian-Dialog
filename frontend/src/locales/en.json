@@ -463,6 +463,27 @@
       "logout": "Are you sure you want to log out?",
       "delete_account": "Are you sure you want to delete your account? This action cannot be undone."
     },
+    "privacy": {
+      "title": "Privacy & Security",
+      "updateUsername": "Update Username",
+      "usernamePlaceholder": "Enter new username",
+      "resetPassword": "Reset Password",
+      "deleteData": "Delete All Data",
+      "deleteDataDescription": "Delete all chats and clear account data",
+      "deleteAccount": "Delete Account",
+      "deleteAccountWarning": "This action cannot be undone. All your data will be permanently deleted.",
+      "logoutAllDevices": "Logout from All Devices",
+      "save": "Save",
+      "saving": "Saving...",
+      "confirmDeleteData": "Are you sure you want to delete all your chats and data? This action cannot be undone.",
+      "confirmDeleteAccount": "Are you sure you want to permanently delete your account? All your data will be lost.",
+      "dataDeleted": "All data has been deleted successfully",
+      "accountDeleted": "Your account has been deleted",
+      "loggedOutAllDevices": "Logged out from all devices successfully",
+      "usernameUpdated": "Username updated successfully",
+      "enterPassword": "Enter your password to confirm",
+      "passwordRequired": "Password is required for security"
+    },
     "current_language": "English",
     "language_ru": "Русский",
     "language_en": "English"

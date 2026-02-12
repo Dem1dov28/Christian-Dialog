@@ -76,6 +76,8 @@ class UnifiedAPI {
     this.sendRegistrationCode = (email) => auth.sendRegistrationCode(email);
     this.verifyResetCode = (email, code) => auth.verifyResetCode(email, code);
     this.resetPassword = (email, token, newPassword) => auth.resetPassword(email, token, newPassword);
+    this.deleteAccount = (password) => auth.deleteAccount(password);
+    this.logoutAllDevices = () => auth.logoutAllDevices();
 
     // Agents методы
     this.getAgents = () => agents.getAgents();

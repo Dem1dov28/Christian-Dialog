@@ -3135,6 +3135,50 @@ export const ChatsProvider = ({ children }) => {
     }
   };
 
+  // Очистить все разговоры пользователя
+  const clearAllConversations = async () => {
+    console.log("=== clearAllConversations START ===");
+
+    try {
+      setIsLoading(true);
+
+      // Удаляем все разговоры по одному
+      const conversationIds = conversations.map(conv => conv.id);
+      console.log(`Deleting ${conversationIds.length} conversations`);
+
+      for (const conversationId of conversationIds) {
+        try {
+          await deleteConversation(conversationId);
+          console.log(`Deleted conversation ${conversationId}`);
+        } catch (error) {
+          console.error(`Failed to delete conversation ${conversationId}:`, error);
+          // Продолжаем удаление остальных чатов даже если один не удалился
+        }
+      }
+
+      // Очищаем локальное состояние
+      setConversations([]);
+      setMessagesByConversation({});
+      setPinnedMessages({});
+      setActiveConversation(null);
+
+      // Очищаем закрепленные чаты
+      setPinnedChats([]);
+
+      // Обновляем sidebar
+      triggerUpdate();
+
+      console.log("=== clearAllConversations SUCCESS ===");
+    } catch (error) {
+      console.error("=== clearAllConversations ERROR ===");
+      console.error("Failed to clear all conversations:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      console.log("=== clearAllConversations END ===");
+    }
+  };
+
   // Закрепить сообщение в разговоре
   const pinMessage = async (conversationId, messageId) => {
     try {
@@ -4398,6 +4442,7 @@ export const ChatsProvider = ({ children }) => {
     deleteConversation,
     renameConversation,
     clearConversationMessages,
+    clearAllConversations,
     pinMessage,
     unpinMessage,
     deleteMessage,

@@ -45,6 +45,7 @@ class UserUpdate(SQLModel):
     full_name: Optional[str] = Field(default=None, max_length=100)
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
     password: Optional[str] = Field(default=None, min_length=6, max_length=100)
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50, regex=r'^[a-zA-Z0-9._-]+$')
 
 
 
@@ -68,6 +69,7 @@ class User(UserBase, table=True):
     verification_token: Optional[str] = Field(default=None)
     reset_token: Optional[str] = Field(default=None)
     reset_token_expires: Optional[datetime] = Field(default=None)
+    token_secret: Optional[str] = Field(default=None, description="Секрет для инвалидации токенов при выходе со всех устройств")
     
     # Поля подписки
     subscription_tier: str = Field(default="free")

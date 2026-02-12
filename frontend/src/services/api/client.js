@@ -9,6 +9,7 @@ class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
     this.token = localStorage.getItem("auth_token");
+    console.log('ApiClient: Initializing, token exists:', !!this.token);
     // Обновляем токен при инициализации
     if (this.token) {
       this.setToken(this.token);
@@ -126,8 +127,18 @@ class ApiClient {
   // Базовый метод для HTTP запросов
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const headers = this.getHeaders();
+    
+    // Debug logging for auth issues
+    if (endpoint.includes('/auth/delete-account')) {
+      console.log('ApiClient: POST /auth/delete-account request');
+      console.log('ApiClient: Token exists:', !!this.token);
+      console.log('ApiClient: Token value:', this.token ? this.token.substring(0, 20) + '...' : 'none');
+      console.log('ApiClient: Headers:', headers);
+    }
+    
     const config = {
-      headers: this.getHeaders(),
+      headers,
       ...options,
     };
 
@@ -295,8 +306,12 @@ class ApiClient {
   }
 
   // DELETE запрос
-  async delete(endpoint) {
-    return this.request(endpoint, { method: "DELETE" });
+  async delete(endpoint, body = null) {
+    const options = { method: "DELETE" };
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+    return this.request(endpoint, options);
   }
 
   // POST запрос с FormData (для загрузки файлов)

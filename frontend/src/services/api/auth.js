@@ -326,5 +326,15 @@ export class AuthAPI {
   async resetPassword(email, token, newPassword) {
     return this.client.post("/auth/reset-password", { email, token, new_password: newPassword });
   }
+
+  // Удалить аккаунт пользователя
+  async deleteAccount(password) {
+    return this.client.post("/auth/delete-account", { password });
+  }
+
+  // Выйти со всех устройств
+  async logoutAllDevices() {
+    return this.client.post("/auth/logout-all");
+  }
 }
 

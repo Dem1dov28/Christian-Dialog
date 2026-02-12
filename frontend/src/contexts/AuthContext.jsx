@@ -451,6 +451,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Удалить аккаунт пользователя
+  const deleteUserAccount = async (password) => {
+    try {
+      console.log("AuthContext: Deleting user account...");
+      const response = await apiClient.deleteAccount(password);
+      console.log("AuthContext: Account deleted:", response);
+      return response;
+    } catch (error) {
+      console.error("AuthContext: Failed to delete account:", error);
+      throw error;
+    }
+  };
+
+  // Выйти со всех устройств
+  const logoutAllDevices = async () => {
+    try {
+      console.log("AuthContext: Logging out from all devices...");
+      const response = await apiClient.logoutAllDevices();
+      console.log("AuthContext: Logged out from all devices:", response);
+      return response;
+    } catch (error) {
+      console.error("AuthContext: Failed to logout from all devices:", error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -470,6 +496,8 @@ export const AuthProvider = ({ children }) => {
     upgradeSubscription,
     getSubscriptionStatus,
     refreshUserData,
+    deleteUserAccount,
+    logoutAllDevices,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
