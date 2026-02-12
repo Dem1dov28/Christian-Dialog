@@ -1038,7 +1038,7 @@ async def reset_password(
 
 class DeleteAccountRequest(BaseModel):
     """Запрос на удаление аккаунта"""
-    password: str
+    password: Optional[str] = None
 
 
 class DeleteAccountResponse(BaseModel):
@@ -1057,12 +1057,13 @@ async def delete_account(
     try:
         logger.info(f"Starting account deletion for user id: {current_user.id}")
         
-        # Проверяем пароль
-        if not verify_password(request.password, current_user.hashed_password):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Неверный пароль"
-            )
+        # Проверяем пароль только для обычных пользователей
+        if current_user.auth_provider != "google":
+            if not request.password or not verify_password(request.password, current_user.hashed_password):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Неверный пароль"
+                )
         
         logger.info("Password verified successfully")
         

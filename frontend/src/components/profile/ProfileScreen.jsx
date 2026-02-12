@@ -142,11 +142,11 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
 
   const handleResetPassword = () => {
     // Navigate to forgot password page with user's email pre-filled
-    navigate("/forgot-password", { 
-      state: { 
+    navigate("/forgot-password", {
+      state: {
         email: user?.email || "",
         fromProfile: true
-      } 
+      }
     });
     onClose();
   };
@@ -166,7 +166,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   };
 
   const handleDeleteAccount = async () => {
-    if (!deleteAccountPassword.trim()) {
+    if (user?.auth_provider !== "google" && !deleteAccountPassword.trim()) {
       showError(t("profile.privacy.passwordRequired"));
       return;
     }
@@ -214,23 +214,23 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
     input.type = "file";
     input.accept = "image/*";
     input.style.display = "none";
-    
+
     input.onchange = async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      
+
       // Проверяем размер файла (максимум 5MB)
       if (file.size > 5 * 1024 * 1024) {
         showError(t("profile.avatar.sizeError") || "Размер файла не должен превышать 5MB");
         return;
       }
-      
+
       // Проверяем тип файла
       if (!file.type.startsWith("image/")) {
         showError(t("profile.avatar.typeError") || "Файл должен быть изображением");
         return;
       }
-      
+
       try {
         setIsLoading(true);
         const updatedUser = await apiClient.uploadAvatar(file);
@@ -251,7 +251,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
         setIsLoading(false);
       }
     };
-    
+
     document.body.appendChild(input);
     input.click();
     document.body.removeChild(input);
@@ -288,12 +288,12 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
               {user?.subscription_tier === "free"
                 ? t("profile.subscription.free")
                 : user?.subscription_tier === "plus"
-                ? "Plus"
-                : user?.subscription_tier === "pro"
-                ? "Pro"
-                : user?.subscription_tier === "api"
-                ? "API"
-                : t("profile.subscription.free")}
+                  ? "Plus"
+                  : user?.subscription_tier === "pro"
+                    ? "Pro"
+                    : user?.subscription_tier === "api"
+                      ? "API"
+                      : t("profile.subscription.free")}
             </span>
           ),
         },
@@ -376,9 +376,8 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
 
   return (
     <div
-      className={`absolute inset-0 z-20 flex flex-col h-full profile-screen transform transition-transform duration-300 ease-in-out ${
-        isShown ? "translate-x-0" : "-translate-x-full"
-      }${isNarrowViewport ? " w-full max-w-full" : ""}`}
+      className={`absolute inset-0 z-20 flex flex-col h-full profile-screen transform transition-transform duration-300 ease-in-out ${isShown ? "translate-x-0" : "-translate-x-full"
+        }${isNarrowViewport ? " w-full max-w-full" : ""}`}
       style={containerStyle}
     >
       {/* Header */}
@@ -424,7 +423,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                 }}
               />
             ) : null}
-            <div 
+            <div
               className={`w-24 h-24 rounded-full profile-avatar profile-avatar-fallback flex items-center justify-center text-white font-bold text-2xl mx-auto`}
               style={{ display: user?.avatar_url ? "none" : "flex" }}
             >
@@ -452,9 +451,8 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           {/* Subscription Status */}
           <div className="mb-4">
             <SubscriptionStatus
-              key={`${user?.subscription_tier}-${user?.expires_at ?? ""}-${
-                user?.messages_used ?? 0
-              }`}
+              key={`${user?.subscription_tier}-${user?.expires_at ?? ""}-${user?.messages_used ?? 0
+                }`}
               user={user}
               onUpgrade={handleUpgradeClick}
             />
@@ -463,9 +461,8 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           {/* Usage Statistics */}
           <div className="mb-4">
             <UsageStatistics
-              key={`${user?.subscription_tier}-${user?.messages_limit}-${
-                user?.messages_used ?? 0
-              }`}
+              key={`${user?.subscription_tier}-${user?.messages_limit}-${user?.messages_used ?? 0
+                }`}
               usageStats={usageStats}
               user={user}
             />
@@ -487,18 +484,16 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   >
                     <div className="flex items-center gap-3">
                       <IconComponent
-                        className={`w-5 h-5 transition-colors ${
-                          item.isDanger
+                        className={`w-5 h-5 transition-colors ${item.isDanger
                             ? "text-red-500 group-hover:text-red-400"
                             : "text-[var(--text-dim)] group-hover:text-[var(--text-white)]"
-                        }`}
+                          }`}
                       />
                       <span
-                        className={`font-medium transition-colors ${
-                          item.isDanger
+                        className={`font-medium transition-colors ${item.isDanger
                             ? "text-red-500 group-hover:text-red-400"
                             : "text-[var(--text-white)]"
-                        }`}
+                          }`}
                       >
                         {item.label}
                       </span>
@@ -513,11 +508,10 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   {/* Language menu dropdown */}
                   {isLanguageItem && (
                     <div
-                      className={`overflow-hidden bg-[var(--bg-secondary)] border-t transition-all duration-300 ease-out ${
-                        isLanguageMenuOpen
+                      className={`overflow-hidden bg-[var(--bg-secondary)] border-t transition-all duration-300 ease-out ${isLanguageMenuOpen
                           ? "max-h-64 opacity-100 translate-y-0 border-[var(--border-color)]"
                           : "max-h-0 opacity-0 -translate-y-2 border-transparent pointer-events-none"
-                      }`}
+                        }`}
                       style={{
                         transitionProperty: "max-height, opacity, transform, border-color",
                       }}
@@ -531,9 +525,8 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                               setLanguage(lang.code);
                               setIsLanguageMenuOpen(false);
                             }}
-                            className={`w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors ${
-                              language === lang.code ? "bg-[var(--accent)]/20" : ""
-                            }`}
+                            className={`w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors ${language === lang.code ? "bg-[var(--accent)]/20" : ""
+                              }`}
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-lg">{lang.flag}</span>
@@ -553,11 +546,10 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   {/* Privacy menu dropdown */}
                   {isPrivacyItem && (
                     <div
-                      className={`overflow-hidden bg-[var(--bg-secondary)] border-t transition-all duration-300 ease-out ${
-                        isPrivacyMenuOpen
+                      className={`overflow-hidden bg-[var(--bg-secondary)] border-t transition-all duration-300 ease-out ${isPrivacyMenuOpen
                           ? "max-h-[500px] opacity-100 translate-y-0 border-[var(--border-color)]"
                           : "max-h-0 opacity-0 -translate-y-2 border-transparent pointer-events-none"
-                      }`}
+                        }`}
                       style={{
                         transitionProperty: "max-height, opacity, transform, border-color",
                       }}
@@ -619,14 +611,9 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                         >
                           <div className="flex items-center gap-3">
                             <FiTrash2 className="w-5 h-5 text-orange-500" />
-                            <div className="text-left">
-                              <span className="text-[var(--text-white)] font-medium block">
-                                {t("profile.privacy.deleteData")}
-                              </span>
-                              <span className="text-[var(--text-dim)] text-xs">
-                                {t("profile.privacy.deleteDataDescription")}
-                              </span>
-                            </div>
+                            <span className="text-[var(--text-white)] font-medium block">
+                              {t("profile.privacy.deleteData")}
+                            </span>
                           </div>
                           <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
                         </button>
@@ -641,14 +628,9 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                         >
                           <div className="flex items-center gap-3">
                             <FiAlertTriangle className="w-5 h-5 text-red-500" />
-                            <div className="text-left">
-                              <span className="text-red-500 font-medium block">
-                                {t("profile.privacy.deleteAccount")}
-                              </span>
-                              <span className="text-[var(--text-dim)] text-xs">
-                                {t("profile.privacy.deleteAccountWarning")}
-                              </span>
-                            </div>
+                            <span className="text-red-500 font-medium block">
+                              {t("profile.privacy.deleteAccount")}
+                            </span>
                           </div>
                           <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
                         </button>
@@ -804,18 +786,22 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm text-[var(--text-dim)] mb-1">
-                  {t("profile.privacy.enterPassword")}
-                </label>
-                <input
-                  type="password"
-                  value={deleteAccountPassword}
-                  onChange={(e) => setDeleteAccountPassword(e.target.value)}
-                  placeholder="••••••"
-                  className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
+              {user?.auth_provider !== "google" && (
+                <div>
+                  <label className="block text-sm text-[var(--text-dim)] mb-1">
+                    {t("profile.privacy.enterPassword")}
+                  </label>
+                  <input
+                    type="password"
+                    value={deleteAccountPassword}
+                    onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                    placeholder="••••••"
+                    className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+              )}
+
+
 
               <div className="flex gap-2">
                 <button
@@ -826,7 +812,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={isLoading || !deleteAccountPassword.trim()}
+                  disabled={isLoading || (user?.auth_provider !== "google" && !deleteAccountPassword.trim())}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   {isLoading ? t("common.loading") : t("profile.privacy.deleteAccount")}
