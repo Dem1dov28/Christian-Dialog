@@ -320,6 +320,13 @@ class ApiClient {
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
+
+    // Add CSRF token
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
+    }
+
     // НЕ устанавливаем Content-Type - браузер сам установит multipart/form-data с boundary
 
     try {
@@ -375,6 +382,12 @@ class ApiClient {
 
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
+    }
+
+    // Add CSRF token
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
     }
 
     try {

@@ -245,8 +245,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Дополнительные заголовки
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
-        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        
+        # Cross-Origin-Resource-Policy: разрешаем cross-origin для статических файлов (аватары, изображения)
+        if request.url.path.startswith("/static/") or request.url.path.startswith("/api/avatars/"):
+            response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
+        else:
+            response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        
+        # Cross-Origin-Embedder-Policy: не устанавливаем для статических файлов, чтобы не блокировать загрузку
+        if not (request.url.path.startswith("/static/") or request.url.path.startswith("/api/avatars/")):
+            response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
         
         # Для API-ответов запрещаем кеширование
         if request.url.path.startswith("/api/") or request.url.path.startswith("/auth/"):

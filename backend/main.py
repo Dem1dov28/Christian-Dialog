@@ -5,6 +5,8 @@ from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import os
+import sys
+import asyncio
 from pathlib import Path
 from sqlmodel import Session, select
 from urllib.parse import unquote
@@ -83,10 +85,31 @@ attraction_visit_service = AttractionVisitService()
 
 
 
+def _suppress_connection_reset_errors(loop, context):
+    """Suppress harmless ConnectionResetError on Windows.
+    
+    This is a known issue with Python's asyncio on Windows where the browser
+    closing connections triggers WinError 10054 errors that are logged but
+    are actually harmless.
+    """
+    exception = context.get('exception')
+    if isinstance(exception, ConnectionResetError):
+        # Suppress ConnectionResetError (WinError 10054) - harmless on Windows
+        return
+    # Call the default exception handler for all other exceptions
+    loop.default_exception_handler(context)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
     # Startup
+    
+    # Suppress ConnectionResetError on Windows (WinError 10054)
+    if sys.platform == 'win32':
+        loop = asyncio.get_running_loop()
+        loop.set_exception_handler(_suppress_connection_reset_errors)
+    
     # Проверка SECRET_KEY при старте (только предупреждение)
     try:
         check_secret_key()

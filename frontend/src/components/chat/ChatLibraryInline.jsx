@@ -1181,8 +1181,10 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       // Переключаемся на созданный чат через onChatSelect для установки activeChatId
       // Это необходимо, так как createGroupChat только устанавливает activeConversation через selectConversation
       // но также нужно установить activeChatId в App.jsx для правильного отображения чата
+      // Важно: используем ID с префиксом group- для соответствия формату в conversations
       if (onChatSelect && newGroupChat?.conversation_id) {
-        await onChatSelect(newGroupChat.conversation_id);
+        const groupConversationId = `group-${newGroupChat.conversation_id}`;
+        await onChatSelect(groupConversationId);
       }
 
       // Закрываем режим создания группы

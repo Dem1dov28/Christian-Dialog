@@ -8,7 +8,10 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, System
 
 # Импортируем ConversationBufferWindowMemory с подавлением предупреждений о deprecated API
 # TODO: Мигрировать на новое API LangChain в будущем
-from langchain.memory import ConversationBufferWindowMemory
+try:
+    from langchain_classic.memory import ConversationBufferWindowMemory
+except ImportError:
+    from langchain.memory import ConversationBufferWindowMemory
 
 # Подавляем предупреждения о deprecated API для ConversationBufferWindowMemory (в частности, LangChainDeprecationWarning)
 try:

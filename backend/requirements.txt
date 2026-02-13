@@ -9,14 +9,14 @@ psycopg2-binary>=2.9.9  # PostgreSQL драйвер
 sqlalchemy>=1.4,<2.0.36  # Ограничено langchain-community 0.3.7
 
 # LangChain - основной фреймворк для работы с LLM
-langchain==0.3.7
-langchain-openai==0.2.8
-langchain-community==0.3.7
-langchain-core==0.3.17
-langsmith==0.1.147
+langchain>=1.2.10
+langchain-openai>=1.1.9
+langchain-community>=0.4.1
+langchain-core>=1.2.12
+langsmith>=0.7.1
 
 # OpenAI клиент (используется LangChain)
-openai==1.108.2
+openai>=2.20.0
 
 # Аутентификация и безопасность
 python-jose[cryptography]==3.3.0
