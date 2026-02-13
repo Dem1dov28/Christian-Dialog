@@ -27,85 +27,57 @@ export const AuthProvider = ({ children }) => {
     if (isInitialized) return;
 
     const initAuth = async () => {
-      const token = localStorage.getItem("auth_token");
-      if (token) {
+      try {
+        // Проверяем токен через cookie (HttpOnly), без localStorage
+        const userData = await apiClient.verifyToken();
+        // Сразу после верификации подтягиваем /auth/me для полного набора полей (messages_cycle_started_at)
         try {
-          apiClient.setToken(token);
-          const userData = await apiClient.verifyToken();
-          // Сразу после верификации подтягиваем /auth/me для полного набора полей (messages_cycle_started_at)
-          try {
-            const fullUser = await apiClient.getCurrentUser();
-            setUser(fullUser);
-            // Сохраняем данные пользователя для офлайн режима
-            localStorage.setItem("user_data", JSON.stringify(fullUser));
-          } catch (e) {
-            setUser(userData.user);
-            // Сохраняем данные пользователя для офлайн режима
-            localStorage.setItem("user_data", JSON.stringify(userData.user));
-          }
-          setIsAuthenticated(true);
-          // Загружаем статистику использования
-          try {
-            const stats = await apiClient.getUsageStats();
-            setUsageStats(stats);
-          } catch (error) {
-            console.error("Failed to load usage stats:", error);
-          }
-        } catch (error) {
-          console.error("Token verification failed:", error);
-
-          // Проверяем тип ошибки
-          if (
-            error.message.includes("Network error") ||
-            error.message.includes("Failed to fetch")
-          ) {
-            console.warn(
-              "Network error detected, keeping auth state for offline mode"
-            );
-            // При сетевых ошибках сохраняем состояние аутентификации
-            // Пользователь может работать в офлайн режиме
-            setIsAuthenticated(true); // Оставляем как авторизованного
-            // Не очищаем user и usageStats - они остаются в состоянии
-          } else if (
-            error.message === "Not authenticated" ||
-            error.message.includes("401")
-          ) {
-            console.log("Token expired or invalid, clearing auth state");
-            localStorage.removeItem("auth_token");
-            localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
-            apiClient.setToken(null);
-            setUser(null);
-            setIsAuthenticated(false);
-            setUsageStats(null);
-          } else {
-            // Для других ошибок также сохраняем состояние
-            console.warn("Authentication error (non-auth):", error.message);
-            setIsAuthenticated(true); // Оставляем как авторизованного
-          }
+          const fullUser = await apiClient.getCurrentUser();
+          setUser(fullUser);
+          // Сохраняем данные пользователя для офлайн режима
+          localStorage.setItem("user_data", JSON.stringify(fullUser));
+        } catch (e) {
+          setUser(userData.user);
+          // Сохраняем данные пользователя для офлайн режима
+          localStorage.setItem("user_data", JSON.stringify(userData.user));
         }
-      } else {
-        // Нет токена - проверяем, есть ли сохраненные данные пользователя для офлайн режима
-        const savedUserData = localStorage.getItem("user_data");
-        if (savedUserData) {
-          try {
-            const userData = JSON.parse(savedUserData);
-            console.log(
-              "No token found, but user data exists - entering offline mode"
-            );
-            setUser(userData);
-            setIsAuthenticated(true); // Офлайн режим
-            setUsageStats(null); // Статистика недоступна в офлайн режиме
-          } catch (error) {
-            console.error("Failed to parse saved user data:", error);
-            setIsAuthenticated(false);
-            setUser(null);
-            setUsageStats(null);
-          }
-        } else {
-          // Нет токена и нет сохраненных данных - пользователь не авторизован
-          setIsAuthenticated(false);
+        setIsAuthenticated(true);
+        // Загружаем статистику использования
+        try {
+          const stats = await apiClient.getUsageStats();
+          setUsageStats(stats);
+        } catch (error) {
+          console.error("Failed to load usage stats:", error);
+        }
+      } catch (error) {
+        console.error("Token verification failed:", error);
+
+        // Проверяем тип ошибки
+        if (
+          error.message.includes("Network error") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          console.warn(
+            "Network error detected, keeping auth state for offline mode"
+          );
+          // При сетевых ошибках сохраняем состояние аутентификации
+          // Пользователь может работать в офлайн режиме
+          setIsAuthenticated(true); // Оставляем как авторизованного
+          // Не очищаем user и usageStats - они остаются в состоянии
+        } else if (
+          error.message === "Not authenticated" ||
+          error.message.includes("401")
+        ) {
+          console.log("Token expired or invalid, clearing auth state");
+          localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
+          apiClient.setToken(null);
           setUser(null);
+          setIsAuthenticated(false);
           setUsageStats(null);
+        } else {
+          // Для других ошибок также сохраняем состояние
+          console.warn("Authentication error (non-auth):", error.message);
+          setIsAuthenticated(true); // Оставляем как авторизованного
         }
       }
       setIsInitializing(false);
@@ -257,7 +229,6 @@ export const AuthProvider = ({ children }) => {
 
   // Принудительный выход при ошибке авторизации
   const forceLogout = () => {
-    localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
     apiClient.setToken(null);
     setUser(null);
@@ -270,29 +241,21 @@ export const AuthProvider = ({ children }) => {
     setIsInitializing(true);
     setIsInitialized(false);
 
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      try {
-        apiClient.setToken(token);
-        const userData = await apiClient.verifyToken();
-        const fullUser = await apiClient.getCurrentUser();
-        setUser(fullUser);
-        setIsAuthenticated(true);
+    try {
+      const userData = await apiClient.verifyToken();
+      const fullUser = await apiClient.getCurrentUser();
+      setUser(fullUser);
+      setIsAuthenticated(true);
 
-        try {
-          const stats = await apiClient.getUsageStats();
-          setUsageStats(stats);
-        } catch (error) {
-          console.error("Failed to load usage stats:", error);
-        }
+      try {
+        const stats = await apiClient.getUsageStats();
+        setUsageStats(stats);
       } catch (error) {
-        console.error("Reinitialization failed:", error);
-        forceLogout();
+        console.error("Failed to load usage stats:", error);
       }
-    } else {
-      setIsAuthenticated(false);
-      setUser(null);
-      setUsageStats(null);
+    } catch (error) {
+      console.error("Reinitialization failed:", error);
+      forceLogout();
     }
 
     setIsInitializing(false);

@@ -66,14 +66,15 @@ def get_column_names(conn, table_name: str) -> set:
         return {col["name"] for col in columns}
     except Exception as e:
         logger.debug(f"Ошибка при получении колонок таблицы {table_name}: {e}")
-        # Fallback на прямой SQL запрос
+        # Fallback на прямой SQL запрос (параметризованно — без риска SQL injection)
         try:
             result = conn.execute(
-                text(f"""
+                text("""
                     SELECT column_name 
                     FROM information_schema.columns 
-                    WHERE table_name = '{table_name}'
-                """)
+                    WHERE table_name = :table_name
+                """),
+                {"table_name": table_name},
             )
             return {row[0] for row in result.fetchall()}
         except Exception as e2:

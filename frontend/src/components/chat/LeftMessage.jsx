@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSpring, animated } from "@react-spring/web";
 import { useOptimizedMessageAnimations } from "../../hooks/message/useOptimizedMessageAnimations";
 import { useChats } from "../../contexts/ChatsContext";
@@ -6,6 +6,7 @@ import { MessageState, AnimationType } from "../../hooks/message/useMessageState
 import ThinkingIndicator from "./ThinkingIndicator";
 import { MdPictureAsPdf, MdDescription, MdTableChart, MdImage, MdCode, MdInsertDriveFile, MdDownload } from "react-icons/md";
 import apiClient from "../../services/api";
+import { sanitizeChatMessage } from "../../utils/sanitize";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useImageModal } from "../../contexts/ImageModalContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -1446,6 +1447,9 @@ export default function LeftMessage({
               });
             }
 
+            // Санитизируем HTML перед вставкой в DOM, чтобы защититься от XSS
+            const safeHtml = sanitizeChatMessage(displayText);
+
             return hasHTMLTags ? (
               <div
                 ref={messageRef}
@@ -1455,7 +1459,7 @@ export default function LeftMessage({
                   wordBreak: "break-word",
                   color: "var(--msg-left-text-color)",
                 }}
-                dangerouslySetInnerHTML={{ __html: displayText }}
+                dangerouslySetInnerHTML={{ __html: safeHtml }}
                 onClick={(e) => {
                   // Разрешаем клики по ссылкам и кнопкам внутри HTML контента
                   const target = e.target;

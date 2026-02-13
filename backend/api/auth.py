@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select, func, or_, and_
 from datetime import timedelta, datetime
@@ -30,6 +30,7 @@ from core.auth import (
 from core.dependencies import get_current_active_user
 from core.user_utils import create_user_response
 from services.subscription_service import SubscriptionService
+from services.auth_protection_service import auth_protection_service
 from models.user import (
     UserCreate, 
     UserResponse, 
@@ -144,17 +145,72 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_session)):
 
 
 @router.post("/login", response_model=Token)
-def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
-    """Вход пользователя по email (OAuth2 форма)"""
+def login_user(
+    request: Request,
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_session),
+):
+    """Вход пользователя по email (OAuth2 форма) с защитой от brute-force."""
     # OAuth2PasswordRequestForm использует поле username, но мы используем его для email
-    user = authenticate_user(db, form_data.username, form_data.password)
+    email = form_data.username
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Сначала проверяем, не заблокирован ли email или IP
+    email_blocked, email_retry = auth_protection_service.is_blocked(email)
+    ip_blocked, ip_retry = auth_protection_service.is_blocked(client_ip)
+
+    if email_blocked or ip_blocked:
+        retry_after = max(email_retry, ip_retry)
+        try:
+            from core.security_logger import log_suspicious_activity
+            log_suspicious_activity(
+                "LOGIN_BLOCKED",
+                user_id=None,
+                ip_address=client_ip,
+                details={"email": email, "retry_after_sec": retry_after},
+            )
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Слишком много неудачных попыток входа. Попробуйте снова через {retry_after} секунд.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    user = authenticate_user(db, email, form_data.password)
     if not user:
+        try:
+            from core.security_logger import log_suspicious_activity
+            log_suspicious_activity(
+                "LOGIN_FAILED",
+                user_id=None,
+                ip_address=client_ip,
+                details={"email": email},
+            )
+        except Exception:
+            pass
+        # Записываем неудачную попытку и для email, и для IP
+        email_blocked_now, email_retry_now = auth_protection_service.record_failed_attempt(email)
+        ip_blocked_now, ip_retry_now = auth_protection_service.record_failed_attempt(client_ip)
+
+        if email_blocked_now or ip_blocked_now:
+            retry_after = max(email_retry_now, ip_retry_now)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Слишком много неудачных попыток входа. Попробуйте снова через {retry_after} секунд.",
+                headers={"Retry-After": str(retry_after)},
+            )
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Неверный email или пароль",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    # Успешный вход — очищаем счётчики для email и IP
+    auth_protection_service.clear_attempts(email)
+    auth_protection_service.clear_attempts(client_ip)
     # Обновляем время последнего входа
     update_user_last_login(db, user)
     
@@ -170,10 +226,20 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
     # Создаем токен
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username, "user_id": user.id}, 
-        expires_delta=access_token_expires
+        data={"sub": user.username, "user_id": user.id},
+        expires_delta=access_token_expires,
     )
-    
+
+    # Сохраняем access_token в HttpOnly cookie для защиты от XSS
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=False,  # Для локальной разработки; в production лучше True (через HTTPS)
+        samesite="lax",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -183,7 +249,11 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
 
 
 @router.post("/google", response_model=Token)
-def login_with_google(payload: GoogleAuthRequest, db: Session = Depends(get_session)):
+def login_with_google(
+    payload: GoogleAuthRequest,
+    response: Response,
+    db: Session = Depends(get_session),
+):
     """Вход или регистрация пользователя через Google ID Token"""
     logger.info(f"Google login attempt. Allowed clients: {GOOGLE_ALLOWED_CLIENT_IDS}")
     logger.info(f"Request client_id: {payload.client_id}, GOOGLE_CLIENT_ID: {GOOGLE_CLIENT_ID}")
@@ -335,7 +405,17 @@ def login_with_google(payload: GoogleAuthRequest, db: Session = Depends(get_sess
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username, "user_id": user.id},
-        expires_delta=access_token_expires
+        expires_delta=access_token_expires,
+    )
+
+    # Сохраняем access_token в HttpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=False,  # В production установить True
+        samesite="lax",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
     user_response = create_user_response(user)
@@ -513,8 +593,9 @@ async def upload_avatar(
 
 
 @router.post("/logout")
-def logout_user():
-    """Выход пользователя (на клиенте нужно удалить токен)"""
+def logout_user(response: Response):
+    """Выход пользователя: очищаем access_token cookie (и клиенту не нужно трогать токен)."""
+    response.delete_cookie("access_token")
     return {"message": "Успешный выход из системы"}
 
 

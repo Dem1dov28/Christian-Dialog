@@ -230,6 +230,17 @@ python tests/test_message_functions.py
 - CORS для защиты от атак
 - Валидация входных данных
 
+### Перед выкладкой на production
+
+1. **backend/.env** — задать: `ENVIRONMENT=production`, `SECRET_KEY` (длинный случайный), `DATABASE_URL` с сильным паролем, `ALLOWED_ORIGINS=https://ваш-домен` (без localhost). По желанию: `SENTRY_DSN`, `REDIS_URL` (если Redis не на localhost).
+2. **Корень проекта** — скопировать `env.example` в `.env`, подставить пароли для PostgreSQL и pgAdmin (для `docker compose`).
+3. **HTTPS** — выдать сертификат (Let's Encrypt) и поставить Nginx/Caddy перед приложением.
+4. **Зависимости** — один раз: `pip install pip-audit && python backend/scripts/check_vulnerabilities.py`.
+5. **Бэкапы БД** — настроить cron для `scripts/backup_database.sh` (см. `backend/scripts/README-DB.md`).
+6. **Сервер** — не запускать `docker compose` с профилем `development`, чтобы не поднимать pgAdmin.
+
+Подробный аудит: [SECURITY_AUDIT.md](../SECURITY_AUDIT.md) в корне репозитория.
+
 ## 📊 Технологии
 
 - **FastAPI** - веб-фреймворк

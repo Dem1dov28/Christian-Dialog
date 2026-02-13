@@ -8,13 +8,12 @@ from core.database import ensure_user_messages_cycle_column
 from models.user import User, TokenData
 from models.agent import Agent
 from core.security import validate_password_strength, check_secret_key
+from config import SECRET_KEY  # Единый источник секретного ключа
 # from services.subscription_service import SubscriptionService  # Временно отключено для отладки
-import os
 import logging
 
 # Настройки для JWT
 logger = logging.getLogger(__name__)
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 1 час для access token (было 24 часа - слишком долго)
 REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7 дней для refresh token

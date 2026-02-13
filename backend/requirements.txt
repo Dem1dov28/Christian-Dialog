@@ -6,7 +6,7 @@ uvicorn[standard]==0.36.0
 sqlmodel>=0.0.25
 pydantic>=2.11.9
 psycopg2-binary>=2.9.9  # PostgreSQL драйвер
-sqlalchemy>=2.0.40  # Обновлено для совместимости с Python 3.14
+sqlalchemy>=1.4,<2.0.36  # Ограничено langchain-community 0.3.7
 
 # LangChain - основной фреймворк для работы с LLM
 langchain==0.3.7
@@ -59,3 +59,9 @@ ddgs>=0.1.0  # Новое название пакета (было duckduckgo-sea
 # duckduckgo-search>=6.0.0  # Старое название (deprecated, но оставляем для совместимости)
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
+
+# Redis для rate limiting / защиты от брутфорса
+redis>=5.0.0
+
+# Мониторинг и error tracking (опционально)
+sentry-sdk[fastapi]>=2.0.0

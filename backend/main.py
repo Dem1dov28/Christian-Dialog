@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException, Depends, status
 from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import os
@@ -24,6 +25,7 @@ from core.database import create_db_and_tables, get_session
 from core.dependencies import get_current_user
 from core.security import SecurityHeadersMiddleware, check_secret_key, sanitize_filename, validate_path_traversal
 from core.rate_limiter import RateLimitMiddleware
+from core.csrf import CSRFMiddleware
 from api.agents import create_agent_endpoints
 from api.chat import create_chat_endpoints
 from api.multi_agent_chat import create_multi_agent_chat_endpoints
@@ -47,6 +49,9 @@ from services.folder_service import FolderService
 from services.pinned_chats_service import PinnedChatsService
 from models.file_attachment import FileAttachment
 from models.user import User
+from config import ALLOWED_ORIGINS, ENVIRONMENT
+from core.monitoring import init_sentry
+from core.logging_config import setup_sensitive_data_filter
 
 # Настраиваем логирование
 logging.basicConfig(
@@ -54,12 +59,15 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
+setup_sensitive_data_filter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 # from services.pinned_chats_service import PinnedChatsService  # Файл не существует
 # from services.pinned_messages_service import PinnedMessagesService  # Файл не существует
-from config import ALLOWED_ORIGINS
 
+
+# Инициализируем мониторинг (если указан SENTRY_DSN)
+init_sentry()
 
 # Создаем экземпляры сервисов
 agent_service = AgentService()
@@ -114,21 +122,27 @@ app = FastAPI(
 # Порядок middleware ВАЖЕН:
 # 1. SecurityHeadersMiddleware  -> внутренний слой (добавляет security-заголовки)
 # 2. RateLimitMiddleware        -> промежуточный слой (может вернуть 429)
-# 3. CORSMiddleware             -> внешний слой, чтобы CORS заголовки добавлялись
+# 3. CSRFMiddleware             -> защита от CSRF для state-changing запросов
+# 4. CORSMiddleware             -> внешний слой, чтобы CORS заголовки добавлялись
 #    даже к ответам/ошибкам из внутренних middleware (например, 429 от rate limiter).
+# 5. HTTPSRedirectMiddleware    -> самый внешний слой (редиректит HTTP -> HTTPS в production)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimitMiddleware)
+app.add_middleware(CSRFMiddleware)
 
 # Настройка CORS для связи с фронтендом
-# В production ограничить origins только доверенными доменами
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],  # Ограничиваем headers
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-Token"],
     expose_headers=["Content-Disposition", "Content-Length", "Content-Type", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
 )
+
+# В production принудительно редиректим HTTP -> HTTPS
+if ENVIRONMENT == "production":
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 # Подключаем эндпоинты
 app.include_router(auth_router)
@@ -501,8 +515,11 @@ async def download_file_attachment(
 # Глобальный обработчик ошибок валидации
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Обработчик ошибок валидации - не раскрывает детали для безопасности"""
-    logger.warning(f"Validation error on {request.url.path}: {exc.errors()}")
+    """Обработчик ошибок валидации — в production не логируем тело запроса (могут быть пароли и т.д.)."""
+    if ENVIRONMENT == "production":
+        logger.warning("Validation error on %s: %s field(s)", request.url.path, len(exc.errors()))
+    else:
+        logger.warning("Validation error on %s: %s", request.url.path, exc.errors())
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": "Ошибка валидации данных. Проверьте введенные данные."}
@@ -512,8 +529,22 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # Глобальный обработчик необработанных исключений
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Обработчик необработанных исключений - не раскрывает детали для безопасности"""
-    logger.error(f"Unhandled exception on {request.url.path}: {exc}", exc_info=True)
+    """Обработчик необработанных исключений — детали не отдаём клиенту; в production пишем в security.log."""
+    client_ip = request.client.host if request.client else "unknown"
+    if ENVIRONMENT == "production":
+        logger.error("Unhandled exception on %s", request.url.path, exc_info=True)
+        try:
+            from core.security_logger import log_suspicious_activity
+            log_suspicious_activity(
+                "INTERNAL_ERROR",
+                user_id=None,
+                ip_address=client_ip,
+                details={"path": request.url.path, "method": request.method},
+            )
+        except Exception:
+            pass
+    else:
+        logger.error("Unhandled exception on %s: %s", request.url.path, exc, exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Внутренняя ошибка сервера. Попробуйте позже."}

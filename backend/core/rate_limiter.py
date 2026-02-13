@@ -7,14 +7,35 @@ from fastapi import Request, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
+# Пытаемся инициализировать Redis (для production)
+try:
+    import redis  # type: ignore
+
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    _redis_client = redis.from_url(
+        REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=3,
+    )
+    # Тестовое ping
+    _redis_client.ping()
+    USE_REDIS = True
+    logger.info(f"Rate limiter: подключен Redis ({REDIS_URL})")
+except Exception as e:  # pragma: no cover - безопасный fallback
+    _redis_client = None
+    USE_REDIS = False
+    logger.warning(f"Rate limiter: Redis недоступен, используется in-memory реализация: {e}")
+
 
 class RateLimiter:
-    """Simple in-memory rate limiter (для production лучше использовать Redis)"""
+    """Rate limiter с поддержкой Redis (если доступен)"""
     
     def __init__(self):
+        # In-memory хранилище как fallback
         self.requests: Dict[str, list] = defaultdict(list)
         self.cleanup_interval = timedelta(minutes=5)
         self.last_cleanup = datetime.utcnow()
@@ -62,6 +83,11 @@ class RateLimiter:
         Returns:
             Tuple of (is_allowed, remaining_requests)
         """
+        # Если доступен Redis — используем его (production-ready)
+        if USE_REDIS and _redis_client is not None:
+            return self._is_allowed_redis(client_id, max_requests, window_seconds)
+        
+        # Fallback: in-memory реализация (для dev / локального запуска)
         self._cleanup_old_entries()
         
         now = datetime.utcnow()
@@ -81,6 +107,68 @@ class RateLimiter:
         # Add current request
         self.requests[client_id].append(now)
         
+        remaining = max_requests - request_count - 1
+        return True, remaining
+
+    def _is_allowed_redis(
+        self,
+        client_id: str,
+        max_requests: int,
+        window_seconds: int
+    ) -> Tuple[bool, int]:
+        """
+        Реализация rate limiting с использованием Redis (sliding window).
+        """
+        assert _redis_client is not None  # для type checker
+        
+        key = f"rate_limit:{client_id}"
+        now = datetime.utcnow().timestamp()
+        window_start = now - window_seconds
+        
+        try:
+            pipe = _redis_client.pipeline()
+            # Удаляем старые записи
+            pipe.zremrangebyscore(key, 0, window_start)
+            # Добавляем текущий запрос
+            pipe.zadd(key, {str(now): now})
+            # Считаем количество запросов в окне
+            pipe.zcard(key)
+            # Устанавливаем TTL для ключа
+            pipe.expire(key, window_seconds + 60)
+            _, _, request_count, _ = pipe.execute()
+            
+            if request_count > max_requests:
+                return False, 0
+            
+            remaining = max_requests - request_count
+            return True, remaining
+        except Exception as e:  # pragma: no cover - безопасный fallback
+            logger.error(f"Redis error in rate limiter, fallback to in-memory: {e}")
+            # На ошибке Redis не блокируем пользователя, но продолжаем с in-memory
+            return self._is_allowed_memory_fallback(client_id, max_requests, window_seconds)
+
+    def _is_allowed_memory_fallback(
+        self,
+        client_id: str,
+        max_requests: int,
+        window_seconds: int
+    ) -> Tuple[bool, int]:
+        """Отдельный метод для in-memory логики (используется как fallback)."""
+        self._cleanup_old_entries()
+        
+        now = datetime.utcnow()
+        cutoff_time = now - timedelta(seconds=window_seconds)
+        
+        self.requests[client_id] = [
+            req_time for req_time in self.requests[client_id]
+            if req_time > cutoff_time
+        ]
+        
+        request_count = len(self.requests[client_id])
+        if request_count >= max_requests:
+            return False, 0
+        
+        self.requests[client_id].append(now)
         remaining = max_requests - request_count - 1
         return True, remaining
 
@@ -161,6 +249,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 f"Rate limit exceeded for {client_id} on {path}. "
                 f"Limit: {max_requests} requests per {window_seconds} seconds"
             )
+            try:
+                from core.security_logger import log_suspicious_activity
+                log_suspicious_activity(
+                    "RATE_LIMIT_EXCEEDED",
+                    user_id=None,
+                    ip_address=client_id,
+                    details={"path": path, "limit": max_requests, "window_sec": window_seconds},
+                )
+            except Exception:
+                pass
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={

@@ -38,6 +38,11 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+try:
+    from openai import RateLimitError as OpenAIRateLimitError
+except ImportError:
+    OpenAIRateLimitError = None
+
 
 class LangChainService:
     """Сервис для работы с языковыми моделями через LangChain и OpenRouter
@@ -633,8 +638,23 @@ class LangChainService:
         except Exception as e:
             error_message = str(e)
             error_type = type(e).__name__
-            logger.error(f"Ошибка в generate_response для агента {agent_name} с моделью {model}: {error_type}: {error_message}", exc_info=True)
-            
+            is_rate_limit = (
+                OpenAIRateLimitError is not None and isinstance(e, OpenAIRateLimitError)
+                or "429" in error_message
+                or "rate limit" in error_message.lower()
+                or "rate-limited" in error_message.lower()
+            )
+            if is_rate_limit:
+                logger.warning(
+                    "Превышен лимит запросов к модели для агента %s (модель: %s). Пробуем fallback или возвращаем сообщение пользователю.",
+                    agent_name, model
+                )
+            else:
+                logger.error(
+                    f"Ошибка в generate_response для агента {agent_name} с моделью {model}: {error_type}: {error_message}",
+                    exc_info=True,
+                )
+
             # Проверяем, является ли это ошибкой подключения к API
             is_connection_error = (
                 "connection error" in error_message.lower() or

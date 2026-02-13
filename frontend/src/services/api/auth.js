@@ -1,6 +1,7 @@
 /**
  * API методы для аутентификации и управления пользователями
  */
+import { getCsrfToken } from "../../utils/csrf";
 
 export class AuthAPI {
   constructor(client) {
@@ -21,12 +22,15 @@ export class AuthAPI {
     formData.append('password', credentials.password);
 
     const url = `${this.client.baseURL}/auth/login`;
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const csrfToken = getCsrfToken();
+    if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
     const config = {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers,
       body: formData,
+      credentials: 'include', // важно для получения HttpOnly cookie от сервера
     };
 
     try {
@@ -76,10 +80,8 @@ export class AuthAPI {
         throw error;
       }
 
+      // Токен теперь хранится в HttpOnly cookie, поэтому access_token из тела можно игнорировать
       const data = await response.json();
-      if (data.access_token) {
-        this.client.setToken(data.access_token);
-      }
       return data;
     } catch (error) {
       if (error.name === "TypeError" && error.message.includes("fetch")) {
@@ -105,9 +107,7 @@ export class AuthAPI {
     }
 
     const response = await this.client.post("/auth/google", payload);
-    if (response.access_token) {
-      this.client.setToken(response.access_token);
-    }
+    // access_token устанавливается сервером в HttpOnly cookie
     return response;
   }
 

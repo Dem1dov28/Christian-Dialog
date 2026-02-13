@@ -15,15 +15,9 @@ export function getAgentAvatarUrl(imageUrl, avatarUrl, quality = "high") {
     return null;
   }
 
-  // Если это путь к статическим файлам приложения (начинается с /images/agents/)
-  // и не содержит уже подпапок _low или _medium
-  if (url.startsWith("/images/agents/") && !url.includes("/_low/") && !url.includes("/_medium/")) {
-    if (quality === "low") {
-      url = url.replace("/images/agents/", "/images/agents/_low/");
-    } else if (quality === "medium") {
-      url = url.replace("/images/agents/", "/images/agents/_medium/");
-    }
-  }
+  // Для /images/agents/ используем один и тот же файл (подпапки _low/_medium не заполнены)
+  // Если появятся уменьшенные версии — можно снова включить подстановку по quality
+  // if (url.startsWith("/images/agents/") && ...) { url = ... _low/ или _medium/ ... }
 
   // Если URL уже абсолютный (http/https), возвращаем как есть
   if (url.startsWith("http://") || url.startsWith("https://")) {

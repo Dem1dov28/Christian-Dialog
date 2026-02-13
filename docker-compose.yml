@@ -4,9 +4,11 @@ services:
     container_name: timetalk_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: timetalk
-      POSTGRES_USER: timetalk_user
-      POSTGRES_PASSWORD: timetalk_92305FqYic54Op
+      # ВАЖНО: эти значения должны приходить из .env файла,
+      # который НЕ коммитится в репозиторий
+      POSTGRES_DB: ${DB_NAME:-timetalk}
+      POSTGRES_USER: ${DB_USER:-timetalk_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
@@ -23,12 +25,18 @@ services:
 
   # Опционально: pgAdmin для управления БД через веб-интерфейс
   pgadmin:
+    # ВАЖНО: запускается только в профиле development.
+    # На production-сервере НЕ используйте профиль development, чтобы не поднимать pgAdmin.
+    profiles:
+      - development
     image: dpage/pgadmin4:latest
     container_name: timetalk_pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@timetalk.local
-      PGADMIN_DEFAULT_PASSWORD: admin
+      # Эти переменные также должны быть заданы в .env,
+      # чтобы пароли не хранились в docker-compose.yml
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@timetalk.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "5050:80"
@@ -40,10 +48,25 @@ services:
     networks:
       - timetalk_network
 
+  # Redis для rate limiting, анти-брутфорса и кэша
+  redis:
+    image: redis:7-alpine
+    container_name: timetalk_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - timetalk_network
+
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

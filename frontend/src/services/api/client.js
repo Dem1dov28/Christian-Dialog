@@ -2,28 +2,21 @@
  * Базовый API клиент для связи с бэкендом
  * Содержит общую логику для всех API запросов
  */
-
-const API_BASE_URL = "http://localhost:8000";
+import { API_BASE_URL, API_TIMEOUT } from "../../config/api";
+import { getCsrfToken } from "../../utils/csrf";
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
-    this.token = localStorage.getItem("auth_token");
-    console.log('ApiClient: Initializing, token exists:', !!this.token);
-    // Обновляем токен при инициализации
-    if (this.token) {
-      this.setToken(this.token);
-    }
+    // Токен теперь хранится в HttpOnly cookie на сервере,
+    // поэтому в клиенте он не нужен.
+    this.token = null;
   }
 
   // Установить токен авторизации
   setToken(token) {
+    // Для совместимости оставляем метод, но он больше не использует localStorage.
     this.token = token;
-    if (token) {
-      localStorage.setItem("auth_token", token);
-    } else {
-      localStorage.removeItem("auth_token");
-    }
   }
 
   // Получить заголовки для запросов
@@ -32,8 +25,10 @@ class ApiClient {
       "Content-Type": "application/json",
     };
 
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`;
+    // Добавляем CSRF токен, если он есть в cookie
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
     }
 
     return headers;
@@ -127,23 +122,25 @@ class ApiClient {
   // Базовый метод для HTTP запросов
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    const headers = this.getHeaders();
-    
-    // Debug logging for auth issues
-    if (endpoint.includes('/auth/delete-account')) {
-      console.log('ApiClient: POST /auth/delete-account request');
-      console.log('ApiClient: Token exists:', !!this.token);
-      console.log('ApiClient: Token value:', this.token ? this.token.substring(0, 20) + '...' : 'none');
-      console.log('ApiClient: Headers:', headers);
-    }
-    
+
+    // AbortController для таймаута запросов
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
     const config = {
-      headers,
+      headers: this.getHeaders(),
+      signal: controller.signal,
       ...options,
     };
 
     try {
-      const response = await fetch(url, config);
+      const response = await fetch(url, {
+        ...config,
+        credentials: "include", // Отправляем cookies (включая access_token и csrf_token)
+      });
+
+      // Успешный ответ — очищаем таймаут
+      clearTimeout(timeoutId);
 
       // Если токен истек, очищаем его
       if (response.status === 401) {
@@ -258,6 +255,11 @@ class ApiClient {
       const text = await response.text();
       return text ? text : {};
     } catch (error) {
+      // Отмененный запрос (таймаут)
+      if (error.name === "AbortError") {
+        throw new Error("Request timeout - server not responding");
+      }
+
       // Более детальное логирование ошибок
       if (error.name === "TypeError" && error.message.includes("fetch")) {
         console.error("Network error details:", {
@@ -306,12 +308,8 @@ class ApiClient {
   }
 
   // DELETE запрос
-  async delete(endpoint, body = null) {
-    const options = { method: "DELETE" };
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
-    return this.request(endpoint, options);
+  async delete(endpoint) {
+    return this.request(endpoint, { method: "DELETE" });
   }
 
   // POST запрос с FormData (для загрузки файлов)
@@ -329,6 +327,7 @@ class ApiClient {
         method: "POST",
         headers,
         body: formData,
+        credentials: "include",
       });
 
       if (response.status === 401) {
@@ -383,6 +382,7 @@ class ApiClient {
         method: "PUT",
         headers,
         body: formData,
+        credentials: "include",
       });
 
       if (response.status === 401) {
