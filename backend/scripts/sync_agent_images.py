@@ -146,11 +146,7 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
         # Политики / персонажи с латинскими именами
         "putin": "владимир путин",
         "platon": "платон",
-        "tramp": "дональд трамп",
-        "zelenskiy": "владимир зеленский",
-        "pavel durov": "павел дуров",
         "mark avrily": "марк аврелий",
-        "ilon mask": "илон маск",
         "friedrich nietzsche": "фридрих ницше",
         "english teacher": "учитель английского",
         # Исторические личности

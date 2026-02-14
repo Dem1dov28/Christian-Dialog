@@ -5,6 +5,7 @@ import PricingCard from "./PricingCard";
 import { getPricingData } from "../../data/pricingData";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import apiClient from "../../services/api";
 
 const PricingPage = ({ isVisible, onClose }) => {
   const { user, upgradeSubscription } = useAuth();
@@ -13,12 +14,14 @@ const PricingPage = ({ isVisible, onClose }) => {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState(null);
+  const [bepaidEnabled, setBepaidEnabled] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
       setIsClosing(false);
       setUpgradeError(null);
       setUpgradeSuccess(null);
+      apiClient.getPaymentsConfig().then((r) => setBepaidEnabled(r.bepaid_enabled === true)).catch(() => setBepaidEnabled(false));
     }
   }, [isVisible]);
 
@@ -43,7 +46,6 @@ const PricingPage = ({ isVisible, onClose }) => {
 
       if (response.success) {
         setUpgradeSuccess(response.message);
-        // Закрываем страницу через 2 секунды после успешного обновления
         setTimeout(() => {
           handleClose();
         }, 2000);
@@ -52,6 +54,25 @@ const PricingPage = ({ isVisible, onClose }) => {
       }
     } catch (error) {
       console.error("Upgrade error:", error);
+      setUpgradeError(error.message || t("pricing.upgradeError"));
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
+  const handlePayWithCard = async (tier) => {
+    try {
+      setIsUpgrading(true);
+      setUpgradeError(null);
+      const returnUrl = `${window.location.origin}/subscription-success`;
+      const response = await apiClient.createCheckout(tier, returnUrl);
+      if (response.redirect_url) {
+        window.location.href = response.redirect_url;
+        return;
+      }
+      setUpgradeError(response.error || t("pricing.upgradeError"));
+    } catch (error) {
+      console.error("Checkout error:", error);
       setUpgradeError(error.message || t("pricing.upgradeError"));
     } finally {
       setIsUpgrading(false);
@@ -110,11 +131,14 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("plus")
                   ? t("pricing.currentPlan")
-                  : t("pricing.switchToPlus")
+                  : bepaidEnabled
+                    ? t("pricing.payWithCard")
+                    : t("pricing.switchToPlus")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus")) {
-                  handleUpgrade("plus");
+                  if (bepaidEnabled) handlePayWithCard("plus");
+                  else handleUpgrade("plus");
                 }
               }}
               isCurrentPlan={isCurrentPlan("plus")}
@@ -126,11 +150,16 @@ const PricingPage = ({ isVisible, onClose }) => {
               description={pricingData.pro.description}
               features={pricingData.pro.features}
               buttonText={
-                isCurrentPlan("pro") ? t("pricing.currentPlan") : t("pricing.switchToPro")
+                isCurrentPlan("pro")
+                  ? t("pricing.currentPlan")
+                  : bepaidEnabled
+                    ? t("pricing.payWithCard")
+                    : t("pricing.switchToPro")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro")) {
-                  handleUpgrade("pro");
+                  if (bepaidEnabled) handlePayWithCard("pro");
+                  else handleUpgrade("pro");
                 }
               }}
               isCurrentPlan={isCurrentPlan("pro")}

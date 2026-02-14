@@ -341,5 +341,20 @@ export class AuthAPI {
   async clearAllData() {
     return this.client.post("/auth/clear-all-data");
   }
+
+  // --- BePaid (оплата подписки) ---
+
+  // Узнать, включена ли оплата через BePaid
+  async getPaymentsConfig() {
+    return this.client.get("/payments/config");
+  }
+
+  // Создать сессию оплаты и получить redirect_url на страницу BePaid
+  async createCheckout(tier, returnUrl) {
+    return this.client.post("/payments/create-checkout", {
+      tier,
+      return_url: returnUrl,
+    });
+  }
 }
 

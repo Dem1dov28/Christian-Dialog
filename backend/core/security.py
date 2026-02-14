@@ -60,7 +60,7 @@ def validate_password_strength(password: str) -> Tuple[bool, Optional[str]]:
     
     # Проверка на распространенные слабые пароли
     common_passwords = [
-        "password", "12345678", "qwerty", "abc123", "password123",
+        "password", "password1", "12345678", "qwerty", "abc123", "password123",
         "admin", "letmein", "welcome", "monkey", "1234567890"
     ]
     if password.lower() in common_passwords:

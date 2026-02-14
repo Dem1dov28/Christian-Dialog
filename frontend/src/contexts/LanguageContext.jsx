@@ -139,7 +139,8 @@ export const LanguageProvider = ({ children }) => {
         return {
           ...agent,
           name: translated.name || agent.name,
-          description: translated.description || agent.description
+          // Для карточки и модалки приоритет у полного описания из API/конфига; короткое из локали — только если с API пусто
+          description: agent.description || translated.description
         };
       }
       

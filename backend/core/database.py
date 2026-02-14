@@ -13,11 +13,7 @@ from models.user import User
 from models.user_channel_subscription import UserChannelSubscription
 from models.file_attachment import FileAttachment
 from models.test_answer import TestAnswer
-from models.trip import Trip
 from models.attraction_visit import AttractionVisit
-from models.budget import Budget
-from models.savings_goal import SavingsGoal
-from models.recurring_payment import RecurringPayment
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +150,9 @@ def create_db_and_tables():
             # Проверяем столбцы для авторизации через соцсети
             ensure_user_social_columns(conn)
 
+            # BePaid: привязка подписки к платёжной системе
+            ensure_user_bepaid_columns(conn)
+
             # Проверяем существование таблицы fileattachment
             ensure_file_attachment_table(conn)
             
@@ -165,6 +164,8 @@ def create_db_and_tables():
             
             # Проверяем наличие колонки user_id у таблицы agent (для пользовательских персонажей)
             ensure_agent_user_id_column(conn)
+            # Колонка description для подробного описания агента (показ в карточке)
+            ensure_agent_description_column(conn)
             
             conn.commit()
     except Exception as e:
@@ -214,6 +215,33 @@ def ensure_user_social_columns(connection=None):
                 conn.close()
     except Exception as e:
         logger.debug(f"Ошибка при проверке колонок соцавторизации: {e}")
+
+
+def ensure_user_bepaid_columns(connection=None):
+    """Гарантировать существование колонок user.bepaid_subscription_id и user.bepaid_customer_id."""
+    try:
+        if connection is not None:
+            conn = connection
+            should_close = False
+        else:
+            conn = engine.connect()
+            should_close = True
+
+        try:
+            columns = get_column_names(conn, "user")
+            if "bepaid_subscription_id" not in columns:
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN bepaid_subscription_id VARCHAR"))
+                logger.info("Добавлена колонка bepaid_subscription_id в таблицу user")
+            if "bepaid_customer_id" not in columns:
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN bepaid_customer_id VARCHAR"))
+                logger.info("Добавлена колонка bepaid_customer_id в таблицу user")
+            if should_close:
+                conn.commit()
+        finally:
+            if should_close:
+                conn.close()
+    except Exception as e:
+        logger.debug(f"Ошибка при проверке колонок BePaid: {e}")
 
 
 def ensure_conversation_system_chat_column():
@@ -474,6 +502,29 @@ def ensure_file_attachment_table(connection=None):
                 conn.close()
     except Exception as e:
         logger.error(f"Ошибка при проверке таблицы fileattachment: {e}", exc_info=True)
+
+
+def ensure_agent_description_column(connection=None):
+    """Гарантировать существование колонки agent.description (подробное описание для карточки)."""
+    try:
+        if connection is not None:
+            conn = connection
+            should_close = False
+        else:
+            conn = engine.connect()
+            should_close = True
+        try:
+            columns = get_column_names(conn, "agent")
+            if "description" not in columns:
+                conn.execute(text("ALTER TABLE agent ADD COLUMN description TEXT"))
+                logger.info("Добавлена колонка description в таблицу agent")
+                if should_close:
+                    conn.commit()
+        finally:
+            if should_close:
+                conn.close()
+    except Exception as e:
+        logger.error(f"Ошибка при проверке колонки description в agent: {e}", exc_info=True)
 
 
 def ensure_agent_user_id_column(connection=None):

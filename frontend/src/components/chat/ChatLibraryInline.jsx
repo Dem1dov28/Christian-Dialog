@@ -314,9 +314,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       combined.includes("правитель") || combined.includes("президент") ||
       combined.includes("король") || combined.includes("император") ||
       combined.includes("царь") || combined.includes("королева") ||
-      name.includes("путин") || name.includes("зеленский") ||
-      name.includes("трамп") || name.includes("putin") ||
-      name.includes("zelensky") || name.includes("trump") ||
+      name.includes("путин") || name.includes("putin") ||
       name.includes("ленин") || name.includes("сталин") ||
       name.includes("lenin") || name.includes("stalin") ||
       name.includes("марк аврелий") || name.includes("marcus aurelius")
@@ -420,7 +418,6 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       combined.includes("business") || combined.includes("entrepreneur") ||
       combined.includes("investor") || combined.includes("manager") ||
       combined.includes("billionaire") || combined.includes("millionaire") ||
-      name.includes("маск") || name.includes("musk") ||
       name.includes("гейтс") || name.includes("gates") ||
       name.includes("брэнсон") || name.includes("branson") ||
       name.includes("баффет") || name.includes("buffett")
@@ -506,10 +503,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       const translatedAgent = translateAgent(agent);
       // Формируем полный URL для аватара, если это относительный путь
       let imageSrc = getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "medium");
+      // description из API/конфига — показывается в модалке при клике на карточку
+      const description = translatedAgent.description ?? agent.description ?? "";
       return {
         id: translatedAgent.id,
         name: translatedAgent.name,
-        description: translatedAgent.description,
+        description,
         instructions: translatedAgent.instructions, // Добавляем инструкции для биографии
         colorClass: translatedAgent.color_class,
         iconName: translatedAgent.icon_name,
@@ -699,8 +698,6 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     // Политика
     if (combined.includes('политика') || combined.includes('политический') ||
       combined.includes('политик') || combined.includes('президент') ||
-      name.includes('зеленский') || name.includes('zelensky') ||
-      name.includes('трамп') || name.includes('trump') ||
       name.includes('путин') || name.includes('putin')) {
       return 'politics';
     }
@@ -714,7 +711,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
     // Технологии
     if (combined.includes('технология') || combined.includes('технологический') ||
-      combined.includes('тех') || name.includes('маск') || name.includes('musk') ||
+      combined.includes('тех') ||
       name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'technology';
     }
@@ -787,9 +784,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     }
 
     // Президент/Политик
-    if (name.includes('зеленский') || name.includes('zelensky') ||
-      name.includes('трамп') || name.includes('trump') ||
-      name.includes('путин') || name.includes('putin') ||
+    if (name.includes('путин') || name.includes('putin') ||
       combined.includes('президент')) {
       return 'president';
     }
@@ -802,8 +797,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     }
 
     // Предприниматель в технологиях
-    if (name.includes('маск') || name.includes('musk') ||
-      name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
+    if (name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'tech_entrepreneur';
     }
 

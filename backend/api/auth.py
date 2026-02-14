@@ -56,13 +56,8 @@ from models.message import Message
 from models.multi_agent_conversation import MultiAgentConversation
 from models.agent import Agent
 from models.attraction_visit import AttractionVisit
-from models.budget import Budget
 from models.file_attachment import FileAttachment
 from models.folder import Folder
-from models.recurring_payment import RecurringPayment
-
-from models.savings_goal import SavingsGoal
-from models.trip import Trip
 from models.user_channel_subscription import UserChannelSubscription
 from models.test_answer import TestAnswer
 from pydantic import BaseModel
@@ -305,8 +300,15 @@ def login_with_google(
     email = id_info.get("email")
     email_verified = id_info.get("email_verified", False)
     full_name = id_info.get("name")
-    avatar_url = id_info.get("picture")
-    
+    # Фото профиля: стандартный ключ в Google ID token — "picture"
+    avatar_url = (
+        id_info.get("picture")
+        or id_info.get("image")
+        or id_info.get("avatar")
+    )
+    if isinstance(avatar_url, str):
+        avatar_url = avatar_url.strip() or None
+
     logger.info(f"Google user data: email={email}, full_name={full_name}, avatar_url={avatar_url}")
 
     if not google_sub:
@@ -383,10 +385,10 @@ def login_with_google(
         user.google_id = google_sub
         user.email_verified = True
         user.auth_provider = "google"
-        # Убеждаемся, что avatar_url установлен
-        if avatar_url and not user.avatar_url:
-            logger.info(f"Setting avatar_url for new user: '{avatar_url}'")
+        # Всегда подтягиваем фото из Google при регистрации
+        if avatar_url:
             user.avatar_url = avatar_url
+            logger.info(f"Setting avatar_url for new Google user: '{avatar_url}'")
         user.updated_at = datetime.utcnow()
         db.add(user)
         db.commit()
@@ -1377,49 +1379,21 @@ async def delete_account(
         for agent in user_agents:
             db.delete(agent)
         
-        # 7. Удаляем поездки
-        statement = select(Trip).where(Trip.user_id == user_id)
-        trips = db.exec(statement).all()
-        logger.info(f"Found {len(trips)} trips to delete")
-        for trip in trips:
-            db.delete(trip)
-        
-        # 8. Удаляем бюджеты
-        statement = select(Budget).where(Budget.user_id == user_id)
-        budgets = db.exec(statement).all()
-        logger.info(f"Found {len(budgets)} budgets to delete")
-        for budget in budgets:
-            db.delete(budget)
-        
-        # 9. Удаляем цели накоплений
-        statement = select(SavingsGoal).where(SavingsGoal.user_id == user_id)
-        savings_goals = db.exec(statement).all()
-        logger.info(f"Found {len(savings_goals)} savings goals to delete")
-        for goal in savings_goals:
-            db.delete(goal)
-        
-        # 10. Удаляем регулярные платежи
-        statement = select(RecurringPayment).where(RecurringPayment.user_id == user_id)
-        recurring_payments = db.exec(statement).all()
-        logger.info(f"Found {len(recurring_payments)} recurring payments to delete")
-        for payment in recurring_payments:
-            db.delete(payment)
-        
-        # 11. Удаляем посещения достопримечательностей
+        # 7. Удаляем посещения достопримечательностей
         statement = select(AttractionVisit).where(AttractionVisit.user_id == user_id)
         visits = db.exec(statement).all()
         logger.info(f"Found {len(visits)} attraction visits to delete")
         for visit in visits:
             db.delete(visit)
         
-        # 12. Удаляем подписки на каналы
+        # 8. Удаляем подписки на каналы
         statement = select(UserChannelSubscription).where(UserChannelSubscription.user_id == user_id)
         subscriptions = db.exec(statement).all()
         logger.info(f"Found {len(subscriptions)} channel subscriptions to delete")
         for subscription in subscriptions:
             db.delete(subscription)
         
-        # 13. Удаляем папки
+        # 9. Удаляем папки
         statement = select(Folder).where(Folder.user_id == user_id)
         folders = db.exec(statement).all()
         logger.info(f"Found {len(folders)} folders to delete")

@@ -411,6 +411,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                 alt={user?.full_name || user?.username || "User"}
                 className="w-24 h-24 rounded-full object-cover profile-avatar mx-auto shadow-lg"
                 style={{ display: "block" }}
+                referrerPolicy={user.avatar_url.startsWith("http") ? "no-referrer" : undefined}
                 onError={(e) => {
                   // Если изображение не загрузилось, показываем инициал
                   console.error("Failed to load avatar image:", user.avatar_url);

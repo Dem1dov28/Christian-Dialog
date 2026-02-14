@@ -152,20 +152,20 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       const response = await apiClient.loginWithGoogle(credential, clientId);
+      // В ответе бэкенда уже есть актуальный user с avatar_url из Google
+      const userFromLogin = response?.user;
 
       try {
         const fullUser = await apiClient.getCurrentUser();
-        console.log("[AuthContext] Full user data after Google login:", fullUser);
-        console.log("[AuthContext] Avatar URL:", fullUser?.avatar_url);
-        console.log("[AuthContext] Full user object keys:", Object.keys(fullUser || {}));
-        setUser(fullUser);
-        localStorage.setItem("user_data", JSON.stringify(fullUser));
+        // Подтягиваем avatar_url из ответа логина, если в /me его ещё нет (гонка с cookie)
+        const mergedUser = userFromLogin?.avatar_url && !fullUser?.avatar_url
+          ? { ...fullUser, avatar_url: userFromLogin.avatar_url }
+          : fullUser;
+        setUser(mergedUser);
+        localStorage.setItem("user_data", JSON.stringify(mergedUser));
       } catch (e) {
-        console.log("[AuthContext] Using response.user data:", response.user);
-        console.log("[AuthContext] Response user avatar_url:", response.user?.avatar_url);
-        console.log("[AuthContext] Response user object keys:", Object.keys(response.user || {}));
-        setUser(response.user);
-        localStorage.setItem("user_data", JSON.stringify(response.user));
+        setUser(userFromLogin || response?.user);
+        localStorage.setItem("user_data", JSON.stringify(userFromLogin || response?.user));
       }
 
       setIsAuthenticated(true);

@@ -987,9 +987,7 @@ const Sidebar = ({
       combined.includes("правитель") || combined.includes("президент") ||
       combined.includes("король") || combined.includes("император") ||
       combined.includes("царь") || combined.includes("королева") ||
-      name.includes("путин") || name.includes("зеленский") ||
-      name.includes("трамп") || name.includes("putin") ||
-      name.includes("zelensky") || name.includes("trump") ||
+      name.includes("путин") || name.includes("putin") ||
       name.includes("ленин") || name.includes("сталин") ||
       name.includes("lenin") || name.includes("stalin") ||
       name.includes("марк аврелий") || name.includes("marcus aurelius")

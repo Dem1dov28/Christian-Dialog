@@ -1,1 +1,26 @@
-#!/usr/bin/env python3"""Скрипт для проверки работы backend сервера"""import requestsimport sysdef test_backend():    """Тестирует работу backend сервера"""    base_url = "http://localhost:8002"        try:        # Тест основного API        response = requests.get(f"{base_url}/api", timeout=5)        if response.status_code == 200:            print("✅ Основной API работает")            print(f"Ответ: {response.json()}")        else:            print(f"❌ Основной API не работает: {response.status_code}")            return False                    # Тест auth endpoint        response = requests.get(f"{base_url}/auth/test", timeout=5)        if response.status_code == 200:            print("✅ Auth router работает")            print(f"Ответ: {response.json()}")        else:            print(f"❌ Auth router не работает: {response.status_code}")            return False                    return True            except requests.exceptions.ConnectionError:        print("❌ Не удается подключиться к серверу. Сервер запущен?")        return False    except Exception as e:        print(f"❌ Ошибка: {e}")        return Falseif __name__ == "__main__":    print("Проверка работы backend сервера...")    if test_backend():        print("\n🎉 Backend сервер работает корректно!")    else:        print("\n💥 Backend сервер не работает!")        sys.exit(1)
+"""
+Интеграционные тесты работы backend (эндпоинты /api и auth).
+Требуют DATABASE_URL. Используют fixture client.
+"""
+import pytest
+
+pytestmark = pytest.mark.integration
+
+
+def test_api_endpoint(client):
+    """Основной API возвращает 200 и ожидаемые поля."""
+    response = client.get("/api")
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data
+    assert "docs" in data
+
+
+def test_auth_router_available(client):
+    """Auth router доступен (эндпоинт /auth/test или аналогичный)."""
+    # Проверяем, что auth зарегистрирован — через openapi
+    response = client.get("/openapi.json")
+    assert response.status_code == 200
+    paths = response.json().get("paths", {})
+    auth_paths = [p for p in paths if "auth" in p.lower()]
+    assert len(auth_paths) >= 1, "Ожидается хотя бы один auth path в API"

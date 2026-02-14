@@ -21,12 +21,15 @@ import {
   MdDelete
 } from "react-icons/md";
 import CreateAgentModal from "../agent/CreateAgentModal";
+import PersonaDetailModal from "../modals/PersonaDetailModal";
 
 const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [isVisible, setIsVisible] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedPersonaForDetail, setSelectedPersonaForDetail] = useState(null);
+  const [isPersonaDetailModalOpen, setIsPersonaDetailModalOpen] = useState(false);
 
   const { agents, getAgentsByCategory, getUserAgents, deleteAgent } = useAgents();
   const { showSuccess, showError } = useNotification();
@@ -194,10 +197,11 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const { translateAgent } = useLanguage();
   const aiPersonas = agents.map(agent => {
     const translatedAgent = translateAgent(agent);
+    const description = translatedAgent.description ?? agent.description ?? "";
     return {
       id: translatedAgent.id,
       name: translatedAgent.name,
-      description: translatedAgent.description,
+      description,
       colorClass: translatedAgent.color_class,
       iconName: translatedAgent.icon_name,
       imageSrc: translatedAgent.image_url || translatedAgent.avatar_url,
@@ -367,8 +371,6 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     // Политика
     if (combined.includes('политика') || combined.includes('политический') ||
       combined.includes('политик') || combined.includes('президент') ||
-      name.includes('зеленский') || name.includes('zelensky') ||
-      name.includes('трамп') || name.includes('trump') ||
       name.includes('путин') || name.includes('putin')) {
       return 'politics';
     }
@@ -382,7 +384,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
 
     // Технологии
     if (combined.includes('технология') || combined.includes('технологический') ||
-      combined.includes('тех') || name.includes('маск') || name.includes('musk') ||
+      combined.includes('тех') ||
       name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'technology';
     }
@@ -486,9 +488,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     }
 
     // Президент/Политик
-    if (name.includes('зеленский') || name.includes('zelensky') ||
-      name.includes('трамп') || name.includes('trump') ||
-      name.includes('путин') || name.includes('putin') ||
+    if (name.includes('путин') || name.includes('putin') ||
       combined.includes('президент')) {
       return 'president';
     }
@@ -501,8 +501,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     }
 
     // Предприниматель в технологиях
-    if (name.includes('маск') || name.includes('musk') ||
-      name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
+    if (name.includes('дуров') || name.includes('durov') || name.includes('drova')) {
       return 'tech_entrepreneur';
     }
 
@@ -787,7 +786,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
       return (
         <div
           key={persona.id}
-          onClick={() => handleChatSelect(`agent-${persona.id}`)}
+          onClick={() => handlePersonaCardClick(persona)}
           className={`group cursor-pointer bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--hover-bg)] transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-[var(--border-color)] hover:border-[var(--accent)] hover:shadow-[var(--accent)]/20 relative overflow-hidden persona-card${animationIndex >= 0 ? " persona-card-enter" : ""
             }`}
           style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -904,9 +903,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     combined.includes("правитель") || combined.includes("президент") ||
                     combined.includes("король") || combined.includes("император") ||
                     combined.includes("царь") || combined.includes("королева") ||
-                    name.includes("путин") || name.includes("зеленский") ||
-                    name.includes("трамп") || name.includes("putin") ||
-                    name.includes("zelensky") || name.includes("trump") ||
+                    name.includes("путин") || name.includes("putin") ||
                     name.includes("ленин") || name.includes("сталин") ||
                     name.includes("lenin") || name.includes("stalin") ||
                     name.includes("марк аврелий") || name.includes("marcus aurelius")
@@ -1010,7 +1007,6 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                     combined.includes("business") || combined.includes("entrepreneur") ||
                     combined.includes("investor") || combined.includes("manager") ||
                     combined.includes("billionaire") || combined.includes("millionaire") ||
-                    name.includes("маск") || name.includes("musk") ||
                     name.includes("гейтс") || name.includes("gates") ||
                     name.includes("брэнсон") || name.includes("branson") ||
                     name.includes("баффет") || name.includes("buffett")
@@ -1071,6 +1067,20 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
           defaultValue: "Не удалось подписаться на канал",
         })
       );
+    }
+  };
+
+  // Клик по карточке агента — открыть модалку с полным описанием
+  const handlePersonaCardClick = (persona) => {
+    setSelectedPersonaForDetail(persona);
+    setIsPersonaDetailModalOpen(true);
+  };
+
+  const handleStartChatFromModal = () => {
+    if (selectedPersonaForDetail) {
+      handleChatSelect(`agent-${selectedPersonaForDetail.id}`);
+      setIsPersonaDetailModalOpen(false);
+      setSelectedPersonaForDetail(null);
     }
   };
 
@@ -1218,12 +1228,21 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                       {filteredUserAgents.map((agent) => (
                         <div
                           key={agent.id}
-                          onClick={() => handleChatSelect(`agent-${agent.id}`)}
+                          onClick={() => handlePersonaCardClick({
+                            id: agent.id,
+                            name: agent.name,
+                            description: agent.description,
+                            imageSrc: agent.avatar_url?.startsWith("/") ? `http://localhost:8000${agent.avatar_url}` : agent.avatar_url,
+                            colorClass: "bg-gradient-to-br from-[var(--accent)] to-purple-600",
+                          })}
                           className="group cursor-pointer bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--hover-bg)] transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-[var(--border-color)] hover:border-[var(--accent)] hover:shadow-[var(--accent)]/20 relative overflow-hidden"
                         >
                           {/* Кнопка удаления */}
                           <button
-                            onClick={(e) => handleDeleteUserAgent(e, agent.id, agent.name)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteUserAgent(e, agent.id, agent.name);
+                            }}
                             className="absolute top-3 right-3 p-2 rounded-full bg-red-500/10 text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 z-20"
                             title={t("library.deleteAgent")}
                           >
@@ -1448,6 +1467,17 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
           // Персонаж создан, можно сразу открыть чат с ним
           handleChatSelect(`agent-${newAgent.id}`);
         }}
+      />
+
+      {/* Модальное окно с описанием агента при клике на карточку */}
+      <PersonaDetailModal
+        isOpen={isPersonaDetailModalOpen}
+        onClose={() => {
+          setIsPersonaDetailModalOpen(false);
+          setSelectedPersonaForDetail(null);
+        }}
+        persona={selectedPersonaForDetail}
+        onStartChat={handleStartChatFromModal}
       />
     </React.Fragment>
   );
