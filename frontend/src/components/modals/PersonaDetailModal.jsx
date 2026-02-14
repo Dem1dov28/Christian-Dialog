@@ -16,9 +16,13 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
     onClose();
   };
 
-  // Используем description как подробную биографию
+  // Подробная биография: приоритет — description из API/конфига, иначе — начало instructions
   const getBiography = () => {
-    return persona.description || "Информация о персонаже будет добавлена позже.";
+    const desc = persona.description ?? persona.instructions;
+    if (desc && typeof desc === "string" && desc.trim()) {
+      return desc.trim();
+    }
+    return "Информация о персонаже будет добавлена позже.";
   };
 
   // Пытаемся извлечь годы из description

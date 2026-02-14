@@ -184,8 +184,7 @@ export const AgentsProvider = ({ children }) => {
         // Исключаем известных персонажей по имени (даже если категория не указана)
         const knownCharacters = [
           "сократ", "socrates", "платон", "plato", "ницше", "nietzsche",
-          "марк аврелий", "marcus aurelius", "зеленский", "zelensky",
-          "трамп", "trump", "путин", "putin", "маск", "musk", "дуров", "durov", "drova"
+          "марк аврелий", "marcus aurelius", "путин", "putin", "дуров", "durov", "drova"
         ];
         if (knownCharacters.some(char => name.includes(char))) {
           return false;
@@ -201,8 +200,7 @@ export const AgentsProvider = ({ children }) => {
           // Проверяем, не является ли это известным персонажем
           const knownCharacters = [
             "сократ", "socrates", "платон", "plato", "ницше", "nietzsche",
-            "марк аврелий", "marcus aurelius", "зеленский", "zelensky",
-            "трамп", "trump", "путин", "putin", "маск", "musk", "дуров", "durov", "drova"
+            "марк аврелий", "marcus aurelius", "путин", "putin", "дуров", "durov", "drova"
           ];
           if (knownCharacters.some(char => name.includes(char))) {
             return false;

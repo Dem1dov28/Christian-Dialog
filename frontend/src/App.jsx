@@ -17,6 +17,7 @@ import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Index from "./pages/Index.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess.jsx";
 import { Toaster } from "./components/ui/toaster.jsx";
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext.jsx";
@@ -713,6 +714,14 @@ export default function App() {
                                     <PublicRoute>
                                       <Index />
                                     </PublicRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/subscription-success"
+                                  element={
+                                    <ProtectedRoute>
+                                      <SubscriptionSuccess />
+                                    </ProtectedRoute>
                                   }
                                 />
 

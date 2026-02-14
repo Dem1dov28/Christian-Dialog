@@ -146,9 +146,22 @@ uvicorn main:app --reload
 python scripts/sync_agents_from_config.py
 ```
 
-### Миграции / обновления данных
+### Миграции БД (Alembic)
 
-Миграции и массовые апдейты выполняйте через ваши миграции (Alembic/SQL) или админ-скрипты по необходимости.
+В проекте настроен Alembic. Из директории `backend` (с заданной `DATABASE_URL`):
+
+```bash
+# Применить все миграции
+alembic upgrade head
+
+# Создать новую миграцию после изменения моделей
+alembic revision --autogenerate -m "описание изменений"
+
+# Откатить на одну ревизию
+alembic downgrade -1
+```
+
+Конфигурация: `alembic.ini`, `alembic/env.py`. Файлы миграций: `alembic/versions/`. Подробнее см. `alembic/versions/README.md`.
 
 ### Тестирование
 

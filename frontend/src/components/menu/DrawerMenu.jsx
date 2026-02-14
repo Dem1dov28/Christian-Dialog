@@ -167,6 +167,7 @@ export function DrawerMenu({
                   src={user.avatar_url.startsWith("http") ? user.avatar_url : `${apiClient.baseURL}${user.avatar_url}`}
                   alt={user?.full_name || user?.username || "User"}
                   className="w-12 h-12 rounded-full object-cover shadow-lg select-none"
+                  referrerPolicy={user.avatar_url.startsWith("http") ? "no-referrer" : undefined}
                   onError={(e) => {
                     e.target.style.display = "none";
                     e.target.nextSibling.style.display = "flex";

@@ -98,6 +98,20 @@ RIA_RSS_URL = os.getenv(
     "https://ria.ru/export/rss2/archive/index.xml"
 )
 
+# ---------------------------------------------------------------------------
+# BEPAID (платежи и подписки)
+# ---------------------------------------------------------------------------
+BEPAID_SHOP_ID = os.getenv("BEPAID_SHOP_ID", "")
+BEPAID_SECRET_KEY = os.getenv("BEPAID_SECRET_KEY", "")
+BEPAID_API_URL = os.getenv("BEPAID_API_URL", "https://api.bepaid.by").rstrip("/")
+# ID планов подписки в BePaid (создаются в личном кабинете BePaid)
+BEPAID_PLAN_PLUS_ID = os.getenv("BEPAID_PLAN_PLUS_ID", "")
+BEPAID_PLAN_PRO_ID = os.getenv("BEPAID_PLAN_PRO_ID", "")
+# Базовый URL бэкенда для notification_url (куда BePaid шлёт webhook), например https://api.yourapp.com
+BEPAID_BACKEND_BASE = os.getenv("BEPAID_BACKEND_BASE", "http://localhost:8000")
+# Включить интеграцию с BePaid (если False, кнопки оплаты не ведут в BePaid)
+BEPAID_ENABLED = bool(BEPAID_SHOP_ID and BEPAID_SECRET_KEY and BEPAID_PLAN_PLUS_ID and BEPAID_PLAN_PRO_ID)
+
 # Настройки разработки
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 PORT = int(os.getenv("PORT", "8000"))

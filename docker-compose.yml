@@ -4,8 +4,6 @@ services:
     container_name: timetalk_postgres
     restart: unless-stopped
     environment:
-      # ВАЖНО: эти значения должны приходить из .env файла,
-      # который НЕ коммитится в репозиторий
       POSTGRES_DB: ${DB_NAME:-timetalk}
       POSTGRES_USER: ${DB_USER:-timetalk_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -16,7 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/scripts/init_postgresql.sql:/docker-entrypoint-initdb.d/01-init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U timetalk_user -d timetalk"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-timetalk_user} -d ${DB_NAME:-timetalk}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,7 +46,7 @@ services:
     networks:
       - timetalk_network
 
-  # Redis для rate limiting, анти-брутфорса и кэша
+  # Redis для rate limiting и анти-брутфорса
   redis:
     image: redis:7-alpine
     container_name: timetalk_redis
@@ -61,6 +59,51 @@ services:
     networks:
       - timetalk_network
 
+  # Backend (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: timetalk_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-timetalk_user}:${DB_PASSWORD}@postgresql:5432/${DB_NAME:-timetalk}
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_exports:/app/exports
+      - backend_static:/app/static
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - timetalk_network
+
+  # Frontend (nginx + SPA)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    container_name: timetalk_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - timetalk_network
+
 volumes:
   postgres_data:
     driver: local
@@ -68,6 +111,9 @@ volumes:
     driver: local
   redis_data:
     driver: local
+  backend_uploads:
+  backend_exports:
+  backend_static:
 
 networks:
   timetalk_network:

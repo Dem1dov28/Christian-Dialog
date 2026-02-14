@@ -1,1 +1,44 @@
-#!/usr/bin/env python3"""Тест для проверки импортов"""def test_imports():    """Тестировать импорты"""    try:        print("🔍 Тестируем импорты...")                # Импортируем модели        from models.folder import Folder, FolderPublic, FolderCreate, FolderUpdate        print("✅ Модели папок импортированы")                # Импортируем сервис        from services.folders.folder_service import FolderService        print("✅ FolderService импортирован")                # Импортируем API        from api.folders.routes import create_folder_endpoints        print("✅ create_folder_endpoints импортирован")                # Создаем экземпляр сервиса        folder_service = FolderService()        print("✅ FolderService создан")                # Тестируем создание папки        folder_data = FolderCreate(            name="Тест",            description="Тестовая папка",            folder_type="custom"        )        print("✅ FolderCreate создан")                return True            except Exception as e:        print(f"❌ Ошибка импорта: {e}")        import traceback        traceback.print_exc()        return Falseif __name__ == "__main__":    print("🚀 Тест импортов")    print("=" * 30)        if test_imports():        print("✅ Все импорты работают!")    else:        print("❌ Есть проблемы с импортами!")
+"""
+Тест корректности импортов ключевых модулей (без запуска БД).
+"""
+import pytest
+import sys
+from pathlib import Path
+
+backend_dir = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(backend_dir))
+
+pytestmark = pytest.mark.unit
+
+
+def test_import_models():
+    """Импорт моделей."""
+    from models.folder import Folder, FolderPublic, FolderCreate, FolderUpdate
+    from models.agent import Agent, AgentPublic
+    from models.conversation import Conversation
+    from models.user import User
+
+
+def test_import_folder_service():
+    """Импорт сервиса папок."""
+    from services.folder_service import FolderService
+
+
+def test_import_api_folders():
+    """Импорт API папок."""
+    from api.folders import create_folder_endpoints
+
+
+def test_folder_service_instance():
+    """Создание экземпляра FolderService."""
+    from services.folder_service import FolderService
+    svc = FolderService()
+    assert svc is not None
+
+
+def test_folder_create_model():
+    """Создание Pydantic-модели FolderCreate."""
+    from models.folder import FolderCreate
+    data = FolderCreate(name="Тест", description="Описание", folder_type="custom")
+    assert data.name == "Тест"
+    assert data.folder_type == "custom"
