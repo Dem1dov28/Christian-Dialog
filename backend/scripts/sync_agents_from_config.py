@@ -39,6 +39,7 @@ except Exception:
 
 from core.database import engine, create_db_and_tables
 from models.agent import Agent
+from models.multi_agent_conversation import ConversationAgent
 
 
 def load_agents_config(config_path: str = None) -> list:
@@ -56,7 +57,7 @@ def load_agents_config(config_path: str = None) -> list:
     return config.get('agents', [])
 
 
-def sync_agents_from_config(dry_run: bool = False):
+def sync_agents_from_config(dry_run: bool = False, remove_orphans: bool = False):
     """Синхронизировать агентов из конфигурации в БД"""
     create_db_and_tables()
     
@@ -70,6 +71,36 @@ def sync_agents_from_config(dry_run: bool = False):
     with Session(engine) as session:
         updated_count = 0
         created_count = 0
+        removed_count = 0
+        
+        # Get all agent names from config
+        config_agent_names = {agent['name'] for agent in agents_config}
+        
+        # Find and remove orphaned global agents if flag is set
+        # Only remove agents with user_id=NULL (global/system agents)
+        # User-created agents (user_id != NULL) are never deleted
+        if remove_orphans:
+            all_db_agents = session.exec(select(Agent)).all()
+            for db_agent in all_db_agents:
+                # Skip user-created agents (they have user_id set)
+                if db_agent.user_id is not None:
+                    continue
+                # Only remove global agents that are not in config
+                if db_agent.name not in config_agent_names:
+                    if not dry_run:
+                        # First, delete all ConversationAgent records referencing this agent
+                        conversation_agents = session.exec(
+                            select(ConversationAgent).where(ConversationAgent.agent_id == db_agent.id)
+                        ).all()
+                        for ca in conversation_agents:
+                            session.delete(ca)
+                        # Now delete the agent
+                        session.delete(db_agent)
+                        session.commit()
+                    print(f"🗑️  Удален: {db_agent.name} (ID: {db_agent.id})")
+                    removed_count += 1
+            if removed_count > 0:
+                print()
         
         for agent_config in agents_config:
             name = agent_config['name']
@@ -168,6 +199,8 @@ def sync_agents_from_config(dry_run: bool = False):
         print(f"\n📊 Итого:")
         print(f"   Обновлено: {updated_count}")
         print(f"   Создано: {created_count}")
+        if remove_orphans:
+            print(f"   Удалено: {removed_count}")
         if dry_run:
             print(f"\n⚠️  DRY RUN - изменения не применены")
 
@@ -187,13 +220,21 @@ def main():
         type=str,
         help='Путь к файлу конфигурации (по умолчанию: backend/config/agents.yaml)'
     )
+    parser.add_argument(
+        '--remove-orphans',
+        action='store_true',
+        help='Удалить агентов из БД, которых нет в конфигурации'
+    )
     
     args = parser.parse_args()
     
     if args.dry_run:
         print("🔍 DRY RUN MODE - изменения не будут применены\n")
     
-    sync_agents_from_config(dry_run=args.dry_run)
+    if args.remove_orphans and not args.dry_run:
+        print("⚠️  ВНИМАНИЕ: Будут удалены агенты, отсутствующие в конфигурации\n")
+    
+    sync_agents_from_config(dry_run=args.dry_run, remove_orphans=args.remove_orphans)
 
 
 if __name__ == "__main__":

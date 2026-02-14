@@ -2905,7 +2905,7 @@ export const ChatsProvider = ({ children }) => {
 
       // Находим разговор в локальном списке для определения типа
       const conversation = conversations.find(
-        (conv) => conv.id === conversationId
+        (conv) => String(conv.id) === String(conversationId)
       );
 
       // Проверяем, есть ли еще чаты с этим агентом (ДО удаления, исключая текущий)
@@ -2915,7 +2915,7 @@ export const ChatsProvider = ({ children }) => {
         otherChatsWithAgent = conversations.filter(
           (conv) => {
             // Проверяем базовые условия
-            if (conv.id === conversationId) return false;
+            if (String(conv.id) === String(conversationId)) return false;
             if (conv.agent_id !== conversation.agent_id) return false;
             if (conv.is_group || conv.is_channel) return false;
 
@@ -2949,7 +2949,7 @@ export const ChatsProvider = ({ children }) => {
 
       // Удаляем из списка разговоров
       setConversations((prev) =>
-        prev.filter((conv) => conv.id !== conversationId)
+        prev.filter((conv) => String(conv.id) !== String(conversationId))
       );
 
       // Удаляем из закрепленных чатов, если он был закреплен
@@ -2975,7 +2975,7 @@ export const ChatsProvider = ({ children }) => {
       });
 
       // Если удаляемый разговор был активным, очищаем активный разговор
-      if (activeConversation && activeConversation.id === conversationId) {
+      if (activeConversation && String(activeConversation.id) === String(conversationId)) {
         setActiveConversation(null);
         // messages автоматически станет пустым через computed value
       }
@@ -3586,7 +3586,9 @@ export const ChatsProvider = ({ children }) => {
       if (setAsActive) {
         // Используем selectConversation для правильной инициализации чата
         // Это установит activeConversation, загрузит сообщения и установит chatReady
-        await selectConversation(chatData.conversation_id);
+        // Важно: используем ID с префиксом group- для соответствия формату в conversations
+        const groupConversationId = `group-${chatData.conversation_id}`;
+        await selectConversation(groupConversationId);
       }
 
       return chatData;

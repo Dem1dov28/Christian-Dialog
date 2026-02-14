@@ -201,7 +201,7 @@ export function useChatHandlers({
         console.error("Failed to switch chat:", error);
       }
     },
-[activeChatId, selectConversation, setActiveChatId]
+    [activeChatId, selectConversation, setActiveChatId]
   );
 
   const handleCreateNewChat = useCallback(
@@ -216,7 +216,7 @@ export function useChatHandlers({
         console.error("Failed to create new chat:", error);
       }
     },
-[createChat, setActiveChatId]
+    [createChat, setActiveChatId]
   );
 
   const handleDeleteChat = useCallback(
@@ -242,20 +242,21 @@ export function useChatHandlers({
           console.log("Conversation not in local state, deleting by ID:", chatIdStr);
         }
 
-        await deleteConversation(chatIdStr);
-
-        // Если удаляемый чат был активным, очищаем активный чат
+        // Если удаляемый чат был активным, очищаем активный чат ПЕРЕД удалением,
+        // чтобы избежать попыток повторного выбора удаленного чата через useChatLifecycle
         if (String(activeChatId) === chatIdStr) {
-          console.log("Clearing active chat after deletion");
+          console.log("Clearing active chat before deletion");
           setActiveChatId(null);
         }
+
+        await deleteConversation(chatIdStr);
 
         console.log("Chat deletion completed successfully");
       } catch (error) {
         console.error("Failed to delete chat:", error);
       }
     },
-[activeChatId, conversations, deleteConversation, setActiveChatId]
+    [activeChatId, conversations, deleteConversation, setActiveChatId]
   );
 
   return {
