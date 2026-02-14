@@ -2939,12 +2939,22 @@ export const ChatsProvider = ({ children }) => {
         ? conversationId.replace(/^(group-|channel-|conv-)/, '')
         : conversationId;
 
-      if (conversation && conversation.is_group) {
-        // Удаляем групповой чат
-        await apiClient.deleteGroupChat(numericId);
-      } else {
-        // Удаляем обычный чат
-        await apiClient.deleteConversation(numericId);
+      try {
+        if (conversation && conversation.is_group) {
+          // Удаляем групповой чат
+          await apiClient.deleteGroupChat(numericId);
+        } else {
+          // Удаляем обычный чат
+          await apiClient.deleteConversation(numericId);
+        }
+      } catch (apiError) {
+        // Если чат не найден на сервере (404), продолжаем локальное удаление
+        if (apiError.status === 404 || (apiError.message && apiError.message.includes("404")) || (apiError.response && apiError.response.status === 404)) {
+          console.warn(`[deleteConversation] Conversation ${conversationId} not found on server (404), proceeding with local cleanup`);
+        } else {
+          // Для других ошибок прекращаем выполнение
+          throw apiError;
+        }
       }
 
       // Удаляем из списка разговоров
@@ -3142,30 +3152,24 @@ export const ChatsProvider = ({ children }) => {
     try {
       setIsLoading(true);
 
-      // Удаляем все разговоры по одному
-      const conversationIds = conversations.map(conv => conv.id);
-      console.log(`Deleting ${conversationIds.length} conversations`);
+      // Вызываем новый эндпоинт для очистки всех данных на сервере
+      // Это удалит все чаты, сообщения, папки, файлы и настройки одной операцией
+      await apiClient.clearAllData();
+      console.log("Server data cleared successfully");
 
-      for (const conversationId of conversationIds) {
-        try {
-          await deleteConversation(conversationId);
-          console.log(`Deleted conversation ${conversationId}`);
-        } catch (error) {
-          console.error(`Failed to delete conversation ${conversationId}:`, error);
-          // Продолжаем удаление остальных чатов даже если один не удалился
-        }
-      }
-
-      // Очищаем локальное состояние
+      // Очищаем все локальные состояния чата
       setConversations([]);
       setMessagesByConversation({});
       setPinnedMessages({});
       setActiveConversation(null);
-
-      // Очищаем закрепленные чаты
       setPinnedChats([]);
 
-      // Обновляем sidebar
+      // Сбрасываем счетчики непрочитанных
+      if (typeof setUnreadCounts === 'function') {
+        setUnreadCounts({});
+      }
+
+      // Обновляем sidebar и уведомляем другие контексты через updateTrigger
       triggerUpdate();
 
       console.log("=== clearAllConversations SUCCESS ===");

@@ -297,3 +297,33 @@ class FileStorageService:
         
         return deleted_count
 
+    def delete_files_by_user(self, session: Session, user_id: int) -> int:
+        """Delete all files associated with a user
+        
+        Args:
+            session: Database session
+            user_id: User ID
+            
+        Returns:
+            Number of files deleted
+        """
+        statement = select(FileAttachment).where(FileAttachment.user_id == user_id)
+        file_attachments = session.exec(statement).all()
+        
+        deleted_count = 0
+        for file_attachment in file_attachments:
+            if self.delete_file(session, file_attachment.id):
+                deleted_count += 1
+        
+        # Clean up user directory
+        user_dir = self.base_upload_dir / str(user_id)
+        try:
+            if user_dir.exists():
+                import shutil
+                shutil.rmtree(user_dir, ignore_errors=True)
+                logger.info(f"Removed user directory: {user_dir}")
+        except Exception as e:
+            logger.warning(f"Failed to remove user directory {user_dir}: {e}")
+            
+        return deleted_count
+

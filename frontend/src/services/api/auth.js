@@ -336,5 +336,10 @@ export class AuthAPI {
   async logoutAllDevices() {
     return this.client.post("/auth/logout-all");
   }
+
+  // Удалить все данные пользователя
+  async clearAllData() {
+    return this.client.post("/auth/clear-all-data");
+  }
 }
 

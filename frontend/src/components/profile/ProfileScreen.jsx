@@ -19,6 +19,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useChats } from "../../contexts/ChatsContext";
+import { useFolders } from "../../contexts/FoldersContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import apiClient from "../../services/api";
 import SubscriptionStatus from "./SubscriptionStatus";
@@ -33,6 +34,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const { language, setLanguage, t } = useLanguage();
   const { showSuccess, showError } = useNotification();
   const { clearAllConversations } = useChats();
+  const { loadFolders } = useFolders();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -155,6 +157,10 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
     try {
       setIsLoading(true);
       await clearAllConversations();
+      // Перезагружаем папки, чтобы очистить их в интерфейсе
+      if (typeof loadFolders === 'function') {
+        await loadFolders();
+      }
       showSuccess(t("profile.privacy.dataDeleted"));
       setShowDeleteDataModal(false);
     } catch (error) {
@@ -485,14 +491,14 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                     <div className="flex items-center gap-3">
                       <IconComponent
                         className={`w-5 h-5 transition-colors ${item.isDanger
-                            ? "text-red-500 group-hover:text-red-400"
-                            : "text-[var(--text-dim)] group-hover:text-[var(--text-white)]"
+                          ? "text-red-500 group-hover:text-red-400"
+                          : "text-[var(--text-dim)] group-hover:text-[var(--text-white)]"
                           }`}
                       />
                       <span
                         className={`font-medium transition-colors ${item.isDanger
-                            ? "text-red-500 group-hover:text-red-400"
-                            : "text-[var(--text-white)]"
+                          ? "text-red-500 group-hover:text-red-400"
+                          : "text-[var(--text-white)]"
                           }`}
                       >
                         {item.label}
@@ -509,8 +515,8 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   {isLanguageItem && (
                     <div
                       className={`overflow-hidden bg-[var(--bg-secondary)] border-t transition-all duration-300 ease-out ${isLanguageMenuOpen
-                          ? "max-h-64 opacity-100 translate-y-0 border-[var(--border-color)]"
-                          : "max-h-0 opacity-0 -translate-y-2 border-transparent pointer-events-none"
+                        ? "max-h-64 opacity-100 translate-y-0 border-[var(--border-color)]"
+                        : "max-h-0 opacity-0 -translate-y-2 border-transparent pointer-events-none"
                         }`}
                       style={{
                         transitionProperty: "max-height, opacity, transform, border-color",
@@ -547,8 +553,8 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   {isPrivacyItem && (
                     <div
                       className={`overflow-hidden bg-[var(--bg-secondary)] border-t transition-all duration-300 ease-out ${isPrivacyMenuOpen
-                          ? "max-h-[500px] opacity-100 translate-y-0 border-[var(--border-color)]"
-                          : "max-h-0 opacity-0 -translate-y-2 border-transparent pointer-events-none"
+                        ? "max-h-[500px] opacity-100 translate-y-0 border-[var(--border-color)]"
+                        : "max-h-0 opacity-0 -translate-y-2 border-transparent pointer-events-none"
                         }`}
                       style={{
                         transitionProperty: "max-height, opacity, transform, border-color",

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select, func, or_, and_
+from sqlalchemy import text
 from datetime import timedelta, datetime
 import os
 import uuid
@@ -63,6 +64,7 @@ from models.recurring_payment import RecurringPayment
 from models.savings_goal import SavingsGoal
 from models.trip import Trip
 from models.user_channel_subscription import UserChannelSubscription
+from models.test_answer import TestAnswer
 from pydantic import BaseModel
 
 from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID
@@ -1115,6 +1117,184 @@ async def reset_password(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class ClearAllDataResponse(BaseModel):
+    """Ответ при удалении всех данных"""
+    success: bool
+    message: str
+
+
+@router.post("/clear-all-data", response_model=ClearAllDataResponse)
+async def clear_all_data(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session)
+):
+    """Удаление всех данных пользователя (чаты, сообщения, файлы и т.д.) без удаления аккаунта"""
+    try:
+        user_id = current_user.id
+        logger.info(f"Starting data clearing for user id: {user_id}")
+        
+        # 0. Предварительно получаем все ID разговоров пользователя
+        conv_ids = [c.id for c in db.exec(select(Conversation).where(Conversation.user_id == user_id)).all()]
+        m_conv_ids = [c.id for c in db.exec(select(MultiAgentConversation).where(MultiAgentConversation.user_id == user_id)).all()]
+        
+        # 1. Удаляем жалобы (reports) и ответы на тесты (testanswer)
+        try:
+            if conv_ids:
+                 # Удаляем жалобы по ID чатов
+                 try:
+                     db.execute(text("DELETE FROM reports WHERE chat_id IN :ids"), {"ids": tuple(conv_ids)})
+                 except Exception: pass
+                 
+                 # Удаляем ответы на тесты
+                 try:
+                     db.execute(text("DELETE FROM testanswer WHERE conversation_id IN :ids"), {"ids": tuple(conv_ids)})
+                 except Exception: pass
+            
+            if m_conv_ids:
+                 try:
+                     db.execute(text("DELETE FROM reports WHERE chat_id IN :ids"), {"ids": tuple(m_conv_ids)})
+                 except Exception: pass
+
+            # Удаляем жалобы, созданные пользователем
+            try:
+                db.execute(text("DELETE FROM reports WHERE user_id = :user_id"), {"user_id": user_id})
+            except Exception: pass
+            
+            db.commit()
+            logger.info(f"Reports and Test answers cleared for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Failed to clear dependent data for user {user_id}: {e}")
+            db.rollback()
+
+        # 2. Обнуляем все ссылки сообщений на другие сообщения (reply_to, original_message)
+        try:
+            if conv_ids:
+                # Обнуляем внутренние ссылки (внутри чатов пользователя)
+                db.execute(text("UPDATE message SET reply_to_message_id = NULL WHERE conversation_id IN :ids"), {"ids": tuple(conv_ids)})
+                try:
+                    db.execute(text("UPDATE message SET original_message_id = NULL WHERE conversation_id IN :ids"), {"ids": tuple(conv_ids)})
+                except Exception: pass
+                
+                # Обнуляем внешние ссылки (если кто-то другой ссылается на сообщения этого пользователя)
+                # Это гарантирует, что мы сможем удалить сообщения
+                try:
+                    db.execute(text("UPDATE message SET reply_to_message_id = NULL WHERE reply_to_message_id IN (SELECT id FROM message WHERE conversation_id IN :ids)"), {"ids": tuple(conv_ids)})
+                except Exception: pass
+                try:
+                    db.execute(text("UPDATE message SET original_message_id = NULL WHERE original_message_id IN (SELECT id FROM message WHERE conversation_id IN :ids)"), {"ids": tuple(conv_ids)})
+                except Exception: pass
+            
+            if m_conv_ids:
+                db.execute(text("UPDATE message SET reply_to_message_id = NULL WHERE multi_agent_conversation_id IN :ids"), {"ids": tuple(m_conv_ids)})
+                try:
+                    db.execute(text("UPDATE message SET original_message_id = NULL WHERE multi_agent_conversation_id IN :ids"), {"ids": tuple(m_conv_ids)})
+                except Exception: pass
+                
+                # Аналогично для внешних ссылок из мульти-агентных чатов
+                try:
+                    db.execute(text("UPDATE message SET reply_to_message_id = NULL WHERE reply_to_message_id IN (SELECT id FROM message WHERE multi_agent_conversation_id IN :ids)"), {"ids": tuple(m_conv_ids)})
+                except Exception: pass
+                try:
+                    db.execute(text("UPDATE message SET original_message_id = NULL WHERE original_message_id IN (SELECT id FROM message WHERE multi_agent_conversation_id IN :ids)"), {"ids": tuple(m_conv_ids)})
+                except Exception: pass
+            
+            db.commit()
+            logger.info(f"Message self-references nulled successfully for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Failed to nullify message references for user {user_id}: {e}")
+            db.rollback()
+
+        # 2. Удаляем файлы (сначала, т.к. они ссылаются на другие сущности)
+        from services.file_storage_service import FileStorageService
+        file_storage_service = FileStorageService()
+        try:
+            deleted_files_count = file_storage_service.delete_files_by_user(db, user_id)
+            logger.info(f"Deleted {deleted_files_count} files for user {user_id}")
+            db.commit() # Фиксируем удаление файлов
+        except Exception as e:
+            logger.error(f"Error deleting files for user {user_id}: {e}")
+            db.rollback()
+
+        # 3. Удаляем все сообщения обычных разговоров
+        statement = select(Conversation).where(Conversation.user_id == user_id)
+        conversations = db.exec(statement).all()
+        for conv in conversations:
+            statement_msg = select(Message).where(Message.conversation_id == conv.id)
+            messages = db.exec(statement_msg).all()
+            for msg in messages:
+                db.delete(msg)
+            db.delete(conv)
+        db.commit() # Фиксируем удаление сообщений и обычных чатов
+            
+        # 4. Удаляем мульти-агентные разговоры и их составляющие
+        statement = select(MultiAgentConversation).where(MultiAgentConversation.user_id == user_id)
+        multi_convs = db.exec(statement).all()
+        for m_conv in multi_convs:
+            # Удаляем сообщения
+            statement_msg = select(Message).where(Message.multi_agent_conversation_id == m_conv.id)
+            messages = db.exec(statement_msg).all()
+            for msg in messages:
+                db.delete(msg)
+            
+            # Удаляем связи с агентами (ConversationAgent)
+            from models.multi_agent_conversation import ConversationAgent
+            statement_agents = select(ConversationAgent).where(ConversationAgent.conversation_id == m_conv.id)
+            conv_agents = db.exec(statement_agents).all()
+            for ca in conv_agents:
+                db.delete(ca)
+                
+            db.delete(m_conv)
+        db.commit() # Фиксируем удаление мульти-агентных чатов
+            
+        # 5. Удаляем пользовательские агенты
+        statement = select(Agent).where(Agent.user_id == user_id)
+        user_agents = db.exec(statement).all()
+        for agent in user_agents:
+            db.delete(agent)
+        db.commit()
+            
+        # 6. Удаляем папки
+        statement = select(Folder).where(Folder.user_id == user_id)
+        folders = db.exec(statement).all()
+        for folder in folders:
+            db.delete(folder)
+        db.commit()
+            
+        # 7. Удаляем прочие данные
+        # Импорты для моделей, которые могут не быть импортированы
+        from models.trip import Trip
+        from models.budget import Budget
+        from models.savings_goal import SavingsGoal
+        from models.recurring_payment import RecurringPayment
+        from models.attraction_visit import AttractionVisit
+        from models.user_channel_subscription import UserChannelSubscription
+        
+        for model in [Trip, Budget, SavingsGoal, RecurringPayment, AttractionVisit, UserChannelSubscription]:
+            try:
+                statement = select(model).where(model.user_id == user_id)
+                items = db.exec(statement).all()
+                for item in items:
+                    db.delete(item)
+            except Exception as e:
+                logger.warning(f"Failed to clear data for model {model.__name__}: {e}")
+
+        db.commit()
+        logger.info(f"All data successfully cleared for user {user_id}")
+        
+        return ClearAllDataResponse(
+            success=True,
+            message="Все данные успешно удалены"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error clearing data for user {user_id}: {e}", exc_info=True)
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail="Не удалось полностью очистить данные"
+        )
 
 
 class DeleteAccountRequest(BaseModel):

@@ -78,6 +78,7 @@ class UnifiedAPI {
     this.resetPassword = (email, token, newPassword) => auth.resetPassword(email, token, newPassword);
     this.deleteAccount = (password) => auth.deleteAccount(password);
     this.logoutAllDevices = () => auth.logoutAllDevices();
+    this.clearAllData = () => auth.clearAllData();
 
     // Agents методы
     this.getAgents = () => agents.getAgents();
