@@ -100,6 +100,7 @@ class UnifiedAPI {
     this.getConversationMessages = (conversationId, offset, maxChars, beforeDate) =>
       chats.getConversationMessages(conversationId, offset, maxChars, beforeDate);
     this.deleteConversation = (conversationId) => chats.deleteConversation(conversationId);
+    this.deleteAllConversations = () => chats.deleteAllConversations();
     this.clearConversationMessages = (conversationId) => chats.clearConversationMessages(conversationId);
     this.pinMessage = (conversationId, messageId) => chats.pinMessage(conversationId, messageId);
     this.pinGroupMessage = (conversationId, messageId) => chats.pinGroupMessage(conversationId, messageId);

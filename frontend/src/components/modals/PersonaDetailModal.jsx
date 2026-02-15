@@ -1,8 +1,11 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdArrowBack } from "react-icons/md";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
+  const { t } = useLanguage();
+
   if (!isOpen || !persona) return null;
 
   const handleOverlayClick = (e) => {
@@ -22,29 +25,43 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
     if (desc && typeof desc === "string" && desc.trim()) {
       return desc.trim();
     }
-    return "Информация о персонаже будет добавлена позже.";
+    return t("library.noDescription", {
+      defaultValue: "Информация о персонаже будет добавлена позже."
+    });
   };
 
   // Пытаемся извлечь годы из description
   const getYears = () => {
-    // Ищем паттерн типа "Имя (годы) —" или "Имя (род. год) —" в начале описания
+    if (!persona.description) return null;
+
+    // 1. Ищем паттерн типа "(1979-1990)" или "(1979–1990)"
     const yearPattern = /\((\d{4})\s*[-–]\s*(\d{4}|н\.э\.|до н\.э\.)\)/;
-    const match = persona.description?.match(yearPattern);
+    const match = persona.description.match(yearPattern);
     if (match) {
       return `${match[1]}-${match[2]}`;
     }
-    // Ищем одиночный год рождения "род. год" или "ок. год"
-    const birthPattern = /\((род\.|ок\.)\s*(\d{4})/i;
-    const birthMatch = persona.description?.match(birthPattern);
+
+    // 2. Ищем паттерн "from 1979 to 1990" (английский вариант)
+    const enYearPattern = /from\s+(\d{4})\s+to\s+(\d{4})/;
+    const enMatch = persona.description.match(enYearPattern);
+    if (enMatch) {
+      return `${enMatch[1]}-${enMatch[2]}`;
+    }
+
+    // 3. Ищем одиночный год рождения "(род. 1950)" или "(born 1950)"
+    const birthPattern = /\((род\.|ок\.|born|c\.)\s*(\d{4})/i;
+    const birthMatch = persona.description.match(birthPattern);
     if (birthMatch) {
       return `${birthMatch[1]} ${birthMatch[2]}`;
     }
-    // Ищем простой паттерн "годы-годы"
+
+    // 4. Ищем простой паттерн "(1979-1990)" без лишних слов
     const simplePattern = /\((\d{4})\s*[-–]\s*(\d{4})\)/;
-    const simpleMatch = persona.description?.match(simplePattern);
+    const simpleMatch = persona.description.match(simplePattern);
     if (simpleMatch) {
       return `${simpleMatch[1]}-${simpleMatch[2]}`;
     }
+
     return null;
   };
 
@@ -84,7 +101,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
                 <button
                   onClick={onClose}
                   className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200"
-                  aria-label="Назад"
+                  aria-label={t("common.back", { defaultValue: "Назад" })}
                 >
                   <MdArrowBack className="text-xl" />
                 </button>
@@ -144,7 +161,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
                   onClick={handleStartChat}
                   className="w-full py-4 rounded-xl bg-[#6B7F5A] text-white font-semibold text-base hover:bg-[#5A6B4A] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
                 >
-                  Создать чат
+                  {t("library.createChat", { defaultValue: "Создать чат" })}
                 </button>
               </div>
             </div>

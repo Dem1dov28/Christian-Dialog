@@ -12,7 +12,6 @@ from models.multi_agent_conversation import MultiAgentConversation, Conversation
 from models.user import User
 from models.user_channel_subscription import UserChannelSubscription
 from models.file_attachment import FileAttachment
-from models.test_answer import TestAnswer
 from models.attraction_visit import AttractionVisit
 
 logger = logging.getLogger(__name__)

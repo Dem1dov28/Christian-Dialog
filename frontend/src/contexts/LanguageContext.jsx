@@ -29,8 +29,8 @@ const agentTranslations = {
 
 const getStorageLanguage = () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY) || 
-                   sessionStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY) ||
+      sessionStorage.getItem(STORAGE_KEY);
     return stored && (stored === 'ru' || stored === 'en') ? stored : DEFAULT_LANGUAGE;
   } catch (e) {
     return DEFAULT_LANGUAGE;
@@ -61,13 +61,13 @@ export const LanguageProvider = ({ children }) => {
   useEffect(() => {
     // Load language from storage on mount
     const storedLanguage = getStorageLanguage();
-    const storageMethod = localStorage.getItem(STORAGE_KEY) ? 'localStorage' : 
-                         sessionStorage.getItem(STORAGE_KEY) ? 'sessionStorage' : 
-                         'runtime';
+    const storageMethod = localStorage.getItem(STORAGE_KEY) ? 'localStorage' :
+      sessionStorage.getItem(STORAGE_KEY) ? 'sessionStorage' :
+        'runtime';
     setLanguageState(storedLanguage);
     setStorageType(storageMethod);
     setIsInitialized(true);
-    
+
     // Set HTML lang attribute
     document.documentElement.lang = storedLanguage;
   }, []);
@@ -77,7 +77,7 @@ export const LanguageProvider = ({ children }) => {
       console.warn(`Unsupported language: ${newLanguage}. Falling back to ${DEFAULT_LANGUAGE}`);
       newLanguage = DEFAULT_LANGUAGE;
     }
-    
+
     setLanguageState(newLanguage);
     setStorageLanguage(newLanguage);
     document.documentElement.lang = newLanguage;
@@ -85,11 +85,11 @@ export const LanguageProvider = ({ children }) => {
 
   const t = useMemo(() => {
     const currentTranslations = translations[language] || translations[DEFAULT_LANGUAGE];
-    
+
     return (key, params = {}) => {
       const keys = key.split('.');
       let value = currentTranslations;
-      
+
       for (const k of keys) {
         if (value && typeof value === 'object' && k in value) {
           value = value[k];
@@ -108,11 +108,11 @@ export const LanguageProvider = ({ children }) => {
           break;
         }
       }
-      
+
       if (typeof value !== 'string') {
         return key;
       }
-      
+
       // Replace parameters in translation
       return value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
         return params[paramKey] !== undefined ? params[paramKey] : match;
@@ -122,28 +122,31 @@ export const LanguageProvider = ({ children }) => {
 
   // Ref для отслеживания уже залогированных агентов (чтобы избежать спама в консоли)
   const loggedAgentsRef = useRef(new Set());
-  
+
   // Function to translate agent name and description
   const translateAgent = useMemo(() => {
     const currentAgentTranslations = agentTranslations[language] || agentTranslations[DEFAULT_LANGUAGE];
-    
+
     return (agent) => {
       if (!agent || !agent.name) {
         return agent;
       }
-      
+
       const agentKey = agent.name;
       const translated = currentAgentTranslations?.agents?.[agentKey];
-      
+
       if (translated) {
         return {
           ...agent,
           name: translated.name || agent.name,
-          // Для карточки и модалки приоритет у полного описания из API/конфига; короткое из локали — только если с API пусто
-          description: agent.description || translated.description
+          // Если язык не русский и есть перевод, берем его (так как в API описание на русском).
+          // Если русский, то API (agent.description) в приоритете, как более полное/актуальное.
+          description: language !== 'ru' && translated.description
+            ? translated.description
+            : (agent.description || translated.description)
         };
       }
-      
+
       // Log missing translation for debugging (only once per agent to avoid spam)
       // Отключено для уменьшения спама в консоли
       // if (process.env.NODE_ENV === 'development') {
@@ -152,7 +155,7 @@ export const LanguageProvider = ({ children }) => {
       //     console.warn(`Translation not found for agent: "${agentKey}" (language: ${language})`);
       //   }
       // }
-      
+
       // Fallback to original if translation not found
       return agent;
     };

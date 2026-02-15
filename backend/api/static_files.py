@@ -34,7 +34,11 @@ def _serve_safe_file(base_dir: str, filename: str, description: str) -> FileResp
         raise HTTPException(status_code=404, detail="Файл не найден")
     ext = os.path.splitext(filename)[1].lower()
     media_type = MEDIA_TYPES.get(ext, "application/octet-stream")
-    return FileResponse(path=filepath, media_type=media_type)
+    response = FileResponse(path=filepath, media_type=media_type)
+    # Добавляем CORS-заголовки для статических файлов
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 
 @router.get("/api/download/{filename}")

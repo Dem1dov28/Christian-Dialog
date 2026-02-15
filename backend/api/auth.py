@@ -59,7 +59,6 @@ from models.attraction_visit import AttractionVisit
 from models.file_attachment import FileAttachment
 from models.folder import Folder
 from models.user_channel_subscription import UserChannelSubscription
-from models.test_answer import TestAnswer
 from pydantic import BaseModel
 
 from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID
@@ -1141,17 +1140,12 @@ async def clear_all_data(
         conv_ids = [c.id for c in db.exec(select(Conversation).where(Conversation.user_id == user_id)).all()]
         m_conv_ids = [c.id for c in db.exec(select(MultiAgentConversation).where(MultiAgentConversation.user_id == user_id)).all()]
         
-        # 1. Удаляем жалобы (reports) и ответы на тесты (testanswer)
+        # 1. Удаляем жалобы (reports)
         try:
             if conv_ids:
                  # Удаляем жалобы по ID чатов
                  try:
                      db.execute(text("DELETE FROM reports WHERE chat_id IN :ids"), {"ids": tuple(conv_ids)})
-                 except Exception: pass
-                 
-                 # Удаляем ответы на тесты
-                 try:
-                     db.execute(text("DELETE FROM testanswer WHERE conversation_id IN :ids"), {"ids": tuple(conv_ids)})
                  except Exception: pass
             
             if m_conv_ids:
@@ -1165,7 +1159,7 @@ async def clear_all_data(
             except Exception: pass
             
             db.commit()
-            logger.info(f"Reports and Test answers cleared for user {user_id}")
+            logger.info(f"Reports cleared for user {user_id}")
         except Exception as e:
             logger.warning(f"Failed to clear dependent data for user {user_id}: {e}")
             db.rollback()
@@ -1264,16 +1258,11 @@ async def clear_all_data(
             db.delete(folder)
         db.commit()
             
-        # 7. Удаляем прочие данные
-        # Импорты для моделей, которые могут не быть импортированы
-        from models.trip import Trip
-        from models.budget import Budget
-        from models.savings_goal import SavingsGoal
-        from models.recurring_payment import RecurringPayment
+        # 7. Удаляем прочие данные (только существующие модели)
         from models.attraction_visit import AttractionVisit
         from models.user_channel_subscription import UserChannelSubscription
         
-        for model in [Trip, Budget, SavingsGoal, RecurringPayment, AttractionVisit, UserChannelSubscription]:
+        for model in [AttractionVisit, UserChannelSubscription]:
             try:
                 statement = select(model).where(model.user_id == user_id)
                 items = db.exec(statement).all()
@@ -1283,6 +1272,17 @@ async def clear_all_data(
                 logger.warning(f"Failed to clear data for model {model.__name__}: {e}")
 
         db.commit()
+        
+        # 8. Очищаем закрепленные чаты пользователя
+        try:
+            current_user.pinned_chats = "[]"
+            db.add(current_user)
+            db.commit()
+            logger.info(f"Pinned chats cleared for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Failed to clear pinned chats for user {user_id}: {e}")
+            db.rollback()
+        
         logger.info(f"All data successfully cleared for user {user_id}")
         
         return ClearAllDataResponse(

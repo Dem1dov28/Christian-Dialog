@@ -50,23 +50,7 @@ class SaveNoteRequest(BaseModel):
     conversation_id: int
     message: str
 
-# Модель для проверки ответов теста
-class TestAnswerItem(BaseModel):
-    question_id: str
-    question: str
-    answer: str
-
-
-class CheckTestAnswersRequest(BaseModel):
-    agent_id: int
-    questions: List[TestAnswerItem]
-    conversation_id: Optional[int] = None
-    test_id: Optional[str] = None  # Уникальный ID теста из HTML
-
-
 def create_chat_endpoints(app, agent_service, conversation_service: ConversationService, folder_service=None):
-    # Инициализируем сервис для работы с ответами на тесты
-
     """Создать эндпоинты для чата"""
     
     def verify_conversation_access(
@@ -1264,6 +1248,34 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             )
         return None
     
+    @app.delete("/users/conversations", status_code=status.HTTP_200_OK)
+    def delete_all_conversations(
+        current_user: User = Depends(get_current_active_user)
+    ):
+        """Удалить все разговоры и сообщения пользователя (bulk delete)"""
+        try:
+            result = conversation_service.delete_all_user_conversations(current_user.id)
+            if not result['success']:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to delete conversations"
+                )
+            return {
+                "success": True,
+                "message": "All conversations deleted successfully",
+                "conversations_deleted": result['conversations_deleted'],
+                "messages_deleted": result['messages_deleted'],
+                "files_deleted": result['files_deleted']
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error deleting all conversations for user {current_user.id}: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error deleting all conversations"
+            )
+    
     @app.post("/conversations/{conversation_id}/messages/{message_id}/pin")
     def pin_message(
         conversation_id: int, 
@@ -1582,278 +1594,4 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to clear conversation messages"
-            )
-    
-    @app.post("/chat/check-test-answers")
-    async def check_test_answers(
-        request: CheckTestAnswersRequest,
-        current_user: User = Depends(get_current_active_user)
-    ):
-        """Проверить ответы на тест через LLM
-        
-        Принимает список вопросов и ответов, отправляет их на проверку агенту
-        и возвращает результаты проверки в формате JSON.
-        """
-        try:
-            agent_id = validate_agent_id(request.agent_id)
-            
-            # Проверяем, существует ли агент и активен ли он
-            agent = agent_service.get_agent(agent_id)
-            if not agent:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Agent not found"
-                )
-            
-            if not agent_service.is_agent_active(agent_id):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Agent is not active"
-                )
-            
-            # Формируем запрос для LLM
-            check_request = "Проверь мои ответы на тест:\n\n" + "\n\n".join(
-                f"{i + 1}. Вопрос: {q.question}\nМой ответ: {q.answer}"
-                for i, q in enumerate(request.questions)
-            )
-            
-            # Добавляем инструкцию для возврата только JSON
-            check_request += "\n\nВерни ТОЛЬКО JSON в формате: {\"results\": [{\"question_id\": \"1\", \"is_correct\": true}, {\"question_id\": \"2\", \"is_correct\": false}, ...]}. НЕ пиши объяснения, НЕ пиши текст, ТОЛЬКО JSON с результатами проверки."
-            
-            # Проверяем доступ к беседе (если она указана)
-            conversation_id = request.conversation_id
-            if conversation_id:
-                verify_conversation_access(conversation_id, current_user, read_only=True)
-            
-            # Вызываем LLM для проверки ответов
-            # В conversation_id передаем текущую беседу, чтобы сохранить контекст последнего теста в память агента
-            # generate_response автоматически сохраняет сообщение в память LangChain для этой беседы
-            # НЕ сохраняем сообщение в БД, чтобы оно не появлялось в чате как видимое сообщение
-            response_text = await agent_service.generate_response(
-                agent_id=agent_id,
-                message=check_request,
-                conversation_id=str(conversation_id) if conversation_id else None,
-                language=None
-            )
-            
-            # Пытаемся извлечь JSON из ответа
-            # Ищем JSON в ответе (может быть обернут в ```json``` или просто текст)
-            json_match = re.search(r'\{[\s\S]*"results"[\s\S]*\}', response_text)
-            if json_match:
-                try:
-                    results = json.loads(json_match.group(0))
-                    if results.get("results") and isinstance(results["results"], list):
-                        # Сохраняем ответы в БД, если указаны test_id и conversation_id
-                        if request.test_id and conversation_id:
-                            try:
-                                # Формируем данные для сохранения
-                                answers_to_save = []
-                                for result in results["results"]:
-                                    # Находим соответствующий вопрос
-                                    question_data = next(
-                                        (q for q in request.questions if q.question_id == result["question_id"]),
-                                        None
-                                    )
-                                    if question_data:
-                                        answers_to_save.append({
-                                            "question_id": result["question_id"],
-                                            "question": question_data.question,
-                                            "answer": question_data.answer,
-                                            "is_correct": result.get("is_correct", False)
-                                        })
-                                
-                                # Сохраняем в БД
-                                test_answer_service.save_test_answers(
-                                    test_id=request.test_id,
-                                    conversation_id=conversation_id,
-                                    agent_id=agent_id,
-                                    answers=answers_to_save
-                                )
-                                logger.info(f"Saved test answers to DB: test_id={request.test_id}, conversation_id={conversation_id}")
-                            except Exception as e:
-                                logger.warning(f"Failed to save test answers to DB: {e}")
-                        
-                        # Возвращаем результаты проверки
-                        return {
-                            "ok": True,
-                            "results": results["results"]
-                        }
-                except json.JSONDecodeError:
-                    logger.warning(f"Failed to parse JSON from LLM response: {response_text[:200]}")
-            
-            # Если не удалось извлечь JSON, возвращаем ошибку
-            logger.error(f"LLM response does not contain valid JSON: {response_text[:500]}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to parse test results from LLM response"
-            )
-            
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error checking test answers: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error checking test answers: {str(e)}"
-            )
-    
-    @app.get("/chat/test-results/{test_id}")
-    async def get_test_results(
-        test_id: str,
-        conversation_id: int = Query(...),
-        current_user: User = Depends(get_current_active_user)
-    ):
-        """Получить результаты теста с аналитикой"""
-        try:
-            # Проверяем доступ к беседе
-            verify_conversation_access(conversation_id, current_user, read_only=True)
-            
-            # Получаем результаты теста
-            test_results = test_answer_service.get_test_results(test_id, conversation_id)
-            
-            if not test_results:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Test results not found"
-                )
-            
-            return test_results
-            
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error getting test results: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error getting test results: {str(e)}"
-            )
-    
-    @app.get("/chat/latest-test-results")
-    async def get_latest_test_results(
-        conversation_id: int = Query(...),
-        current_user: User = Depends(get_current_active_user)
-    ):
-        """Получить результаты последнего теста в беседе"""
-        try:
-            # Проверяем доступ к беседе
-            verify_conversation_access(conversation_id, current_user, read_only=True)
-            
-            # Получаем результаты последнего теста
-            test_results = test_answer_service.get_latest_test_result(conversation_id)
-            
-            if not test_results:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="No test results found for this conversation"
-                )
-            
-            return test_results
-            
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error getting latest test results: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error getting latest test results: {str(e)}"
-            )
-    
-    @app.post("/chat/test-analytics")
-    async def get_test_analytics(
-        test_id: str = Body(...),
-        conversation_id: int = Body(...),
-        agent_id: int = Body(...),
-        current_user: User = Depends(get_current_active_user)
-    ):
-        """Получить аналитику теста от агента"""
-        try:
-            # Проверяем доступ к беседе
-            verify_conversation_access(conversation_id, current_user, read_only=True)
-            
-            # Проверяем агента
-            agent = agent_service.get_agent(agent_id)
-            if not agent:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Agent not found"
-                )
-            
-            if not agent_service.is_agent_active(agent_id):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Agent is not active"
-                )
-            
-            # Получаем результаты теста из БД
-            test_results = test_answer_service.get_test_results(test_id, conversation_id)
-            if not test_results:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Test results not found"
-                )
-            
-            # Формируем запрос для агента на анализ
-            analytics_request = "Проанализируй мои ответы на тест. Покажи детальный анализ каждого вопроса в следующем формате:\n\n"
-            
-            for answer in test_results.answers:
-                question_num = answer.question_id
-                user_answer = answer.user_answer if answer.user_answer else "(пусто)"
-                is_correct = "Верно" if answer.is_correct else "Неверно"
-                
-            analytics_request += f"{question_num}. Вопрос {question_num}:\n\n"
-            analytics_request += f"Ваш ответ: {user_answer}\n"
-            analytics_request += f"Правильный ответ: {answer.question_text}\n"
-            analytics_request += f"Результат: {is_correct}"
-            if not answer.is_correct and user_answer != "(пусто)":
-                analytics_request += " (ответ неверный)"
-            elif user_answer == "(пусто)":
-                analytics_request += " (ответ отсутствует)"
-            elif answer.is_correct and user_answer.lower() != answer.question_text.lower():
-                analytics_request += " (принято как правильный, несмотря на различия в написании)"
-            analytics_request += ".\n"
-            analytics_request += "Разъяснение: Объясни, почему правильный ответ именно такой, и что нужно знать по этому вопросу.\n\n"
-            
-            analytics_request += "\nВ конце добавь раздел '### Рекомендации:' с советами по темам, которые нужно повторить."
-            analytics_request += "\n\nВАЖНО: Используй форматирование markdown (**текст** для выделения). Структура должна быть четкой: каждый вопрос начинается с номера и слова 'Вопрос', затем идут 'Ваш ответ:', 'Правильный ответ:', 'Результат:' и 'Разъяснение:'."
-            
-            # Вызываем агента для получения аналитики
-            # НЕ сохраняем запрос пользователя в БД, чтобы он не появлялся в чате
-            # Но сохраняем ответ агента явно
-            logger.info(f"🔄 Requesting analytics from agent {agent_id} for conversation {conversation_id}")
-            analytics_response = await agent_service.generate_response(
-                agent_id=agent_id,
-                message=analytics_request,
-                conversation_id=str(conversation_id),
-                language=None
-            )
-            logger.info(f"✅ Analytics received from agent, length: {len(analytics_response)}")
-            
-            # Сохраняем ответ агента в БД как сообщение от агента
-            logger.info(f"🔄 Attempting to save analytics message: conversation_id={conversation_id}, agent_id={agent_id}, content_length={len(analytics_response)}")
-            try:
-                saved_message = conversation_service.save_message(
-                    conversation_id=conversation_id,
-                    content=analytics_response,
-                    is_from_user=False,
-                    agent_id=agent_id,
-                    folder_service=folder_service
-                )
-                logger.info(f"✅ Analytics message saved successfully: message_id={saved_message.id if saved_message else 'None'}, conversation_id={conversation_id}, agent_id={agent_id}")
-            except Exception as save_error:
-                logger.error(f"❌ Failed to save analytics message: {save_error}", exc_info=True)
-                # Не прерываем выполнение, просто логируем ошибку
-                # Сообщение все равно вернется в ответе, и фронтенд может его обработать
-            
-            return {
-                "ok": True,
-                "analytics": analytics_response
-            }
-            
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error getting test analytics: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error getting test analytics: {str(e)}"
             )

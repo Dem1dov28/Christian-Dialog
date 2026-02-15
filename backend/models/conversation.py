@@ -69,7 +69,6 @@ class Conversation(ConversationBase, table=True):
 
     # Связи
     messages: List["Message"] = Relationship(back_populates="conversation")
-    test_answers: List["TestAnswer"] = Relationship(back_populates="conversation")
     file_attachments: List["FileAttachment"] = Relationship(
         back_populates="conversation"
     )

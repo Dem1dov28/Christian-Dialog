@@ -69,6 +69,18 @@ export class ChatsAPI {
     return this.client.delete(`/conversations/${conversationId}`);
   }
 
+  // Удалить все разговоры пользователя (bulk delete)
+  async deleteAllConversations() {
+    try {
+      const response = await this.client.delete('/users/conversations');
+      return response;
+    } catch (error) {
+      console.error('=== API deleteAllConversations ERROR ===');
+      console.error('API deleteAllConversations error:', error);
+      throw error;
+    }
+  }
+
   // Очистить все сообщения из разговора
   async clearConversationMessages(conversationId) {
 

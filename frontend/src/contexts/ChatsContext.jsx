@@ -2432,9 +2432,10 @@ export const ChatsProvider = ({ children }) => {
       // Сбрасываем счетчик на backend (асинхронно, не блокируем UI)
       // Определяем тип чата для правильного API endpoint
       const targetConversationEntry = conversations.find(c => String(c.id) === String(conversationId));
-      const isGroupChat = targetConversationEntry?.is_group || false;
+      const isGroupChat = targetConversationEntry?.is_group || (typeof conversationId === 'string' && conversationId.startsWith('group-'));
       const isChannelChat =
         targetConversationEntry?.is_channel ||
+        (typeof conversationId === 'string' && conversationId.startsWith('channel-')) ||
         channelsRef.current.some((channel) => String(channel.id) === String(conversationId));
 
       // Получаем чистый ID для API
@@ -2501,23 +2502,52 @@ export const ChatsProvider = ({ children }) => {
       let localConversation = conversations.find(
         (conv) => String(conv.id) === String(conversationId)
       );
+      console.log(`[selectConversation] Looking for conversation ${conversationId}:`, {
+        foundLocally: !!localConversation,
+        localConversation: localConversation ? { id: localConversation.id, is_group: localConversation.is_group, group_agent_ids: localConversation.group_agent_ids } : null,
+        totalConversations: conversations.length
+      });
 
       // Если не найден локально, пытаемся загрузить с сервера
       if (!localConversation) {
         try {
-          const conversation = await apiClient.getConversation(conversationId);
-          // КРИТИЧНО: Если это канал, форматируем его через formatChannel для правильной установки isSubscribed
-          if (conversation && (conversation.is_channel || channelsRef.current.some(ch => ch.id === conversationId))) {
-            const formatted = formatChannel(conversation);
-            if (formatted) {
-              localConversation = formatted;
+          // Если ID содержит префикс group-, сразу пробуем загрузить групповой чат
+          if (typeof conversationId === 'string' && conversationId.startsWith('group-')) {
+            // Извлекаем чистый ID для API (убираем префикс group-)
+            const numericId = conversationId.replace(/^(group-|channel-|conv-)/, '');
+            const groupConversation = await apiClient.getGroupChat(numericId);
+            // Извлекаем ID агентов из списка agents
+            const groupAgentIds = groupConversation.agents?.map(a => a.agent_id || a.id) || [];
+            console.log(`[selectConversation] Loaded group chat from server:`, {
+              conversationId,
+              numericId,
+              agents: groupConversation.agents,
+              groupAgentIds
+            });
+            localConversation = {
+              ...groupConversation,
+              id: conversationId, // Сохраняем оригинальный ID с префиксом
+              is_group: true,
+              group_avatar: groupConversation.group_avatar || "group",
+              group_avatar_url: groupConversation.group_avatar_url || null,
+              group_agent_ids: groupAgentIds, // Сохраняем ID агентов для совместимости
+            };
+          } else {
+            const conversation = await apiClient.getConversation(conversationId);
+            // КРИТИЧНО: Если это канал, форматируем его через formatChannel для правильной установки isSubscribed
+            if (conversation && (conversation.is_channel || channelsRef.current.some(ch => ch.id === conversationId))) {
+              const formatted = formatChannel(conversation);
+              if (formatted) {
+                localConversation = formatted;
+              } else {
+                localConversation = conversation;
+              }
             } else {
               localConversation = conversation;
             }
-          } else {
-            localConversation = conversation;
           }
         } catch (error) {
+          console.log(`[selectConversation] Ошибка загрузки обычного чата для ${conversationId}:`, error);
           // Проверяем, является ли это ошибкой rate limit (429)
           const isRateLimitError = error.status === 429 ||
             error.message?.includes("429") ||
@@ -2536,11 +2566,29 @@ export const ChatsProvider = ({ children }) => {
           }
 
           // Если обычный API не работает, пробуем групповой
+          console.log(`[selectConversation] Пробуем загрузить групповой чат для ${conversationId}`);
           try {
-            const groupConversation = await apiClient.getGroupChat(conversationId);
+            // Извлекаем чистый ID для API (убираем префикс group- если есть)
+            const numericId = typeof conversationId === 'string'
+              ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+              : conversationId;
+            const groupConversation = await apiClient.getGroupChat(numericId);
+            console.log(`[selectConversation] Raw group chat response from server:`, groupConversation);
+            // Извлекаем ID агентов из списка agents
+            const groupAgentIds = groupConversation.agents?.map(a => a.agent_id || a.id) || [];
+            console.log(`[selectConversation] Loaded group chat from server:`, {
+              conversationId,
+              numericId,
+              agents: groupConversation.agents,
+              groupAgentIds
+            });
             localConversation = {
               ...groupConversation,
+              id: conversationId, // Сохраняем оригинальный ID с префиксом
               is_group: true,
+              group_avatar: groupConversation.group_avatar || "group",
+              group_avatar_url: groupConversation.group_avatar_url || null,
+              group_agent_ids: groupAgentIds, // Сохраняем ID агентов для совместимости
             };
           } catch (groupError) {
             // Проверяем, является ли это ошибкой rate limit (429)
@@ -2578,6 +2626,22 @@ export const ChatsProvider = ({ children }) => {
           !!localConversation.is_channel ||
           channelsRef.current.some((channel) => String(channel.id) === String(conversationId))
         );
+
+        // Обработка групповых чатов - добавляем в conversations если их там нет
+        if (isGroupConversation) {
+          setConversations((prev) => {
+            // Проверяем, не добавлен ли уже этот групповой чат
+            const existing = (prev || []).find(c => String(c.id) === String(conversationId) && c.is_group);
+            if (existing) {
+              // Обновляем существующий чат
+              return (prev || []).map(c =>
+                String(c.id) === String(conversationId) && c.is_group ? localConversation : c
+              );
+            }
+            // Добавляем новый групповой чат в начало списка
+            return [localConversation, ...(prev || [])];
+          });
+        }
 
         if (isChannelConversation) {
           const channelMeta = channelsRef.current.find(
@@ -2702,6 +2766,12 @@ export const ChatsProvider = ({ children }) => {
         }
 
         // Устанавливаем активный разговор ДО загрузки данных
+        console.log(`[selectConversation] Setting activeConversation:`, {
+          id: localConversation.id,
+          is_group: localConversation.is_group,
+          group_agent_ids: localConversation.group_agent_ids,
+          agents: localConversation.agents
+        });
         setActiveConversation(localConversation);
 
         // КРИТИЧНО: Если сообщения для этого чата еще не загружены, показываем пустой массив
@@ -2786,6 +2856,7 @@ export const ChatsProvider = ({ children }) => {
             console.log(
               `🔄 [Chat Load] Шаг 1/3: Загрузка закрепленных сообщений для чата ${conversationId}`
             );
+            console.log(`[Chat Load] Local conversation data:`, localConversation);
             await loadPinnedMessages(conversationId);
 
             // 2. История сообщений
@@ -3152,7 +3223,7 @@ export const ChatsProvider = ({ children }) => {
     try {
       setIsLoading(true);
 
-      // Вызываем новый эндпоинт для очистки всех данных на сервере
+      // Вызываем оригинальный эндпоинт для очистки всех данных на сервере
       // Это удалит все чаты, сообщения, папки, файлы и настройки одной операцией
       await apiClient.clearAllData();
       console.log("Server data cleared successfully");
@@ -3588,9 +3659,29 @@ export const ChatsProvider = ({ children }) => {
 
       // Устанавливаем как активный чат только если явно запрошено
       if (setAsActive) {
-        // Используем selectConversation для правильной инициализации чата
-        // Это установит activeConversation, загрузит сообщения и установит chatReady
-        // Важно: используем ID с префиксом group- для соответствия формату в conversations
+        // Создаем объект чата для immediate установки
+        const groupChatItem = {
+          id: `group-${chatData.conversation_id}`,
+          conversation_id: `group-${chatData.conversation_id}`,
+          real_id: chatData.conversation_id,
+          title: groupData.title,
+          agent_id: null, // У групповых чатов нет одного агента
+          agent_name: null,
+          is_group: true,
+          group_avatar: chatData.group_avatar || groupData.group_avatar || groupData.avatar || "group",
+          group_avatar_url: chatData.group_avatar_url || null, // Сохраняем URL загруженного аватара
+          group_agent_ids: groupData.agent_ids, // Сохраняем ID агентов группы
+          created_at: new Date().toISOString(),
+          agents: groupData.agents || groupData.selectedAgents || [] // Добавляем информацию об агентах для немедленного использования
+        };
+        
+        // Устанавливаем сразу как активный чат с полной информацией
+        setActiveConversation(groupChatItem);
+        
+        // Небольшая задержка, чтобы дать время на обновление UI
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Затем вызываем selectConversation для полной инициализации
         const groupConversationId = `group-${chatData.conversation_id}`;
         await selectConversation(groupConversationId);
       }
@@ -4273,14 +4364,18 @@ export const ChatsProvider = ({ children }) => {
     try {
       // Определяем тип чата
       const conversation = conversations.find(
-        (conv) => conv.id === conversationId
+        (conv) => String(conv.id) === String(conversationId)
       );
-      const isGroupChat = conversation?.is_group;
+      const isGroupChat = conversation?.is_group || (typeof conversationId === 'string' && conversationId.startsWith('group-'));
 
       let pinnedMessagesData = [];
       if (isGroupChat) {
+        // Извлекаем числовой ID для группового чата
+        const numericId = typeof conversationId === 'string'
+          ? conversationId.replace(/^(group-|channel-|conv-)/, '')
+          : conversationId;
         pinnedMessagesData = await apiClient.getPinnedGroupMessages(
-          conversationId
+          numericId
         );
       } else {
         pinnedMessagesData = await apiClient.getPinnedMessages(conversationId);

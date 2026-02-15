@@ -31,7 +31,6 @@ class Agent(AgentBase, table=True):
     conversations: List["Conversation"] = Relationship()
     multi_agent_conversations: List["ConversationAgent"] = Relationship(back_populates="agent")
     messages: List["Message"] = Relationship(back_populates="agent")
-    test_answers: List["TestAnswer"] = Relationship(back_populates="agent")
 
 
 class AgentPublic(AgentBase):

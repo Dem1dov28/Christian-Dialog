@@ -488,6 +488,83 @@ class ConversationService(BaseService):
             logger.error(f"Error deleting conversation {conversation_id}: {e}", exc_info=True)
             return False
     
+    def delete_all_user_conversations(self, user_id: int) -> dict:
+        """Удалить все разговоры и сообщения пользователя (bulk delete)
+        
+        Args:
+            user_id: ID пользователя
+            
+        Returns:
+            Словарь с результатами удаления: {
+                'conversations_deleted': int,
+                'messages_deleted': int,
+                'files_deleted': int,
+                'success': bool
+            }
+        """
+        result = {
+            'conversations_deleted': 0,
+            'messages_deleted': 0,
+            'files_deleted': 0,
+            'success': False
+        }
+        
+        try:
+            with self.get_session() as session:
+                # Получаем все разговоры пользователя
+                conversations = session.exec(
+                    select(Conversation).where(Conversation.user_id == user_id)
+                ).all()
+                
+                conversation_ids = [c.id for c in conversations]
+                
+                if not conversation_ids:
+                    logger.info(f"No conversations found for user {user_id}")
+                    result['success'] = True
+                    return result
+                
+                logger.info(f"Found {len(conversation_ids)} conversations to delete for user {user_id}")
+                
+                # Удаляем все файлы, связанные с разговорами пользователя
+                try:
+                    for conv_id in conversation_ids:
+                        deleted_files = self.file_storage_service.delete_files_by_conversation(session, conv_id)
+                        result['files_deleted'] += deleted_files
+                except Exception as e:
+                    logger.error(f"Error deleting files for user {user_id}: {e}", exc_info=True)
+                
+                # Удаляем все сообщения из разговоров пользователя
+                try:
+                    messages = session.exec(
+                        select(Message).where(Message.conversation_id.in_(conversation_ids))
+                    ).all()
+                    result['messages_deleted'] = len(messages)
+                    for message in messages:
+                        session.delete(message)
+                    logger.info(f"Deleted {len(messages)} messages for user {user_id}")
+                except Exception as e:
+                    logger.error(f"Error deleting messages for user {user_id}: {e}", exc_info=True)
+                
+                # Удаляем сами разговоры
+                try:
+                    for conversation in conversations:
+                        session.delete(conversation)
+                    result['conversations_deleted'] = len(conversations)
+                    logger.info(f"Deleted {len(conversations)} conversations for user {user_id}")
+                except Exception as e:
+                    logger.error(f"Error deleting conversations for user {user_id}: {e}", exc_info=True)
+                
+                session.commit()
+                result['success'] = True
+                
+                logger.info(f"Bulk delete completed for user {user_id}: {result}")
+                return result
+                
+        except Exception as e:
+            logger.error(f"Error in bulk delete for user {user_id}: {e}", exc_info=True)
+            result['success'] = False
+            return result
+    
     def pin_message(self, conversation_id: int, message_id: int) -> bool:
         """Закрепить сообщение в разговоре"""
         with self.get_session() as session:
