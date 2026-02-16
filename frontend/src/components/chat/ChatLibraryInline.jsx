@@ -1152,33 +1152,42 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         return;
       }
 
-      console.log("Creating group chat:", {
+      console.log("[handleCreateGroupChat] Creating group chat with:", {
         selectedPersonas,
+        selectedPersonas_length: selectedPersonas.length,
         chatName,
         chatAvatar,
       });
 
       // Подготавливаем данные для создания группового чата
+      // КРИТИЧНО: Создаем копию массива selectedPersonas, чтобы избежать
+      // проблем с очисткой state после handleCancelGroupCreation
+      const agentIdsCopy = [...selectedPersonas];
+      console.log("[handleCreateGroupChat] Agent IDs copy:", agentIdsCopy);
+      
       const groupData = {
         title: chatName.trim(),
-        description: `Групповой чат с ${selectedPersonas.length} персонажами`,
-        agent_ids: selectedPersonas,
+        description: `Групповой чат с ${agentIdsCopy.length} персонажами`,
+        agent_ids: agentIdsCopy,
         group_avatar: chatAvatarPreview ? "group" : chatAvatar, // Если загружено изображение, используем "group" как дефолтную иконку
         avatarFile: chatAvatarFile, // Файл аватара (только для Plus/Pro)
       };
 
       // Создаем групповой чат через API
+      // setAsActive=true установит чат как активный в ChatsContext
       const newGroupChat = await createGroupChat(groupData, true);
 
       console.log("Group chat created successfully:", newGroupChat);
 
-      // Переключаемся на созданный чат через onChatSelect для установки activeChatId
-      // Это необходимо, так как createGroupChat только устанавливает activeConversation через selectConversation
-      // но также нужно установить activeChatId в App.jsx для правильного отображения чата
-      // Важно: используем ID с префиксом group- для соответствия формату в conversations
+      // КРИТИЧНО: Вызываем onChatSelect только для установки activeChatId в App.jsx
+      // createGroupChat уже установил activeConversation с правильными агентами
+      // Но нам нужно также установить activeChatId для UI
       if (onChatSelect && newGroupChat?.conversation_id) {
         const groupConversationId = `group-${newGroupChat.conversation_id}`;
-        await onChatSelect(groupConversationId);
+        // Не используем await, чтобы избежать повторного вызова selectConversation
+        // onChatSelect установит activeChatId, но selectConversation пропустится
+        // так как activeConversation уже установлен
+        onChatSelect(groupConversationId);
       }
 
       // Закрываем режим создания группы
@@ -1848,15 +1857,17 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                       {/* Описание - всегда видимое */}
                                       {persona.description && (
-                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
-                                          {persona.description.length > 150
-                                            ? persona.description.substring(0, 150) + "..."
-                                            : persona.description}
-                                        </p>
+                                        <div className="hidden md:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                            {persona.description.length > 150
+                                              ? persona.description.substring(0, 150) + "..."
+                                              : persona.description}
+                                          </p>
+                                        </div>
                                       )}
 
                                       {/* Категории персонажей - только понятные категории */}
-                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                      <div className="mt-2 sm:mt-3 hidden md:flex flex-col gap-1.5 items-center">
                                         {(() => {
                                           const characterCategories = getCharacterCategory(persona);
 
@@ -1983,15 +1994,17 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         {persona.name}
                                       </h3>
                                       {persona.description && (
-                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
-                                          {persona.description.length > 150
-                                            ? persona.description.substring(0, 150) + "..."
-                                            : persona.description}
-                                        </p>
+                                        <div className="hidden md:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                            {persona.description.length > 150
+                                              ? persona.description.substring(0, 150) + "..."
+                                              : persona.description}
+                                          </p>
+                                        </div>
                                       )}
 
                                       {/* Категории персонажей - только понятные категории */}
-                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                      <div className="mt-2 sm:mt-3 hidden md:flex flex-col gap-1.5 items-center">
                                         {(() => {
                                           const characterCategories = getCharacterCategory(persona);
 
@@ -2118,15 +2131,17 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         {persona.name}
                                       </h3>
                                       {persona.description && (
-                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
-                                          {persona.description.length > 150
-                                            ? persona.description.substring(0, 150) + "..."
-                                            : persona.description}
-                                        </p>
+                                        <div className="hidden md:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
+                                            {persona.description.length > 150
+                                              ? persona.description.substring(0, 150) + "..."
+                                              : persona.description}
+                                          </p>
+                                        </div>
                                       )}
 
                                       {/* Категории персонажей - только понятные категории */}
-                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                      <div className="mt-2 sm:mt-3 hidden md:flex flex-col gap-1.5 items-center">
                                         {(() => {
                                           const characterCategories = getCharacterCategory(persona);
 
@@ -2263,11 +2278,13 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       </h3>
                                       {/* Описание - всегда видимое */}
                                       {persona.description && (
-                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mt-1">
-                                          {persona.description.length > 150
-                                            ? persona.description.substring(0, 150) + "..."
-                                            : persona.description}
-                                        </p>
+                                        <div className="hidden md:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mt-1">
+                                            {persona.description.length > 150
+                                              ? persona.description.substring(0, 150) + "..."
+                                              : persona.description}
+                                          </p>
+                                        </div>
                                       )}
                                     </div>
 
@@ -2398,7 +2415,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       </p>
 
                                       {/* Категории персонажей - только понятные категории */}
-                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                      <div className="mt-2 sm:mt-3 hidden md:flex flex-col gap-1.5 items-center">
                                         {(() => {
                                           const characterCategories = getCharacterCategory(persona);
 
@@ -2525,13 +2542,15 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         {persona.name}
                                       </h3>
                                       {persona.description && (
-                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                          {persona.description}
-                                        </p>
+                                        <div className="hidden md:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
+                                            {persona.description}
+                                          </p>
+                                        </div>
                                       )}
 
                                       {/* Категории персонажей - только понятные категории */}
-                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                      <div className="mt-2 sm:mt-3 hidden md:flex flex-col gap-1.5 items-center">
                                         {(() => {
                                           const characterCategories = getCharacterCategory(persona);
 
@@ -2658,13 +2677,15 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         {persona.name}
                                       </h3>
                                       {persona.description && (
-                                        <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
-                                          {persona.description}
-                                        </p>
+                                        <div className="hidden md:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
+                                            {persona.description}
+                                          </p>
+                                        </div>
                                       )}
 
                                       {/* Категории персонажей - только понятные категории */}
-                                      <div className="mt-2 sm:mt-3 flex flex-col gap-1.5 items-center">
+                                      <div className="mt-2 sm:mt-3 hidden md:flex flex-col gap-1.5 items-center">
                                         {(() => {
                                           const characterCategories = getCharacterCategory(persona);
 

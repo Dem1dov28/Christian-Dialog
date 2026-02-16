@@ -827,7 +827,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
             </h3>
 
             {/* Категории персонажей - только понятные категории */}
-            <div className="mt-3 flex flex-col gap-1.5 items-center">
+            <div className="mt-3 hidden md:flex flex-col gap-1.5 items-center">
               {(() => {
                 // Функция для определения категорий персонажа (может возвращать несколько категорий)
                 const getCharacterCategories = (persona) => {

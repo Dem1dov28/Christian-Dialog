@@ -2339,11 +2339,20 @@ export const ChatsProvider = ({ children }) => {
 
   const selectConversation = async (conversationId) => {
     console.log("[ChatsContext] selectConversation called with conversationId:", conversationId);
+    console.log("[ChatsContext] activeConversationRef.current:", activeConversationRef.current);
     console.log("[ChatsContext] Current conversations:", conversations.map(c => ({ id: c.id, title: c.title })));
 
-    // Проверяем, не выбран ли уже этот чат (предотвращаем перерендер)
+    // КРИТИЧНО: Проверяем ref ПЕРВЫМ, так как он обновляется синхронно
+    // (в отличие от state, который обновляется асинхронно)
+    // Это особенно важно для createGroupChat, который устанавливает ref перед вызовом onChatSelect
+    if (activeConversationRef.current === conversationId) {
+      console.log(`✅ Чат ${conversationId} уже активен (проверка ref), пропускаем перерендер`);
+      return;
+    }
+
+    // Проверяем, не выбран ли уже этот чат через state (предотвращаем перерендер)
     if (activeConversation && activeConversation.id === conversationId) {
-      console.log(`✅ Чат ${conversationId} уже активен, пропускаем перерендер`);
+      console.log(`✅ Чат ${conversationId} уже активен (проверка state), пропускаем перерендер`);
       return;
     }
 
@@ -2633,9 +2642,20 @@ export const ChatsProvider = ({ children }) => {
             // Проверяем, не добавлен ли уже этот групповой чат
             const existing = (prev || []).find(c => String(c.id) === String(conversationId) && c.is_group);
             if (existing) {
-              // Обновляем существующий чат
+              // КРИТИЧНО: При обновлении существующего чата сохраняем group_agent_ids
+              // если они уже установлены (например, из createGroupChat)
+              // и новые данные с сервера их не содержат
+              const mergedConversation = {
+                ...localConversation,
+                group_agent_ids: localConversation.group_agent_ids?.length > 0 
+                  ? localConversation.group_agent_ids 
+                  : existing.group_agent_ids,
+                agents: localConversation.agents?.length > 0 
+                  ? localConversation.agents 
+                  : existing.agents,
+              };
               return (prev || []).map(c =>
-                String(c.id) === String(conversationId) && c.is_group ? localConversation : c
+                String(c.id) === String(conversationId) && c.is_group ? mergedConversation : c
               );
             }
             // Добавляем новый групповой чат в начало списка
@@ -3583,7 +3603,12 @@ export const ChatsProvider = ({ children }) => {
   const createGroupChat = async (groupData, setAsActive = false) => {
     try {
       setIsLoading(true);
-      console.log("Creating group chat:", groupData);
+      console.log("[createGroupChat] Creating group chat with data:", {
+        title: groupData.title,
+        agent_ids: groupData.agent_ids,
+        agent_ids_length: groupData.agent_ids?.length,
+        setAsActive
+      });
 
       // Если есть файл аватара, используем FormData, иначе обычный JSON
       let chatData;
@@ -3614,6 +3639,21 @@ export const ChatsProvider = ({ children }) => {
         throw new Error("Invalid group chat data received from server");
       }
 
+      // КРИТИЧНО: Загружаем полную информацию об агентах группы сразу после создания
+      let groupAgents = [];
+      try {
+        console.log("[createGroupChat] Loading agents for conversation:", chatData.conversation_id);
+        const agentsResponse = await apiClient.getGroupChatAgents(chatData.conversation_id);
+        groupAgents = agentsResponse.agents || [];
+        console.log("[createGroupChat] Loaded group agents:", {
+          count: groupAgents.length,
+          agentIds: groupAgents.map(a => a.id)
+        });
+      } catch (error) {
+        console.error("[createGroupChat] Failed to load group agents:", error);
+        // Не прерываем создание группы, если не удалось загрузить агентов
+      }
+
       // Добавляем новый групповой чат в список разговоров
       setConversations((prev) => {
         // Проверяем, что чат с таким ID еще не существует
@@ -3641,6 +3681,7 @@ export const ChatsProvider = ({ children }) => {
           group_avatar_url: chatData.group_avatar_url || null, // Сохраняем URL загруженного аватара
           group_agent_ids: groupData.agent_ids, // Сохраняем ID агентов группы
           created_at: new Date().toISOString(),
+          agents: groupAgents, // ИСПРАВЛЕНО: Используем загруженных агентов
         };
 
         // Добавляем новый чат в начало списка и удаляем возможные дубликаты
@@ -3659,7 +3700,7 @@ export const ChatsProvider = ({ children }) => {
 
       // Устанавливаем как активный чат только если явно запрошено
       if (setAsActive) {
-        // Создаем объект чата для immediate установки
+        // Создаем объект чата для immediate установки с полными данными об агентах
         const groupChatItem = {
           id: `group-${chatData.conversation_id}`,
           conversation_id: `group-${chatData.conversation_id}`,
@@ -3672,18 +3713,39 @@ export const ChatsProvider = ({ children }) => {
           group_avatar_url: chatData.group_avatar_url || null, // Сохраняем URL загруженного аватара
           group_agent_ids: groupData.agent_ids, // Сохраняем ID агентов группы
           created_at: new Date().toISOString(),
-          agents: groupData.agents || groupData.selectedAgents || [] // Добавляем информацию об агентах для немедленного использования
+          agents: groupAgents // ИСПРАВЛЕНО: Используем загруженных агентов вместо пустого массива
         };
-        
-        // Устанавливаем сразу как активный чат с полной информацией
+
+        // КРИТИЧНО: Устанавливаем сразу как активный чат с полной информацией
+        // БЕЗ вызова selectConversation, так как он не найдет чат в conversations
+        // (setConversations ещё не применился)
+        console.log("[createGroupChat] Setting activeConversation with group_agent_ids:", {
+          id: groupChatItem.id,
+          group_agent_ids: groupChatItem.group_agent_ids,
+          group_agent_ids_length: groupChatItem.group_agent_ids?.length,
+          agents_length: groupChatItem.agents?.length
+        });
         setActiveConversation(groupChatItem);
         
-        // Небольшая задержка, чтобы дать время на обновление UI
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Обновляем ref для корректной работы при последующих операциях
+        activeConversationRef.current = groupChatItem.id;
+        prevActiveConversationIdRef.current = groupChatItem.id;
         
-        // Затем вызываем selectConversation для полной инициализации
-        const groupConversationId = `group-${chatData.conversation_id}`;
-        await selectConversation(groupConversationId);
+        // Сохраняем в localStorage
+        try {
+          localStorage.setItem('lastActiveChat', groupChatItem.id);
+        } catch (e) {
+          console.error('Failed to save lastActiveChat to localStorage:', e);
+        }
+        
+        // Инициализируем пустые сообщения для нового чата
+        updateMessagesForConversation(groupChatItem.id, []);
+        
+        // Устанавливаем состояние готовности чата
+        setChatReady(true);
+        setIsChatLoading(false);
+        
+        console.log("[createGroupChat] Group chat set as active with agents:", groupAgents.length);
       }
 
       return chatData;

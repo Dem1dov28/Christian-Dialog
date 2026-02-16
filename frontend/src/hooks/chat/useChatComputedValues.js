@@ -131,6 +131,13 @@ export function useChatComputedValues({
 
   // Имена агентов группы
   const groupAgentNames = useMemo(() => {
+    console.log("[useChatComputedValues] Computing groupAgentNames:", {
+      isGroupChat,
+      group_agent_ids: activeConversation?.group_agent_ids,
+      group_agent_ids_length: activeConversation?.group_agent_ids?.length,
+      conversationId: activeConversation?.id
+    });
+    
     if (!isGroupChat || !activeConversation?.group_agent_ids) {
       return "";
     }

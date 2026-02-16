@@ -87,7 +87,7 @@ export default function LeftMessage({
     });
   };
 
-  const { t } = useLanguage();
+  const { t, translateAgent } = useLanguage();
 
   // Обработчик скачивания файла
   const handleDownloadFile = async (filename, originalFilename, e) => {
@@ -98,6 +98,14 @@ export default function LeftMessage({
       showError(t("chat.downloadError", { error: error.message || t("chat.unknownError") }));
     }
   };
+
+  // Translate agent name using the translateAgent function
+  const translatedAgentName = useMemo(() => {
+    if (!agentName) return null;
+    // translateAgent expects an object with a 'name' property
+    const translatedAgent = translateAgent({ name: agentName });
+    return translatedAgent?.name || agentName;
+  }, [agentName, translateAgent]);
 
   // Получаем оптимизированные анимации
   const {
@@ -1304,12 +1312,12 @@ export default function LeftMessage({
           }}
         >
           {/* Имя агента для групповых чатов */}
-          {agentName && (
+          {translatedAgentName && (
             <div
               className="text-xs font-medium mb-1"
               style={{ color: "var(--msg-left-time-color)" }}
             >
-              {agentName}
+              {translatedAgentName}
             </div>
           )}
 
@@ -1371,12 +1379,12 @@ export default function LeftMessage({
         onContextMenu={onContextMenu}
       >
         {/* Имя агента для групповых чатов */}
-        {agentName && (
+        {translatedAgentName && (
           <div
             className="text-xs font-medium mb-1"
             style={{ color: "var(--msg-left-time-color)" }}
           >
-            {agentName}
+            {translatedAgentName}
           </div>
         )}
 
