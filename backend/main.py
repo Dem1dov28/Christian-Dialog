@@ -160,8 +160,11 @@ app.add_middleware(
     expose_headers=["Content-Disposition", "Content-Length", "Content-Type", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
 )
 
-# В production принудительно редиректим HTTP -> HTTPS
-if ENVIRONMENT == "production":
+# В production опционально редиректим HTTP -> HTTPS.
+# На текущем сервере используется только HTTP, поэтому редирект выключен,
+# чтобы не ломать CORS preflight-запросы (браузер не допускает редирект для OPTIONS).
+ENABLE_HTTPS_REDIRECT = os.getenv("ENABLE_HTTPS_REDIRECT", "false").lower() == "true"
+if ENVIRONMENT == "production" and ENABLE_HTTPS_REDIRECT:
     app.add_middleware(HTTPSRedirectMiddleware)
 
 # Подключаем эндпоинты
