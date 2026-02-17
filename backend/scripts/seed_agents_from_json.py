@@ -1,8 +1,15 @@
 import json
 import logging
+import sys
 from pathlib import Path
 
 from sqlmodel import Session, select
+
+# Гарантируем, что корень backend-проекта (/app) есть в PYTHONPATH,
+# чтобы работали импорты вида `from core.database import engine`.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
 
 from core.database import engine
 from models.agent import Agent
