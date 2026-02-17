@@ -23,6 +23,13 @@ SAFE_METHODS: Iterable[str] = ("GET", "HEAD", "OPTIONS", "TRACE")
 CSRF_COOKIE_NAME = "csrf_token"
 CSRF_HEADER_NAME = "X-CSRF-Token"
 
+# Пути, для которых CSRF проверка не требуется.
+# Для этих эндпоинтов защита обеспечивается другими механизмами
+# (например, проверкой origin через CORS и валидацией внешнего токена).
+CSRF_EXEMPT_PATHS: Iterable[str] = (
+    "/auth/google",   # вход через Google ID token (JSON-запрос из доверенного фронтенда)
+)
+
 
 class CSRFMiddleware(BaseHTTPMiddleware):
   async def dispatch(self, request: Request, call_next):
@@ -45,8 +52,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         cookie_kwargs["domain"] = "localhost"
       response.set_cookie(**cookie_kwargs)
 
-    # Проверяем только state-changing методы
-    if request.method.upper() not in SAFE_METHODS:
+    method = request.method.upper()
+    path = request.url.path or ""
+
+    # Проверяем только state-changing методы и только если путь не исключён
+    if method not in SAFE_METHODS and not any(path.startswith(p) for p in CSRF_EXEMPT_PATHS):
       header_token = request.headers.get(CSRF_HEADER_NAME)
       cookie_token = request.cookies.get(CSRF_COOKIE_NAME)
 
