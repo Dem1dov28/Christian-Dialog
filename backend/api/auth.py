@@ -61,7 +61,7 @@ from models.folder import Folder
 from models.user_channel_subscription import UserChannelSubscription
 from pydantic import BaseModel
 
-from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID
+from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID, EMAIL_VERIFICATION_REQUIRED
 
 logger = logging.getLogger(__name__)
 
@@ -90,41 +90,44 @@ google_request_adapter = google_requests.Request()
 def register_user(user_data: UserCreate, db: Session = Depends(get_session)):
     """Регистрация нового пользователя"""
     try:
-        if not hasattr(user_data, 'code') or not user_data.code:
-             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Требуется код подтверждения email"
-            )
-        
-        # Проверяем код верификации
-        if user_data.code:
-            from services.verification_code_service import verification_code_service
-            from sqlmodel import select
-            from models.verification_code import VerificationCode
-            
-            # Проверяем, что код существует и валиден
-            # Используем существующую сессию db вместо создания новой
-            from datetime import datetime
-            statement = select(VerificationCode).where(
-                VerificationCode.email == user_data.email,
-                VerificationCode.code == user_data.code,
-                VerificationCode.is_used == False,
-                VerificationCode.expires_at > datetime.utcnow()
-            )
-            
-            verification_code = db.exec(statement).first()
-            
-            if not verification_code:
+        # При отключённой верификации email (например, на сервере без доступа к SMTP)
+        # разрешаем регистрацию без кода.
+        if EMAIL_VERIFICATION_REQUIRED:
+            if not hasattr(user_data, "code") or not user_data.code:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Неверный или просроченный код подтверждения"
+                    detail="Требуется код подтверждения email"
                 )
-            
-            # Помечаем код как использованный
-            verification_code.is_used = True
-            verification_code.used_at = datetime.utcnow()
-            db.add(verification_code)
-            db.commit()
+
+            # Проверяем код верификации
+            if user_data.code:
+                from services.verification_code_service import verification_code_service
+                from sqlmodel import select
+                from models.verification_code import VerificationCode
+
+                # Проверяем, что код существует и валиден
+                # Используем существующую сессию db вместо создания новой
+                from datetime import datetime
+                statement = select(VerificationCode).where(
+                    VerificationCode.email == user_data.email,
+                    VerificationCode.code == user_data.code,
+                    VerificationCode.is_used == False,
+                    VerificationCode.expires_at > datetime.utcnow()
+                )
+
+                verification_code = db.exec(statement).first()
+
+                if not verification_code:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Неверный или просроченный код подтверждения"
+                    )
+
+                # Помечаем код как использованный
+                verification_code.is_used = True
+                verification_code.used_at = datetime.utcnow()
+                db.add(verification_code)
+                db.commit()
         
         user = create_user(db, user_data)
         return create_user_response(user)

@@ -55,6 +55,9 @@ GOOGLE_ALLOWED_CLIENT_IDS = [
 # Настройки OpenRouter API
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "dummy-key")
 
+# Верификация email при регистрации
+EMAIL_VERIFICATION_REQUIRED = os.getenv("EMAIL_VERIFICATION_REQUIRED", "true").lower() == "true"
+
 # ---------------------------------------------------------------------------
 # CORS НАСТРОЙКИ
 # ---------------------------------------------------------------------------
