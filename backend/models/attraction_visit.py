@@ -13,7 +13,7 @@ class AttractionVisit(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(..., foreign_key="user.id", index=True)
-    trip_id: Optional[int] = Field(default=None, foreign_key="trips.id", index=True, description="ID поездки, если посещение в рамках поездки")
+    trip_id: Optional[int] = Field(default=None, index=True, description="ID поездки, если посещение в рамках поездки (модель trips удалена)")
     travel_id: Optional[int] = Field(default=None, index=True, description="ID метки путешествия, если привязано к метке (модель удалена)")
     
     # Информация о достопримечательности
