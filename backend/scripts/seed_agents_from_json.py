@@ -16,7 +16,9 @@ def seed_agents() -> int:
     Импортирует персонажей из extracted_agents.json в таблицу agent.
     Скрипт идемпотентный: существующие агенты с тем же name не дублируются.
     """
-    project_root = Path(__file__).resolve().parents[2]
+    # Внутри Docker backend-код лежит в /app, а этот скрипт — в /app/scripts.
+    # Нам нужен корень backend-проекта (=/app), поэтому берём родительскую директорию.
+    project_root = Path(__file__).resolve().parent.parent  # /app
     json_path = project_root / "extracted_agents.json"
 
     if not json_path.exists():
