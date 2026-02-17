@@ -30,8 +30,7 @@ wheels/
 *.sqlite
 *.sqlite3
 
-# Environment
-.env
+# Environment ( .env коммитится для деплоя; локальные переопределения — не коммитить )
 .env.local
 .env.*.local
 
