@@ -25,9 +25,16 @@ CSRF_HEADER_NAME = "X-CSRF-Token"
 
 # Пути, для которых CSRF проверка не требуется.
 # Для этих эндпоинтов защита обеспечивается другими механизмами
-# (например, проверкой origin через CORS и валидацией внешнего токена).
+# (например, проверкой origin через CORS, аутентификацией и валидацией внешнего токена).
 CSRF_EXEMPT_PATHS: Iterable[str] = (
-    "/auth/google",   # вход через Google ID token (JSON-запрос из доверенного фронтенда)
+    "/auth/login",                  # вход по логину/паролю (JSON / form)
+    "/auth/logout",                 # выход — просто очистка cookie
+    "/auth/register",               # регистрация
+    "/auth/send-registration-code",
+    "/auth/send-reset-code",
+    "/auth/verify-reset-code",
+    "/auth/reset-password",
+    "/auth/google",                 # вход через Google ID token
 )
 
 
