@@ -28,9 +28,10 @@ body {
      2. -webkit-fill-available — iOS Safari до 15.4 (исключает панели браузера)
      3. 100svh         — все современные браузеры: Small Viewport Height,
                          специально создан чтобы контент не уходил под панели браузера */
-  height: 100vh;
-  height: -webkit-fill-available;
-  height: 100svh;
+  height: 100vh;                          /* запасной: старые браузеры */
+  height: -webkit-fill-available;        /* iOS Safari < 15.4 */
+  height: 100svh;                        /* Chrome 108+, Safari 15.4+ */
+  height: var(--app-height, 100svh);     /* JS: самый точный, переопределяет всё */
   overflow: hidden;
   font-family: "Roboto", sans-serif;
   color: var(--text-white);

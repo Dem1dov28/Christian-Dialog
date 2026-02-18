@@ -46,14 +46,16 @@
         }
       })();
     </script>
-    <!-- Обновление --vh при появлении клавиатуры (нужно для компонентов,
-         которые используют calc(var(--vh) * 100) для внутренних размеров).
-         Высота самого приложения теперь управляется через position:fixed на #root —
-         это надёжнее любых вычислений на мобильных браузерах. -->
+    <!-- Точная высота viewport для мобильных.
+         100svh (CSS) — основной способ, но не поддерживается в Chrome < 108 (Android).
+         --app-height через visualViewport.height — JS-фолбек: даёт реальную видимую высоту
+         на всех устройствах, применяется последним и переопределяет CSS-значения. -->
     <script>
       (function() {
         function setViewportHeight() {
           var height = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+          var px = height + 'px';
+          document.documentElement.style.setProperty('--app-height', px);
           document.documentElement.style.setProperty('--vh', (height * 0.01) + 'px');
         }
         setViewportHeight();
