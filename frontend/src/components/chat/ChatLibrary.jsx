@@ -22,6 +22,7 @@ import {
 } from "react-icons/md";
 import CreateAgentModal from "../agent/CreateAgentModal";
 import PersonaDetailModal from "../modals/PersonaDetailModal";
+import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
 
 const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -1232,7 +1233,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
                             id: agent.id,
                             name: agent.name,
                             description: agent.description,
-                            imageSrc: agent.avatar_url?.startsWith("/") ? `http://localhost:8000${agent.avatar_url}` : agent.avatar_url,
+                            imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url, "medium"),
                             colorClass: "bg-gradient-to-br from-[var(--accent)] to-purple-600",
                           })}
                           className="group cursor-pointer bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--hover-bg)] transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-[var(--border-color)] hover:border-[var(--accent)] hover:shadow-[var(--accent)]/20 relative overflow-hidden"
@@ -1254,10 +1255,10 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
 
                           {/* Аватар */}
                           <div className="flex justify-center mb-4 relative z-10">
-                            {agent.avatar_url ? (
+                            {getAgentAvatarUrl(agent.image_url, agent.avatar_url, "medium") ? (
                               <div className="relative">
                                 <img
-                                  src={agent.avatar_url.startsWith('/') ? `http://localhost:8000${agent.avatar_url}` : agent.avatar_url}
+                                  src={getAgentAvatarUrl(agent.image_url, agent.avatar_url, "medium")}
                                   alt={agent.name}
                                   className="w-20 h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                 />
