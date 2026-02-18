@@ -58,6 +58,10 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "dummy-key")
 # Верификация email при регистрации
 EMAIL_VERIFICATION_REQUIRED = os.getenv("EMAIL_VERIFICATION_REQUIRED", "true").lower() == "true"
 
+# Кука access_token: для cross-origin (фронт на другом домене) нужны SameSite=None и Secure=True.
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", str(ENVIRONMENT == "production").lower()).lower() == "true"
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "none" if ENVIRONMENT == "production" else "lax").lower()
+
 # ---------------------------------------------------------------------------
 # CORS НАСТРОЙКИ
 # ---------------------------------------------------------------------------

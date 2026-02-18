@@ -61,7 +61,7 @@ from models.folder import Folder
 from models.user_channel_subscription import UserChannelSubscription
 from pydantic import BaseModel
 
-from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID, EMAIL_VERIFICATION_REQUIRED
+from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID, EMAIL_VERIFICATION_REQUIRED, COOKIE_SECURE, COOKIE_SAMESITE
 
 logger = logging.getLogger(__name__)
 
@@ -229,13 +229,13 @@ def login_user(
         expires_delta=access_token_expires,
     )
 
-    # Сохраняем access_token в HttpOnly cookie для защиты от XSS
+    # Сохраняем access_token в HttpOnly cookie. В production: Secure=True, SameSite=None — чтобы кука отправлялась с другого домена (фронт ≠ API).
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # Для локальной разработки; в production лучше True (через HTTPS)
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
@@ -414,13 +414,13 @@ def login_with_google(
         expires_delta=access_token_expires,
     )
 
-    # Сохраняем access_token в HttpOnly cookie
+    # Сохраняем access_token в HttpOnly cookie. В production: Secure=True, SameSite=None — чтобы кука отправлялась с другого домена.
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # В production установить True
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
@@ -600,8 +600,8 @@ async def upload_avatar(
 
 @router.post("/logout")
 def logout_user(response: Response):
-    """Выход пользователя: очищаем access_token cookie (и клиенту не нужно трогать токен)."""
-    response.delete_cookie("access_token")
+    """Выход пользователя: очищаем access_token cookie. Параметры должны совпадать с set_cookie."""
+    response.delete_cookie("access_token", path="/", secure=COOKIE_SECURE, samesite=COOKIE_SAMESITE)
     return {"message": "Успешный выход из системы"}
 
 

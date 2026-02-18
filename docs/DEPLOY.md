@@ -43,12 +43,22 @@ nano .env   # или любой редактор
 | `VITE_API_BASE_URL` | URL, по которому браузер будет обращаться к API (см. ниже) |
 | `VITE_GOOGLE_CLIENT_ID` | Google OAuth Client ID (если используете вход через Google) |
 
+**Кука и вход через Google (фронт и API с разных доменов):** в production кука ставится с `SameSite=None` и `Secure=True`, чтобы браузер отправлял её при запросах с другого домена. Для этого **API должен быть доступен по HTTPS** (например, через nginx с SSL). Задайте `VITE_API_BASE_URL=https://...` (не `http://`). Если API только по HTTP, задайте `COOKIE_SECURE=false` и `COOKIE_SAMESITE=lax` — тогда кука будет работать только при фронте и API с одного домена/порта.
+
 **Важно про `VITE_API_BASE_URL`:**
 
 - Если фронт и API будут доступны с **одного домена** через reverse proxy (рекомендуется): укажите базовый URL этого домена, например `https://app.example.com`. Тогда запросы к API пойдут на тот же домен (например `/api/...`), и nginx будет проксировать их на backend.
 - Если API на **отдельном поддомене** (например `https://api.example.com`): укажите `VITE_API_BASE_URL=https://api.example.com`.
 
 В production **не** используйте `DEBUG=True` и не оставляйте `ALLOWED_ORIGINS` с localhost.
+
+**Почта (коды верификации):** если на VPS заблокирован SMTP, задайте в `.env` отправку через Resend (HTTPS):
+
+| Переменная | Описание |
+|------------|----------|
+| `RESEND_API_KEY` | Ключ из [resend.com](https://resend.com) → API Keys → Create API Key |
+| `RESEND_FROM` | Адрес отправителя с подтверждённого домена, например `noreply@epochaldialog.com` (пусто = тестовый onboarding@resend.dev) |
+| `RESEND_REPLY_TO` | Куда слать ответы пользователей, например `sentiensapps@gmail.com` |
 
 ---
 
