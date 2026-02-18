@@ -12,15 +12,21 @@ import logging
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения из .env ДО импорта core.database
-# Порядок: backend/.env → корень проекта .env → текущая директория (для Docker переменные уже в окружении)
+# Порядок: backend/.env → корень проекта .env → корень проекта .env.local (переопределяет) → текущая директория
 backend_dir = Path(__file__).parent
+repo_root = backend_dir.parent
 env_path = backend_dir / ".env"
-root_env = backend_dir.parent / ".env"
+root_env = repo_root / ".env"
+root_env_local = repo_root / ".env.local"
+
+# Загружаем в порядке приоритета (последний имеет приоритет)
 if env_path.exists():
     load_dotenv(env_path)
-elif root_env.exists():
+if root_env.exists():
     load_dotenv(root_env)
-else:
+if root_env_local.exists():
+    load_dotenv(root_env_local, override=True)  # .env.local переопределяет всё
+if not (env_path.exists() or root_env.exists() or root_env_local.exists()):
     load_dotenv()
 
 from core.database import create_db_and_tables

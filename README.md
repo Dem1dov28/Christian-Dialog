@@ -118,7 +118,9 @@ Frontend будет доступен на `http://localhost:5173`
 
 ## 📚 Документация
 
+- **[Локальная разработка](./docs/LOCAL_DEVELOPMENT.md)** ⭐ — **как разрабатывать и тестировать локально перед деплоем**
 - **[Backend README](./backend/README.md)** — подробная документация по backend
+- **[Деплой на сервер](./docs/DEPLOY.md)** — инструкция по развёртыванию на production
 - **[Архитектура](./docs/ARCHITECTURE.md)** — слои backend/frontend, поток данных, безопасность
 - **[API (эндпоинты, примеры)](./docs/API.md)** — описание API и эндпоинт `/health` для мониторинга
 - **[CONTRIBUTING](./CONTRIBUTING.md)** — как контрибьютить, тесты, стиль кода

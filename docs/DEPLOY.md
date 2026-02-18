@@ -93,6 +93,41 @@ API: `http://IP_СЕРВЕРА:8000`
 
 ## 3. Reverse proxy и HTTPS (рекомендуется)
 
+### Быстрый вариант: один домен epochaldialog.com (уже есть сертификат)
+
+Если вы уже получили сертификат Certbot для `epochaldialog.com` (см. выше), сделайте так.
+
+1. **Установить Nginx на сервере**
+   ```bash
+   apt install -y nginx
+   ```
+
+2. **Освободить порт 80 для Nginx** — в `docker-compose.yml` сменить порт фронта:
+   - Было: `ports: - "80:80"` у сервиса `frontend`
+   - Стало: `ports: - "8080:80"` (фронт будет на 8080, Nginx займёт 80 и 443)
+
+3. **Скопировать конфиг и включить сайт**
+   ```bash
+   cp "/root/Epochal Dialog/docs/nginx-epochaldialog-https.conf" /etc/nginx/sites-available/epochaldialog.com
+   ln -sf /etc/nginx/sites-available/epochaldialog.com /etc/nginx/sites-enabled/
+   rm -f /etc/nginx/sites-enabled/default
+   nginx -t && systemctl reload nginx
+   ```
+
+4. **В `.env` на сервере**
+   - `VITE_API_BASE_URL=https://epochaldialog.com`
+   - `ALLOWED_ORIGINS=https://epochaldialog.com`
+
+5. **Пересобрать фронт и перезапустить**
+   ```bash
+   cd "/root/Epochal Dialog"
+   docker compose up -d --build frontend
+   ```
+
+После этого сайт будет по `https://epochaldialog.com`, API — по тому же домену (куки и вход через Google будут работать).
+
+---
+
 Чтобы отдавать приложение по одному домену и включить HTTPS, поставьте на хост **Nginx** (или Caddy) и проксируйте запросы в контейнеры.
 
 ### Вариант A: Два домена (рекомендуется) — фронт и API на поддоменах

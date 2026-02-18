@@ -39,6 +39,7 @@ from dotenv import load_dotenv
 
 # Load .env (needed because core.database requires DATABASE_URL)
 load_dotenv(os.path.join(BACKEND_DIR, ".env"))
+load_dotenv(os.path.join(REPO_ROOT, ".env"))  # корневой .env на сервере
 
 from sqlmodel import Session, select
 

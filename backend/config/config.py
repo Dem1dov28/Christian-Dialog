@@ -1,9 +1,14 @@
 import os
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Загружаем переменные окружения из backend/.env (если есть)
-load_dotenv()
+# Загружаем переменные окружения:
+# 1. Сначала .env (базовые настройки, могут быть для production)
+# 2. Потом .env.local (локальные переопределения, если есть) — имеет приоритет
+repo_root = Path(__file__).parent.parent.parent
+load_dotenv(repo_root / ".env")  # базовый .env
+load_dotenv(repo_root / ".env.local", override=True)  # локальные переопределения (если есть)
 
 logger = logging.getLogger(__name__)
 
