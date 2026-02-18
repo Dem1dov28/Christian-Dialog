@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { MdArrowBack, MdSearch, MdMenuBook, MdMoreVert, MdPlayArrow, MdGroup, MdNotifications } from "react-icons/md";
-import savedMessagesImage from "../../assets/images/Saved_Messages.png";
 import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 /**

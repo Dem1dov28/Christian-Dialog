@@ -70,7 +70,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { usePanelWidth } from "../../contexts/PanelWidthContext";
-import savedMessagesImage from "../../assets/images/Saved_Messages.png";
 import apiClient from "../../services/api";
 import { useMaxWidth } from "../../hooks/common/use-mobile.jsx";
 import {

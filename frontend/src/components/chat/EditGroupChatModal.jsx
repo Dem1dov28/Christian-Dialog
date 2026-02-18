@@ -4,6 +4,8 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import apiClient from "../../services/api";
+import ruAgentTranslations from "../../locales/agents_ru.json";
+import enAgentTranslations from "../../locales/agents_en.json";
 import {
   MdGroup,
   MdGroups,
@@ -207,13 +209,25 @@ const EditGroupChatModal = ({
     { icon: RiTeamFill, name: "team_fill" },
   ];
 
-  // Фильтрация агентов
+  // Фильтрация агентов (только по имени, на русском и английском)
   const charactersAgents = getAgentsByCategory("characters");
   const filteredAgents = charactersAgents.filter((agent) => {
-    const matchesSearch = !searchQuery || 
-      translateAgent(agent).name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (agent.description && agent.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase().trim();
+
+    // Получаем оригинальное имя (ключ в translations)
+    const originalName = agent.name;
+    const displayName = translateAgent(agent).name.toLowerCase();
+
+    // Получаем русское и английское имя из переводов
+    const ruName = ruAgentTranslations?.agents?.[originalName]?.name?.toLowerCase() || displayName;
+    const enName = enAgentTranslations?.agents?.[originalName]?.name?.toLowerCase() || displayName;
+
+    // Поиск по русскому или английскому имени
+    const matchesSearch = displayName.includes(query) ||
+      ruName.includes(query) ||
+      enName.includes(query);
+
     if (filterCategory === "all") return matchesSearch;
     if (filterCategory === "created") return matchesSearch && agent.is_user_created;
     // Здесь можно добавить фильтрацию по категориям персонажей

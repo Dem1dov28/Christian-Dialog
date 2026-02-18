@@ -405,6 +405,17 @@ function MainApp() {
     }
   }, [isLoading, isAgentsLoading, agents.length, conversations.length, folders.length]);
 
+  // Эффект для добавления класса фонового изображения темы только для авторизованных пользователей
+  React.useEffect(() => {
+    // Добавляем класс для фонового изображения темы
+    document.body.classList.add('app-with-theme-bg');
+    
+    // Cleanup при размонтировании
+    return () => {
+      document.body.classList.remove('app-with-theme-bg');
+    };
+  }, []);
+
   // Показываем 3D лоадер до полной загрузки главной страницы
   if (!isInitialLoadComplete) {
     return <LoadingScreen isVisible={true} />;
@@ -423,7 +434,7 @@ function MainApp() {
   const isMediumScreenChatFullWidth = isMediumScreen && !isUltraCompact && (activeChatId || isInlineLibraryOpen) && !isMediumScreenSidebarVisible && !isLibraryWithSidebar;
 
   return (
-    <div className="flex h-screen overflow-hidden w-full">
+    <div className="flex h-dscreen overflow-hidden w-full">
       <DrawerMenu
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
@@ -673,7 +684,7 @@ export default function App() {
                           >
                             <GlobalLongPressHandler />
                             <ConnectionStatus />
-                            <div className="flex h-screen overflow-hidden items-center justify-center">
+                            <div className="flex h-dscreen overflow-hidden items-center justify-center">
                               <Routes>
                                 {/* Публичные маршруты */}
                                 <Route

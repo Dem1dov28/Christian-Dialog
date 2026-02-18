@@ -99,7 +99,7 @@ export default function SupportModalNew({ isOpen, onClose, onSubmit }) {
       }}
     >
       <div
-        className="rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-160px)] overflow-y-auto"
+        className="rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-160px)] overflow-y-auto"
         style={{
           backgroundColor: "var(--bg-primary)",
           border: "1px solid var(--border-color)",

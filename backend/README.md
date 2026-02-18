@@ -1,6 +1,6 @@
-# Epochal Dialoge Backend
+# Epochal Dialog Backend
 
-Backend для приложения Epochal Dialoge - платформы для общения с ИИ-агентами.
+Backend для приложения Epochal Dialog - платформы для общения с ИИ-агентами.
 
 ## 📁 Структура проекта
 

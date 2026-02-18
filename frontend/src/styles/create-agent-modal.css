@@ -214,7 +214,7 @@
 /* Мобильная адаптация */
 @media (max-width: 480px) {
   .create-agent-modal {
-    max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
   }
 

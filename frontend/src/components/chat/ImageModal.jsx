@@ -136,7 +136,7 @@ export default function ImageModal({ isOpen, image, onClose }) {
           // Ограничиваем контейнер размерами viewport с учетом padding overlay
           // p-2 = 0.5rem (8px), sm:p-4 = 1rem (16px), md:p-6 = 1.5rem (24px)
           maxWidth: 'calc(100vw - 1rem)',
-          maxHeight: 'calc(100vh - 160px)',
+          maxHeight: 'calc(100dvh - 160px)',
           width: 'min-content',
           height: 'min-content',
           boxSizing: 'border-box',
@@ -159,7 +159,7 @@ export default function ImageModal({ isOpen, image, onClose }) {
                 // Изображение ограничено внутренней областью контейнера
                 // Вычитаем padding контейнера (clamp(4px, 1vw, 12px) * 2 = clamp(8px, 2vw, 24px))
                 maxWidth: 'calc(100vw - 1rem - clamp(8px, 2vw, 24px))',
-                maxHeight: 'calc(100vh - 1rem - clamp(8px, 2vw, 24px) - 60px)',
+                maxHeight: 'calc(100dvh - 1rem - clamp(8px, 2vw, 24px) - 60px)',
                 width: 'auto',
                 height: 'auto',
                 objectFit: 'contain',

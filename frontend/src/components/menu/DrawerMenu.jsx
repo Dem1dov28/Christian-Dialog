@@ -22,7 +22,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useModal } from "../../contexts/ModalContext.jsx";
 import apiClient from "../../services/api";
-import logo from "../../assets/images/logo.png";
+import logo from "../../assets/images/logo.webp";
 
 // Утилитарная функция для объединения классов (аналог cn)
 const cn = (...classes) => {
@@ -375,11 +375,11 @@ export function DrawerMenu({
             <p className="text-[var(--text-gray)] text-[13px] text-center font-normal flex items-center justify-center gap-2">
               <img
                 src={logo}
-                alt="Epochal Dialoge"
+                alt="Epochal Dialog"
                 className="h-[1em] w-auto object-contain origin-center"
                 style={{ transform: `scale(${logoScale})` }}
               />
-              <span>Epochal Dialoge 1.0.0</span>
+              <span>Epochal Dialog 1.0.0</span>
             </p>
           </div>
         </div>

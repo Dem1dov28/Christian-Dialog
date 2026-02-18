@@ -244,7 +244,7 @@ async def test_search():
 @app.get("/")
 def read_root():
     """Главная страница веб-интерфейса"""
-    return {"message": "Epochal Dialoge Backend API", "docs": "/docs"}
+    return {"message": "Epochal Dialog Backend API", "docs": "/docs"}
 
 
 @app.get("/health")

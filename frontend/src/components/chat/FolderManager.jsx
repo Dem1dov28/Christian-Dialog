@@ -500,7 +500,7 @@ const FolderManager = ({
       <div
         ref={modalRef}
         onTransitionEnd={handleTransitionEnd}
-        className={`frosted-glass rounded-2xl shadow-2xl w-full max-w-md max-h-[calc(100vh-160px)] mx-4 flex flex-col ${
+        className={`frosted-glass rounded-2xl shadow-2xl w-full max-w-md max-h-[calc(100dvh-160px)] mx-4 flex flex-col ${
           isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
         }`}
         style={{

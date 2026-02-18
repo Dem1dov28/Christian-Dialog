@@ -4,6 +4,8 @@ import { MdPerson } from "react-icons/md";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
+import ruAgentTranslations from "../../locales/agents_ru.json";
+import enAgentTranslations from "../../locales/agents_en.json";
 
 /**
  * Библиотека персонажей - отдельный компонент для выбора и добавления персонажей
@@ -38,15 +40,27 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
     });
   }, [agents, getAgentsByCategory, translateAgent]);
 
-  // Фильтруем персонажей по поисковому запросу
+  // Фильтруем персонажей по поисковому запросу (только по имени, на русском и английском)
   const filteredCharacters = useMemo(() => {
     if (!searchQuery) return allCharacters;
-    const query = searchQuery.toLowerCase();
-    return allCharacters.filter(
-      (character) =>
-        character.name.toLowerCase().includes(query) ||
-        character.description.toLowerCase().includes(query)
-    );
+    const query = searchQuery.toLowerCase().trim();
+
+    return allCharacters.filter((character) => {
+      // Получаем оригинальное имя (ключ в translations)
+      const originalName = character.name;
+
+      // Текущее отображаемое имя (уже переведенное)
+      const displayName = character.name.toLowerCase();
+
+      // Получаем русское и английское имя из переводов (если есть)
+      const ruName = ruAgentTranslations?.agents?.[originalName]?.name?.toLowerCase() || displayName;
+      const enName = enAgentTranslations?.agents?.[originalName]?.name?.toLowerCase() || displayName;
+
+      // Поиск по русскому или английскому имени
+      return displayName.includes(query) ||
+             ruName.includes(query) ||
+             enName.includes(query);
+    });
   }, [allCharacters, searchQuery]);
 
   const handleAddCharacter = useCallback(
@@ -72,7 +86,7 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
-      <div className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100vh-160px)] flex flex-col">
+      <div className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100dvh-160px)] flex flex-col">
         {/* Заголовок */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-3">

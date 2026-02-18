@@ -11,6 +11,8 @@ import CreateAgentModal from "../agent/CreateAgentModal";
 import DeleteAgentModal from "../agent/DeleteAgentModal";
 import PersonaDetailModal from "../modals/PersonaDetailModal";
 import apiClient from "../../services/api";
+import ruAgentTranslations from "../../locales/agents_ru.json";
+import enAgentTranslations from "../../locales/agents_en.json";
 import {
   MdStar,
   MdNotifications,
@@ -505,9 +507,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       let imageSrc = getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "medium");
       // description из API/конфига — показывается в модалке при клике на карточку
       const description = translatedAgent.description ?? agent.description ?? "";
+      // Сохраняем оригинальное имя агента (ключ для переводов)
+      const originalName = agent.name;
       return {
         id: translatedAgent.id,
         name: translatedAgent.name,
+        originalName, // Оригинальное имя для поиска в переводах
         description,
         instructions: translatedAgent.instructions, // Добавляем инструкции для биографии
         colorClass: translatedAgent.color_class,
@@ -817,18 +822,22 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     // Если поисковый запрос пустой, проверяем только категорию
     // Убрали ранний возврат, чтобы фильтрация по категориям из базы данных работала правильно
 
-    // Поиск по имени и описанию
+    // Поиск только по имени (на русском и английском)
+    // Получаем оригинальное имя агента (ключ в translations)
+    const agentKey = persona.originalName || persona.name;
+    const displayName = persona.name.toLowerCase();
+
+    // Получаем русское и английское имя из переводов
+    const ruName = ruAgentTranslations?.agents?.[agentKey]?.name?.toLowerCase() || displayName;
+    const enName = enAgentTranslations?.agents?.[agentKey]?.name?.toLowerCase() || displayName;
+
     // Если поисковый запрос пустой, считаем, что поиск совпадает
-    const matchesNameOrDesc =
-      !searchLower || persona.name.toLowerCase().includes(searchLower) ||
-      (persona.description &&
-        persona.description.toLowerCase().includes(searchLower));
+    const matchesName = !searchLower ||
+      displayName.includes(searchLower) ||
+      ruName.includes(searchLower) ||
+      enName.includes(searchLower);
 
-    // Поиск по категориям (первичные, вторичные, третичные)
-    const categoryTerms = getCategorySearchTerms(persona);
-    const matchesCategorySearch = !searchLower || categoryTerms.some(term => term.toLowerCase().includes(searchLower));
-
-    const matchesSearch = matchesNameOrDesc || matchesCategorySearch;
+    const matchesSearch = matchesName;
 
     // Фильтрация по категории
     let matchesCategoryFilter = filterCategory === "all";

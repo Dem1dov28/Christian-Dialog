@@ -23,6 +23,8 @@ import {
 import CreateAgentModal from "../agent/CreateAgentModal";
 import PersonaDetailModal from "../modals/PersonaDetailModal";
 import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
+import ruAgentTranslations from "../../locales/agents_ru.json";
+import enAgentTranslations from "../../locales/agents_en.json";
 
 const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -199,9 +201,12 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const aiPersonas = agents.map(agent => {
     const translatedAgent = translateAgent(agent);
     const description = translatedAgent.description ?? agent.description ?? "";
+    // Сохраняем оригинальное имя агента (ключ для переводов)
+    const originalName = agent.name;
     return {
       id: translatedAgent.id,
       name: translatedAgent.name,
+      originalName, // Оригинальное имя для поиска в переводах
       description,
       colorClass: translatedAgent.color_class,
       iconName: translatedAgent.icon_name,
@@ -522,16 +527,22 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
     // Если поисковый запрос пустой, проверяем только категорию
     // Убрали ранний возврат, чтобы фильтрация по категориям из базы данных работала правильно
 
-    // Поиск по имени и описанию
+    // Поиск только по имени (на русском и английском)
+    // Получаем оригинальное имя агента (ключ в translations)
+    const agentKey = persona.originalName || persona.name;
+    const displayName = persona.name.toLowerCase();
+
+    // Получаем русское и английское имя из переводов
+    const ruName = ruAgentTranslations?.agents?.[agentKey]?.name?.toLowerCase() || displayName;
+    const enName = enAgentTranslations?.agents?.[agentKey]?.name?.toLowerCase() || displayName;
+
     // Если поисковый запрос пустой, считаем, что поиск совпадает
-    const matchesNameOrDesc = !searchLower || persona.name.toLowerCase().includes(searchLower) ||
-      (persona.description && persona.description.toLowerCase().includes(searchLower));
+    const matchesName = !searchLower ||
+      displayName.includes(searchLower) ||
+      ruName.includes(searchLower) ||
+      enName.includes(searchLower);
 
-    // Поиск по категориям (первичные, вторичные, третичные)
-    const categoryTerms = getCategorySearchTerms(persona);
-    const matchesCategorySearch = !searchLower || categoryTerms.some(term => term.toLowerCase().includes(searchLower));
-
-    const matchesSearch = matchesNameOrDesc || matchesCategorySearch;
+    const matchesSearch = matchesName;
 
     // Фильтрация по категории
     let matchesCategoryFilter = filterCategory === "all";
@@ -611,9 +622,9 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
   const userAgents = getUserAgents ? getUserAgents() : [];
   const filteredUserAgents = userAgents.filter((agent) => {
     if (!searchQuery) return true;
-    const searchLower = searchQuery.toLowerCase();
-    return agent.name.toLowerCase().includes(searchLower) ||
-      (agent.description && agent.description.toLowerCase().includes(searchLower));
+    const searchLower = searchQuery.toLowerCase().trim();
+    // Поиск только по имени пользовательских агентов
+    return agent.name.toLowerCase().includes(searchLower);
   });
 
   const totalPersonas = characters.length + filteredAgents.length + filteredUserAgents.length;
@@ -1109,7 +1120,7 @@ const ChatLibrary = ({ isOpen, onClose, onChatSelect }) => {
 
       {/* Библиотека чатов */}
       <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
-        <div className="bg-[var(--bg-primary)]/90 backdrop-blur-xl rounded-none sm:rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[92vw] sm:max-w-4xl md:max-w-5xl lg:max-w-6xl max-h-[calc(100vh-160px)] overflow-hidden border border-[var(--border-color)] flex flex-col">
+        <div className="bg-[var(--bg-primary)]/90 backdrop-blur-xl rounded-none sm:rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[92vw] sm:max-w-4xl md:max-w-5xl lg:max-w-6xl max-h-[calc(100dvh-160px)] overflow-hidden border border-[var(--border-color)] flex flex-col">
           {/* Заголовок с градиентом */}
           <div
             className="relative p-5 sm:p-6 md:p-8 border-b border-[var(--border-color)] bg-gradient-to-r from-[var(--accent)]/30 via-[var(--accent)]/25 to-[var(--accent)]/30 sticky top-0 z-10"

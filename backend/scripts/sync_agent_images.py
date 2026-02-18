@@ -30,7 +30,7 @@ if sys.platform == "win32":
 # Добавляем корень backend в sys.path, чтобы работали локальные импорты
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.dirname(CURRENT_DIR)  # backend/
-REPO_ROOT = os.path.dirname(BACKEND_DIR)    # EpochalDialog/
+REPO_ROOT = os.path.dirname(BACKEND_DIR)    # Epochal Dialog/
 for p in (BACKEND_DIR, REPO_ROOT):
     if p not in sys.path:
         sys.path.insert(0, p)

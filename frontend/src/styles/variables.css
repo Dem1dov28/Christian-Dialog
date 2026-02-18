@@ -94,7 +94,7 @@
   --shape-glow: 64 224 208 / 0.3;
 
   /* Фоновое изображение по умолчанию (светлая бирюзово-белая тема) */
-  --bg-image: url("/turquoisewhitetheme.png");
+  --bg-image: url("/compressed/turquoisewhitetheme.webp");
 
   --sidebar-background: 0 0% 100%;
   --sidebar-foreground: 222 47% 11%;
@@ -191,7 +191,7 @@
   --shape-glow: 277 36% 50% / 0.35;
 
   /* Фоновое изображение для базовой тёмной темы (фиолетовый дарк) */
-  --bg-image: url("/purpledarktheme.png");
+  --bg-image: url("/compressed/purpledarktheme.webp");
 }
 
 /* Дополнительная тема (blue theme) поверх темной
@@ -296,7 +296,7 @@
   --shape-glow: 342 57% 65% / 0.35;
 
   /* Фоновое изображение для blue-темы (тёмный розовый фон) */
-  --bg-image: url("/pinkdarktheme.png");
+  --bg-image: url("/compressed/pinkdarktheme.webp");
 }
 
 /* Пастельная светлая тема поверх базовой (root)
@@ -402,7 +402,7 @@
   --shape-glow: 4 100% 82% / 0.4;
 
   /* Фоновое изображение для пастельной темы (mint + peach) */
-  --bg-image: url("/mintpeachtheme.png");
+  --bg-image: url("/compressed/mintpeachtheme.webp");
 }
 
 /* Принудительная темная тема для страниц авторизации */
@@ -473,8 +473,9 @@
   ) !important;
   --shape-glow: 277 36% 50% / 0.35 !important;
 
-  /* Заблокированная тёмная тема (логин/регистрация) — тот же фон, что и у dark */
-  --bg-image: url("/purpledarktheme.png") !important;
+  /* На страницах авторизации фоновое изображение не используется — 
+     это предотвращает загрузку theme images до редиректа на авторизацию */
+  --bg-image: none !important;
 }
 
 .dark-theme-locked {

@@ -495,7 +495,7 @@ const CreateFolderForm = ({
       <div
         ref={modalRef}
         onTransitionEnd={handleTransitionEnd}
-        className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100vh-160px)] overflow-hidden ${
+        className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-hidden ${
           isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
         }`}
         onClick={(e) => e.stopPropagation()} // Предотвращаем всплытие события
@@ -644,7 +644,7 @@ const CreateFolderForm = ({
             <div
               ref={chatSelectorRef}
               onTransitionEnd={handleChatSelectorTransitionEnd}
-              className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100vh-160px)] overflow-hidden ${
+              className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-hidden ${
                 chatSelectorShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
               }`}
               onClick={(e) => e.stopPropagation()}
@@ -789,7 +789,7 @@ const CreateFolderForm = ({
           }}
         >
           <div
-            className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm mx-4 max-h-[calc(100vh-160px)] overflow-hidden"
+            className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm mx-4 max-h-[calc(100dvh-160px)] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             style={{
               background:

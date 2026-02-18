@@ -158,7 +158,7 @@ const DeleteFolderModal = ({
       <div
         ref={modalRef}
         onTransitionEnd={handleTransitionEnd}
-        className={`frosted-glass rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[calc(100vh-160px)] overflow-y-auto transform transition-all duration-200 ${
+        className={`frosted-glass rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-y-auto transform transition-all duration-200 ${
           isShown
             ? "scale-100 translate-y-0 opacity-100"
             : "scale-95 translate-y-4 opacity-0"

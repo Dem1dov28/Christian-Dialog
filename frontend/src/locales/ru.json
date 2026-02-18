@@ -157,7 +157,7 @@
     "allMessagesSaved": "Все сообщения и данные сохранятся",
     "howToRestore": "Как восстановить:",
     "method1": "Способ 1:",
-    "goToMenu": "Перейти в меню Epochal Dialoge",
+    "goToMenu": "Перейти в меню Epochal Dialog",
     "method2": "Способ 2:",
     "openProfile": "Открыть профиль пользователя",
     "aiAssistant": "ИИ-Ассистент",
@@ -428,7 +428,7 @@
       "api_settings": "Настройки API",
       "data_export": "Экспорт данных",
       "tell_friend": "Рассказать другу",
-      "rate_app": "Оценить Epochal Dialoge",
+      "rate_app": "Оценить Epochal Dialog",
       "help": "Помощь и поддержка",
       "documentation": "Документация",
       "community": "Сообщество",
@@ -505,7 +505,7 @@
   },
   "auth": {
     "login": {
-      "title": "Вход в Epochal Dialoge",
+      "title": "Вход в Epochal Dialog",
       "email": "Почта",
       "username": "Имя пользователя",
       "password": "Пароль",
@@ -529,7 +529,7 @@
       "privacyLink": "Политикой конфиденциальности"
     },
     "register": {
-      "title": "Регистрация в Epochal Dialoge",
+      "title": "Регистрация в Epochal Dialog",
       "subtitle": "Создайте аккаунт",
       "email": "Почта",
       "username": "Имя пользователя",
@@ -554,7 +554,7 @@
       "sendCode": "Отправить код"
     },
     "forgotPassword": {
-      "title": "Сброс пароля в Epochal Dialoge",
+      "title": "Сброс пароля в Epochal Dialog",
       "subtitle": "Введите адрес электронной почты, и мы отправим код для сброса пароля.",
       "email": "Адрес электронной почты",
       "emailPlaceholder": "Введите адрес электронной почты",

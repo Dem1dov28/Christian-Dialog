@@ -1,1 +1,1 @@
-"""Тесты для Epochal Dialoge Backend"""
+"""Тесты для Epochal Dialog Backend"""

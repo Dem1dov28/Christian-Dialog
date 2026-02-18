@@ -160,7 +160,7 @@
     "allMessagesSaved": "All messages and data will be saved",
     "howToRestore": "How to restore:",
     "method1": "Method 1:",
-    "goToMenu": "Go to Epochal Dialoge menu",
+    "goToMenu": "Go to Epochal Dialog menu",
     "method2": "Method 2:",
     "openProfile": "Open user profile",
     "aiAssistant": "AI Assistant",
@@ -439,7 +439,7 @@
       "language": "Language",
       "data_export": "Data Export",
       "tell_friend": "Tell a Friend",
-      "rate_app": "Rate Epochal Dialoge",
+      "rate_app": "Rate Epochal Dialog",
       "help": "Help & Support",
       "report": "Report Problem",
       "documentation": "Documentation",
@@ -517,7 +517,7 @@
   },
   "auth": {
     "login": {
-      "title": "Sign in to Epochal Dialoge",
+      "title": "Sign in to Epochal Dialog",
       "email": "Email",
       "username": "Username",
       "password": "Password",
@@ -541,7 +541,7 @@
       "privacyLink": "Privacy Policy"
     },
     "register": {
-      "title": "Register on Epochal Dialoge",
+      "title": "Register on Epochal Dialog",
       "subtitle": "Create your account",
       "email": "Email",
       "username": "Username",
@@ -568,7 +568,7 @@
       "sendCode": "Send code"
     },
     "forgotPassword": {
-      "title": "Reset password for Epochal Dialoge",
+      "title": "Reset password for Epochal Dialog",
       "subtitle": "Enter your email address and we'll send you a code to reset your password",
       "email": "Email address",
       "emailPlaceholder": "Enter your email address",

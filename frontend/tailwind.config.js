@@ -12,6 +12,18 @@ export default {
       },
     },
     extend: {
+      height: {
+        'dscreen': ['100dvh', '100vh'],
+        'dscreen-safe': 'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+      },
+      minHeight: {
+        'dscreen': ['100dvh', '100vh'],
+        'dscreen-safe': 'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+      },
+      maxHeight: {
+        'dscreen': ['100dvh', '100vh'],
+        'dscreen-safe': 'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

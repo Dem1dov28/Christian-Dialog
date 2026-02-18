@@ -30,7 +30,6 @@ import { TbUserCog } from "react-icons/tb";
 import { BsPinFill } from "react-icons/bs";
 import ChatActions from "./ChatActions";
 import SystemChatActions from "./SystemChatActions";
-import savedMessagesImage from "../../assets/images/Saved_Messages.png";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAgents } from "../../contexts/AgentsContext";
 

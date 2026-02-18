@@ -28,7 +28,6 @@ import { FaPeopleGroup } from "react-icons/fa6";
 import { RiTeamFill } from "react-icons/ri";
 import { PiHandsClappingDuotone } from "react-icons/pi";
 import { TbUserCog } from "react-icons/tb";
-import savedMessagesImage from "../../assets/images/Saved_Messages.png";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -797,7 +796,7 @@ export default function AIPanel({
       <>
         <div
           className={`bg-[var(--bg-secondary)] flex flex-col border border-[var(--border-color)] relative rounded-2xl shadow-2xl overflow-hidden h-full ${isClosing ? 'ai-panel-modal-fade-out' : 'ai-panel-modal-fade-in'}`}
-          style={{ maxHeight: "calc(100vh - 96px)" }}
+          style={{ maxHeight: "calc(100dvh - 96px)" }}
         >
           {panelContent}
         </div>
