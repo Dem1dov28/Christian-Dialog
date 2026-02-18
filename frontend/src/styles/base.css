@@ -13,21 +13,22 @@
   }
 }
 
+/* html: высота 100% от initial containing block (= viewport).
+   Не используем dvh/vh напрямую — JS устанавливает --vh точнее. */
 html {
-  height: 100dvh;
-  height: calc(var(--vh, 1dvh) * 100);
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
   font-family: "Roboto", sans-serif;
-  /* Высота body = viewport минус safe-area (notch/home bar на iPhone).
-     overflow: hidden нужен для chat-layout, но не должен обрезать safe-area. */
-  height: 100dvh;
-  height: calc(var(--vh, 1dvh) * 100);
-  overflow-x: hidden;
-  overflow-y: hidden;
+  /* --vh устанавливается JS-скриптом в index.html через visualViewport.height —
+     это единственный надёжный способ получить реальную высоту на мобильных браузерах.
+     Fallback: 1vh (на случай если JS ещё не выполнился). */
+  height: 100vh;                          /* запасной вариант для старых браузеров */
+  height: calc(var(--vh, 1vh) * 100);    /* точная высота от JS (= visualViewport.height) */
+  overflow: hidden;
   color: var(--text-white);
   background-color: var(--bg-primary);
   /* Фоновое изображение не применяется к body по умолчанию —
@@ -40,14 +41,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease, background-image 0.2s ease;
 }
 
-/* #root занимает всё пространство body (с учётом safe-area отступов).
-   height: 100% вместо 100dvh чтобы не выходить за пределы body при наличии padding. */
+/* #root и .app-root: height: 100% = 100% от body.
+   Safe-area padding здесь, чтобы контент не заходил под notch/home-bar на iPhone.
+   height: 100% с box-sizing: border-box → контентная область = body height - padding. */
 #root {
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: hidden;
-  /* Safe area insets здесь, а не на body — иначе при overflow:hidden на body
-     нижние safe-area пиксели обрезаются (ломает layout на iPhone X+) */
+  overflow: hidden;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);

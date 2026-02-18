@@ -46,16 +46,25 @@
         }
       })();
     </script>
-    <!-- Viewport height fix for mobile browsers -->
+    <!-- Viewport height fix for mobile browsers.
+         window.visualViewport.height даёт реальную видимую высоту:
+         исключает адресную строку браузера, системную навигацию Android и клавиатуру.
+         Без этого 100dvh/100vh на мобильных браузерах больше видимой области
+         и нижняя часть приложения обрезается. -->
     <script>
       (function() {
         function setViewportHeight() {
-          const vh = window.innerHeight * 0.01;
-          document.documentElement.style.setProperty('--vh', vh + 'px');
+          // visualViewport точнее innerHeight на мобильных: учитывает системные панели
+          var height = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+          document.documentElement.style.setProperty('--vh', (height * 0.01) + 'px');
         }
         setViewportHeight();
         window.addEventListener('resize', setViewportHeight);
         window.addEventListener('orientationchange', setViewportHeight);
+        // visualViewport resize срабатывает при появлении клавиатуры на мобильных
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', setViewportHeight);
+        }
       })();
     </script>
     <meta charset="UTF-8" />
