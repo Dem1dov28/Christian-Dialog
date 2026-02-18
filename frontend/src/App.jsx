@@ -433,7 +433,7 @@ function MainApp() {
   const isMediumScreenChatFullWidth = isMediumScreen && !isUltraCompact && (activeChatId || isInlineLibraryOpen) && !isMediumScreenSidebarVisible && !isLibraryWithSidebar;
 
   return (
-    <div className="flex h-full overflow-x-hidden w-full">
+    <div className="flex h-full overflow-hidden w-full">
       <DrawerMenu
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
