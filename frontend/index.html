@@ -46,22 +46,19 @@
         }
       })();
     </script>
-    <!-- Viewport height fix for mobile browsers.
-         window.visualViewport.height даёт реальную видимую высоту:
-         исключает адресную строку браузера, системную навигацию Android и клавиатуру.
-         Без этого 100dvh/100vh на мобильных браузерах больше видимой области
-         и нижняя часть приложения обрезается. -->
+    <!-- Обновление --vh при появлении клавиатуры (нужно для компонентов,
+         которые используют calc(var(--vh) * 100) для внутренних размеров).
+         Высота самого приложения теперь управляется через position:fixed на #root —
+         это надёжнее любых вычислений на мобильных браузерах. -->
     <script>
       (function() {
         function setViewportHeight() {
-          // visualViewport точнее innerHeight на мобильных: учитывает системные панели
           var height = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
           document.documentElement.style.setProperty('--vh', (height * 0.01) + 'px');
         }
         setViewportHeight();
         window.addEventListener('resize', setViewportHeight);
         window.addEventListener('orientationchange', setViewportHeight);
-        // visualViewport resize срабатывает при появлении клавиатуры на мобильных
         if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', setViewportHeight);
         }
