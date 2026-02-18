@@ -174,7 +174,7 @@ export default function Chat({
   const isShowBackButton = useMaxWidth(750);
   const mainContainerClassName = [
     "flex flex-col bg-tg-panel relative h-full overflow-hidden",
-    showBackButton ? "flex-1 w-full min-w-0" : "flex-1 min-w-[500px]"
+    showBackButton ? "flex-1 w-full min-w-0" : "flex-1 min-w-0 sm:min-w-[500px]"
   ].join(" ");
 
   // Функции для работы с draft сообщениями теперь в useChatInput
