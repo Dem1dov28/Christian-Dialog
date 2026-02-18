@@ -35,7 +35,6 @@ import { ModalProvider } from "./contexts/ModalContext.jsx";
 import FolderManager from "./components/chat/FolderManager.jsx";
 import MainLayout from "./components/layout/MainLayout.jsx";
 import LoadingScreen from "./components/loading/LoadingScreen.jsx";
-import GlobalSupportModal from "./components/modals/GlobalSupportModal.jsx";
 import ReportModalNew from "./components/modals/ReportModalNew.jsx";
 import SupportModalNew from "./components/modals/SupportModalNew.jsx";
 import { useGlobalLongPress } from "./hooks/common/useGlobalLongPress.js";

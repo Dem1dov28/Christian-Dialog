@@ -38,7 +38,6 @@ from api.chat import create_chat_endpoints
 from api.multi_agent_chat import create_multi_agent_chat_endpoints
 from api.folders import create_folder_endpoints
 from api.pinned_chats import create_pinned_chats_endpoints
-# from api.pinned_messages import create_pinned_messages_endpoints  # Файл не существует
 from api.search import router as search_router
 from api.auth import router as auth_router
 from api.attractions import create_attractions_endpoints
@@ -68,8 +67,6 @@ logging.basicConfig(
 setup_sensitive_data_filter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-# from services.pinned_chats_service import PinnedChatsService  # Файл не существует
-# from services.pinned_messages_service import PinnedMessagesService  # Файл не существует
 
 
 # Инициализируем мониторинг (если указан SENTRY_DSN)
@@ -83,9 +80,6 @@ multi_agent_chat_service = MultiAgentChatService(agent_service)
 folder_service = FolderService()
 pinned_chats_service = PinnedChatsService()
 attraction_visit_service = AttractionVisitService()
-# pinned_messages_service = PinnedMessagesService()  # Файл не существует
-
-
 
 
 def _suppress_connection_reset_errors(loop, context):
@@ -188,7 +182,6 @@ create_support_endpoints(app)
 app.include_router(static_files_router)
 app.include_router(file_attachments_router)
 app.include_router(payments_router)
-# create_pinned_messages_endpoints(app, pinned_messages_service)  # Файл не существует
 
 
 @app.get("/test-search-db")

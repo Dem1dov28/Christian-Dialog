@@ -7,18 +7,15 @@ import React, {
   useCallback,
   startTransition,
 } from "react";
-// УДАЛЕНО - DragDropContext (использовался только для TodoJournalView)
 import { createPortal } from "react-dom";
 import Actions from "./Actions";
 import LeftMessage from "./LeftMessage";
 import RightMessage from "./RightMessage";
-import ChatLibrary from "./ChatLibrary";
 import ChatLibraryInline from "./ChatLibraryInline";
 import HeaderMenu from "./HeaderMenu";
 import ReportModal from "./ReportModal";
 import ClearChatModal from "./ClearChatModal";
 import EditGroupChatModal from "./EditGroupChatModal";
-// УДАЛЕНО - импорты удаленных компонентов для инструментов
 import ChatHeader from "./ChatHeader";
 import ChatSelectionHeader from "./ChatSelectionHeader";
 import ChatInput from "./ChatInput";
