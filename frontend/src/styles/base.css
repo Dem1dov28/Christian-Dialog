@@ -15,12 +15,22 @@
 
 html {
   height: 100%;
+  /* -webkit-fill-available на html нужен чтобы body мог использовать это значение */
+  min-height: -webkit-fill-available;
   overflow: hidden;
 }
 
 body {
   margin: 0;
-  height: 100%;
+  /* Высота с учётом панелей браузера (адресная строка + нижняя панель).
+     Порядок важен — последнее поддерживаемое значение применяется:
+     1. 100vh          — запасной вариант (может включать панели браузера)
+     2. -webkit-fill-available — iOS Safari до 15.4 (исключает панели браузера)
+     3. 100svh         — все современные браузеры: Small Viewport Height,
+                         специально создан чтобы контент не уходил под панели браузера */
+  height: 100vh;
+  height: -webkit-fill-available;
+  height: 100svh;
   overflow: hidden;
   font-family: "Roboto", sans-serif;
   color: var(--text-white);
@@ -35,18 +45,8 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease, background-image 0.2s ease;
 }
 
-/* position: fixed; inset: 0 — единственный надёжный способ заполнить
-   видимую область браузера на мобильных (iOS Safari, Android Chrome).
-   dvh/vh/innerHeight ненадёжны: они включают нижнюю панель браузера,
-   и нижняя часть приложения оказывается под ней.
-   С position: fixed браузер сам ограничивает элемент видимой зоной —
-   между адресной строкой сверху и панелью инструментов снизу. */
 #root {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  height: 100%;
   overflow: hidden;
   /* safe-area для устройств с notch и home bar (iPhone X+) */
   padding-top: env(safe-area-inset-top);
