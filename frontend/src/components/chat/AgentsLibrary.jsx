@@ -110,9 +110,9 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
-      <div className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100dvh-160px)] flex flex-col">
+      <section className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100dvh-160px)] flex flex-col">
         {/* Заголовок */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[var(--border-color)]">
+        <header className="flex items-center justify-between p-4 sm:p-6 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-[var(--accent)]/10">
               <MdSmartToy className="text-2xl text-[var(--accent)]" />
@@ -133,10 +133,10 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
           >
             <MdClose className="text-2xl text-[var(--text-white)]" />
           </button>
-        </div>
+        </header>
 
         {/* Поиск */}
-        <div className="p-4 sm:p-6 border-b border-[var(--border-color)]">
+        <section className="p-4 sm:p-6 border-b border-[var(--border-color)]">
           <div className="relative">
             <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xl text-[var(--text-gray)]" />
             <input
@@ -147,10 +147,10 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
               className="w-full pl-10 pr-4 py-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
-        </div>
+        </section>
 
         {/* Список агентов */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {filteredAgents.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <MdSmartToy className="text-6xl text-[var(--text-gray)] mb-4 opacity-50" />
@@ -169,7 +169,7 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
                 const IconComponent = getIconComponent(agent.iconName);
 
                 return (
-                  <div
+                  <article
                     key={agent.id}
                     className={`group relative bg-[var(--bg-primary)] rounded-xl p-5 border transition-all duration-300 hover:scale-105 hover:shadow-lg ${isAdded
                       ? "border-[var(--accent)] bg-[var(--accent)]/10"
@@ -228,13 +228,13 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
                         {isAdded ? `✓ ${t("library.added")}` : `+ ${t("library.add")}`}
                       </button>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>
           )}
-        </div>
-      </div>
+        </main>
+      </section>
     </div>
   );
 };

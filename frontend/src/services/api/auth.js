@@ -206,7 +206,19 @@ export class AuthAPI {
 
   // Проверить валидность токена
   async verifyToken() {
-    return this.client.get("/auth/verify-token");
+    try {
+      return await this.client.get("/auth/verify-token");
+    } catch (error) {
+      // Для 401 ошибок не логируем в консоль - это нормальное поведение
+      // для неавторизованных или пользователей с истекшим токеном
+      if (error.status === 401 || error.message?.includes('401') || error.message === 'Not authenticated') {
+        // Создаем чистую ошибку без логирования
+        const cleanError = new Error('Not authenticated');
+        cleanError.status = 401;
+        throw cleanError;
+      }
+      throw error;
+    }
   }
 
   // Проверить соединение с сервером

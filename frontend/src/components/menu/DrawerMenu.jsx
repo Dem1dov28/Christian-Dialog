@@ -182,7 +182,7 @@ export function DrawerMenu({
                   {user?.full_name || user?.username || "User"}
                 </span>
                 <span className="text-[var(--text-gray)] text-[14px] font-normal">
-                  {user?.email || "user@example.com"}
+                  {user?.email || "user@epochaldialog.com"}
                 </span>
               </div>
             </div>

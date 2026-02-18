@@ -452,7 +452,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
 
           {/* Email */}
           <p className="text-[var(--text-dim)] text-sm mb-4">
-            {user?.email || "user@example.com"}
+            {user?.email || "user@epochaldialog.com"}
           </p>
 
           {/* Subscription Status */}

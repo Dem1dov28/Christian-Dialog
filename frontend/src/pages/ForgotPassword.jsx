@@ -7,6 +7,7 @@ import { ArrowLeft, Mail } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import api from "@/services/api";
 import { useNotification } from "@/contexts/NotificationContext";
+import { SEO } from "@/components/common/SEO";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -104,7 +105,13 @@ const ForgotPassword = () => {
 
   if (isEmailSent) {
     return (
-      <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
+      <>
+        <SEO
+          title="Восстановление пароля"
+          description="Восстановление пароля Epochal Dialog. Введите код подтверждения для сброса пароля."
+          canonical="/forgot-password"
+        />
+        <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
         <AuthBackground />
 
         {/* Glass Panel */}
@@ -186,11 +193,19 @@ const ForgotPassword = () => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
+    <>
+      <SEO
+        title="Восстановление пароля"
+        description="Забыли пароль? Восстановите доступ к Epochal Dialog - платформе для общения с AI-агентами."
+        keywords="восстановление пароля, сброс пароля, forgot password"
+        canonical="/forgot-password"
+      />
+      <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
       <AuthBackground />
 
       {/* Glass Panel */}
@@ -269,6 +284,7 @@ const ForgotPassword = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -15,7 +15,7 @@ export const useLanguage = () => {
 };
 
 const STORAGE_KEY = 'language';
-const DEFAULT_LANGUAGE = 'ru';
+const DEFAULT_LANGUAGE = 'en';
 
 const translations = {
   ru: ruTranslations,
@@ -27,11 +27,40 @@ const agentTranslations = {
   en: enAgentTranslations,
 };
 
+const getBrowserLanguage = () => {
+  try {
+    const browserLang = navigator.language || navigator.userLanguage;
+    // Check if browser language starts with 'ru' for Russian
+    if (browserLang && browserLang.toLowerCase().startsWith('ru')) {
+      return 'ru';
+    }
+    // Default to English for all other languages
+    return 'en';
+  } catch (e) {
+    return DEFAULT_LANGUAGE;
+  }
+};
+
 const getStorageLanguage = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY) ||
       sessionStorage.getItem(STORAGE_KEY);
-    return stored && (stored === 'ru' || stored === 'en') ? stored : DEFAULT_LANGUAGE;
+    // If no stored language, detect from browser
+    if (!stored) {
+      const browserLang = getBrowserLanguage();
+      // Save detected language to storage
+      try {
+        localStorage.setItem(STORAGE_KEY, browserLang);
+      } catch (e) {
+        try {
+          sessionStorage.setItem(STORAGE_KEY, browserLang);
+        } catch (e2) {
+          // Ignore storage errors
+        }
+      }
+      return browserLang;
+    }
+    return stored === 'ru' || stored === 'en' ? stored : DEFAULT_LANGUAGE;
   } catch (e) {
     return DEFAULT_LANGUAGE;
   }

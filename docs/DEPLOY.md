@@ -38,7 +38,7 @@ nano .env   # или любой редактор
 |------------|----------|
 | `DB_PASSWORD` | Надёжный пароль для PostgreSQL |
 | `SECRET_KEY` | Случайная строка 32+ символов: `python3 -c "import secrets; print(secrets.token_urlsafe(64))"` |
-| `ALLOWED_ORIGINS` | Ваш домен для фронта, например `https://app.example.com` |
+| `ALLOWED_ORIGINS` | Ваш домен для фронта, например `https://epochaldialog.com` |
 | `OPENROUTER_API_KEY` | Ключ API OpenRouter |
 | `VITE_API_BASE_URL` | URL, по которому браузер будет обращаться к API (см. ниже) |
 | `VITE_GOOGLE_CLIENT_ID` | Google OAuth Client ID (если используете вход через Google) |
@@ -47,8 +47,8 @@ nano .env   # или любой редактор
 
 **Важно про `VITE_API_BASE_URL`:**
 
-- Если фронт и API будут доступны с **одного домена** через reverse proxy (рекомендуется): укажите базовый URL этого домена, например `https://app.example.com`. Тогда запросы к API пойдут на тот же домен (например `/api/...`), и nginx будет проксировать их на backend.
-- Если API на **отдельном поддомене** (например `https://api.example.com`): укажите `VITE_API_BASE_URL=https://api.example.com`.
+- Если фронт и API будут доступны с **одного домена** через reverse proxy (рекомендуется): укажите базовый URL этого домена, например `https://epochaldialog.com`. Тогда запросы к API пойдут на тот же домен (например `/api/...`), и nginx будет проксировать их на backend.
+- Если API на **отдельном поддомене** (например `https://api.epochaldialog.com`): укажите `VITE_API_BASE_URL=https://api.epochaldialog.com`.
 
 В production **не** используйте `DEBUG=True` и не оставляйте `ALLOWED_ORIGINS` с localhost.
 
@@ -132,17 +132,17 @@ API: `http://IP_СЕРВЕРА:8000`
 
 ### Вариант A: Два домена (рекомендуется) — фронт и API на поддоменах
 
-- Фронт: `https://app.example.com` → контейнер frontend (порт 80)
-- API: `https://api.example.com` → контейнер backend (порт 8000)
+- Фронт: `https://epochaldialog.com` → контейнер frontend (порт 80)
+- API: `https://api.epochaldialog.com` → контейнер backend (порт 8000)
 
-**Nginx — фронт** (`/etc/nginx/sites-available/app.example.com`):
+**Nginx — фронт** (`/etc/nginx/sites-available/epochaldialog.com`):
 
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name app.example.com;
-    ssl_certificate     /etc/letsencrypt/live/app.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/app.example.com/privkey.pem;
+    server_name epochaldialog.com;
+    ssl_certificate     /etc/letsencrypt/live/epochaldialog.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/epochaldialog.com/privkey.pem;
 
     location / {
         proxy_pass http://127.0.0.1:80;
@@ -155,14 +155,14 @@ server {
 }
 ```
 
-**Nginx — API** (`/etc/nginx/sites-available/api.example.com`):
+**Nginx — API** (`/etc/nginx/sites-available/api.epochaldialog.com`):
 
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name api.example.com;
-    ssl_certificate     /etc/letsencrypt/live/api.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.example.com/privkey.pem;
+    server_name api.epochaldialog.com;
+    ssl_certificate     /etc/letsencrypt/live/api.epochaldialog.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.epochaldialog.com/privkey.pem;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -179,17 +179,17 @@ server {
 
 В `.env`:
 
-- `VITE_API_BASE_URL=https://api.example.com`
-- `ALLOWED_ORIGINS=https://app.example.com`
+- `VITE_API_BASE_URL=https://api.epochaldialog.com`
+- `ALLOWED_ORIGINS=https://epochaldialog.com`
 
 ### Вариант B: Один домен (фронт и API на одном домене)
 
-Если хотите отдавать и фронт, и API с одного домена (например `app.example.com`), нужно проксировать на backend пути вроде `/auth`, `/chat`, `/agents`, `/api`, `/static`, `/docs` и т.д. Пример одного блока для API (остальные запросы — на фронт):
+Если хотите отдавать и фронт, и API с одного домена (например `epochaldialog.com`), нужно проксировать на backend пути вроде `/auth`, `/chat`, `/agents`, `/api`, `/static`, `/docs` и т.д. Пример одного блока для API (остальные запросы — на фронт):
 
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name app.example.com;
+    server_name epochaldialog.com;
     # ... ssl_* ...
 
     location / {
@@ -211,7 +211,7 @@ server {
 }
 ```
 
-В `.env`: `VITE_API_BASE_URL=https://app.example.com`, `ALLOWED_ORIGINS=https://app.example.com`.
+В `.env`: `VITE_API_BASE_URL=https://epochaldialog.com`, `ALLOWED_ORIGINS=https://epochaldialog.com`.
 
 После правок: `sudo nginx -t && sudo systemctl reload nginx`.
 

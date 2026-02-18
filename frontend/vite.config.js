@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 // Загружаем .env из корня проекта (один файл для backend и frontend)
@@ -35,9 +36,79 @@ export default defineConfig(({ mode }) => {
           plugins: [],
         },
       }),
+      // Bundle analyzer - generates stats.html on build
+      visualizer({
+        filename: './dist/stats.html',
+        open: false,
+        gzipSize: true,
+        brotliSize: true,
+      }),
     ],
     optimizeDeps: {
-      include: ["react", "react-dom"],
+      include: ["react", "react-dom", "react-router-dom", "zustand"],
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Core React ecosystem - loaded on every page
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // State management - smaller chunk
+            'vendor-state': ['zustand'],
+            // UI Components - only used Radix primitives
+            'vendor-ui': [
+              '@radix-ui/react-avatar',
+              '@radix-ui/react-label',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-slot',
+              '@radix-ui/react-toast',
+            ],
+            // Animation libraries - lazy loaded when needed
+            'vendor-animation': ['framer-motion'],
+            // Utilities - tree-shakeable
+            'vendor-utils': ['zod', 'clsx', 'tailwind-merge'],
+            // Icons - only lucide-react, react-icons removed
+            'vendor-icons': ['lucide-react'],
+          },
+          // Ensure small chunks for better caching
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: (assetInfo) => {
+            const info = assetInfo.name.split('.');
+            const ext = info[info.length - 1];
+            if (/\.(woff2?|ttf|otf)$/.test(assetInfo.name)) {
+              return 'assets/fonts/[name]-[hash][extname]';
+            }
+            if (/\.(png|jpe?g|gif|svg|webp|ico)$/.test(assetInfo.name)) {
+              return 'assets/images/[name]-[hash][extname]';
+            }
+            return 'assets/[name]-[hash][extname]';
+          },
+        },
+      },
+      cssCodeSplit: true,
+      cssMinify: true,
+      // Source maps: enabled for development, disabled for production
+      sourcemap: mode === 'development',
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: mode === 'production',
+          drop_debugger: mode === 'production',
+          pure_funcs: mode === 'production' ? ['console.log', 'console.info', 'console.debug'] : [],
+          passes: 2,
+        },
+        mangle: {
+          safari10: true,
+        },
+        format: {
+          comments: false,
+        },
+      },
+      // Enable brotli compression for smaller assets
+      reportCompressedSize: true,
+      // Reduce chunk size warnings
+      chunkSizeWarningLimit: 500,
     },
     resolve: {
       alias: {

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useNotification } from '@/contexts/NotificationContext';
 import api from '@/services/api';
 import { AuthBackground } from '@/components/auth/AuthBackground';
+import { SEO } from '@/components/common/SEO';
 
 const ResetPassword = () => {
   const { t } = useLanguage();
@@ -66,17 +67,23 @@ const ResetPassword = () => {
   };
   
   return (
-    <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
+    <>
+      <SEO
+        title="Сброс пароля"
+        description="Создайте новый пароль для доступа к Epochal Dialog. Безопасный сброс пароля."
+        canonical="/reset-password"
+      />
+      <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
       <AuthBackground />
       
       <div className="relative z-10 w-full max-w-[480px] flex items-center justify-center perspective-1000">
         <Card className="backdrop-blur-2xl bg-card/30 border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5),0_-4px_24px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-700 ease-out ring-1 ring-white/5 before:absolute before:inset-0 before:rounded-[2rem] before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none">
           <CardHeader className="text-center mb-6 sm:mb-8">
-            <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
+            <div className="relative inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
               <img 
                 src="/logo.webp"
                 alt="Epochal Dialog"
-                className="w-10 h-10 object-contain transition-transform duration-500 group-hover:scale-110"
+                className="w-20 h-20 object-contain transition-transform duration-500 group-hover:scale-110"
               />
             </div>
             <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-b from-foreground via-foreground to-foreground/80 bg-clip-text tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
@@ -136,6 +143,7 @@ const ResetPassword = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

@@ -1,7 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
-    <!-- Theme initialization script - MUST be first to prevent FOUC -->
+    <!-- Charset MUST be within first 1024 bytes for security -->
+    <meta charset="UTF-8" />
+    
+    <!-- Theme initialization script - MUST be early to prevent FOUC -->
     <script>
       (function () {
         try {
@@ -46,6 +49,7 @@
         }
       })();
     </script>
+    
     <!-- Viewport height fix for mobile browsers -->
     <script>
       (function() {
@@ -58,18 +62,82 @@
         window.addEventListener('orientationchange', setViewportHeight);
       })();
     </script>
-    <meta charset="UTF-8" />
+    
+    <!-- Primary Meta Tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2d283e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Epochal Dialog - платформа для общения с AI-агентами. Общайтесь с историческими личностями, мыслителями и персонажами с помощью искусственного интеллекта." />
+    <meta name="keywords" content="AI чат, искусственный интеллект, исторические личности, диалоги, Epochal Dialog" />
+    <meta name="author" content="Epochal Dialog" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://epochaldialog.com" />
+    <meta property="og:title" content="Epochal Dialog - AI платформа для диалогов" />
+    <meta property="og:description" content="Общайтесь с историческими личностями и AI-персонажами. Платформа для увлекательных диалогов с искусственным интеллектом." />
+    <meta property="og:image" content="https://epochaldialog.com/preview.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Epochal Dialog" />
+    <meta property="og:locale" content="ru_RU" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://epochaldialog.com" />
+    <meta property="twitter:title" content="Epochal Dialog - AI платформа для диалогов" />
+    <meta property="twitter:description" content="Общайтесь с историческими личностями и AI-персонажами. Платформа для увлекательных диалогов с искусственным интеллектом." />
+    <meta property="twitter:image" content="https://epochaldialog.com/preview.jpg" />
+    
+    <!-- Favicon -->
     <link rel="icon" type="image/webp" href="/favicon.webp" />
-    <title>Epochal Dialog</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <title>Epochal Dialog — Общайтесь с историческими личностями через AI</title>
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Epochal Dialog",
+      "url": "https://epochaldialog.com/",
+      "description": "Платформа для общения с историческими личностями через AI. Общайтесь с великими мыслителями, учеными и философами с помощью искусственного интеллекта.",
+      "inLanguage": "ru",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://epochaldialog.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Epochal Dialog",
+      "url": "https://epochaldialog.com/",
+      "logo": "https://epochaldialog.com/logo.webp",
+      "sameAs": []
+    }
+    </script>
+    
+    <!-- Resource hints for faster font loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    <link rel="stylesheet" href="/src/styles/inline-styles.css" />
+    
+    <!-- Preload critical font files for Roboto (primary UI font) -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOlCnqEu92Fr1MmWUlfBBc4.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- Google Fonts - Combined into single request for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Montserrat:wght@400;500;600&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap" rel="stylesheet" />
+    <!-- Note: Material Icons & Symbols removed - project uses react-icons instead -->
+    
+    <!-- Critical CSS - inlined for fast initial render -->
+    <link rel="stylesheet" href="/inline-styles.css" />
   </head>
   <body style="background-color: var(--bg-primary); color: var(--text-white);" class="font-sans">
     <div id="root"></div>

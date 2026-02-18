@@ -1,0 +1,31 @@
+# robots.txt for epochaldialog.com
+# Last updated: 2026-02-18
+
+User-agent: *
+Allow: /
+
+# Public pages - explicitly allow indexing
+Allow: /login
+Allow: /register
+Allow: /welcome
+Allow: /forgot-password
+Allow: /reset-password
+
+# Private pages - disallow indexing (require authentication)
+Disallow: /subscription-success
+
+# API endpoints - disallow crawling
+Disallow: /api/
+Disallow: /auth/
+
+# Static assets - allow
+Allow: /assets/
+Allow: /images/
+Allow: /favicon.webp
+Allow: /logo.webp
+
+# Sitemap location
+Sitemap: https://epochaldialog.com/sitemap.xml
+
+# Crawl rate
+Crawl-delay: 1

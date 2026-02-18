@@ -5,6 +5,7 @@ import PricingCard from "./PricingCard";
 import { getPricingData } from "../../data/pricingData";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { SEO } from "@/components/common/SEO";
 import apiClient from "../../services/api";
 
 const PricingPage = ({ isVisible, onClose }) => {
@@ -87,6 +88,13 @@ const PricingPage = ({ isVisible, onClose }) => {
 
   const overlay = (
     <div className={`${styles.overlay} ${isClosing ? styles.closing : ""}`}>
+      <SEO
+        title="Тарифы и подписки"
+        description="Выберите подходящий тариф для Epochal Dialog. Бесплатный план, Plus и Pro подписки с расширенными возможностями общения с AI-историческими личностями."
+        keywords="тарифы Epochal Dialog, подписка, цены, AI чат, планы"
+        canonical="/pricing"
+        noindex={true}
+      />
       <div className={`${styles.container} ${isClosing ? styles.closing : ""}`}>
         {/* Header with close button */}
         <div className={styles.header}>

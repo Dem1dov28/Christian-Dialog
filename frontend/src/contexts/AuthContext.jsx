@@ -28,6 +28,17 @@ export const AuthProvider = ({ children }) => {
 
     const initAuth = async () => {
       try {
+        // Проверяем наличие признака аутентификации перед вызовом verifyToken
+        // чтобы избежать 401 ошибки в консоли для неавторизованных пользователей
+        const hasAuthIndicator = document.cookie.includes('access_token') || 
+                                 localStorage.getItem('user_data');
+        if (!hasAuthIndicator) {
+          // Нет признаков аутентификации, сразу завершаем инициализацию
+          setIsInitializing(false);
+          setIsInitialized(true);
+          return;
+        }
+        
         // Проверяем токен через cookie (HttpOnly), без localStorage
         const userData = await apiClient.verifyToken();
         // Сразу после верификации подтягиваем /auth/me для полного набора полей (messages_cycle_started_at)
@@ -50,7 +61,10 @@ export const AuthProvider = ({ children }) => {
           console.error("Failed to load usage stats:", error);
         }
       } catch (error) {
-        console.error("Token verification failed:", error);
+        // Не логируем 401 ошибки - это нормальное поведение для неавторизованных пользователей
+        if (error.status !== 401 && !error.message?.includes('401') && error.message !== 'Not authenticated') {
+          console.error("Token verification failed:", error);
+        }
 
         // Проверяем тип ошибки
         if (
@@ -68,7 +82,7 @@ export const AuthProvider = ({ children }) => {
           error.message === "Not authenticated" ||
           error.message.includes("401")
         ) {
-          console.log("Token expired or invalid, clearing auth state");
+          // Ожидаемое поведение для неавторизованных пользователей - не логируем
           localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
           apiClient.setToken(null);
           setUser(null);

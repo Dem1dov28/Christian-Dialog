@@ -6,6 +6,7 @@ import { AuthBackground } from "@/components/auth/AuthBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GoogleLogin } from "@react-oauth/google";
+import { SEO } from "@/components/common/SEO";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -118,7 +119,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
+    <>
+      <SEO
+        title="Вход"
+        description="Войдите в Epochal Dialog - платформу для общения с AI-агентами. Общайтесь с историческими личностями и персонажами."
+        keywords="вход, авторизация, AI чат, искусственный интеллект, исторические личности"
+        canonical="/login"
+      />
+      <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
       <AuthBackground />
 
       {/* Glass Panel */}
@@ -126,11 +134,11 @@ const Login = () => {
         <div className="relative backdrop-blur-2xl bg-card/30 border border-white/10 rounded-[2rem] p-6 sm:p-8 [@media(max-height:629px)]:p-3 [@media(max-height:629px)]:sm:p-4 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5),0_-4px_24px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-700 ease-out ring-1 ring-white/5 before:absolute before:inset-0 before:rounded-[2rem] before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none">
           {/* Logo */}
           <div className="text-center mb-6 sm:mb-8 [@media(max-height:629px)]:mb-3 [@media(max-height:629px)]:sm:mb-4">
-            <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 [@media(max-height:629px)]:mb-2 [@media(max-height:629px)]:hidden shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
+            <div className="relative inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 [@media(max-height:629px)]:mb-2 [@media(max-height:629px)]:hidden shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
               <img
                 src="/logo.webp"
                 alt="Epochal Dialog"
-                className="w-10 h-10 object-contain transition-transform duration-500 group-hover:scale-110"
+                className="w-20 h-20 object-contain transition-transform duration-500 group-hover:scale-110"
               />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-b from-foreground via-foreground to-foreground/80 bg-clip-text tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
@@ -281,6 +289,7 @@ const Login = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

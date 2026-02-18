@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,17 +8,20 @@ import {
 } from "react-router-dom";
 import DrawerMenu from "./components/menu/DrawerMenu.jsx";
 import DeleteChatModal from "./components/chat/DeleteChatModal.jsx";
-import PricingPage from "./pages/PricingPage/PricingPage.jsx";
-import UpgradeModal from "./components/modals/UpgradeModal.jsx";
 import ConnectionStatus from "./components/common/ConnectionStatus.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
-import Index from "./pages/Index.jsx";
-import NotFound from "./pages/NotFound.jsx";
-import SubscriptionSuccess from "./pages/SubscriptionSuccess.jsx";
 import { Toaster } from "./components/ui/toaster.jsx";
+import { LazyGoogleOAuthProvider } from "./components/auth/LazyGoogleOAuthProvider.jsx";
+
+// Lazy loaded page components for better initial load performance
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Register = lazy(() => import("./pages/Register.jsx"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
+const Index = lazy(() => import("./pages/Index.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
+const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess.jsx"));
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext.jsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
@@ -32,11 +35,8 @@ import {
 import { ImageModalProvider } from "./contexts/ImageModalContext.jsx";
 import { PanelWidthProvider } from "./contexts/PanelWidthContext.jsx";
 import { ModalProvider } from "./contexts/ModalContext.jsx";
-import FolderManager from "./components/chat/FolderManager.jsx";
 import MainLayout from "./components/layout/MainLayout.jsx";
 import LoadingScreen from "./components/loading/LoadingScreen.jsx";
-import ReportModalNew from "./components/modals/ReportModalNew.jsx";
-import SupportModalNew from "./components/modals/SupportModalNew.jsx";
 import { useGlobalLongPress } from "./hooks/common/useGlobalLongPress.js";
 import { useAppState } from "./hooks/common/useAppState.js";
 import { usePanelHandlers } from "./hooks/common/usePanelHandlers.js";
@@ -47,6 +47,13 @@ import { useFolderHandlers } from "./hooks/common/useFolderHandlers.js";
 import { useModal } from "./contexts/ModalContext.jsx";
 import apiClient from "./services/api";
 import { useNotification } from "./contexts/NotificationContext.jsx";
+
+// Lazy loaded components for better initial load performance
+const PricingPage = lazy(() => import("./pages/PricingPage/PricingPage.jsx"));
+const UpgradeModal = lazy(() => import("./components/modals/UpgradeModal.jsx"));
+const FolderManager = lazy(() => import("./components/chat/FolderManager.jsx"));
+const ReportModalNew = lazy(() => import("./components/modals/ReportModalNew.jsx"));
+const SupportModalNew = lazy(() => import("./components/modals/SupportModalNew.jsx"));
 
 // Компонент для основного приложения
 function MainApp() {
@@ -500,17 +507,21 @@ function MainApp() {
         onShowUpgradeModal={() => setShowUpgradeModal(true)}
       />
 
-      {/* Modals */}
-      <ReportModalNew
-        isOpen={isReportModalOpen}
-        onClose={closeReportModal}
-        onSubmit={handleReportSubmit}
-      />
-      <SupportModalNew
-        isOpen={isSupportModalOpen}
-        onClose={closeSupportModal}
-        onSubmit={handleSupportSubmit}
-      />
+      {/* Modals - wrapped in Suspense for lazy loading */}
+      <Suspense fallback={null}>
+        <ReportModalNew
+          isOpen={isReportModalOpen}
+          onClose={closeReportModal}
+          onSubmit={handleReportSubmit}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <SupportModalNew
+          isOpen={isSupportModalOpen}
+          onClose={closeSupportModal}
+          onSubmit={handleSupportSubmit}
+        />
+      </Suspense>
 
       <DeleteChatModal
         isOpen={isDeleteChatModalOpen}
@@ -587,37 +598,43 @@ function MainApp() {
 
       {/* УДАЛЕНО - UnsubscribeChannelModal (channels были удалены) */}
 
-      <FolderManager
-        isOpen={isFolderManagerOpen}
-        onClose={handleCloseFolderManager}
-        onFolderCreate={handleFolderCreate}
-        onFolderUpdate={handleFolderUpdate}
-        onFolderDelete={handleFolderDelete}
-        onFolderAdd={handleFolderAdd}
-        onFolderSelect={handleFolderSelect}
-        onChatSelect={handleChatSelect}
-        folders={folders}
-        recommendedFolders={getRecommendedFolders()}
-        conversations={conversations}
-        agents={agents}
-      />
+      <Suspense fallback={null}>
+        <FolderManager
+          isOpen={isFolderManagerOpen}
+          onClose={handleCloseFolderManager}
+          onFolderCreate={handleFolderCreate}
+          onFolderUpdate={handleFolderUpdate}
+          onFolderDelete={handleFolderDelete}
+          onFolderAdd={handleFolderAdd}
+          onFolderSelect={handleFolderSelect}
+          onChatSelect={handleChatSelect}
+          folders={folders}
+          recommendedFolders={getRecommendedFolders()}
+          conversations={conversations}
+          agents={agents}
+        />
+      </Suspense>
 
-      {/* Pricing Page */}
-      <PricingPage
-        isVisible={isPricingPageVisible}
-        onClose={() => setIsPricingPageVisible(false)}
-      />
+      {/* Pricing Page - lazy loaded */}
+      <Suspense fallback={null}>
+        <PricingPage
+          isVisible={isPricingPageVisible}
+          onClose={() => setIsPricingPageVisible(false)}
+        />
+      </Suspense>
 
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        onUpgrade={(tier) => {
-          setShowUpgradeModal(false);
-          setIsPricingPageVisible(true);
-        }}
-        currentTier={user?.subscription_tier || "free"}
-      />
+      {/* Upgrade Modal - lazy loaded */}
+      <Suspense fallback={null}>
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          onUpgrade={(tier) => {
+            setShowUpgradeModal(false);
+            setIsPricingPageVisible(true);
+          }}
+          currentTier={user?.subscription_tier || "free"}
+        />
+      </Suspense>
 
       {/* Toast уведомления */}
       <Toaster />
@@ -684,71 +701,78 @@ export default function App() {
                             <GlobalLongPressHandler />
                             <ConnectionStatus />
                             <div className="flex h-dscreen overflow-hidden items-center justify-center">
-                              <Routes>
-                                {/* Публичные маршруты */}
-                                <Route
-                                  path="/login"
-                                  element={
-                                    <PublicRoute>
-                                      <Login />
-                                    </PublicRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/register"
-                                  element={
-                                    <PublicRoute>
-                                      <Register />
-                                    </PublicRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/forgot-password"
-                                  element={
-                                    <PublicRoute allowAuthenticated={true}>
-                                      <ForgotPassword />
-                                    </PublicRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/reset-password"
-                                  element={
-                                    <PublicRoute>
-                                      <ResetPassword />
-                                    </PublicRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/welcome"
-                                  element={
-                                    <PublicRoute>
-                                      <Index />
-                                    </PublicRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/subscription-success"
-                                  element={
-                                    <ProtectedRoute>
-                                      <SubscriptionSuccess />
-                                    </ProtectedRoute>
-                                  }
-                                />
+                              <Suspense fallback={<LoadingScreen isVisible={true} />}>
+                                <Routes>
+                                  {/* Публичные маршруты */}
+                                  <Route
+                                    path="/login"
+                                    element={
+                                      <PublicRoute>
+                                        {googleClientId ? (
+                                          <LazyGoogleOAuthProvider clientId={googleClientId}>
+                                            <Login />
+                                          </LazyGoogleOAuthProvider>
+                                        ) : (
+                                          <Login />
+                                        )}
+                                      </PublicRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/register"
+                                    element={
+                                      <PublicRoute>
+                                        <Register />
+                                      </PublicRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/forgot-password"
+                                    element={
+                                      <PublicRoute allowAuthenticated={true}>
+                                        <ForgotPassword />
+                                      </PublicRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/reset-password"
+                                    element={
+                                      <PublicRoute>
+                                        <ResetPassword />
+                                      </PublicRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/welcome"
+                                    element={
+                                      <PublicRoute>
+                                        <Index />
+                                      </PublicRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/subscription-success"
+                                    element={
+                                      <ProtectedRoute>
+                                        <SubscriptionSuccess />
+                                      </ProtectedRoute>
+                                    }
+                                  />
 
-                                {/* Защищенные маршруты */}
-                                <Route
-                                  path="/"
-                                  element={
-                                    <ProtectedRoute>
-                                      <MainApp />
-                                    </ProtectedRoute>
-                                  }
-                                />
+                                  {/* Защищенные маршруты */}
+                                  <Route
+                                    path="/"
+                                    element={
+                                      <ProtectedRoute>
+                                        <MainApp />
+                                      </ProtectedRoute>
+                                    }
+                                  />
 
-
-                                {/* 404 маршрут */}
-                                <Route path="*" element={<NotFound />} />
-                              </Routes>
+                                  {/* 404 маршрут */}
+                                  <Route path="*" element={<NotFound />} />
+                                </Routes>
+                              </Suspense>
 
                               {/* Toast уведомления */}
                               <Toaster />
