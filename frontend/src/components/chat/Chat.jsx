@@ -1110,12 +1110,9 @@ export default function Chat({
         )
           } ${selectionActive ? "select-none" : ""}`}
         style={{
-          minHeight: "0", // Важно для flex-контейнеров
-          height: "100%", // Убеждаемся, что контейнер занимает всю высоту
+          minHeight: "0", // Важно для flex-контейнеров — без этого flex-1 не сжимается
           opacity: isScrollReady || isInlineLibraryOpen ? 1 : 0,
           transition: isScrollReady ? "opacity 0.15s ease-in" : "none",
-          // Динамический padding-bottom управляется через useChatInputLayout
-          // Статический padding удален в пользу динамического расчета
         }}
         data-scroll-to-bottom="true"
         onContextMenu={(e) => {

@@ -14,20 +14,26 @@
 }
 
 html {
-  height: 100dvh;
-  height: calc(var(--vh, 1dvh) * 100);
-  overflow-x: hidden;
+  height: 100%;
+  /* -webkit-fill-available на html нужен чтобы body мог использовать это значение */
+  min-height: -webkit-fill-available;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
+  /* Высота с учётом панелей браузера (адресная строка + нижняя панель).
+     Порядок важен — последнее поддерживаемое значение применяется:
+     1. 100vh          — запасной вариант (может включать панели браузера)
+     2. -webkit-fill-available — iOS Safari до 15.4 (исключает панели браузера)
+     3. 100svh         — все современные браузеры: Small Viewport Height,
+                         специально создан чтобы контент не уходил под панели браузера */
+  height: 100vh;                          /* запасной: старые браузеры */
+  height: -webkit-fill-available;        /* iOS Safari < 15.4 */
+  height: 100svh;                        /* Chrome 108+, Safari 15.4+ */
+  height: var(--app-height, 100svh);     /* JS: самый точный, переопределяет всё */
+  overflow: hidden;
   font-family: "Roboto", sans-serif;
-  /* Высота body = viewport минус safe-area (notch/home bar на iPhone).
-     overflow: hidden нужен для chat-layout, но не должен обрезать safe-area. */
-  height: 100dvh;
-  height: calc(var(--vh, 1dvh) * 100);
-  overflow-x: hidden;
-  overflow-y: hidden;
   color: var(--text-white);
   background-color: var(--bg-primary);
   /* Фоновое изображение не применяется к body по умолчанию —
@@ -40,14 +46,10 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease, background-image 0.2s ease;
 }
 
-/* #root занимает всё пространство body (с учётом safe-area отступов).
-   height: 100% вместо 100dvh чтобы не выходить за пределы body при наличии padding. */
 #root {
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: hidden;
-  /* Safe area insets здесь, а не на body — иначе при overflow:hidden на body
-     нижние safe-area пиксели обрезаются (ломает layout на iPhone X+) */
+  overflow: hidden;
+  /* safe-area для устройств с notch и home bar (iPhone X+) */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
