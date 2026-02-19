@@ -18,6 +18,8 @@ html {
   /* -webkit-fill-available на html нужен чтобы body мог использовать это значение */
   min-height: -webkit-fill-available;
   overflow: hidden;
+  /* Запрещаем масштабирование жестами (pinch-to-zoom) — как в Telegram Web */
+  touch-action: pan-x pan-y;
 }
 
 body {
@@ -30,10 +32,6 @@ body {
      4. var(--app-height) — JS: самый точный, переопределяет всё */
   height: 100dvh;                        /* Dynamic viewport: все современные браузеры */
   height: var(--app-height, 100dvh);     /* JS: самый точный, переопределяет всё */
-  min-height: 100dvh;
-  min-height: var(--app-height, 100dvh);
-  /* padding-bottom для safe-area на iOS/Android */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
   overflow: hidden;
   font-family: "Roboto", sans-serif;
   color: var(--text-white);
