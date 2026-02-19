@@ -1,4 +1,4 @@
-ï»¿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +24,7 @@ const ResetPassword = () => {
   const email = location.state?.email;
   const token = location.state?.token;
   
-  // Ğ•ÑĞ»Ğ¸ Ğ½ĞµÑ‚ email Ğ¸Ğ»Ğ¸ Ñ‚Ğ¾ĞºĞµĞ½Ğ°, Ğ¿ĞµÑ€ĞµĞ½Ğ°Ğ¿Ñ€Ğ°Ğ²Ğ»ÑĞµĞ¼ Ğ½Ğ° forgot-password
+  // Åñëè íåò email èëè òîêåíà, ïåğåíàïğàâëÿåì íà forgot-password
   if (!email || !token) {
     navigate('/forgot-password');
     return null;
@@ -48,14 +48,14 @@ const ResetPassword = () => {
     
     try {
       await api.resetPassword(email, token, password);
-      // ĞŸÑ€Ğ¾Ğ²ĞµÑ€ÑĞµĞ¼, Ñ‡Ñ‚Ğ¾ showNotification ÑĞ²Ğ»ÑĞµÑ‚ÑÑ Ñ„ÑƒĞ½ĞºÑ†Ğ¸ĞµĞ¹
+      // Ïğîâåğÿåì, ÷òî showNotification ÿâëÿåòñÿ ôóíêöèåé
       if (typeof showNotification === 'function') {
         showNotification(t('auth.resetPassword.success'), 'success');
       }
       navigate('/login');
     } catch (error) {
       console.error('Reset password error:', error);
-      // Ğ—Ğ°Ñ‰Ğ¸Ñ‚Ğ° Ğ¾Ñ‚ Ğ¾ÑˆĞ¸Ğ±ĞºĞ¸ "errors.generic"
+      // Çàùèòà îò îøèáêè "errors.generic"
       try {
         setError(t('errors.generic'));
       } catch (translationError) {
@@ -69,11 +69,11 @@ const ResetPassword = () => {
   return (
     <>
       <SEO
-        title="Ğ¡Ğ±Ñ€Ğ¾Ñ Ğ¿Ğ°Ñ€Ğ¾Ğ»Ñ"
-        description="Ğ¡Ğ¾Ğ·Ğ´Ğ°Ğ¹Ñ‚Ğµ Ğ½Ğ¾Ğ²Ñ‹Ğ¹ Ğ¿Ğ°Ñ€Ğ¾Ğ»ÑŒ Ğ´Ğ»Ñ Ğ´Ğ¾ÑÑ‚ÑƒĞ¿Ğ° Ğº Epochal Dialog. Ğ‘ĞµĞ·Ğ¾Ğ¿Ğ°ÑĞ½Ñ‹Ğ¹ ÑĞ±Ñ€Ğ¾Ñ Ğ¿Ğ°Ñ€Ğ¾Ğ»Ñ."
+        title="Ñáğîñ ïàğîëÿ"
+        description="Ñîçäàéòå íîâûé ïàğîëü äëÿ äîñòóïà ê Epochal Dialog. Áåçîïàñíûé ñáğîñ ïàğîëÿ."
         canonical="/reset-password"
       />
-      <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
+      <div className="relative flex items-center justify-center p-4 dark-theme-locked" style={{ minHeight: '100%' }}>
       <AuthBackground />
       
       <div className="relative z-10 w-full max-w-[480px] flex items-center justify-center perspective-1000">

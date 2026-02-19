@@ -21,6 +21,8 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const Index = lazy(() => import("./pages/Index.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess.jsx"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess.jsx"));
+const PaymentFailed = lazy(() => import("./pages/PaymentFailed.jsx"));
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
@@ -776,7 +778,7 @@ export default function App() {
                           >
                             <GlobalLongPressHandler />
                             <ConnectionStatus />
-                            <div className="flex overflow-hidden items-center justify-center" style={{ height: 'var(--app-height, 100dvh)' }}>
+                            <div className="flex overflow-hidden w-full" style={{ height: '100%' }}>
                               <Suspense fallback={<LoadingScreen isVisible={true} />}>
                                 <Routes>
                                   {/* Публичные маршруты */}
@@ -826,14 +828,46 @@ export default function App() {
                                       </PublicRoute>
                                     }
                                   />
-                                  <Route
-                                    path="/subscription-success"
-                                    element={
-                                      <ProtectedRoute>
-                                        <SubscriptionSuccess />
-                                      </ProtectedRoute>
-                                    }
-                                  />
+                                <Route
+                                  path="/subscription-success"
+                                  element={
+                                    <ProtectedRoute>
+                                      <SubscriptionSuccess />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/successful-payment"
+                                  element={
+                                    <ProtectedRoute>
+                                      <PaymentSuccess />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/failed-payment"
+                                  element={
+                                    <ProtectedRoute>
+                                      <PaymentFailed />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/successful-payment"
+                                  element={
+                                    <ProtectedRoute>
+                                      <PaymentSuccess />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/failed-payment"
+                                  element={
+                                    <ProtectedRoute>
+                                      <PaymentFailed />
+                                    </ProtectedRoute>
+                                  }
+                                />
 
                                   {/* Защищенные маршруты */}
                                   <Route

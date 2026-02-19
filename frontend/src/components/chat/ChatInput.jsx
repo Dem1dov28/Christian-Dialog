@@ -194,7 +194,7 @@ function ChatInput({
         onDragLeave={onDragLeave}
         onPaste={onPaste}
       >
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 chat-input-transparent chat-input-frosted">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 chat-input-transparent chat-input-frosted mx-auto w-full" style={{ maxWidth: '720px' }}>
           {/* File Attachment Button */}
           {!isChannelChat && !isReadOnlyChannel && (
             <button

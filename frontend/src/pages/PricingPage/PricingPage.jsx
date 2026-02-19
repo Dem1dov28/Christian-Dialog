@@ -15,6 +15,7 @@ const PricingPage = ({ isVisible, onClose }) => {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState(null);
+  const [cryptocloudEnabled, setCryptocloudEnabled] = useState(false);
   const [bepaidEnabled, setBepaidEnabled] = useState(false);
 
   useEffect(() => {
@@ -22,7 +23,15 @@ const PricingPage = ({ isVisible, onClose }) => {
       setIsClosing(false);
       setUpgradeError(null);
       setUpgradeSuccess(null);
-      apiClient.getPaymentsConfig().then((r) => setBepaidEnabled(r.bepaid_enabled === true)).catch(() => setBepaidEnabled(false));
+      apiClient.getPaymentsConfig()
+        .then((r) => {
+          setCryptocloudEnabled(r.cryptocloud_enabled === true);
+          setBepaidEnabled(r.bepaid_enabled === true);
+        })
+        .catch(() => {
+          setCryptocloudEnabled(false);
+          setBepaidEnabled(false);
+        });
     }
   }, [isVisible]);
 
@@ -65,7 +74,7 @@ const PricingPage = ({ isVisible, onClose }) => {
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
-      const returnUrl = `${window.location.origin}/subscription-success`;
+      const returnUrl = `${window.location.origin}/successful-payment`;
       const response = await apiClient.createCheckout(tier, returnUrl);
       if (response.redirect_url) {
         window.location.href = response.redirect_url;
@@ -74,6 +83,24 @@ const PricingPage = ({ isVisible, onClose }) => {
       setUpgradeError(response.error || t("pricing.upgradeError"));
     } catch (error) {
       console.error("Checkout error:", error);
+      setUpgradeError(error.message || t("pricing.upgradeError"));
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
+  const handlePayWithCrypto = async (tier) => {
+    try {
+      setIsUpgrading(true);
+      setUpgradeError(null);
+      const response = await apiClient.createCryptoInvoice(tier);
+      if (response.link) {
+        window.location.href = response.link;
+        return;
+      }
+      setUpgradeError(response.error || t("pricing.upgradeError"));
+    } catch (error) {
+      console.error("CryptoCloud error:", error);
       setUpgradeError(error.message || t("pricing.upgradeError"));
     } finally {
       setIsUpgrading(false);
@@ -139,13 +166,16 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("plus")
                   ? t("pricing.currentPlan")
-                  : bepaidEnabled
-                    ? t("pricing.payWithCard")
-                    : t("pricing.switchToPlus")
+                  : cryptocloudEnabled
+                    ? t("pricing.payWithCrypto")
+                    : bepaidEnabled
+                      ? t("pricing.payWithCard")
+                      : t("pricing.switchToPlus")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus")) {
-                  if (bepaidEnabled) handlePayWithCard("plus");
+                  if (cryptocloudEnabled) handlePayWithCrypto("plus");
+                  else if (bepaidEnabled) handlePayWithCard("plus");
                   else handleUpgrade("plus");
                 }
               }}
@@ -160,13 +190,16 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
-                  : bepaidEnabled
-                    ? t("pricing.payWithCard")
-                    : t("pricing.switchToPro")
+                  : cryptocloudEnabled
+                    ? t("pricing.payWithCrypto")
+                    : bepaidEnabled
+                      ? t("pricing.payWithCard")
+                      : t("pricing.switchToPro")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro")) {
-                  if (bepaidEnabled) handlePayWithCard("pro");
+                  if (cryptocloudEnabled) handlePayWithCrypto("pro");
+                  else if (bepaidEnabled) handlePayWithCard("pro");
                   else handleUpgrade("pro");
                 }
               }}

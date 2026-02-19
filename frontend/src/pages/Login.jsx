@@ -126,7 +126,7 @@ const Login = () => {
         keywords="вход, авторизация, AI чат, искусственный интеллект, исторические личности"
         canonical="/login"
       />
-      <div className="min-h-dscreen relative flex items-center justify-center p-4 dark-theme-locked">
+      <div className="relative flex items-center justify-center p-4 dark-theme-locked" style={{ minHeight: '100%' }}>
       <AuthBackground />
 
       {/* Glass Panel */}

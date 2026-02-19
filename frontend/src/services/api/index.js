@@ -71,6 +71,7 @@ class UnifiedAPI {
     this.getMessagesLimit = (tier) => auth.getMessagesLimit(tier);
     this.getSubscriptionStatus = () => auth.getSubscriptionStatus();
     this.getPaymentsConfig = () => auth.getPaymentsConfig();
+    this.createCryptoInvoice = (tier) => auth.createCryptoInvoice(tier);
     this.createCheckout = (tier, returnUrl) => auth.createCheckout(tier, returnUrl);
     this.checkEmailExists = (email) => auth.checkEmailExists(email);
     this.sendPasswordResetCode = (email) => auth.sendPasswordResetCode(email);
