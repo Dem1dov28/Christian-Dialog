@@ -112,8 +112,19 @@ const ForgotPassword = () => {
           canonical="/forgot-password"
         />
         <div
-          className="relative flex w-full p-4 dark-theme-locked items-center justify-center auth-page-container"
-          style={{ minHeight: '100%' }}
+          className="dark-theme-locked"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+          }}
         >
         <AuthBackground />
 
@@ -209,8 +220,19 @@ const ForgotPassword = () => {
         canonical="/forgot-password"
       />
       <div
-        className="relative flex w-full p-4 dark-theme-locked items-center justify-center auth-page-container"
-        style={{ minHeight: '100%' }}
+        className="dark-theme-locked"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+        }}
       >
       <AuthBackground />
 
