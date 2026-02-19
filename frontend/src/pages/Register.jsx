@@ -106,7 +106,10 @@ const Register = () => {
         keywords="регистрация, создать аккаунт, AI чат, искусственный интеллект"
         canonical="/register"
       />
-      <div className="relative flex items-center justify-center p-4 dark-theme-locked w-full" style={{ minHeight: '100%' }}>
+      <div
+        className="relative flex w-full p-4 dark-theme-locked items-center justify-center auth-page-container"
+        style={{ minHeight: '100%' }}
+      >
       <AuthBackground />
 
       {/* Glass Panel */}

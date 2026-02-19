@@ -778,7 +778,7 @@ export default function App() {
                           >
                             <GlobalLongPressHandler />
                             <ConnectionStatus />
-                            <div className="flex overflow-hidden w-full" style={{ height: '100%' }}>
+                            <div className="flex w-full overflow-x-hidden overflow-y-auto" style={{ height: '100%', WebkitOverflowScrolling: 'touch' }}>
                               <Suspense fallback={<LoadingScreen isVisible={true} />}>
                                 <Routes>
                                   {/* Публичные маршруты */}

@@ -111,7 +111,10 @@ const ForgotPassword = () => {
           description="Восстановление пароля Epochal Dialog. Введите код подтверждения для сброса пароля."
           canonical="/forgot-password"
         />
-        <div className="relative flex items-center justify-center p-4 dark-theme-locked w-full" style={{ minHeight: '100%' }}>
+        <div
+          className="relative flex w-full p-4 dark-theme-locked items-center justify-center auth-page-container"
+          style={{ minHeight: '100%' }}
+        >
         <AuthBackground />
 
         {/* Glass Panel */}
@@ -205,7 +208,10 @@ const ForgotPassword = () => {
         keywords="восстановление пароля, сброс пароля, forgot password"
         canonical="/forgot-password"
       />
-      <div className="relative flex items-center justify-center p-4 dark-theme-locked w-full" style={{ minHeight: '100%' }}>
+      <div
+        className="relative flex w-full p-4 dark-theme-locked items-center justify-center auth-page-container"
+        style={{ minHeight: '100%' }}
+      >
       <AuthBackground />
 
       {/* Glass Panel */}

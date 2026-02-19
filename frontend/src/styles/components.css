@@ -605,4 +605,13 @@ input:checked + .toggle-slider:before {
   z-index: 1;
 }
 
+/* Страницы входа: на iOS и узких экранах панель сверху + прокрутка */
+@media (max-height: 700px) {
+  .auth-page-container {
+    align-items: flex-start;
+    padding-top: max(1rem, env(safe-area-inset-top, 0px));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
 
