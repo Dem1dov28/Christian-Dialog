@@ -354,16 +354,21 @@ export class AuthAPI {
     return this.client.post("/auth/clear-all-data");
   }
 
-  // --- BePaid (оплата подписки) ---
+  // --- Платежи ---
 
-  // Узнать, включена ли оплата через BePaid
+  // Узнать, какие провайдеры включены: { cryptocloud_enabled, bepaid_enabled }
   async getPaymentsConfig() {
     return this.client.get("/payments/config");
   }
 
-  // Создать сессию оплаты и получить redirect_url на страницу BePaid
+  // CryptoCloud: создать крипто-инвойс → получить link на страницу оплаты
+  async createCryptoInvoice(tier) {
+    return this.client.post("/payments/cryptocloud/create-invoice", { tier });
+  }
+
+  // BePaid: создать подписку → получить redirect_url на страницу оплаты картой
   async createCheckout(tier, returnUrl) {
-    return this.client.post("/payments/create-checkout", {
+    return this.client.post("/payments/bepaid/create-checkout", {
       tier,
       return_url: returnUrl,
     });

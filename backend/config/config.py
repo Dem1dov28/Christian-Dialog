@@ -111,6 +111,23 @@ RIA_RSS_URL = os.getenv(
 )
 
 # ---------------------------------------------------------------------------
+# CRYPTOCLOUD (крипто-платежи)
+# ---------------------------------------------------------------------------
+# Получить в ЛК CryptoCloud: https://app.cryptocloud.plus
+# API KEY — в разделе "Интеграция → API"
+# SHOP_ID — ID проекта из ЛК
+# SECRET_KEY — секрет проекта (для верификации JWT в postback)
+CRYPTOCLOUD_API_KEY = os.getenv("CRYPTOCLOUD_API_KEY", "")
+CRYPTOCLOUD_SHOP_ID = os.getenv("CRYPTOCLOUD_SHOP_ID", "")
+CRYPTOCLOUD_SECRET_KEY = os.getenv("CRYPTOCLOUD_SECRET_KEY", "")
+CRYPTOCLOUD_API_URL = os.getenv("CRYPTOCLOUD_API_URL", "https://api.cryptocloud.plus").rstrip("/")
+# Цены тарифов в USD (должны совпадать с тем, что в pricingData.js)
+CRYPTOCLOUD_PRICE_PLUS = float(os.getenv("CRYPTOCLOUD_PRICE_PLUS", "2"))
+CRYPTOCLOUD_PRICE_PRO = float(os.getenv("CRYPTOCLOUD_PRICE_PRO", "5"))
+# Интеграция включается автоматически, если все три поля заданы
+CRYPTOCLOUD_ENABLED = bool(CRYPTOCLOUD_API_KEY and CRYPTOCLOUD_SHOP_ID and CRYPTOCLOUD_SECRET_KEY)
+
+# ---------------------------------------------------------------------------
 # BEPAID (платежи и подписки)
 # ---------------------------------------------------------------------------
 BEPAID_SHOP_ID = os.getenv("BEPAID_SHOP_ID", "")
