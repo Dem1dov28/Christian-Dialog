@@ -201,6 +201,16 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
         "winston churchill": "уинстон черчилль",
         "wolfgang amadeus mozart": "вольфганг амадей моцарт",
         "albert einstein": "альберт эйнштейн",
+        # Латинские имена файлов -> русские имена агентов
+        "alexander pushkin": "александр сергеевич пушкин",
+        "rene descartes": "рене декарт",
+        "rené descartes": "рене декарт",
+        "victor tsoi": "виктор цой",
+        "thomas edison": "томас эдисон",
+        "james watt": "джеймс ватт",
+        "rafael santi": "рафаэль санти",
+        "franz kafka": "франц кафка",
+        "elvis presley": "элвис пресли",
         # Инструменты / сервисные агенты
         "dream interpreter": "толкователь сновидений",
         "reminders": "таймер и напоминания",
