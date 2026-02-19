@@ -12,36 +12,27 @@
  * Sets the --app-height CSS variable based on actual window height
  */
 export function setViewportHeight() {
-  // visualViewport.height — реальная видимая высота без панелей браузера.
-  // window.innerHeight включает панели браузера на мобильных — нельзя использовать.
-  const height = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+  // window.innerHeight — стабильная высота, не меняется при открытии клавиатуры.
+  // Использование visualViewport.height здесь вызывало прыжок layout при открытии клавиатуры.
+  const height = window.innerHeight;
   document.documentElement.style.setProperty('--app-height', `${height}px`);
   document.documentElement.style.setProperty('--vh', `${height * 0.01}px`);
 }
 
-/**
- * Initialize viewport height handling
- * Sets initial value and adds resize listener
- */
 export function initViewportHeight() {
   setViewportHeight();
 
+  // Обновляем только при изменении размера окна (поворот экрана).
+  // НЕ слушаем visualViewport.resize — он срабатывает при открытии клавиатуры
+  // и вызывает прыжок всего layout вверх.
   window.addEventListener('resize', setViewportHeight);
   window.addEventListener('orientationchange', () => {
-    setTimeout(setViewportHeight, 100);
+    setTimeout(setViewportHeight, 150);
   });
-
-  // visualViewport resize срабатывает при появлении/скрытии клавиатуры
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', setViewportHeight);
-  }
 
   return () => {
     window.removeEventListener('resize', setViewportHeight);
     window.removeEventListener('orientationchange', setViewportHeight);
-    if (window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', setViewportHeight);
-    }
   };
 }
 

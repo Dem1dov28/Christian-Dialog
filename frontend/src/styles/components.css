@@ -578,4 +578,30 @@ input:checked + .toggle-slider:before {
 /* После завершения драга все должно вернуться в нормальное состояние */
 /* Библиотека сама убирает transform, поэтому эти стили автоматически перестают применяться */
 
+/* =====================================================================
+   Панель ввода сообщений (ChatInput / ChatInputSection)
+   ===================================================================== */
+
+/* Прозрачный контейнер — используется как обёртка всей панели */
+.chat-input-transparent {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Матовый (frosted glass) фон — применяется к строке с textarea и кнопками */
+.chat-input-frosted {
+  background: rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 16px;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Кнопки внутри панели ввода — всегда видимы поверх blur */
+.chat-input-button-visible {
+  position: relative;
+  z-index: 1;
+}
+
 

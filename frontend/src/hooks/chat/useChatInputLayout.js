@@ -36,8 +36,8 @@ export function useChatInputLayout({
     const hasReply = !!replyToMessage;
     const hasFiles = attachedFiles.length > 0;
     
-    // Базовый padding — небольшой отступ снизу для последнего сообщения
-    let paddingBottom = 12;
+    // Базовый padding под абсолютно позиционированный инпут
+    let paddingBottom = 80;
     
     // Дополнительный padding для reply-блока (~100px)
     if (hasReply) {

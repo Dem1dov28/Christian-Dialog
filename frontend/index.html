@@ -57,17 +57,22 @@
     <script>
       (function() {
         function setViewportHeight() {
-          var height = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-          var px = height + 'px';
-          document.documentElement.style.setProperty('--app-height', px);
+          // window.innerHeight стабилен — не меняется при открытии клавиатуры.
+          // visualViewport.height использовать нельзя: он уменьшается при открытии
+          // клавиатуры и вызывает прыжок всего layout вверх.
+          var height = window.innerHeight;
+          document.documentElement.style.setProperty('--app-height', height + 'px');
           document.documentElement.style.setProperty('--vh', (height * 0.01) + 'px');
         }
         setViewportHeight();
         window.addEventListener('resize', setViewportHeight);
-        window.addEventListener('orientationchange', setViewportHeight);
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', setViewportHeight);
-        }
+        window.addEventListener('orientationchange', function() {
+          setTimeout(setViewportHeight, 150);
+        });
+        // Блокируем pinch-to-zoom жестами на iOS (user-scalable=no игнорируется с iOS 10)
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
+        document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
       })();
     </script>
     
