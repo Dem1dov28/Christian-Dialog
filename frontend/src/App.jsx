@@ -709,7 +709,7 @@ export default function App() {
                           >
                             <GlobalLongPressHandler />
                             <ConnectionStatus />
-                            <div className="flex overflow-hidden w-full" style={{ height: 'var(--app-height, 100dvh)' }}>
+                            <div className="flex overflow-hidden w-full" style={{ height: '100%' }}>
                               <Suspense fallback={<LoadingScreen isVisible={true} />}>
                                 <Routes>
                                   {/* Публичные маршруты */}
