@@ -211,10 +211,14 @@ const SearchWithAvatar = forwardRef(
     const handleMessageSelect = async (message) => {
       console.log("Message selected:", message);
       // Переходим в чат с сообщением И передаем ID сообщения для скролла
+      // Для групповых чатов используем префикс group- чтобы правильно открыть существующий чат
+      const conversationId = message.is_group
+        ? `group-${message.conversation_id}`
+        : message.conversation_id;
       if (onChatSelect) {
-        await onChatSelect(message.conversation_id, message.id);
+        await onChatSelect(conversationId, message.id);
       } else {
-        await selectConversation(message.conversation_id);
+        await selectConversation(conversationId);
       }
       closeSearch();
     };

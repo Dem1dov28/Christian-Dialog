@@ -114,10 +114,11 @@ function ChatInput({
             padding: 0,
             border: 'none',
             margin: 0,
+            marginBottom: '8px',
             width: '100%'
           }}
         >
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 chat-input-transparent chat-input-frosted">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 pt-2 sm:pt-2.5 pb-1 sm:pb-1.5 chat-input-transparent chat-input-frosted mx-auto w-full" style={{ maxWidth: '720px' }}>
             {/* Reply Icon */}
             <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-[var(--text-gray)]">
               {React.createElement(getActionIcon("reply"), { className: "w-4 h-4 sm:w-5 sm:h-5 transform -scale-x-100" })}

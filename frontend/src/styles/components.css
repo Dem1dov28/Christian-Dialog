@@ -580,6 +580,43 @@ input:checked + .toggle-slider:before {
 /* Библиотека сама убирает transform, поэтому эти стили автоматически перестают применяться */
 
 /* =====================================================================
+   Chat Messages Container - Telegram-style layout for wide screens
+   ===================================================================== */
+
+/* Chat messages container - constrain width on wide screens like Telegram */
+.chat-messages-container {
+  width: 100%;
+}
+
+/* Chat input section wrapper - responsive padding */
+.chat-input-section-wrapper {
+  padding-left: clamp(8px, 3vw, 80px);
+  padding-right: clamp(8px, 3vw, 80px);
+}
+
+@media (min-width: 1081px) {
+  .chat-messages-container {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Remove extra padding from messages on wide screens */
+  .chat-messages-container .px-3.sm\:px-6 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* On wide screens, center the input section content */
+  .chat-input-section-wrapper {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* =====================================================================
    Панель ввода сообщений (ChatInput / ChatInputSection)
    ===================================================================== */
 

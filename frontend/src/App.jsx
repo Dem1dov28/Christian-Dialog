@@ -18,7 +18,6 @@ const Login = lazy(() => import("./pages/Login.jsx"));
 const Register = lazy(() => import("./pages/Register.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
-const Index = lazy(() => import("./pages/Index.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess.jsx"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess.jsx"));
@@ -817,14 +816,6 @@ export default function App() {
                                     element={
                                       <PublicRoute>
                                         <ResetPassword />
-                                      </PublicRoute>
-                                    }
-                                  />
-                                  <Route
-                                    path="/welcome"
-                                    element={
-                                      <PublicRoute>
-                                        <Index />
                                       </PublicRoute>
                                     }
                                   />

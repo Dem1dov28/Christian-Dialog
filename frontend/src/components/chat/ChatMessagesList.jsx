@@ -123,78 +123,80 @@ const ChatMessagesList = ({
   };
   return (
     <div className="-mx-3 sm:-mx-6 flex flex-col justify-end flex-1">
-      <div
-        className="w-full flex flex-col-reverse"
-        role="listbox"
-        aria-multiselectable={true}
-        aria-label="Messages"
-      >
-        {windowedMessages
-          .slice()
-          .reverse()
-          .map((message) => {
-            const isSelected = selectedMessagesSet.has(message.id);
-            const isActive = activeMessageId === message.id;
-            const isHighlighted = String(highlightedMessageId) === String(message.id);
+      <div className="chat-messages-container">
+        <div
+          className="w-full flex flex-col-reverse"
+          role="listbox"
+          aria-multiselectable={true}
+          aria-label="Messages"
+        >
+          {windowedMessages
+            .slice()
+            .reverse()
+            .map((message) => {
+              const isSelected = selectedMessagesSet.has(message.id);
+              const isActive = activeMessageId === message.id;
+              const isHighlighted = String(highlightedMessageId) === String(message.id);
 
-            let bgColor = "transparent";
-            if (isSelected) {
-              bgColor = theme === "light"
-                ? "rgba(96, 165, 250, 0.6)" // blue-400 с прозрачностью
-                : "rgba(59, 130, 246, 0.4)"; // blue-500 с прозрачностью
-            } else if (isActive) {
-              bgColor = "rgba(0, 0, 0, 0.18)";
-            } else if (isHighlighted) {
-              bgColor = "rgba(0, 0, 0, 0.3)";
-            }
+              let bgColor = "transparent";
+              if (isSelected) {
+                bgColor = theme === "light"
+                  ? "rgba(96, 165, 250, 0.6)" // blue-400 с прозрачностью
+                  : "rgba(59, 130, 246, 0.4)"; // blue-500 с прозрачностью
+              } else if (isActive) {
+                bgColor = "rgba(0, 0, 0, 0.18)";
+              } else if (isHighlighted) {
+                bgColor = "rgba(0, 0, 0, 0.3)";
+              }
 
-            return (
-              <div
-                key={`row-${message.id}`}
-                role="option"
-                aria-selected={isSelected}
-                tabIndex={0}
-                data-message-id={message.id}
-                ref={(el) => {
-                  if (el) {
-                    messageRefs.current[message.id] = el;
-                  } else {
-                    delete messageRefs.current[message.id];
-                  }
-                }}
-                className="w-full"
-                onMouseDown={(e) => handleMessageMouseDown(e, message.id)}
-                onMouseEnter={(e) => handleMessageMouseEnter(e, message.id)}
-                onMouseUp={handleMessageMouseUp}
-                onClick={(e) => onMessageClick(e, message.id)}
-                onContextMenu={(e) => {
-                  if (isSelecting || selectionActive) return;
-                  // Не открываем меню, если пользователь выделяет текст
-                  const selection = window.getSelection();
-                  if (selection && selection.toString().trim().length > 0) {
-                    return;
-                  }
-                  e.preventDefault();
-                  openMenuAtEventWithChecks(e, message.id);
-                }}
-                onTouchStart={(e) => onMessageTouchStart(e, message.id)}
-                onTouchMove={(e) => onMessageTouchMove(e, message.id)}
-                onTouchEnd={(e) => onMessageTouchEnd(e, message.id)}
-                onTouchCancel={(e) => onMessageTouchCancel(e, message.id)}
-                style={{
-                  touchAction: "manipulation",
-                  backgroundColor: bgColor,
-                  // Убираем transition для предотвращения постоянных изменений
-                  transition: "none",
-                  // Блокируем выделение текста во всем контейнере, когда активен режим выделения
-                  userSelect: selectionActive ? 'none' : 'auto',
-                  WebkitUserSelect: selectionActive ? 'none' : 'auto',
-                }}
-              >
-                <div className="px-3 sm:px-6">{renderMessage(message)}</div>
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={`row-${message.id}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  tabIndex={0}
+                  data-message-id={message.id}
+                  ref={(el) => {
+                    if (el) {
+                      messageRefs.current[message.id] = el;
+                    } else {
+                      delete messageRefs.current[message.id];
+                    }
+                  }}
+                  className="w-full"
+                  onMouseDown={(e) => handleMessageMouseDown(e, message.id)}
+                  onMouseEnter={(e) => handleMessageMouseEnter(e, message.id)}
+                  onMouseUp={handleMessageMouseUp}
+                  onClick={(e) => onMessageClick(e, message.id)}
+                  onContextMenu={(e) => {
+                    if (isSelecting || selectionActive) return;
+                    // Не открываем меню, если пользователь выделяет текст
+                    const selection = window.getSelection();
+                    if (selection && selection.toString().trim().length > 0) {
+                      return;
+                    }
+                    e.preventDefault();
+                    openMenuAtEventWithChecks(e, message.id);
+                  }}
+                  onTouchStart={(e) => onMessageTouchStart(e, message.id)}
+                  onTouchMove={(e) => onMessageTouchMove(e, message.id)}
+                  onTouchEnd={(e) => onMessageTouchEnd(e, message.id)}
+                  onTouchCancel={(e) => onMessageTouchCancel(e, message.id)}
+                  style={{
+                    touchAction: "manipulation",
+                    backgroundColor: bgColor,
+                    // Убираем transition для предотвращения постоянных изменений
+                    transition: "none",
+                    // Блокируем выделение текста во всем контейнере, когда активен режим выделения
+                    userSelect: selectionActive ? 'none' : 'auto',
+                    WebkitUserSelect: selectionActive ? 'none' : 'auto',
+                  }}
+                >
+                  <div className="px-3 sm:px-6">{renderMessage(message)}</div>
+                </div>
+              );
+            })}
+        </div>
       </div>
     </div>
   );

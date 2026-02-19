@@ -7,7 +7,6 @@ Allow: /
 # Public pages - explicitly allow indexing
 Allow: /login
 Allow: /register
-Allow: /welcome
 Allow: /forgot-password
 Allow: /reset-password
 

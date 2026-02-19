@@ -7,13 +7,6 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  <!-- Welcome page (public landing) -->
-  <url>
-    <loc>https://epochaldialog.com/welcome</loc>
-    <lastmod>2026-02-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
   <!-- Authentication pages (public) -->
   <url>
     <loc>https://epochaldialog.com/login</loc>
