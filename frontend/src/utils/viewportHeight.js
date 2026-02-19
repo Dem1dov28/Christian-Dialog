@@ -12,8 +12,11 @@
  * Sets the --app-height CSS variable based on actual window height
  */
 export function setViewportHeight() {
-  const height = window.innerHeight;
+  // visualViewport.height — реальная видимая высота без панелей браузера.
+  // window.innerHeight включает панели браузера на мобильных — нельзя использовать.
+  const height = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
   document.documentElement.style.setProperty('--app-height', `${height}px`);
+  document.documentElement.style.setProperty('--vh', `${height * 0.01}px`);
 }
 
 /**
@@ -21,22 +24,24 @@ export function setViewportHeight() {
  * Sets initial value and adds resize listener
  */
 export function initViewportHeight() {
-  // Set initial value
   setViewportHeight();
 
-  // Update on resize (handles orientation changes, address bar show/hide)
   window.addEventListener('resize', setViewportHeight);
-
-  // Also update on orientation change for mobile devices
   window.addEventListener('orientationchange', () => {
-    // Small delay to allow browser to update viewport after orientation change
     setTimeout(setViewportHeight, 100);
   });
 
-  // Cleanup function for React useEffect
+  // visualViewport resize срабатывает при появлении/скрытии клавиатуры
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', setViewportHeight);
+  }
+
   return () => {
     window.removeEventListener('resize', setViewportHeight);
     window.removeEventListener('orientationchange', setViewportHeight);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', setViewportHeight);
+    }
   };
 }
 

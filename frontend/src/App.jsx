@@ -707,7 +707,7 @@ export default function App() {
                           >
                             <GlobalLongPressHandler />
                             <ConnectionStatus />
-                            <div className="flex h-dscreen overflow-hidden items-center justify-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+                            <div className="flex overflow-hidden items-center justify-center" style={{ height: 'var(--app-height, 100dvh)' }}>
                               <Suspense fallback={<LoadingScreen isVisible={true} />}>
                                 <Routes>
                                   {/* Публичные маршруты */}
