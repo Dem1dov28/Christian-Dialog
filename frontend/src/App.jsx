@@ -47,6 +47,7 @@ import { useFolderHandlers } from "./hooks/common/useFolderHandlers.js";
 import { useModal } from "./contexts/ModalContext.jsx";
 import apiClient from "./services/api";
 import { useNotification } from "./contexts/NotificationContext.jsx";
+import { initViewportHeight } from "./utils/viewportHeight.js";
 
 // Lazy loaded components for better initial load performance
 const PricingPage = lazy(() => import("./pages/PricingPage/PricingPage.jsx"));
@@ -422,6 +423,12 @@ function MainApp() {
     };
   }, []);
 
+  // Initialize viewport height for mobile devices
+  React.useEffect(() => {
+    const cleanup = initViewportHeight();
+    return cleanup;
+  }, []);
+
   // Показываем 3D лоадер до полной загрузки главной страницы
   if (!isInitialLoadComplete) {
     return <LoadingScreen isVisible={true} />;
@@ -700,7 +707,7 @@ export default function App() {
                           >
                             <GlobalLongPressHandler />
                             <ConnectionStatus />
-                            <div className="flex h-dscreen overflow-hidden items-center justify-center">
+                            <div className="flex h-dscreen overflow-hidden items-center justify-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
                               <Suspense fallback={<LoadingScreen isVisible={true} />}>
                                 <Routes>
                                   {/* Публичные маршруты */}

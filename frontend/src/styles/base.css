@@ -26,12 +26,14 @@ body {
      Порядок важен — последнее поддерживаемое значение применяется:
      1. 100vh          — запасной вариант (может включать панели браузера)
      2. -webkit-fill-available — iOS Safari до 15.4 (исключает панели браузера)
-     3. 100svh         — все современные браузеры: Small Viewport Height,
-                         специально создан чтобы контент не уходил под панели браузера */
-  height: 100vh;                          /* запасной: старые браузеры */
-  height: -webkit-fill-available;        /* iOS Safari < 15.4 */
-  height: 100svh;                        /* Chrome 108+, Safari 15.4+ */
-  height: var(--app-height, 100svh);     /* JS: самый точный, переопределяет всё */
+     3. 100dvh         — Dynamic Viewport Height: адаптируется к изменениям viewport
+     4. var(--app-height) — JS: самый точный, переопределяет всё */
+  height: 100dvh;                        /* Dynamic viewport: все современные браузеры */
+  height: var(--app-height, 100dvh);     /* JS: самый точный, переопределяет всё */
+  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
+  /* padding-bottom для safe-area на iOS/Android */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   overflow: hidden;
   font-family: "Roboto", sans-serif;
   color: var(--text-white);

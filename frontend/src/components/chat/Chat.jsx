@@ -1181,7 +1181,10 @@ export default function Chat({
                 {showScrollButton && (
                   <button
                     onClick={handleScrollDownClick}
-                    className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+                    className="fixed right-4 z-50 w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+                    style={{
+                      bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))'
+                    }}
                     aria-label="Scroll down"
                   >
                     <MdArrowDownward size={22} />

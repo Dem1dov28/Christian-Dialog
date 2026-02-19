@@ -106,7 +106,8 @@ export default function ChatInputSection({
       style={{
         backgroundColor: 'transparent',
         background: 'transparent',
-        pointerEvents: 'auto'
+        pointerEvents: 'auto',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
     >
       {content}

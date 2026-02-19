@@ -248,12 +248,15 @@ const EditGroupChatModal = ({
 
       {/* Modal */}
       <div
-        className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 w-full max-w-2xl max-h-[80vh] bg-[var(--bg-secondary)]/90 backdrop-blur-xl border border-[var(--border-color)]/50 rounded-2xl shadow-2xl z-50 transition-all duration-300 flex flex-col ${
+        className={`fixed left-1/2 transform -translate-x-1/2 w-full max-w-2xl max-h-[80vh] bg-[var(--bg-secondary)]/90 backdrop-blur-xl border border-[var(--border-color)]/50 rounded-2xl shadow-2xl z-50 transition-all duration-300 flex flex-col ${
           isShown
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4 pointer-events-none"
         }`}
-        style={{ margin: "0 1rem" }}
+        style={{
+          margin: "0 1rem",
+          bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))'
+        }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyPress}
         tabIndex={-1}
