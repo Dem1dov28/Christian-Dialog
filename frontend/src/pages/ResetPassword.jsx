@@ -73,7 +73,7 @@ const ResetPassword = () => {
         description="Создайте новый пароль для доступа к Epochal Dialog. Безопасный сброс пароля."
         canonical="/reset-password"
       />
-      <div className="relative flex items-center justify-center p-4 dark-theme-locked" style={{ minHeight: '100%' }}>
+      <div className="relative flex items-center justify-center p-4 dark-theme-locked w-full" style={{ minHeight: '100%' }}>
       <AuthBackground />
       
       <div className="relative z-10 w-full max-w-[480px] flex items-center justify-center perspective-1000">
