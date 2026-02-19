@@ -49,11 +49,11 @@ body {
 #root {
   height: 100%;
   overflow: hidden;
-  /* safe-area для устройств с notch и home bar (iPhone X+) */
+  /* safe-area только по вертикали — top (notch) и bottom (home bar).
+     left/right убраны: они нужны только в landscape с notch, но вызывают
+     обрезку контента по бокам в portrait на iOS. */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
 }
 
 /* Класс для применения фонового изображения темы — используется только в авторизованной части приложения */
