@@ -102,7 +102,7 @@ export default function ChatInputSection({
 
   return (
     <div
-      className="chat-input-transparent px-3 sm:px-4"
+      className="chat-input-transparent px-2 sm:px-4 md:px-6"
       style={{
         position: 'absolute',
         bottom: 0,
