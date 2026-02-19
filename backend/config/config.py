@@ -83,12 +83,15 @@ if ENVIRONMENT == "production":
             "  ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com"
         )
 
-    # Защита от случайного попадания localhost в production
-    for origin in ALLOWED_ORIGINS:
-        if "localhost" in origin or "127.0.0.1" in origin:
-            raise ValueError(
-                f"Недопустимый origin в ALLOWED_ORIGINS для production: {origin}"
-            )
+    # Защита от случайного попадания localhost в production (можно отключить через ALLOW_LOCALHOST_IN_PRODUCTION)
+    allow_localhost = os.getenv("ALLOW_LOCALHOST_IN_PRODUCTION", "false").lower() == "true"
+    if not allow_localhost:
+        for origin in ALLOWED_ORIGINS:
+            if "localhost" in origin or "127.0.0.1" in origin:
+                raise ValueError(
+                    f"Недопустимый origin в ALLOWED_ORIGINS для production: {origin}. "
+                    f"Для разработки установите ALLOW_LOCALHOST_IN_PRODUCTION=true"
+                )
 else:
     # В development разрешаем localhost по умолчанию
     ALLOWED_ORIGINS = os.getenv(

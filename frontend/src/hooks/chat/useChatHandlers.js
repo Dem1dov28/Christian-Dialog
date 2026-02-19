@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import apiClient from "../../services/api";
 
 /**
@@ -23,6 +23,8 @@ export function useChatHandlers({
   isRightPanelModal,
   setIsRightPanelVisible,
   systemChat,
+  navigate,
+  location,
 }) {
   const openCompactChatView = useCallback(() => {
     if (isUltraCompact) {
@@ -38,6 +40,10 @@ export function useChatHandlers({
       try {
         // Если chatId равен null, сбрасываем активный чат
         if (chatId === null || chatId === undefined) {
+          // Навигируем назад на главную если мы на /chat
+          if (navigate && location?.pathname === '/chat') {
+            navigate('/', { replace: true });
+          }
           setActiveChatId(null);
           // Также сбрасываем активный разговор в ChatsContext
           // Используем selectConversation с несуществующим ID, чтобы сбросить состояние
@@ -73,6 +79,10 @@ export function useChatHandlers({
         setIsInlineLibraryOpen(false);
         setIsLibraryWithSidebar(false);
 
+        // Навигируем на /chat при открытии чата
+        if (navigate && location?.pathname !== '/chat') {
+          navigate('/chat');
+        }
 
         if (isRightPanelModal) {
           setIsRightPanelVisible(false);
@@ -180,6 +190,8 @@ export function useChatHandlers({
       setIsCompactChatOpen,
       setIsMediumScreenSidebarVisible,
       systemChat,
+      navigate,
+      location,
     ]
   );
 
@@ -258,6 +270,18 @@ export function useChatHandlers({
     },
     [activeChatId, conversations, deleteConversation, setActiveChatId]
   );
+
+  // Синхронизация состояния чата с URL
+  useEffect(() => {
+    if (location?.pathname === '/chat') {
+      // Если URL /chat, но нет активного чата - ничего не делаем
+      // (чат должен быть открыт через handleChatSelect)
+    } else if (location?.pathname !== '/chat' && activeChatId) {
+      // Если URL не /chat, но есть активный чат - закрываем чат
+      // Это происходит при нажатии кнопки "назад" в браузере
+      // Не сбрасываем здесь, чтобы избежать циклов
+    }
+  }, [location?.pathname, activeChatId]);
 
   return {
     handleChatSelect,

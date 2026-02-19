@@ -71,6 +71,7 @@ button:hover svg.text-3xl {
 /* Search input styles */
 .search-input {
   transition: box-shadow 0.3s ease;
+  background-color: var(--search-bg);
 }
 
 .search-input:focus {

@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import DrawerMenu from "./components/menu/DrawerMenu.jsx";
 import DeleteChatModal from "./components/chat/DeleteChatModal.jsx";
@@ -58,6 +59,9 @@ const SupportModalNew = lazy(() => import("./components/modals/SupportModalNew.j
 
 // Компонент для основного приложения
 function MainApp() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   // Используем кастомные хуки для управления состоянием
   const appState = useAppState();
   const [isInitialLoadComplete, setIsInitialLoadComplete] = React.useState(false);
@@ -184,6 +188,8 @@ function MainApp() {
     setIsCompactChatOpen,
     setIsMediumScreenSidebarVisible,
     setIsLibraryWithSidebar,
+    navigate,
+    location,
   });
 
   const {
@@ -210,6 +216,21 @@ function MainApp() {
   const openDrawer = useCallback(() => setIsDrawerOpen(true), [setIsDrawerOpen]);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), [setIsDrawerOpen]);
 
+  // Функции для открытия/закрытия PricingPage с изменением URL
+  const openPricingPage = useCallback(() => {
+    if (navigate && location?.pathname !== '/Subscription') {
+      navigate('/Subscription');
+    }
+    setIsPricingPageVisible(true);
+  }, [navigate, location, setIsPricingPageVisible]);
+
+  const closePricingPage = useCallback(() => {
+    if (navigate && location?.pathname === '/Subscription') {
+      navigate('/', { replace: true });
+    }
+    setIsPricingPageVisible(false);
+  }, [navigate, location, setIsPricingPageVisible]);
+
   // Используем хуки для обработчиков чатов
   const chatHandlers = useChatHandlers({
     activeChatId,
@@ -230,6 +251,8 @@ function MainApp() {
     isRightPanelModal,
     setIsRightPanelVisible,
     systemChat,
+    navigate,
+    location,
   });
 
   const {
@@ -429,13 +452,59 @@ function MainApp() {
     return cleanup;
   }, []);
 
+  // Синхронизация URL с состоянием (обработка кнопки "назад" в браузере)
+  // Используем ref для отслеживания предыдущего pathname
+  const prevPathnameRef = React.useRef(location.pathname);
+  
+  React.useEffect(() => {
+    const prevPathname = prevPathnameRef.current;
+    const currentPathname = location.pathname;
+    
+    // Обновляем ref для следующего рендера
+    prevPathnameRef.current = currentPathname;
+    
+    // При возврате на главную страницу (/), сбрасываем всё состояние как при нажатии кнопки "назад" в приложении
+    if (currentPathname === '/' && prevPathname !== '/') {
+      // Сбрасываем активный чат
+      if (activeChatId) {
+        setActiveChatId(null);
+      }
+      // Закрываем библиотеку
+      if (isInlineLibraryOpen) {
+        setIsInlineLibraryOpen(false);
+        setIsLibraryWithSidebar(false);
+      }
+      // Закрываем PricingPage
+      if (isPricingPageVisible) {
+        setIsPricingPageVisible(false);
+      }
+      // На средних экранах показываем sidebar
+      if (isMediumScreen) {
+        setIsMediumScreenSidebarVisible(true);
+      }
+      // На ультракомпактных закрываем чат
+      if (isUltraCompact) {
+        setIsCompactChatOpen(false);
+      }
+    }
+    
+    // Открываем PricingPage если URL /Subscription, но страница не видна
+    if (currentPathname === '/Subscription' && !isPricingPageVisible) {
+      setIsPricingPageVisible(true);
+    }
+  }, [location.pathname, activeChatId, setActiveChatId, isPricingPageVisible, setIsPricingPageVisible, isMediumScreen, isInlineLibraryOpen, setIsInlineLibraryOpen, isLibraryWithSidebar, setIsLibraryWithSidebar, setIsMediumScreenSidebarVisible, isUltraCompact, setIsCompactChatOpen]);
+
   // Показываем 3D лоадер до полной загрузки главной страницы
   if (!isInitialLoadComplete) {
     return <LoadingScreen isVisible={true} />;
   }
 
+  // На главной странице без активного чата всегда показываем sidebar
+  const isHomePageWithoutChat = location.pathname === '/' && !activeChatId && !isInlineLibraryOpen;
+  
   const shouldRenderSidebar =
     isProfileVisible ||
+    isHomePageWithoutChat ||
     (isUltraCompact && !isCompactChatOpen) ||
     (!isUltraCompact && !isMediumScreen) || // На больших экранах (>750px) всегда показываем
     (isMediumScreen && !isUltraCompact && (!activeChatId || isMediumScreenSidebarVisible || isLibraryWithSidebar)); // На средних (550-750px)
@@ -475,7 +544,7 @@ function MainApp() {
         showProfile={isProfileVisible}
         profileScreenProps={{
           onClose: closeProfile,
-          onOpenPricing: () => setIsPricingPageVisible(true),
+          onOpenPricing: openPricingPage,
           onChatSelect: handleChatSelect,
         }}
         targetMessageId={targetMessageId}
@@ -626,7 +695,7 @@ function MainApp() {
       <Suspense fallback={null}>
         <PricingPage
           isVisible={isPricingPageVisible}
-          onClose={() => setIsPricingPageVisible(false)}
+          onClose={closePricingPage}
         />
       </Suspense>
 
@@ -637,7 +706,7 @@ function MainApp() {
           onClose={() => setShowUpgradeModal(false)}
           onUpgrade={(tier) => {
             setShowUpgradeModal(false);
-            setIsPricingPageVisible(true);
+            openPricingPage();
           }}
           currentTier={user?.subscription_tier || "free"}
         />
@@ -769,6 +838,30 @@ export default function App() {
                                   {/* Защищенные маршруты */}
                                   <Route
                                     path="/"
+                                    element={
+                                      <ProtectedRoute>
+                                        <MainApp />
+                                      </ProtectedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/Library"
+                                    element={
+                                      <ProtectedRoute>
+                                        <MainApp />
+                                      </ProtectedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/chat"
+                                    element={
+                                      <ProtectedRoute>
+                                        <MainApp />
+                                      </ProtectedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/Subscription"
                                     element={
                                       <ProtectedRoute>
                                         <MainApp />

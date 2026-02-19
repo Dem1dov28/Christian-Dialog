@@ -1,0 +1,5 @@
+cd backend
+py main.py
+
+cd frontend 
+npm run dev
