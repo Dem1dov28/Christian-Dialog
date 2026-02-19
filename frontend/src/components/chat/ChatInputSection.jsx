@@ -102,13 +102,14 @@ export default function ChatInputSection({
 
   return (
     <div
-      className="chat-input-transparent px-2 sm:px-4 md:px-6"
+      className="chat-input-transparent"
       style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
         zIndex: 100,
+        padding: '0 clamp(8px, 3vw, 80px)',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))',
         backgroundColor: 'transparent',
         background: 'transparent',
