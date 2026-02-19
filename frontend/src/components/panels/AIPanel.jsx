@@ -46,6 +46,7 @@ const ExpandableDescription = ({ text }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setIsExpanded(false);
@@ -91,7 +92,7 @@ const ExpandableDescription = ({ text }) => {
           }}
           className="text-blue-400 hover:text-blue-500 text-sm mt-0.5 hover:underline focus:outline-none cursor-pointer"
         >
-          еще...
+          {t("common.more")}
         </button>
       )}
     </div>

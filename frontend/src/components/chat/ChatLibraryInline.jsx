@@ -882,7 +882,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     if (width >= 1280) return ROWS_PER_BATCH * 4;
     if (width >= 1024) return ROWS_PER_BATCH * 3;
     if (width >= 640) return ROWS_PER_BATCH * 2;
-    return ROWS_PER_BATCH;
+    return ROWS_PER_BATCH * 2; // <640px: 2 columns
   };
 
   const [itemsPerBatch, setItemsPerBatch] = useState(() =>
@@ -1660,7 +1660,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 )}
                               </h3>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCreated.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -1787,7 +1787,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.characters')}</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCharacters.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -1925,7 +1925,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.tools')}</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleTools.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2062,7 +2062,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.aiModels')}</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleModels.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2205,7 +2205,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
                               </h3>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCreated.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2343,7 +2343,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.characters')}</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCharacters.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2473,7 +2473,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.tools')}</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleTools.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2608,7 +2608,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.aiModels')}</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleModels.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
