@@ -28,10 +28,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 # Load .env (needed because core.database requires DATABASE_URL)
-# Сначала из корня проекта, затем из backend (чтобы backend/.env переопределял при необходимости)
 try:
-    project_root = os.path.abspath(os.path.join(PROJECT_ROOT, ".."))
-    load_dotenv(os.path.join(project_root, ".env"))
     load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 except Exception:
     # If dotenv isn't available or .env missing, continue; core.database will raise a clear error.
