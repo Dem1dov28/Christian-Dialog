@@ -629,11 +629,12 @@ input:checked + .toggle-slider:before {
 
 /* Матовый (frosted glass) фон — применяется к строке с textarea и кнопками */
 .chat-input-frosted {
-  background: rgba(0, 0, 0, 0.25) !important;
+  background: var(--chat-input-bg, rgba(0, 0, 0, 0.25)) !important;
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-radius: 16px;
-  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--chat-input-border, transparent);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* Кнопки внутри панели ввода — всегда видимы поверх blur */

@@ -2,7 +2,7 @@
   "agents": {
     "Марк Аврелий": {
       "name": "Marcus Aurelius",
-      "description": "Roman Emperor and Stoic philosopher; author of 'Meditations'."
+      "description": "(121–180) Roman Emperor and Stoic philosopher; author of 'Meditations'."
     },
     "Илон Маск": {
       "name": "Elon Musk",
@@ -22,171 +22,171 @@
     },
     "Александр Македонский": {
       "name": "Alexander the Great",
-      "description": "King of Macedonia and one of history's greatest military commanders."
+      "description": "(356–323 BC) King of Macedonia and one of history's greatest military commanders."
     },
     "Альберт Эйнштейн": {
       "name": "Albert Einstein",
-      "description": "Theoretical physicist, developer of the theory of relativity."
+      "description": "(1879–1955) Theoretical physicist, developer of the theory of relativity."
     },
     "Будда": {
       "name": "Buddha",
-      "description": "Spiritual teacher, founder of Buddhism; the Awakened One."
+      "description": "(c. 563–483 BC) Spiritual teacher, founder of Buddhism; the Awakened One."
     },
     "Владимир Ленин": {
       "name": "Vladimir Lenin",
-      "description": "Revolutionary, politician, founder of the Soviet state."
+      "description": "(1870–1924) Revolutionary, politician, founder of the Soviet state."
     },
     "Джордж Вашингтон": {
       "name": "George Washington",
-      "description": "1st President of the USA, Commander-in-Chief of the Continental Army."
+      "description": "(1732–1799) 1st President of the USA, Commander-in-Chief of the Continental Army."
     },
     "Гай Юлий Цезарь": {
       "name": "Julius Caesar",
-      "description": "Roman general, politician, writer and dictator."
+      "description": "(100–44 BC) Roman general, politician, writer and dictator."
     },
     "Жанна д'Арк": {
       "name": "Joan of Arc",
-      "description": "National heroine of France, warrior and symbol of resistance."
+      "description": "(c. 1412–1431) National heroine of France, warrior and symbol of resistance."
     },
     "Иисус": {
       "name": "Jesus",
-      "description": "Central figure of Christianity, preacher and teacher."
+      "description": "(c. 4 BC – 30 AD) Central figure of Christianity, preacher and teacher."
     },
     "Иосиф Сталин": {
       "name": "Joseph Stalin",
-      "description": "Soviet leader who headed the USSR from the mid-1920s to 1953."
+      "description": "(1878–1953) Soviet leader who headed the USSR from the mid-1920s to 1953."
     },
     "Клеопатра": {
       "name": "Cleopatra",
-      "description": "The last queen of the Ptolemaic Kingdom of Egypt."
+      "description": "(69–30 BC) The last queen of the Ptolemaic Kingdom of Egypt."
     },
     "Христофор Колумб": {
       "name": "Christopher Columbus",
-      "description": "Italian explorer who opened the Americas to European exploration."
+      "description": "(1451–1506) Italian explorer who opened the Americas to European exploration."
     },
     "Леонардо да Винчи": {
       "name": "Leonardo da Vinci",
-      "description": "Renaissance polymath; painter, scientist and engineer."
+      "description": "(1452–1519) Renaissance polymath; painter, scientist and engineer."
     },
     "Мартин Лютер Кинг-младший": {
       "name": "Martin Luther King Jr.",
-      "description": "Civil rights leader, Nobel Peace Prize laureate."
+      "description": "(1929–1968) Civil rights leader, Nobel Peace Prize laureate."
     },
     "Наполеон Бонапарт": {
       "name": "Napoleon Bonaparte",
-      "description": "French Emperor and military commander, one of the greatest in history."
+      "description": "(1769–1821) French Emperor and military commander, one of the greatest in history."
     },
     "Стив Джобс": {
       "name": "Steve Jobs",
-      "description": "Co-founder of Apple, visionary and pioneer of the personal computer era."
+      "description": "(1955–2011) Co-founder of Apple, visionary and pioneer of the personal computer era."
     },
     "Уинстон Черчилль": {
       "name": "Winston Churchill",
-      "description": "Prime Minister of the UK, orator and wartime leader."
+      "description": "(1874–1965) Prime Minister of the UK, orator and wartime leader."
     },
     "Чингисхан": {
       "name": "Genghis Khan",
-      "description": "Founder and first Great Khan of the Mongol Empire."
+      "description": "(c. 1162–1227) Founder and first Great Khan of the Mongol Empire."
     },
     "Чарльз Дарвин": {
       "name": "Charles Darwin",
-      "description": "English naturalist, developer of the theory of evolution."
+      "description": "(1809–1882) English naturalist, developer of the theory of evolution."
     },
     "Винсент Ван Гог": {
       "name": "Vincent van Gogh",
-      "description": "Dutch Post-Impressionist painter, master of emotional art."
+      "description": "(1853–1890) Dutch Post-Impressionist painter, master of emotional art."
     },
     "Уильям Шекспир": {
       "name": "William Shakespeare",
-      "description": "The greatest English poet and playwright, the Bard of Avon."
+      "description": "(1564–1616) The greatest English poet and playwright, the Bard of Avon."
     },
     "Вольфганг Амадей Моцарт": {
       "name": "Wolfgang Amadeus Mozart",
-      "description": "Austrian composer, one of the greatest in musical history."
+      "description": "(1756–1791) Austrian composer, one of the greatest in musical history."
     },
     "Зигмунд Фрейд": {
       "name": "Sigmund Freud",
-      "description": "Austrian neurologist, founder of psychoanalysis."
+      "description": "(1856–1939) Austrian neurologist, founder of psychoanalysis."
     },
     "Исаак Ньютон": {
       "name": "Isaac Newton",
-      "description": "English physicist and mathematician, discoverer of gravity."
+      "description": "(1643–1727) English physicist and mathematician, discoverer of gravity."
     },
     "Карл Маркс": {
       "name": "Karl Marx",
-      "description": "German philosopher and economist, author of 'Das Kapital'."
+      "description": "(1818–1883) German philosopher and economist, author of 'Das Kapital'."
     },
     "Лев Толстой": {
       "name": "Leo Tolstoy",
-      "description": "Great Russian writer and moral philosopher."
+      "description": "(1828–1910) Great Russian writer and moral philosopher."
     },
     "Людвиг ван Бетховен": {
       "name": "Ludwig van Beethoven",
-      "description": "German composer, titan of music and symbol of spirit."
+      "description": "(1770–1827) German composer, titan of music and symbol of spirit."
     },
     "Михаил Булгаков": {
       "name": "Mikhail Bulgakov",
-      "description": "Russian writer and playwright, author of 'The Master and Margarita'."
+      "description": "(1891–1940) Russian writer and playwright, author of 'The Master and Margarita'."
     },
     "Михаил Ломоносов": {
       "name": "Mikhail Lomonosov",
-      "description": "First Russian world-class scientist, polymath."
+      "description": "(1711–1765) First Russian world-class scientist, polymath."
     },
     "Пабло Пикассо": {
       "name": "Pablo Picasso",
-      "description": "Spanish painter, co-founder of Cubism."
+      "description": "(1881–1973) Spanish painter, co-founder of Cubism."
     },
     "Сальвадор Дали": {
       "name": "Salvador Dalí",
-      "description": "Spanish surrealist painter, master of provocation."
+      "description": "(1904–1989) Spanish surrealist painter, master of provocation."
     },
     "Сократ": {
       "name": "Socrates",
-      "description": "Ancient Greek philosopher, founder of Western philosophy."
+      "description": "(470–399 BC) Ancient Greek philosopher, founder of Western philosophy."
     },
     "Фёдор Достоевский": {
       "name": "Fyodor Dostoevsky",
-      "description": "Great Russian writer, explorer of the human soul."
+      "description": "(1821–1881) Great Russian writer, explorer of the human soul."
     },
     "Конфуций": {
       "name": "Confucius",
-      "description": "Chinese philosopher, founder of Confucianism."
+      "description": "(551–479 BC) Chinese philosopher, founder of Confucianism."
     },
     "Махатма Ганди": {
       "name": "Mahatma Gandhi",
-      "description": "Leader of the Indian independence movement, apostle of nonviolence."
+      "description": "(1869–1948) Leader of the Indian independence movement, apostle of nonviolence."
     },
     "Николай Коперник": {
       "name": "Nicolaus Copernicus",
-      "description": "Polish astronomer, creator of the heliocentric model."
+      "description": "(1473–1543) Polish astronomer, creator of the heliocentric model."
     },
     "Мария Склодовская-Кюри": {
       "name": "Marie Curie",
-      "description": "Physicist and chemist, first woman to win a Nobel Prize."
+      "description": "(1867–1934) Physicist and chemist, first woman to win a Nobel Prize."
     },
     "Никола Тесла": {
       "name": "Nikola Tesla",
-      "description": "Inventor in the field of electrical and radio engineering."
+      "description": "(1856–1943) Inventor in the field of electrical and radio engineering."
     },
     "Архимед": {
       "name": "Archimedes",
-      "description": "Ancient Greek mathematician, physicist and engineer."
+      "description": "(c. 287–212 BC) Ancient Greek mathematician, physicist and engineer."
     },
     "Елизавета II": {
       "name": "Elizabeth II",
-      "description": "Queen of the UK, reigned for over 70 years."
+      "description": "(1926–2022) Queen of the UK, reigned for over 70 years."
     },
     "Маргарет Тэтчер": {
       "name": "Margaret Thatcher",
-      "description": "First female Prime Minister of the UK, the 'Iron Lady'."
+      "description": "(1925–2013) First female Prime Minister of the UK, the 'Iron Lady'."
     },
     "Франклин Делано Рузвельт": {
       "name": "Franklin D. Roosevelt",
-      "description": "32nd US President who led the country through the Great Depression."
+      "description": "(1882–1945) 32nd US President who led the country through the Great Depression."
     },
     "Генри Форд": {
       "name": "Henry Ford",
-      "description": "American industrialist, creator of the assembly line."
+      "description": "(1863–1947) American industrialist, creator of the assembly line."
     },
     "Владимир Путин": {
       "name": "Vladimir Putin",
@@ -194,15 +194,15 @@
     },
     "Платон": {
       "name": "Plato",
-      "description": "Ancient Greek philosopher, founder of the Academy"
+      "description": "(428–348 BC) Ancient Greek philosopher, founder of the Academy."
     },
     "Фридрих Ницше": {
       "name": "Friedrich Nietzsche",
-      "description": "German philosopher, author of the Übermensch concept"
+      "description": "(1844–1900) German philosopher, author of the Übermensch concept."
     },
     "Виктор Цой": {
       "name": "Viktor Tsoi",
-      "description": "Rock musician, poet, frontman of Kino; voice of the perestroika generation."
+      "description": "(1962–1990) Rock musician, poet, frontman of Kino; voice of the perestroika generation."
     },
     "Учитель английского": {
       "name": "English Teacher",
