@@ -122,7 +122,7 @@ def build_filename_index(filenames: List[str]) -> Dict[str, str]:
     return index
 
 
-def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
+def sync_agent_images(dry_run: bool = False, verbose: bool = False) -> Tuple[int, int, List[str]]:
     """Синхронизировать изображения. Возвращает (обновлено, пропущено, предупреждения)."""
     images_dirs = find_images_dirs()
 
@@ -193,8 +193,10 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
         "isaac newton": "исаак ньютон",
         "isabella of castile": "изабелла кастильская",
         "isabella i of castile": "изабелла кастильская",
-        "j r r tolkien": "дж р р толкин",
-        "j.r.r. tolkien": "дж р р толкин",
+        "j r r tolkien": "дж. р. р. толкин",
+        "j.r.r. tolkien": "дж. р. р. толкин",
+        "j. r. r. tolkien": "дж. р. р. толкин",
+        "tolkien": "дж. р. р. толкин",
         "james joyce": "джеймс джойс",
         "james watt": "джеймс ватт",
         "jane austen": "джейн остин",
@@ -227,6 +229,7 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
         "martin luther king jr.": "мартин лютер кинг младший",
         "michael jackson": "майкл джексон",
         "michelangelo": "микеланджело буонарроти",
+        "michelangelo buonarroti": "микеланджело буонарроти",
         "mikhail bulgakov": "михаил булгаков",
         "mikhail lomonosov": "михаил ломоносов",
         "moses": "моисей",
@@ -237,6 +240,8 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
         "oscar wilde": "оскар уайльд",
         "pablo picasso": "пабло пикассо",
         "peter the great": "пётр i",
+        "peter i": "пётр i",
+        "petr i": "пётр i",
         "pyotr ilyich tchaikovsky": "пётр ильич чайковский",
         "raphael": "рафаэль санти",
         "rafael santi": "рафаэль санти",
@@ -246,6 +251,7 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
         "salvador dali": "сальвадор дали",
         "salvador dalí": "сальвадор дали",
         "sigmund freud": "зигмунд фрейд",
+        "seneca": "сенека",
         "socrates": "сократ",
         "steve jobs": "стив джобс",
         "sun tzu": "сунь цзы",
@@ -274,6 +280,7 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
         "marylin monroe": "мэрилин монро",
         "marilyn monroe": "мэрилин монро",
         "augustus": "октавиан август",
+        "octavian augustus": "октавиан август",
         "queen victoria": "королева виктория",
         "stephen hawking": "стивен хокинг",
         # Инструменты / сервисные агенты
@@ -299,12 +306,19 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
             warnings.append("Агенты не найдены в базе данных")
             return (0, 0, warnings)
 
-        # Индекс агентов по нормализованному имени
-        agent_index: Dict[str, Agent] = {normalize(a.name): a for a in agents}
-
         for agent in agents:
             agent_key = normalize(agent.name)
             matched_file: Optional[str] = filename_index.get(agent_key)
+            match_source = "direct" if matched_file else None
+
+            if not matched_file:
+                # Пробуем алиасы: ищем файл, у которого алиас указывает на имя этого агента
+                for stem_norm, fname in filename_index.items():
+                    target_norm = aliases.get(stem_norm)
+                    if target_norm and target_norm == agent_key:
+                        matched_file = fname
+                        match_source = f"alias:{stem_norm}"
+                        break
 
             if matched_file:
                 new_url = matched_file
@@ -312,28 +326,16 @@ def sync_agent_images(dry_run: bool = False) -> Tuple[int, int, List[str]]:
                     agent.image_url = new_url
                     session.add(agent)
                     updated += 1
+                    if verbose:
+                        print(f"  ✓ {agent.name}: {agent.image_url or '(пусто)'} → {new_url} [{match_source}]")
                 else:
                     skipped += 1
+                    if verbose:
+                        print(f"  - {agent.name}: уже {new_url} [{match_source}]")
             else:
-                # Пробуем алиасы: ищем файл, у которого алиас указывает на имя этого агента
-                # Т.е. если aliases[normalize(stem)] == agent_key, то это наш файл
-                matched_file = None
-                for stem_norm, fname in filename_index.items():
-                    target_norm = aliases.get(stem_norm)
-                    if target_norm and target_norm == agent_key:
-                        matched_file = fname
-                        break
-
-                if matched_file:
-                    new_url = matched_file
-                    if agent.image_url != new_url:
-                        agent.image_url = new_url
-                        session.add(agent)
-                        updated += 1
-                    else:
-                        skipped += 1
-                else:
-                    skipped += 1
+                skipped += 1
+                if verbose:
+                    print(f"  ✗ {agent.name}: совпадение не найдено (agent_key={agent_key!r})")
 
         if not dry_run and updated > 0:
             session.commit()
@@ -353,13 +355,20 @@ def main() -> None:
         action="store_true",
         help="Показать изменения без записи в базу",
     )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Показать детали по каждому агенту",
+    )
     args = parser.parse_args()
 
     print("=" * 80)
     print("🖼️ СИНХРОНИЗАЦИЯ ИЗОБРАЖЕНИЙ АГЕНТОВ")
     print("=" * 80)
 
-    updated, skipped, warnings = sync_agent_images(dry_run=args.dry_run)
+    updated, skipped, warnings = sync_agent_images(
+        dry_run=args.dry_run, verbose=args.verbose
+    )
 
     for w in warnings:
         print(f"⚠️  {w}")

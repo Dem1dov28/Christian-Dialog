@@ -5,6 +5,13 @@
 import { API_BASE_URL, API_TIMEOUT } from "../../config/api";
 import { getCsrfToken } from "../../utils/csrf";
 
+function ensureHttpsOnSecurePage(url) {
+  if (typeof window !== "undefined" && window.location?.protocol === "https:" && url.startsWith("http://")) {
+    return "https://" + url.slice(7);
+  }
+  return url;
+}
+
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -36,7 +43,7 @@ class ApiClient {
 
   // Скачать файл attachment
   async downloadFile(filename) {
-    const url = `${this.baseURL}/api/files/${encodeURIComponent(filename)}`;
+    const url = ensureHttpsOnSecurePage(`${this.baseURL}/api/files/${encodeURIComponent(filename)}`);
     const headers = {
       ...this.getHeaders(),
       // Убираем Content-Type для blob ответов
@@ -121,7 +128,7 @@ class ApiClient {
 
   // Базовый метод для HTTP запросов
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = ensureHttpsOnSecurePage(`${this.baseURL}${endpoint}`);
 
     // AbortController для таймаута запросов
     const controller = new AbortController();
@@ -314,7 +321,7 @@ class ApiClient {
 
   // POST запрос с FormData (для загрузки файлов)
   async postFormData(endpoint, formData) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = ensureHttpsOnSecurePage(`${this.baseURL}${endpoint}`);
     const headers = {};
 
     if (this.token) {
@@ -377,7 +384,7 @@ class ApiClient {
 
   // PUT запрос с FormData (для обновления с файлами)
   async putFormData(endpoint, formData) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = ensureHttpsOnSecurePage(`${this.baseURL}${endpoint}`);
     const headers = {};
 
     if (this.token) {
