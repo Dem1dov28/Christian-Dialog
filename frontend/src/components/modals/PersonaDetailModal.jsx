@@ -19,50 +19,35 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
     onClose();
   };
 
-  // Подробная биография: приоритет — description из API/конфига, иначе — начало instructions
+  // Пытаемся извлечь годы из description (из ведущего блока в скобках)
+  const getYears = () => {
+    if (!persona.description) return null;
+    const desc = persona.description.trim();
+
+    // Пытаемся взять весь ведущий блок в скобках: "(…)"
+    const leadingBlock = desc.match(/^\(([^)]+)\)/);
+    if (leadingBlock) {
+      return leadingBlock[1];
+    }
+
+    // Запасной вариант: паттерн типа "(1979–1990)"
+    const fallback = desc.match(/\((\d{1,4}[^)]+)\)/);
+    if (fallback) return fallback[1];
+
+    return null;
+  };
+
+  // Биография: убираем ведущий блок с годами "(…) ", чтобы не дублировать
   const getBiography = () => {
     const desc = persona.description ?? persona.instructions;
     if (desc && typeof desc === "string" && desc.trim()) {
-      return desc.trim();
+      // Снимаем ведущий "(…) " — годы уже отображаются отдельно
+      const stripped = desc.trim().replace(/^\([^)]+\)\s*/, "");
+      return stripped || desc.trim();
     }
     return t("library.noDescription", {
       defaultValue: "Информация о персонаже будет добавлена позже."
     });
-  };
-
-  // Пытаемся извлечь годы из description
-  const getYears = () => {
-    if (!persona.description) return null;
-
-    // 1. Ищем паттерн типа "(1979-1990)" или "(1979–1990)"
-    const yearPattern = /\((\d{4})\s*[-–]\s*(\d{4}|н\.э\.|до н\.э\.)\)/;
-    const match = persona.description.match(yearPattern);
-    if (match) {
-      return `${match[1]}-${match[2]}`;
-    }
-
-    // 2. Ищем паттерн "from 1979 to 1990" (английский вариант)
-    const enYearPattern = /from\s+(\d{4})\s+to\s+(\d{4})/;
-    const enMatch = persona.description.match(enYearPattern);
-    if (enMatch) {
-      return `${enMatch[1]}-${enMatch[2]}`;
-    }
-
-    // 3. Ищем одиночный год рождения "(род. 1950)" или "(born 1950)"
-    const birthPattern = /\((род\.|ок\.|born|c\.)\s*(\d{4})/i;
-    const birthMatch = persona.description.match(birthPattern);
-    if (birthMatch) {
-      return `${birthMatch[1]} ${birthMatch[2]}`;
-    }
-
-    // 4. Ищем простой паттерн "(1979-1990)" без лишних слов
-    const simplePattern = /\((\d{4})\s*[-–]\s*(\d{4})\)/;
-    const simpleMatch = persona.description.match(simplePattern);
-    if (simpleMatch) {
-      return `${simpleMatch[1]}-${simpleMatch[2]}`;
-    }
-
-    return null;
   };
 
   const years = getYears();
@@ -116,7 +101,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
                         alt={persona.name}
                         className="w-full h-auto object-contain"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[var(--bg-primary)]" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-75% to-[var(--bg-primary)]/70" />
                     </div>
                   ) : (
                     <div className="flex items-center justify-center py-16 bg-gradient-to-br from-[var(--accent)]/20 to-gray-800">
