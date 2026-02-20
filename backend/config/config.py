@@ -21,7 +21,7 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 
 # Настройки приложения
 SECRET_KEY = os.getenv("SECRET_KEY")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))  # 1 час по умолчанию
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # 7 дней по умолчанию
 
 # Жёсткая проверка SECRET_KEY: в production без него запускать приложение нельзя
 if not SECRET_KEY:

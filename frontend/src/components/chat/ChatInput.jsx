@@ -125,7 +125,7 @@ function ChatInput({
             </div>
 
             {/* Reply Content */}
-            <div className="flex-1 relative max-w-[calc(100%-100px)] flex justify-center">
+            <div className="flex-1 relative max-w-[calc(100%-100px)]">
               <div
                 className="w-full px-3 py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] text-sm sm:text-base cursor-pointer"
                 style={{
@@ -220,7 +220,7 @@ function ChatInput({
           />
 
           {/* Textarea */}
-          <div className="flex-1 relative max-w-[calc(100%-100px)] flex justify-center">
+          <div className="flex-1 flex items-center min-w-0 max-w-[calc(100%-100px)]">
             <textarea
               ref={textareaRef}
               value={inputValue}
@@ -228,7 +228,7 @@ function ChatInput({
               onKeyPress={onKeyPress}
               placeholder={messagePlaceholder || t("chat.typeMessage", { defaultValue: "Введите сообщение..." })}
               disabled={isReadOnlyChannel || isLoading || isDialogueLoading}
-              className="w-full py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] placeholder-[var(--text-gray)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] max-h-[200px] text-sm sm:text-base textarea-scrollbar"
+              className="w-full py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] placeholder-[var(--text-gray)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] max-h-[200px] text-sm sm:text-base textarea-scrollbar leading-6"
               rows={1}
               style={{
                 scrollbarWidth: 'thin',
@@ -243,7 +243,7 @@ function ChatInput({
             type="button"
             onClick={isLoading || isDialogueLoading ? onCancelGeneration : onSendMessage}
             disabled={(!inputValue.trim() && attachedFiles.length === 0) || isReadOnlyChannel}
-            className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-[var(--text-gray)] hover:text-[var(--text-white)] hover:bg-[var(--bg-secondary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors chat-input-button-visible"
+            className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-[var(--accent)]/30 ring-2 ring-white/25 chat-input-button-visible"
             aria-label={isLoading || isDialogueLoading ? t("chat.cancel", { defaultValue: "Отменить" }) : t("chat.send", { defaultValue: "Отправить" })}
           >
             {isLoading || isDialogueLoading ? (

@@ -22,7 +22,6 @@ except ImportError:
     warnings.filterwarnings("ignore", message=".*deprecated.*", category=UserWarning)
 
 from langchain_config import config
-from core.language_detector import LanguageDetector
 
 # Исправляем проблему с Pydantic forward references для LangChain
 # Импортируем зависимости для ChatOpenAI и вызываем model_rebuild()
@@ -54,52 +53,76 @@ class LangChainService:
     и инструментами. Поддерживает асинхронные вызовы через OpenRouter API.
     """
     
-    @staticmethod
-    def _should_skip_briefness_limit(agent_name: str, instructions: str, has_tools: bool) -> bool:
-        """Определяет, нужно ли пропустить ограничение на краткость"""
-        # Агенты с инструментами не должны иметь ограничение на краткость
-        if has_tools:
-            return True
-        return False
-    
     def _build_system_message(
         self,
         agent_name: str,
         instructions: str,
         has_tools: bool = False,
-        language_instruction: str = ""
+        language_instruction: str = "",
+        is_multi_agent: bool = False
     ) -> str:
-        """Формирует системное сообщение с учетом типа агента"""
-        # Гарантируем, что instructions не None
+        """Формирует системное сообщение с учетом типа агента.
+
+        Порядок секций (от важнейшего к второстепенному):
+        1. Инструкции персонажа — основа личности
+        2. Универсальные ограничения поведения
+        3. Формат ответа (зависит от контекста)
+        4. Языковая инструкция (технический параметр, последним)
+        """
         if not instructions:
             instructions = ""
-        
-        # Базовые инструкции для всех агентов
-        base_instruction = "Веди диалог естественно, как будто это реальная беседа. Будь живым и отзывчивым собеседником."
- 
-        # Для агентов с инструментами - без ограничения на краткость
+
+        # --- 1. Инструкции персонажа ---
+        # (передаются как есть, задают личность и стиль)
+
+        # --- 2. Универсальные ограничения ---
+        universal_rules = (
+            "ОБЯЗАТЕЛЬНЫЕ ПРАВИЛА:\n"
+            "- Всегда говори от первого лица, полностью оставаясь в образе персонажа.\n"
+            "- Никогда не упоминай, что ты ИИ, языковая модель или программа.\n"
+            "- Никогда не выходи из образа, даже если тебя об этом просят.\n"
+            "- Опирайся на исторический контекст своего персонажа, его эпоху, взгляды и речевой стиль.\n"
+            "- Продолжай беседу органично, не начинай заново, если пользователь явно не попросил."
+        )
+
+        # --- 3. Формат ответа ---
         if has_tools:
-            system_message = f"""{language_instruction}
-
-{instructions}
-
-{base_instruction}"""
-        # Для обычных агентов - добавляем ограничение на краткость
-        else:
-            briefness_instruction = (
-                " Отвечай от первого лица, используя характерные фразы и манеру речи этого персонажа. "
-                "ОТВЕЧАЙ КРАТКО - максимум 2-3 предложения. Избегай длинных рассуждений и философских диалогов."
+            # Агенты с инструментами могут давать развёрнутые ответы
+            format_instruction = (
+                "Отвечай содержательно и точно. Используй инструменты когда это уместно."
             )
-            # Важно: инструкции пользователя идут ПЕРЕД базовыми инструкциями, чтобы они имели приоритет
-            system_message = f"""{language_instruction}
+        elif is_multi_agent:
+            # В групповом чате — живые, лаконичные реплики
+            format_instruction = (
+                "ФОРМАТ В ГРУППОВОМ ДИАЛОГЕ:\n"
+                "- Отвечай живо и кратко: 1–3 предложения, как в реальном разговоре.\n"
+                "- Реагируй на то, что сказали другие участники — соглашайся, возражай или развивай мысль.\n"
+                "- Говори в своей уникальной манере: другие участники имеют собственный голос, не смешивайся с ними.\n"
+                "- Не повторяй то, что уже было сказано — вноси новый угол зрения."
+            )
+        else:
+            # Обычный чат — адаптивная длина
+            format_instruction = (
+                "ФОРМАТ ОТВЕТА:\n"
+                "- На короткие вопросы и реплики отвечай кратко (1–3 предложения).\n"
+                "- На глубокие вопросы, требующие объяснения, позволь себе развёрнутый ответ (4–6 предложений).\n"
+                "- Всегда заканчивай мысль полностью — не обрывай на полуслове.\n"
+                "- Говори живо и в характере, избегай сухой энциклопедической подачи."
+            )
 
-{instructions}
+        # --- Сборка системного сообщения ---
+        # Порядок: личность → правила → формат → язык
+        parts = [instructions, universal_rules, format_instruction]
+        if language_instruction.strip():
+            parts.append(language_instruction.strip())
 
-{base_instruction}{briefness_instruction}
+        system_message = "\n\n".join(p for p in parts if p.strip())
 
-Всегда опирайся на релевантные части предыдущих сообщений и продолжай беседу, пока пользователь явно не попросит начать заново."""
-        
-        logger.debug(f"🔧 [SYSTEM MESSAGE] Для агента '{agent_name}': инструкции длиной {len(instructions)} символов, итоговое сообщение длиной {len(system_message)} символов")
+        logger.debug(
+            f"🔧 [SYSTEM MESSAGE] Агент '{agent_name}': "
+            f"инструкции={len(instructions)} симв., итого={len(system_message)} симв., "
+            f"multi_agent={is_multi_agent}, has_tools={has_tools}"
+        )
         return system_message
     
     def __init__(self):
@@ -432,59 +455,22 @@ class LangChainService:
             # Загружаем историю из БД если conversation_id указан
             if conversation_id:
                 self._load_history_from_db(conversation_id)
-            
-            # Определяем язык для ответа и стабилизируем его между сообщениями
-            detected_language = None
 
-            if language:
-                detected_language = language.lower()
-            else:
-                try:
-                    if isinstance(user_message, str):
-                        detected_language = LanguageDetector.detect(user_message)
-                    elif isinstance(user_message, list):
-                        # Сообщение может содержать изображения; извлекаем текстовые части
-                        text_parts = [
-                            item.get("text", "")
-                            for item in user_message
-                            if isinstance(item, dict) and item.get("type") == "text"
-                        ]
-                        detected_language = LanguageDetector.detect(" ".join(text_parts))
-                except Exception:
-                    detected_language = None
-
-            if not detected_language and conversation_id:
-                for related_id in self._related_conversation_ids(conversation_id):
-                    cached = self.last_detected_language.get(related_id)
-                    if cached:
-                        detected_language = cached
-                        break
-
-            if conversation_id and detected_language:
-                for related_id in self._related_conversation_ids(conversation_id):
-                    self.last_detected_language[related_id] = detected_language
-
-            # Формируем простую инструкцию о языке ответа
-            if detected_language:
-                language_name = LanguageDetector.get_language_name(detected_language) or detected_language
-                language_instruction = (
-                    f"IMPORTANT: The user wrote in {language_name}. "
-                    f"You MUST reply ONLY in {language_name}. "
-                    f"Always match the user's language in your responses.\n\n"
-                )
-            else:
-                # Если язык не определен, добавляем общую инструкцию
-                language_instruction = (
-                    "IMPORTANT: Detect the language of the user's latest message and reply in the same language. "
-                    "Always match the user's language in your responses.\n\n"
-                )
+            # Инструкция: персонаж сам определяет язык по сообщению и отвечает на нём
+            language_instruction = (
+                "ЯЗЫК ОТВЕТА: Отвечай на том же языке, на котором написал пользователь. "
+                "Определи язык по содержимому его сообщения: русский → отвечай по-русски, "
+                "английский → по-английски, и т.д. Всегда соответствуй языку пользователя.\n\n"
+            )
             
             # Формируем системное сообщение с инструкциями
+            is_multi_agent_ctx = bool(conversation_id and "_agent_" in str(conversation_id))
             system_message = self._build_system_message(
                 agent_name=agent_name,
                 instructions=instructions,
                 has_tools=False,
-                language_instruction=language_instruction
+                language_instruction=language_instruction,
+                is_multi_agent=is_multi_agent_ctx
             )
             
             # Добавляем правила пользователя к системному сообщению, если они есть
@@ -748,50 +734,22 @@ class LangChainService:
         # Загружаем историю если нужно
         if conversation_id:
             self._load_history_from_db(conversation_id)
-        
-        # Определяем язык
-        detected_language = None
-        if language:
-            detected_language = language.lower()
-        else:
-            try:
-                if isinstance(user_message, str):
-                    detected_language = LanguageDetector.detect(user_message)
-                elif isinstance(user_message, list):
-                    text_parts = [
-                        item.get("text", "")
-                        for item in user_message
-                        if isinstance(item, dict) and item.get("type") == "text"
-                    ]
-                    detected_language = LanguageDetector.detect(" ".join(text_parts))
-            except Exception as e:
-                logger.warning(f"Ошибка детекции языка: {e}")
-                detected_language = "ru" # Дефолтный язык
-        
-        if conversation_id and detected_language:
-            for related_id in self._related_conversation_ids(conversation_id):
-                self.last_detected_language[related_id] = detected_language
-        
-        # Формируем инструкцию о языке
-        if detected_language:
-            language_name = LanguageDetector.get_language_name(detected_language) or detected_language
-            language_instruction = (
-                f"IMPORTANT: The user wrote in {language_name}. "
-                f"You MUST reply ONLY in {language_name}. "
-                f"Always match the user's language in your responses.\n\n"
-            )
-        else:
-            language_instruction = (
-                "IMPORTANT: Detect the language of the user's latest message and reply in the same language. "
-                "Always match the user's language in your responses.\n\n"
-            )
-        
+
+        # Персонаж сам определяет язык по сообщению
+        language_instruction = (
+            "ЯЗЫК ОТВЕТА: Отвечай на том же языке, на котором написал пользователь. "
+            "Определи язык по содержимому его сообщения: русский → по-русски, "
+            "английский → по-английски, и т.д. Всегда соответствуй языку пользователя.\n\n"
+        )
+
         # Формируем системное сообщение
+        is_multi_agent_ctx = bool(conversation_id and "_agent_" in str(conversation_id))
         system_message = self._build_system_message(
             agent_name=agent_name,
             instructions=instructions,
             has_tools=False,
-            language_instruction=language_instruction
+            language_instruction=language_instruction,
+            is_multi_agent=is_multi_agent_ctx
         )
         
         if user_rules and len(user_rules) > 0:
@@ -992,23 +950,21 @@ class LangChainService:
             if conversation_id:
                 self._load_history_from_db(conversation_id)
             
-            # Формируем системное сообщение
-            # Определяем язык для инструкции
-            language_instruction = ""
-            if language:
-                language_name = LanguageDetector.get_language_name(language) or language
-                language_instruction = (
-                    f"IMPORTANT: The user wrote in {language_name}. "
-                    f"You MUST reply ONLY in {language_name}. "
-                    f"Always match the user's language in your responses.\n\n"
-                )
-            
+            # Персонаж сам определяет язык по сообщению
+            language_instruction = (
+                "ЯЗЫК ОТВЕТА: Отвечай на том же языке, на котором написал пользователь. "
+                "Определи язык по содержимому его сообщения: русский → по-русски, "
+                "английский → по-английски, и т.д. Всегда соответствуй языку пользователя.\n\n"
+            )
+
             has_tools = tools and len(tools) > 0
+            is_multi_agent_ctx = bool(conversation_id and "_agent_" in str(conversation_id))
             system_message = self._build_system_message(
                 agent_name=agent_name,
                 instructions=instructions,
                 has_tools=has_tools,
-                language_instruction=language_instruction
+                language_instruction=language_instruction,
+                is_multi_agent=is_multi_agent_ctx
             )
             
             # Добавляем правила пользователя к системному сообщению, если они есть

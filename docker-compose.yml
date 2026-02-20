@@ -77,6 +77,7 @@ services:
       - backend_uploads:/app/uploads
       - backend_exports:/app/exports
       - backend_static:/app/static
+      - ./frontend/public/images:/app/agent_images:ro
     ports:
       - "8000:8000"
     depends_on:

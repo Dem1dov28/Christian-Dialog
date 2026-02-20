@@ -107,7 +107,7 @@ ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:517
 
 OPENROUTER_API_KEY=ваш_ключ_из_openrouter
 GOOGLE_CLIENT_ID=ваш_client_id.apps.googleusercontent.com
-ACCESS_TOKEN_EXPIRE_MINUTES=60
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
 
 DEBUG=True
 PORT=8000

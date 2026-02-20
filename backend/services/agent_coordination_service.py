@@ -37,27 +37,73 @@ class AgentCoordinationService:
         agents: List[Dict[str, Any]],
         conversation_context: List[Dict[str, Any]]
     ) -> CoordinationStrategy:
-        """Определить стратегию координации для разговора"""
-        
-        # Анализируем сообщение пользователя
+        """Определить стратегию координации для разговора на основе семантического анализа."""
+
         message_lower = user_message.lower()
-        
-        # Признаки разных стратегий
-        if any(word in message_lower for word in ["обсудим", "обсуждение", "мнения", "discuss", "opinions"]):
-            strategy = CoordinationStrategy.DEBATE
-        elif any(word in message_lower for word in ["идеи", "предложения", "варианты", "ideas", "suggestions"]):
-            strategy = CoordinationStrategy.BRAINSTORM
-        elif "?" in user_message:
-            strategy = CoordinationStrategy.QNA
-        elif len(conversation_context) > 5:
-            # Если уже идет активный диалог
-            strategy = CoordinationStrategy.COLLABORATIVE
+
+        # Взвешенное голосование по признакам стратегии
+        scores: Dict[CoordinationStrategy, float] = defaultdict(float)
+
+        # DEBATE — спор, дискуссия, столкновение мнений
+        debate_signals = [
+            "обсудим", "обсуждение", "мнения", "ваше мнение", "что думаете", "как считаете",
+            "согласны ли", "спор", "дискуссия", "полемика", "argue", "debate", "discuss",
+            "opinions", "do you agree", "what do you think", "мнение", "позиция",
+            "точка зрения", "кто прав", "правда ли", "верно ли",
+        ]
+        for signal in debate_signals:
+            if signal in message_lower:
+                scores[CoordinationStrategy.DEBATE] += 1.0
+
+        # BRAINSTORM — генерация идей, поиск решений
+        brainstorm_signals = [
+            "идеи", "предложения", "варианты", "как можно", "что если", "придумайте",
+            "подумайте", "мозговой штурм", "brainstorm", "ideas", "suggestions", "solutions",
+            "alternatives", "options", "ways to", "how to", "what are", "придумай",
+            "придумайте", "посоветуйте", "посоветуй",
+        ]
+        for signal in brainstorm_signals:
+            if signal in message_lower:
+                scores[CoordinationStrategy.BRAINSTORM] += 1.0
+
+        # QNA — вопрос ищет ответ
+        if user_message.count("?") >= 1:
+            scores[CoordinationStrategy.QNA] += 1.5
+        # Вопросительные слова без знака (риторические и прямые)
+        qna_signals = [
+            "расскажи", "объясни", "почему", "зачем", "как это", "что такое",
+            "кто такой", "расскажите", "объясните", "tell me", "explain", "what is",
+            "who is", "why", "how does", "when did",
+        ]
+        for signal in qna_signals:
+            if signal in message_lower:
+                scores[CoordinationStrategy.QNA] += 0.5
+
+        # COLLABORATIVE — совместная работа, уже идущий диалог
+        if len(conversation_context) > 4:
+            scores[CoordinationStrategy.COLLABORATIVE] += 0.8
+        collab_signals = [
+            "вместе", "совместно", "поработаем", "давайте", "let's", "together",
+            "collaborate", "cooperate", "помогите", "помогите мне",
+        ]
+        for signal in collab_signals:
+            if signal in message_lower:
+                scores[CoordinationStrategy.COLLABORATIVE] += 0.7
+
+        # Выбираем стратегию с наибольшим счётом
+        if scores:
+            strategy = max(scores, key=lambda k: scores[k])
+            # Если счёт совсем мал (≤0.4) — нет чётких сигналов
+            if scores[strategy] <= 0.4:
+                strategy = CoordinationStrategy.SEQUENTIAL
         else:
             strategy = CoordinationStrategy.SEQUENTIAL
-        
+
         self.conversation_strategies[conversation_id] = strategy
-        logger.debug(f"Determined strategy {strategy.value} for conversation {conversation_id}")
-        
+        logger.debug(
+            f"Determined strategy {strategy.value} for conversation {conversation_id} "
+            f"(scores: {dict(scores)})"
+        )
         return strategy
     
     def get_strategy(self, conversation_id: int) -> CoordinationStrategy:
@@ -73,62 +119,59 @@ class AgentCoordinationService:
         other_agents: List[Dict[str, Any]],
         conversation_context: List[Dict[str, Any]]
     ) -> str:
-        """Построить инструкции координации для агента"""
-        
+        """Построить инструкции координации для агента.
+
+        Инструкции намеренно сформулированы без жёстких ролевых предписаний,
+        чтобы персонаж реагировал в своём голосе, а не как безликий «участник».
+        """
         agent_name = agent.get("name", "Агент")
         other_names = [a.get("name", "Агент") for a in other_agents]
-        
-        base_instruction = f"{agent_name}, ты участвуешь в групповом обсуждении. "
-        base_instruction += f"Другие участники: {', '.join(other_names)}.\n\n"
-        
-        strategy_instructions = {
+        participants_str = ", ".join(other_names) if other_names else "другие участники"
+
+        # Контекст последних реплик (показываем не более 3)
+        context_block = ""
+        if conversation_context:
+            recent = conversation_context[-3:]
+            lines = []
+            for msg in recent:
+                sender = msg.get("agent_name", "Агент") if not msg.get("is_from_user") else "Пользователь"
+                content = (msg.get("content") or msg.get("message") or "").strip()
+                if content:
+                    snippet = content[:120] + ("…" if len(content) > 120 else "")
+                    lines.append(f"  {sender}: {snippet}")
+            if lines:
+                context_block = "Последние реплики в разговоре:\n" + "\n".join(lines) + "\n\n"
+
+        # Наставление, специфичное для стратегии
+        strategy_hints = {
             CoordinationStrategy.SEQUENTIAL: (
-                "Отвечай последовательно, учитывая предыдущие ответы. "
-                "Не повторяй то, что уже сказали другие. Добавь свою уникальную перспективу."
+                f"Сейчас говорит {agent_name}. Вступай в разговор в своей неповторимой манере. "
+                "Добавь свой угол зрения — то, что ещё не прозвучало."
             ),
             CoordinationStrategy.COLLABORATIVE: (
-                "Работай в команде с другими участниками. "
-                "Развивай их идеи, дополняй их мысли, создавай синергию. "
-                "Будь конструктивным и поддерживающим."
+                f"{agent_name}, подхвати нить разговора. Развей или дополни то, что сказали "
+                f"{participants_str}, опираясь на свой опыт и взгляды."
             ),
             CoordinationStrategy.DEBATE: (
-                "Участвуй в конструктивной дискуссии. "
-                "Выражай свое мнение, приводи аргументы, но будь уважительным. "
-                "Можешь соглашаться или не соглашаться с другими, но обосновывай свою позицию."
+                f"{agent_name}, выскажи свою позицию открыто. Соглашайся или возражай "
+                f"{participants_str} — но делай это в собственном стиле, приводя конкретные доводы."
             ),
             CoordinationStrategy.BRAINSTORM: (
-                "Генерируй идеи и предложения. "
-                "Не критикуй идеи других на этом этапе - просто добавляй свои. "
-                "Будь креативным и открытым к новым возможностям."
+                f"{agent_name}, предложи идею, которая ещё не звучала. Будь смелым — "
+                "на этапе поиска идей нет неправильных ответов."
             ),
             CoordinationStrategy.QNA: (
-                "Отвечай на вопросы подробно и точно. "
-                "Если другие уже ответили, можешь дополнить или уточнить их ответы. "
-                "Если вопрос адресован тебе напрямую, ответь первым."
+                f"{agent_name}, ответь на вопрос с позиции своего опыта и знаний. "
+                "Если другие уже ответили — добавь нюанс или уточни."
             ),
             CoordinationStrategy.PARALLEL: (
-                "Ты можешь отвечать параллельно с другими. "
-                "Не жди их ответов - выражай свое мнение независимо, "
-                "но учитывай общий контекст разговора."
+                f"{agent_name}, выскажись независимо, опираясь на общий контекст разговора."
             ),
         }
-        
-        strategy_instruction = strategy_instructions.get(
-            strategy, strategy_instructions[CoordinationStrategy.SEQUENTIAL]
-        )
-        
-        # Добавляем контекст предыдущих сообщений
-        if conversation_context:
-            recent_messages = conversation_context[-3:]
-            context_text = "Последние сообщения:\n"
-            for msg in recent_messages:
-                sender = msg.get("agent_name", "Агент") if not msg.get("is_from_user") else "Пользователь"
-                content = msg.get("content", "") or msg.get("message", "")
-                context_text += f"- {sender}: {content[:100]}...\n"
-            
-            base_instruction += context_text + "\n"
-        
-        return base_instruction + strategy_instruction
+
+        hint = strategy_hints.get(strategy, strategy_hints[CoordinationStrategy.SEQUENTIAL])
+
+        return f"{context_block}{hint}"
     
     def calculate_agent_priority(
         self,

@@ -454,9 +454,9 @@ class AgentDialogueService(BaseService):
                     
                     final_context = f"{dialogue_context}{next_agent['name']}: {continuation_response}"
                     final_response = await self.agent_service.generate_response(
-                        final_agent["id"], 
-                        f"Продолжи диалог естественно. Контекст:\n{final_context}\n\n"
-                        "ВАЖНО: НЕ ПОВТОРЯЙ дословно то, что уже сказали другие. Выражай свои мысли оригинально.",
+                        final_agent["id"],
+                        f"Вот разговор:\n{final_context}\n\n"
+                        f"Теперь слово {final_agent['name']}. Добавь свою реплику в своей манере.",
                         conversation_id=f"{conversation_id}_agent_{final_agent['id']}",
                         is_multi_agent=True,
                         language=language
@@ -495,12 +495,12 @@ class AgentDialogueService(BaseService):
                 if len(agents) < 2:
                     raise ValueError("Need at least 2 agents to continue dialogue")
                 
-                # Получаем последние сообщения для контекста
+                # Получаем последние сообщения для контекста (увеличили до 8 для лучшего контекста)
                 recent_messages = db_session.exec(
                     select(Message)
                     .where(Message.multi_agent_conversation_id == conversation_id)
                     .order_by(Message.created_at.desc())
-                    .limit(5)
+                    .limit(8)
                 ).all()
                 
                 if not recent_messages:
@@ -626,17 +626,25 @@ class AgentDialogueService(BaseService):
                     if other_agents:
                         # Задержка перед вторым ответом
                         await asyncio.sleep(1.0)
-                        
-                        final_agent = random.choice(other_agents)
+
+                        # Выбираем наиболее вовлечённого агента (а не случайного)
+                        agent_engagements = [
+                            (a, self.interaction_service.calculate_agent_engagement(
+                                a, conversation_context, recent_messages_dict
+                            ))
+                            for a in other_agents
+                        ]
+                        agent_engagements.sort(key=lambda x: x[1], reverse=True)
+                        final_agent = agent_engagements[0][0]
+
                         final_context = f"{context}\n{agent['name']}: {continuation_response}"
-                        # Используем is_multi_agent=True для уникального conversation_id
                         final_response = await self.agent_service.generate_response(
-                            final_agent["id"], 
+                            final_agent["id"],
                             f"Продолжи диалог естественно. Контекст:\n{final_context}\n\n"
-                            "ВАЖНО: НЕ ПОВТОРЯЙ дословно то, что уже сказали другие. Выражай свои мысли оригинально.",
+                            "Добавь свою уникальную реплику — не повторяй то, что уже сказали.",
                             conversation_id=f"{conversation_id}_agent_{final_agent['id']}",
                             is_multi_agent=True,
-                            language=language  # Передаем язык для ответа агента
+                            language=language
                         )
                         
                         # Проверяем финальный ответ на повторения (улучшенный семантический анализ)
@@ -709,29 +717,37 @@ class AgentDialogueService(BaseService):
             raise
     
     def _build_dialogue_context(self, recent_messages: List[Message], agent_name: str) -> str:
-        """Построить контекст диалога из последних сообщений"""
-        context = "Последние сообщения в чате (НЕ ПОВТОРЯЙ эти мысли дословно):\n"
+        """Построить контекст диалога из последних сообщений.
+
+        Форматируем как читаемый транскрипт разговора, а не список инструкций.
+        """
+        lines = []
         for msg in reversed(recent_messages):
             if msg.is_from_user:
                 sender = "Пользователь"
             else:
-                # Безопасно получаем имя агента
                 try:
                     sender = msg.agent.name if msg.agent else "Агент"
                 except AttributeError:
                     sender = "Агент"
-            context += f"- {sender}: {msg.content}\n"
-        
-        context += (
-            f"\nТеперь отвечает {agent_name}. "
-            "ВАЖНО: Продолжи диалог естественно, но НЕ ПОВТОРЯЙ дословно то, что уже сказали другие. "
-            "Выражай свои мысли оригинально, даже если согласен с предыдущими высказываниями."
+            content = (msg.content or "").strip()
+            if content:
+                snippet = content[:250] + ("…" if len(content) > 250 else "")
+                lines.append(f"{sender}: {snippet}")
+
+        transcript = "\n".join(lines)
+        return (
+            f"Продолжение разговора. Вот что было сказано:\n{transcript}\n\n"
+            f"Теперь слово {agent_name}. Отвечай в своей манере — "
+            "добавь новую мысль или развей то, о чём говорили другие."
         )
-        return context
     
     def _build_initial_context(self, user_message: str, first_agent: Dict[str, Any], first_response: str) -> str:
-        """Построить начальный контекст диалога"""
-        return f"Пользователь: {user_message}\n{first_agent['name']}: {first_response}"
+        """Построить начальный контекст диалога."""
+        return (
+            f"Пользователь: {user_message}\n"
+            f"{first_agent['name']}: {first_response}"
+        )
     
     def _get_conversation_context(
         self, 
