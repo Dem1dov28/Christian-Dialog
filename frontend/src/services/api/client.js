@@ -14,10 +14,13 @@ function ensureHttpsOnSecurePage(url) {
 
 class ApiClient {
   constructor() {
-    this.baseURL = API_BASE_URL;
-    // Токен теперь хранится в HttpOnly cookie на сервере,
-    // поэтому в клиенте он не нужен.
+    this._baseURL = API_BASE_URL;
     this.token = null;
+  }
+
+  /** baseURL с автоматической заменой HTTP→HTTPS на защищённых страницах (используется везде: img src, fetch и т.д.) */
+  get baseURL() {
+    return ensureHttpsOnSecurePage(this._baseURL);
   }
 
   // Установить токен авторизации

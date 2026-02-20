@@ -4,8 +4,7 @@
 let _base = import.meta.env.VITE_API_BASE_URL ||
   (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
 
-// Защита от Mixed Content: страница по HTTPS не может запрашивать HTTP.
-// Если base URL задан как http://, а страница открыта по https:// — принудительно переключаем на HTTPS.
+// Mixed Content: страница по HTTPS не может запрашивать HTTP. Меняем только протокол, сохраняя хост.
 if (typeof window !== "undefined" && window.location.protocol === "https:" && _base.startsWith("http://")) {
   _base = "https://" + _base.slice(7);
 }

@@ -738,24 +738,15 @@ function ProtectedRoute({ children }) {
 // Компонент для публичных маршрутов (только для неавторизованных)
 function PublicRoute({ children, allowAuthenticated = false }) {
   const { isAuthenticated, isInitializing } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
-  const isRedirecting = React.useRef(false);
 
   if (isInitializing) {
     return <LoadingScreen isVisible={true} />;
   }
 
-  // Редирект для авторизованных — через useEffect, чтобы избежать "выброса" страниц на мобильных
-  React.useEffect(() => {
-    if (!isAuthenticated || allowAuthenticated || isRedirecting.current) return;
-    isRedirecting.current = true;
-    const from = location.state?.from?.pathname || "/";
-    navigate(from, { replace: true, state: {} });
-  }, [isAuthenticated, allowAuthenticated, navigate, location.state]);
-
   if (isAuthenticated && !allowAuthenticated) {
-    return <LoadingScreen isVisible={true} />;
+    const from = location.state?.from?.pathname || "/";
+    return <Navigate to={from} replace state={{}} />;
   }
 
   return children;
