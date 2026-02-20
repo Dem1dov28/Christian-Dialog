@@ -145,11 +145,108 @@
     <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOlCnqEu92Fr1MmWUlfBBc4.woff2" as="font" type="font/woff2" crossorigin />
     
-    <!-- Google Fonts - Combined into single request for better performance -->
-    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Montserrat:wght@400;500;600&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap" rel="stylesheet" />
+    <!-- Google Fonts - Loaded asynchronously to prevent render blocking -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Montserrat:wght@400;500;600&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Montserrat:wght@400;500;600&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap" /></noscript>
     
     <!-- Critical CSS - inlined for fast initial render -->
-    <link rel="stylesheet" href="/inline-styles.css" />
+    <style>
+      /**
+       * Critical CSS - Inline styles for fast initial render
+       * These styles are loaded inline in index.html to prevent FOUC
+       */
+
+      /* Critical layout styles */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Prevent FOUC during theme initialization */
+      html.dark {
+        background-color: #2d283e;
+        color: rgba(209, 215, 224, 0.98);
+      }
+
+      html:not(.dark) {
+        background-color: #ffffff;
+        color: #1f2937;
+      }
+
+      /* Critical body styles */
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100dvh;
+        min-height: var(--app-height, 100dvh);
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Loading state - prevent layout shift */
+      #root {
+        min-height: 100dvh;
+        min-height: var(--app-height, 100dvh);
+      }
+
+      /* Critical font-family fallback to prevent FOUT */
+      .font-sans {
+        font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      /* Prevent text selection during load */
+      .loading * {
+        user-select: none;
+      }
+
+      /* Critical viewport height fix */
+      :root {
+        --vh: 1vh;
+      }
+
+      /* App container critical styles */
+      .app-container {
+        display: flex;
+        height: 100dvh;
+        height: var(--app-height, 100dvh);
+        width: 100%;
+        overflow: hidden;
+      }
+
+      /* Critical utility classes */
+      .flex {
+        display: flex;
+      }
+
+      .h-full {
+        height: 100%;
+      }
+
+      .w-full {
+        width: 100%;
+      }
+
+      .overflow-hidden {
+        overflow: hidden;
+      }
+
+      /* Auth background fallback */
+      .auth-bg {
+        background-color: #2d283e;
+        background-image: linear-gradient(135deg, #2d283e 0%, #564f6f 50%, #2d283e 100%);
+      }
+
+      /* Reduced motion preference */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
   </head>
   <body style="background-color: var(--bg-primary); color: var(--text-white);" class="font-sans">
     <div id="root"></div>

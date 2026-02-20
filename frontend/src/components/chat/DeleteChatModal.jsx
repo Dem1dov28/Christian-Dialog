@@ -182,7 +182,7 @@ const DeleteChatModal = ({
             <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-md flex-shrink-0">
               <div
                 className="absolute inset-0 bg-center bg-cover"
-                style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                 aria-hidden="true"
               />
               {agentImage ? (

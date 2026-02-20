@@ -125,7 +125,7 @@ function ChatInput({
             </div>
 
             {/* Reply Content */}
-            <div className="flex-1 relative max-w-[calc(100%-100px)]">
+            <div className="flex-1 relative max-w-[calc(100%-100px)] flex justify-center">
               <div
                 className="w-full px-3 py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] text-sm sm:text-base cursor-pointer"
                 style={{
@@ -220,7 +220,7 @@ function ChatInput({
           />
 
           {/* Textarea */}
-          <div className="flex-1 relative max-w-[calc(100%-100px)]">
+          <div className="flex-1 relative max-w-[calc(100%-100px)] flex justify-center">
             <textarea
               ref={textareaRef}
               value={inputValue}

@@ -95,7 +95,7 @@ function ChatHeader({
               <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-md mr-4 select-none flex-shrink-0">
                 <div
                   className="absolute inset-0 bg-center bg-cover"
-                  style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                  style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                   aria-hidden="true"
                 />
                 <div className="absolute inset-0 flex items-center justify-center text-white">

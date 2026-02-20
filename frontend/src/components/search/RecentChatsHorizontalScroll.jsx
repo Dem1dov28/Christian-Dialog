@@ -304,7 +304,7 @@ const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
                           className="absolute inset-0 bg-center bg-cover shadow-md"
                           style={{
                             backgroundImage:
-                              "url('/images/agents/Under_Icon_Groups.png')",
+                              "url('/images/agents/_low/Under_Icon_Groups.webp')"
                           }}
                           aria-hidden="true"
                         />

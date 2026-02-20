@@ -87,7 +87,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       cssCodeSplit: true,
-      cssMinify: true,
+      cssMinify: 'lightningcss',
       // Source maps: enabled for development, disabled for production
       sourcemap: mode === 'development',
       minify: 'terser',

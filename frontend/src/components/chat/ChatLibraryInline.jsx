@@ -1537,7 +1537,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-xl border-4 border-[var(--accent)]/20">
                     <div
                       className="absolute inset-0 bg-center bg-cover"
-                      style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                      style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center text-white">
                       {(() => {
@@ -1576,7 +1576,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                       >
                         <div
                           className="absolute inset-0 bg-center bg-cover opacity-60"
-                          style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                          style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                         />
                         <Icon className={`text-xl relative z-10 ${chatAvatar === name ? "text-[var(--accent)]" : "text-tg-text"}`} />
                       </button>

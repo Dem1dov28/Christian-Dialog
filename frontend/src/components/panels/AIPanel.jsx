@@ -657,7 +657,7 @@ export default function AIPanel({
                   <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-md select-none mb-3">
                     <div
                       className="absolute inset-0 bg-center bg-cover"
-                      style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                      style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                       aria-hidden="true"
                     />
                     <div className="absolute inset-0 flex items-center justify-center text-white">

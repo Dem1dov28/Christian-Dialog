@@ -18,9 +18,13 @@ export function getAgentAvatarUrl(imageUrl, avatarUrl, quality = "high") {
   // Для /images/agents/ подставляем уменьшенные версии в зависимости от quality
   if (url.startsWith("/images/agents/") && !url.includes("/_low/") && !url.includes("/_medium/")) {
     if (quality === "low") {
+      // _low использует WebP (максимальное сжатие)
       url = url.replace("/images/agents/", "/images/agents/_low/");
+      url = url.replace(/\.(png|jpg|jpeg|webp)$/i, ".webp");
     } else if (quality === "medium") {
+      // _medium использует JPG (среднее сжатие)
       url = url.replace("/images/agents/", "/images/agents/_medium/");
+      url = url.replace(/\.(png|jpg|jpeg|webp)$/i, ".jpg");
     }
   }
 

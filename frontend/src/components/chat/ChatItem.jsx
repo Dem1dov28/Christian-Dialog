@@ -213,7 +213,7 @@ const ChatItem = ({
               <div className="relative w-12 h-12 rounded-full overflow-hidden select-none">
                 <div
                   className="absolute inset-0 bg-center bg-cover shadow-md"
-                  style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                  style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                   aria-hidden="true"
                 />
                 <div className="absolute inset-0 flex items-center justify-center text-white">

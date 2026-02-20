@@ -577,7 +577,7 @@ const CreateFolderForm = ({
                           <div className="relative w-6 h-6 rounded-full overflow-hidden">
                             <div
                               className="absolute inset-0 bg-center bg-cover"
-                              style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                               aria-hidden="true"
                             />
                             <div className="absolute inset-0 flex items-center justify-center text-white">
@@ -706,7 +706,7 @@ const CreateFolderForm = ({
                           <div className="relative w-8 h-8 rounded-full overflow-hidden">
                             <div
                               className="absolute inset-0 bg-center bg-cover"
-                              style={{ backgroundImage: "url('/images/agents/Under_Icon_Groups.png')" }}
+                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                               aria-hidden="true"
                             />
                             <div className="absolute inset-0 flex items-center justify-center text-white">

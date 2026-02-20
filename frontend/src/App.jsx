@@ -447,6 +447,14 @@ function MainApp() {
     };
   }, []);
 
+  // Эффект для перенаправления на /Library при загрузке приложения
+  // Это гарантирует, что пользователь всегда попадает в Библиотеку AI персонажей
+  React.useEffect(() => {
+    if (isInitialLoadComplete && location.pathname === '/') {
+      navigate('/Library', { replace: true });
+    }
+  }, [isInitialLoadComplete, location.pathname, navigate]);
+
   // Initialize viewport height for mobile devices
   React.useEffect(() => {
     const cleanup = initViewportHeight();
@@ -741,7 +749,7 @@ function PublicRoute({ children, allowAuthenticated = false }) {
 
   // Allow authenticated users to access forgot-password when coming from profile
   if (isAuthenticated && !allowAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/Library" replace />;
   }
 
   return children;
