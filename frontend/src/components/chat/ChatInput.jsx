@@ -228,7 +228,7 @@ function ChatInput({
               onKeyPress={onKeyPress}
               placeholder={messagePlaceholder || t("chat.typeMessage", { defaultValue: "Введите сообщение..." })}
               disabled={isReadOnlyChannel || isLoading || isDialogueLoading}
-              className="w-full py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] placeholder-[var(--text-gray)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] max-h-[200px] text-sm sm:text-base textarea-scrollbar leading-6"
+              className="w-full py-1.5 sm:py-2 bg-transparent border-transparent rounded-xl sm:rounded-2xl text-[var(--text-white)] placeholder-[var(--text-gray)] resize-none focus:outline-none focus:ring-0 focus:border-transparent transition-all min-h-[36px] sm:min-h-[40px] max-h-[200px] text-sm sm:text-base textarea-scrollbar leading-6"
               rows={1}
               style={{
                 scrollbarWidth: 'thin',
