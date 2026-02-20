@@ -188,6 +188,230 @@
       "name": "Henry Ford",
       "description": "(1863–1947) American industrialist, creator of the assembly line."
     },
+    "Рафаэль Санти": {
+      "name": "Raphael",
+      "description": "(1483–1520) Italian painter and architect of the High Renaissance."
+    },
+    "Томас Эдисон": {
+      "name": "Thomas Edison",
+      "description": "(1847–1931) American inventor, creator of the incandescent lamp."
+    },
+    "Бенджамин Франклин": {
+      "name": "Benjamin Franklin",
+      "description": "(1706–1790) American Enlightenment figure, scientist, founding father."
+    },
+    "Джеймс Ватт": {
+      "name": "James Watt",
+      "description": "(1736–1819) Scottish engineer who improved the steam engine."
+    },
+    "Александр Грэм Белл": {
+      "name": "Alexander Graham Bell",
+      "description": "(1847–1922) Inventor of the telephone, scientist and educator."
+    },
+    "Карл Бенц": {
+      "name": "Karl Benz",
+      "description": "(1844–1929) German engineer, creator of the first automobile."
+    },
+    "Джеймс Джойс": {
+      "name": "James Joyce",
+      "description": "(1882–1941) Irish writer, author of 'Ulysses'."
+    },
+    "Эрих Мария Ремарк": {
+      "name": "Erich Maria Remarque",
+      "description": "(1898–1970) German writer, author of 'All Quiet on the Western Front'."
+    },
+    "Александр Сергеевич Пушкин": {
+      "name": "Alexander Pushkin",
+      "description": "(1799–1837) Greatest Russian poet, creator of modern literary Russian."
+    },
+    "Джон Кеннеди": {
+      "name": "John F. Kennedy",
+      "description": "(1917–1963) 35th US President, leader of the 'New Frontier' era."
+    },
+    "Генрих II Валуа": {
+      "name": "Henry II of France",
+      "description": "(1519–1559) King of France from the House of Valois."
+    },
+    "Пётр I": {
+      "name": "Peter the Great",
+      "description": "(1672–1725) Russian Tsar and Emperor, reformer of Russia."
+    },
+    "Екатерина II": {
+      "name": "Catherine the Great",
+      "description": "(1729–1796) Empress of Russia, enlightened ruler."
+    },
+    "Октавиан Август": {
+      "name": "Augustus",
+      "description": "(63 BC–14 AD) First Roman emperor, founder of the principate."
+    },
+    "Аристотель": {
+      "name": "Aristotle",
+      "description": "(384–322 BC) Ancient Greek philosopher, teacher of Alexander the Great."
+    },
+    "Сенека": {
+      "name": "Seneca",
+      "description": "(c. 4 BC–65 AD) Roman Stoic philosopher, playwright and statesman."
+    },
+    "Галилео Галилей": {
+      "name": "Galileo Galilei",
+      "description": "(1564–1642) Italian scientist, founder of experimental physics."
+    },
+    "Франц Кафка": {
+      "name": "Franz Kafka",
+      "description": "(1883–1924) Austro-Hungarian writer, master of absurd and existential prose."
+    },
+    "Ада Лавлейс": {
+      "name": "Ada Lovelace",
+      "description": "(1815–1852) First programmer, collaborator of Charles Babbage."
+    },
+    "Антон Чехов": {
+      "name": "Anton Chekhov",
+      "description": "(1860–1904) Russian writer and playwright, master of the short story."
+    },
+    "Лао-цзы": {
+      "name": "Laozi",
+      "description": "(6th–5th c. BC) Ancient Chinese philosopher, author of 'Tao Te Ching'."
+    },
+    "Сунь-цзы": {
+      "name": "Sun Tzu",
+      "description": "(544–496 BC) Ancient Chinese strategist, author of 'The Art of War'."
+    },
+    "Авиценна": {
+      "name": "Avicenna",
+      "description": "(980–1037) Persian polymath, physician and philosopher."
+    },
+    "Гипатия Александрийская": {
+      "name": "Hypatia of Alexandria",
+      "description": "(c. 355–415) Greek mathematician and philosopher, first woman scholar."
+    },
+    "Микеланджело Буонарроти": {
+      "name": "Michelangelo",
+      "description": "(1475–1564) Italian sculptor, painter and architect of the Renaissance."
+    },
+    "Иоганн Себастьян Бах": {
+      "name": "Johann Sebastian Bach",
+      "description": "(1685–1750) German composer, greatest master of the Baroque."
+    },
+    "Нельсон Мандела": {
+      "name": "Nelson Mandela",
+      "description": "(1918–2013) Anti-apartheid leader, first Black president of South Africa."
+    },
+    "Мария Терезия": {
+      "name": "Maria Theresa",
+      "description": "(1717–1780) Holy Roman Empress, reformer."
+    },
+    "Сунь Ятсен": {
+      "name": "Sun Yat-sen",
+      "description": "(1866–1925) Chinese revolutionary, founder of the Republic of China."
+    },
+    "Изабелла Кастильская": {
+      "name": "Isabella I of Castile",
+      "description": "(1451–1504) Queen of Castile, patron of Columbus."
+    },
+    "Мария Монтессори": {
+      "name": "Maria Montessori",
+      "description": "(1870–1952) Italian educator, creator of the Montessori method."
+    },
+    "Оскар Уайльд": {
+      "name": "Oscar Wilde",
+      "description": "(1854–1900) Irish writer and playwright, master of paradox."
+    },
+    "Данте Алигьери": {
+      "name": "Dante Alighieri",
+      "description": "(1265–1321) Italian poet, author of 'The Divine Comedy'."
+    },
+    "Иоганн Вольфганг фон Гёте": {
+      "name": "Johann Wolfgang von Goethe",
+      "description": "(1749–1832) German poet and thinker, author of 'Faust'."
+    },
+    "Пётр Ильич Чайковский": {
+      "name": "Pyotr Ilyich Tchaikovsky",
+      "description": "(1840–1893) Great Russian composer, master of ballet and symphony."
+    },
+    "Фредди Меркьюри": {
+      "name": "Freddie Mercury",
+      "description": "(1946–1991) British singer, frontman of Queen."
+    },
+    "Марлон Брандо": {
+      "name": "Marlon Brando",
+      "description": "(1924–2004) American actor, icon of method acting."
+    },
+    "Моисей": {
+      "name": "Moses",
+      "description": "(13th c. BC) Biblical prophet, leader of the Israelites' exodus from Egypt."
+    },
+    "Святой Франциск Ассизский": {
+      "name": "Saint Francis of Assisi",
+      "description": "(1181/1182–1226) Italian saint, founder of the Franciscan order."
+    },
+    "Авраам Линкольн": {
+      "name": "Abraham Lincoln",
+      "description": "(1809–1865) 16th US President, emancipator of slaves."
+    },
+    "Королева Виктория": {
+      "name": "Queen Victoria",
+      "description": "(1819–1901) Queen of the UK, symbol of the Victorian era."
+    },
+    "Стивен Хокинг": {
+      "name": "Stephen Hawking",
+      "description": "(1942–2018) British theoretical physicist, researcher of black holes."
+    },
+    "Алан Тьюринг": {
+      "name": "Alan Turing",
+      "description": "(1912–1954) British mathematician, founder of computer science."
+    },
+    "Чарльз Диккенс": {
+      "name": "Charles Dickens",
+      "description": "(1812–1870) English writer, author of 'Oliver Twist'."
+    },
+    "Джейн Остин": {
+      "name": "Jane Austen",
+      "description": "(1775–1817) English novelist, master of the novel of manners."
+    },
+    "Эрнест Хемингуэй": {
+      "name": "Ernest Hemingway",
+      "description": "(1899–1961) American writer, Nobel Prize laureate."
+    },
+    "Дж. Р. Р. Толкин": {
+      "name": "J.R.R. Tolkien",
+      "description": "(1892–1973) English writer, creator of 'The Lord of the Rings'."
+    },
+    "Элвис Пресли": {
+      "name": "Elvis Presley",
+      "description": "(1935–1977) American singer, 'King of Rock and Roll'."
+    },
+    "Майкл Джексон": {
+      "name": "Michael Jackson",
+      "description": "(1958–2009) American singer and dancer, 'King of Pop'."
+    },
+    "Чарли Чаплин": {
+      "name": "Charlie Chaplin",
+      "description": "(1889–1977) British actor and director, creator of the Tramp."
+    },
+    "Мэрилин Монро": {
+      "name": "Marilyn Monroe",
+      "description": "(1926–1962) American actress and Hollywood sex symbol."
+    },
+    "Фрида Кало": {
+      "name": "Frida Kahlo",
+      "description": "(1907–1954) Mexican painter, master of surrealist self-portrait."
+    },
+    "Жюль Верн": {
+      "name": "Jules Verne",
+      "description": "(1828–1905) French writer, founder of science fiction."
+    },
+    "Рене Декарт": {
+      "name": "René Descartes",
+      "description": "(1596–1650) French philosopher and mathematician, author of 'Cogito, ergo sum'."
+    },
+    "Марко Поло": {
+      "name": "Marco Polo",
+      "description": "(1254–1324) Venetian traveler, author of 'The Travels of Marco Polo'."
+    },
+    "Елизавета I": {
+      "name": "Elizabeth I",
+      "description": "(1533–1603) Queen of England, 'Virgin Queen', last of the Tudors."
+    },
     "Владимир Путин": {
       "name": "Vladimir Putin",
       "description": "President of Russia, responds in an official style"

@@ -168,11 +168,9 @@ export const LanguageProvider = ({ children }) => {
         return {
           ...agent,
           name: translated.name || agent.name,
-          // Если язык не русский и есть перевод, берем его (так как в API описание на русском).
-          // Если русский, то API (agent.description) в приоритете, как более полное/актуальное.
-          description: language !== 'ru' && translated.description
-            ? translated.description
-            : (agent.description || translated.description)
+          // Локализованное описание (с годами жизни) в приоритете, если есть.
+          // API description — длинная биография для модалки.
+          description: translated.description || agent.description
         };
       }
 
