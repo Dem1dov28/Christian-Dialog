@@ -61,6 +61,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   const [currentStage, setCurrentStage] = useState("selection"); // "selection" | "setup"
   const [isMounted, setIsMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  // State to defer image loading until after main content is loaded
+  const [shouldLoadImages, setShouldLoadImages] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [agentToEdit, setAgentToEdit] = useState(null);
   const [deleteAgentModal, setDeleteAgentModal] = useState({ isOpen: false, agent: null });
@@ -187,6 +189,24 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     setIsMounted(true);
   }, []);
 
+  // Defer image loading until after main content is loaded
+  // This ensures images in the library don't compete with critical site resources
+  useEffect(() => {
+    // Use requestIdleCallback if available, otherwise setTimeout
+    const scheduleImageLoading = () => {
+      setShouldLoadImages(true);
+    };
+
+    if (typeof window !== 'undefined') {
+      // Wait for main content to be ready
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(scheduleImageLoading, { timeout: 2000 });
+      } else {
+        // Fallback: load images after a delay to let critical content load first
+        setTimeout(scheduleImageLoading, 500);
+      }
+    }
+  }, []);
 
   // Отслеживание скролла для показа тени и границы header
   useEffect(() => {
@@ -876,13 +896,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   // Общее количество агентов для проверки пустоты (убраны tools и models)
   const totalPersonas = characters.length + createdPersonas.length;
 
-  const ROWS_PER_BATCH = 3;
+  const ROWS_PER_BATCH = 4; // Для экранов > 1025px показываем 4 ряда
+  const ROWS_PER_BATCH_MOBILE = 6; // Для экранов < 1025px показываем 6 рядов
 
   const getItemsPerBatch = (width) => {
-    if (width >= 1280) return ROWS_PER_BATCH * 4;
-    if (width >= 1024) return ROWS_PER_BATCH * 3;
-    if (width >= 640) return ROWS_PER_BATCH * 2;
-    return ROWS_PER_BATCH * 2; // <640px: 2 columns
+    if (width >= 1280) return ROWS_PER_BATCH * 4; // 4 ряда * 4 колонки = 16 элементов
+    if (width >= 1024) return ROWS_PER_BATCH * 3; // 4 ряда * 3 колонки = 12 элементов
+    if (width >= 640) return ROWS_PER_BATCH_MOBILE * 2; // 6 рядов * 2 колонки = 12 элементов
+    return ROWS_PER_BATCH_MOBILE * 2; // <640px: 2 columns, 6 рядов
   };
 
   const [itemsPerBatch, setItemsPerBatch] = useState(() =>
@@ -1409,9 +1430,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                       key={personaId}
                       className="flex items-center gap-2 bg-tg-bg border border-tg-border rounded-lg p-2"
                     >
-                      {persona.imageSrc ? (
+                      {persona.imageSrc && shouldLoadImages ? (
                         <img
-                          src={persona.imageSrc}
+                          src={shouldLoadImages ? persona.imageSrc : ''}
                           alt={persona.name}
                           className="w-8 h-8 rounded-full object-cover"
                         />
@@ -1705,9 +1726,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                             onError={(e) => {
@@ -1724,7 +1745,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         </div>
                                       ) : null}
                                       <div
-                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${(persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages) ? "hidden" : ""}`}
                                       >
                                         {IconComponent && (
                                           <IconComponent
@@ -1835,15 +1856,16 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
                                           <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
-                                      ) : (
+                                      ) : null}
+                                      {(persona.imageSrc && shouldLoadImages) ? null : (
                                         <div
                                           className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
@@ -1973,9 +1995,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
@@ -2110,9 +2132,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
@@ -2250,9 +2272,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                             onError={(e) => {
@@ -2269,7 +2291,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         </div>
                                       ) : null}
                                       <div
-                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? "hidden" : ""}`}
+                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${(persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages) ? "hidden" : ""}`}
                                       >
                                         {IconComponent && (
                                           <IconComponent
@@ -2391,15 +2413,16 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
                                           <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
-                                      ) : (
+                                      ) : null}
+                                      {(persona.imageSrc && shouldLoadImages) ? null : (
                                         <div
                                           className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
@@ -2521,9 +2544,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
@@ -2656,9 +2679,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc ? (
-                                        <div className="relative">
+                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
                                           <img
-                                            src={persona.imageSrc}
+                                            src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />

@@ -372,7 +372,7 @@ export function DrawerMenu({
 
           {/* Footer */}
           <div className="px-5 py-4 border-t border-[var(--border-color)] select-none">
-            <p className="text-[var(--text-gray)] text-[13px] text-center font-normal flex items-center justify-center gap-2">
+            <p className="text-[var(--text-gray)] text-[13px] text-center font-normal flex items-center justify-center gap-3">
               <img
                 src={logo}
                 alt="Epochal Dialog"

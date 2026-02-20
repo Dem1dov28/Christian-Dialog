@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+  import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { getActionIcon } from "../../utils/actionIcons";
 import ReplyMessage from "./ReplyMessage";
@@ -243,7 +243,7 @@ function ChatInput({
             type="button"
             onClick={isLoading || isDialogueLoading ? onCancelGeneration : onSendMessage}
             disabled={(!inputValue.trim() && attachedFiles.length === 0) || isReadOnlyChannel}
-            className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl chat-input-button-visible"
+            className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-[var(--text-gray)] hover:text-[var(--text-white)] hover:bg-[var(--bg-secondary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors chat-input-button-visible"
             aria-label={isLoading || isDialogueLoading ? t("chat.cancel", { defaultValue: "Отменить" }) : t("chat.send", { defaultValue: "Отправить" })}
           >
             {isLoading || isDialogueLoading ? (
