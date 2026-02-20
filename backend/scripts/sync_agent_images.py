@@ -70,22 +70,29 @@ def find_images_dir() -> str:
 def find_images_dirs() -> List[Tuple[str, str]]:
     """Определить все каталоги с изображениями агентов/инструментов.
 
-    Возвращает список кортежей (путь_на_диске, web-префикс).
-    Примеры элементов:
-      - (<repo>/frontend/public/images/agents, "/images/agents")
-      - (<repo>/frontend/public/images/tools, "/images/tools")
+    В Docker: ищем /app/agent_images (volume frontend/public/images).
+    Локально: <repo>/frontend/public/images.
     """
-    images_root = os.path.join(REPO_ROOT, "frontend", "public", "images")
     result: List[Tuple[str, str]] = []
-
+    # Docker: volume смонтирован в /app/agent_images
+    docker_root = "/app/agent_images"
+    if os.path.isdir(docker_root):
+        agents_dir = os.path.join(docker_root, "agents")
+        if os.path.isdir(agents_dir):
+            result.append((agents_dir, "/images/agents"))
+        tools_dir = os.path.join(docker_root, "tools")
+        if os.path.isdir(tools_dir):
+            result.append((tools_dir, "/images/tools"))
+        if result:
+            return result
+    # Локально: repo_root/frontend/public/images
+    images_root = os.path.join(REPO_ROOT, "frontend", "public", "images")
     agents_dir = os.path.join(images_root, "agents")
     if os.path.isdir(agents_dir):
         result.append((agents_dir, "/images/agents"))
-
     tools_dir = os.path.join(images_root, "tools")
     if os.path.isdir(tools_dir):
         result.append((tools_dir, "/images/tools"))
-
     return result
 
 
