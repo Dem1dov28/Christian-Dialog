@@ -722,26 +722,40 @@ function MainApp() {
 // Компонент для защищенных маршрутов
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return <LoadingScreen isVisible={true} />;
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
 }
 
 // Компонент для публичных маршрутов (только для неавторизованных)
 function PublicRoute({ children, allowAuthenticated = false }) {
   const { isAuthenticated, isInitializing } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
+  const isRedirecting = React.useRef(false);
 
   if (isInitializing) {
     return <LoadingScreen isVisible={true} />;
   }
 
-  // Allow authenticated users to access forgot-password when coming from profile
+  // Редирект для авторизованных — через useEffect, чтобы избежать "выброса" страниц на мобильных
+  React.useEffect(() => {
+    if (!isAuthenticated || allowAuthenticated || isRedirecting.current) return;
+    isRedirecting.current = true;
+    const from = location.state?.from?.pathname || "/";
+    navigate(from, { replace: true, state: {} });
+  }, [isAuthenticated, allowAuthenticated, navigate, location.state]);
+
   if (isAuthenticated && !allowAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <LoadingScreen isVisible={true} />;
   }
 
   return children;

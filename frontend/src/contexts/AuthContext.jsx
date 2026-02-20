@@ -101,21 +101,20 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, [isInitialized]);
 
-  // Автоматическое обновление токена перед истечением
+  // Проверка валидности токена (токен живёт 7 дней)
   useEffect(() => {
     if (isAuthenticated && user) {
-      const tokenRefreshInterval = setInterval(async () => {
+      const checkInterval = 6 * 60 * 60 * 1000; // каждые 6 часов
+      const tokenCheck = setInterval(async () => {
         try {
-          // Проверяем токен каждые 20 минут (токен живет 24 часа)
           await apiClient.verifyToken();
-          console.log("Token refresh check passed");
         } catch (error) {
-          console.log("Token refresh failed, logging out:", error.message);
+          console.log("Token check failed, logging out:", error.message);
           forceLogout();
         }
-      }, 20 * 60 * 1000); // Проверяем каждые 20 минут
+      }, checkInterval);
 
-      return () => clearInterval(tokenRefreshInterval);
+      return () => clearInterval(tokenCheck);
     }
   }, [isAuthenticated, user]);
 

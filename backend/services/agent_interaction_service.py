@@ -344,56 +344,63 @@ class AgentInteractionService:
         interaction_type: Optional[InteractionType] = None,
         conversation_pattern: Optional[InteractionPattern] = None
     ) -> str:
-        """Построить контекст для агента с учетом типа взаимодействия"""
-        context_parts = [f"Пользователь: {user_message}"]
-        
-        # Добавляем предыдущие ответы с явным указанием, что это уже было сказано
-        if previous_responses:
-            context_parts.append("\nУже сказано другими участниками (НЕ ПОВТОРЯЙ эти мысли):")
-            for response in previous_responses:
-                agent_name = response.get("agent_name", "Агент")
-                message = response.get("message", "")
-                context_parts.append(f"- {agent_name}: {message}")
-        
+        """Построить контекст для агента с учётом типа взаимодействия.
+
+        Формат ориентирован на то, чтобы персонаж видел разговор как живой диалог,
+        а не как список инструкций. Метаинструкции сформулированы кратко и не навязчиво.
+        """
         agent_name = agent.get("name", "Агент")
-        
-        # Добавляем информацию о паттерне разговора
-        if conversation_pattern:
-            pattern_hints = {
-                InteractionPattern.DEBATE: "Идет активная дискуссия.",
-                InteractionPattern.CONFLICT: "Есть разногласия.",
-                InteractionPattern.CONSENSUS: "Участники приходят к согласию.",
-                InteractionPattern.BRAINSTORM: "Происходит мозговой штурм.",
-                InteractionPattern.QNA: "Идет сессия вопросов и ответов."
-            }
-            hint = pattern_hints.get(conversation_pattern)
-            if hint:
-                context_parts.append(f"\nКонтекст: {hint}")
-        
-        # Добавляем строгие инструкции в зависимости от типа взаимодействия
-        if interaction_type == InteractionType.QUESTION:
-            context_parts.append(
-                f"\n{agent_name}, ответь на вопрос естественно и по делу. "
-                "Дай НОВЫЙ ответ, не повторяя то, что уже сказали другие."
-            )
-        elif interaction_type == InteractionType.DISAGREEMENT:
-            context_parts.append(
-                f"\n{agent_name}, вырази своё УНИКАЛЬНОЕ мнение. "
-                "Не повторяй фразы других участников, даже если согласен."
-            )
-        elif interaction_type == InteractionType.AGREEMENT:
-            context_parts.append(
-                f"\n{agent_name}, если согласен, вырази это СВОИМИ СЛОВАМИ. "
-                "Добавь что-то новое или дополни предыдущий ответ, но НЕ ПОВТОРЯЙ дословно."
-            )
-        else:
-            context_parts.append(
-                f"\n{agent_name}, продолжай диалог естественно. "
-                "ВАЖНО: НЕ ПОВТОРЯЙ дословно то, что уже сказали другие участники. "
-                "Выражай свои мысли оригинально, даже если согласен с предыдущими высказываниями."
-            )
-        
-        return "\n".join(context_parts)
+        parts: List[str] = []
+
+        # --- Сообщение пользователя ---
+        parts.append(f"Пользователь написал: {user_message}")
+
+        # --- Ответы других участников (если есть) ---
+        if previous_responses:
+            parts.append("\nНа это уже ответили:")
+            for resp in previous_responses:
+                name = resp.get("agent_name", "Агент")
+                msg = (resp.get("message") or "").strip()
+                if msg:
+                    # Показываем первые 200 символов, чтобы не перегружать контекст
+                    snippet = msg[:200] + ("…" if len(msg) > 200 else "")
+                    parts.append(f"  {name}: {snippet}")
+
+        # --- Подсказка о характере текущего обмена ---
+        pattern_hints = {
+            InteractionPattern.DEBATE:       "В разговоре возникли разные точки зрения.",
+            InteractionPattern.CONFLICT:     "Участники не соглашаются друг с другом.",
+            InteractionPattern.CONSENSUS:    "Участники сходятся во мнениях.",
+            InteractionPattern.BRAINSTORM:   "Идёт совместный поиск идей.",
+            InteractionPattern.QNA:          "Участники отвечают на вопрос.",
+            InteractionPattern.EXPLORATION:  "Тема исследуется сообща.",
+            InteractionPattern.COLLABORATION:"Участники работают вместе.",
+        }
+        if conversation_pattern and conversation_pattern in pattern_hints:
+            parts.append(f"\n[{pattern_hints[conversation_pattern]}]")
+
+        # --- Краткая ненавязчивая инструкция ---
+        turn_hints = {
+            InteractionType.QUESTION: (
+                f"Теперь слово {agent_name}. Ответь на вопрос в своей манере."
+            ),
+            InteractionType.DISAGREEMENT: (
+                f"Теперь слово {agent_name}. Выскажи свою позицию — согласись или возрази."
+            ),
+            InteractionType.AGREEMENT: (
+                f"Теперь слово {agent_name}. Дополни сказанное — своими словами и примерами."
+            ),
+            InteractionType.ADDITION: (
+                f"Теперь слово {agent_name}. Добавь свой взгляд на тему."
+            ),
+        }
+        hint = turn_hints.get(
+            interaction_type,
+            f"Теперь слово {agent_name}. Отвечай естественно, не повторяя уже сказанного."
+        )
+        parts.append(f"\n{hint}")
+
+        return "\n".join(parts)
     
     def check_message_similarity(
         self,
