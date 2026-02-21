@@ -28,7 +28,7 @@ class LangChainConfig:
         """Возвращает конфигурацию для используемой модели"""
         return {
             "model": "tngtech/deepseek-r1t2-chimera:free",
-            "temperature": 0.7,
+            "temperature": 0.9,
             "max_tokens": 2048
         }
     
@@ -36,7 +36,7 @@ class LangChainConfig:
         """Возвращает конфигурацию для vision-модели (для обработки изображений)"""
         return {
             "model": "openai/gpt-4o",  # GPT-4o поддерживает vision
-            "temperature": 0.7,
+            "temperature": 0.9,
             "max_tokens": 200
         }
 
