@@ -506,6 +506,7 @@ export const ChatsProvider = ({ children }) => {
   }, [messagesByConversation]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedConversations, setHasLoadedConversations] = useState(false); // Флаг: разговоры были загружены хотя бы раз
   const [error, setError] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -1075,6 +1076,7 @@ export const ChatsProvider = ({ children }) => {
       setActiveConversation(null);
       setChatReady(false);
       setIsChatLoading(false);
+      setHasLoadedConversations(false); // Сбрасываем флаг загрузки
       channelsRef.current = [];
       setChannels([]);
       setChannelsError(null);
@@ -1297,6 +1299,7 @@ export const ChatsProvider = ({ children }) => {
       }
     } finally {
       setIsLoading(false);
+      setHasLoadedConversations(true); // Отмечаем, что попытка загрузки завершена
       loadingConversationsRef.current = false;
     }
   };
@@ -4577,6 +4580,7 @@ export const ChatsProvider = ({ children }) => {
 
   const value = {
     conversations,
+    hasLoadedConversations, // Флаг: разговоры были загружены
     systemChat,
     activeConversation,
     messages,

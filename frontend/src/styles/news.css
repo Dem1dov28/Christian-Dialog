@@ -83,7 +83,6 @@
 .web-search-results {
   width: 100% !important;
   max-width: 100% !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
 }
 
@@ -186,7 +185,6 @@
 .currency-converter-result {
   width: 100% !important;
   max-width: 100% !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   margin: 4px 0;
   color: var(--msg-left-text-color);
@@ -296,7 +294,6 @@
 .timer-result {
   width: 100% !important;
   max-width: 100% !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   margin: 8px 0;
 }
@@ -353,7 +350,6 @@
 .reminder-result {
   width: 100% !important;
   max-width: 100% !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   margin: 8px 0;
 }
@@ -406,7 +402,6 @@
 
 /* News digest */
 .news-digest {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
   color: var(--msg-left-text-color);
 }
@@ -495,7 +490,6 @@
   font-weight: 700;
   line-height: 1.3;
   margin-bottom: 0.75rem;
-  font-family: 'Georgia', 'Times New Roman', serif;
 }
 
 .news-article-title.large {
@@ -523,7 +517,6 @@
   font-size: 0.875rem;
   color: var(--text-white);
   margin-bottom: 1rem;
-  font-family: 'Courier New', monospace;
 }
 
 .news-article-meta time {

@@ -14,9 +14,8 @@
  * External font imports removed - fonts are loaded in index.html
  * This prevents render-blocking and duplicate font loading
  * Optimized fonts loaded:
+ *   - Montserrat: 500
  *   - Roboto: 400, 500, 700
- *   - Montserrat: 400, 500, 600 (no italic)
- *   - Comfortaa: 400, 700
  *   - Rubik Mono One: 400
  * Note: Material Icons & Symbols removed (project uses react-icons)
  */

@@ -1865,7 +1865,7 @@ const Sidebar = ({
               {/* Кнопка добавления нового чата в правом нижнем углу */}
               {(
                 <button
-                  className="absolute right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl"
+                  className="absolute right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl shine-effect"
                   style={{
                     backgroundColor: "var(--accent)",
                     bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))'

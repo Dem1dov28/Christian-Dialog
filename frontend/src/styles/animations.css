@@ -491,6 +491,53 @@
   animation: slide-in-from-bottom-4 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Shine animation for FAB button */
+@keyframes shine-sweep {
+  0%, 85% {
+    transform: translateX(100%) skewX(-15deg);
+    opacity: 0;
+  }
+  88% {
+    opacity: 0.6;
+  }
+  92% {
+    opacity: 0.8;
+  }
+  96% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(-200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transform: translateX(100%) skewX(-15deg);
+  animation: shine-sweep 6.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .persona-card-enter {
     animation: none;
@@ -504,6 +551,10 @@
     animation: none;
     opacity: 1;
     transform: none;
+  }
+  
+  .shine-effect::before {
+    animation: none;
   }
 }
 

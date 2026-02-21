@@ -114,7 +114,7 @@ const SidebarItem = ({
           </span>
         )}
       </span>
-      <span className="text-[10px] mt-1 leading-tight text-center w-16 break-words font-comfortaa">
+      <span className="text-[10px] mt-1 leading-tight text-center w-16 break-words" style={{ fontFamily: "'Roboto', sans-serif" }}>
         {label}
       </span>
     </button>

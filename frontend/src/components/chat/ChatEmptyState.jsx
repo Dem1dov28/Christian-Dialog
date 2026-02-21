@@ -6,8 +6,8 @@ export default function ChatEmptyState({ emptyStatePrompt, language }) {
     <div className="flex h-full items-center justify-center px-4 py-6">
       <div className="text-center text-balance max-w-md">
         <p
-          className="text-lg sm:text-xl font-semibold text-[var(--text-white)] leading-relaxed"
-          style={{ fontFamily: "'Montserrat', 'Comfortaa', 'Roboto', sans-serif" }}
+          className="text-lg sm:text-xl font-medium text-[var(--text-white)] leading-relaxed"
+          style={{ fontFamily: "'Montserrat', 'Roboto', sans-serif" }}
         >
           {emptyStatePrompt ||
             (language === "ru"

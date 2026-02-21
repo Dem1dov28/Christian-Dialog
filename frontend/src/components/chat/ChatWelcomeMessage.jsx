@@ -7,13 +7,13 @@ export default function ChatWelcomeMessage({ t }) {
       <div className="text-center">
         <h2
           className="text-2xl font-medium text-[var(--text-white)] mb-2"
-          style={{ fontFamily: "'Montserrat', 'Comfortaa', 'Roboto', sans-serif" }}
+          style={{ fontFamily: "'Montserrat', 'Roboto', sans-serif" }}
         >
           {t("chat.selectChat")}
         </h2>
         <p
           className="text-[var(--text-gray)]"
-          style={{ fontFamily: "'Montserrat', 'Comfortaa', 'Roboto', sans-serif" }}
+          style={{ fontFamily: "'Montserrat', 'Roboto', sans-serif" }}
         >
           {t("chat.startNewConversation")}
         </p>

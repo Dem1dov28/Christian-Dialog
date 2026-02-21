@@ -525,6 +525,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       const translatedAgent = translateAgent(agent);
       // Формируем полный URL для аватара, если это относительный путь
       let imageSrc = getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "medium");
+      // Формируем URL для _low версии (для маленьких иконок в списке выбранных)
+      let imageSrcLow = getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "low");
       // description из API/конфига — показывается в модалке при клике на карточку
       const description = translatedAgent.description ?? agent.description ?? "";
       // Сохраняем оригинальное имя агента (ключ для переводов)
@@ -538,6 +540,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         colorClass: translatedAgent.color_class,
         iconName: translatedAgent.icon_name,
         imageSrc: imageSrc,
+        imageSrcLow: imageSrcLow,
         category: translatedAgent.category, // Категория из базы данных (например, "персонаж, политик")
         user_id: translatedAgent.user_id, // ID пользователя-создателя (для категории "created")
         primaryCategory: getPrimaryCategory(translatedAgent),      // Первичный: Персонаж/Инструмент/AI модель
@@ -1159,12 +1162,38 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     []
   );
 
+  // Рассчитываем высоту контейнера иконок динамически на основе ширины
+  const [iconsPerRow, setIconsPerRow] = useState(5);
+  const avatarContainerRef = useRef(null);
+  
+  useEffect(() => {
+    const calculateIconsPerRow = () => {
+      if (avatarContainerRef.current) {
+        const containerWidth = avatarContainerRef.current.offsetWidth;
+        // w-11 = 44px, gap-2 = 8px
+        const iconWidth = 44;
+        const gapWidth = 8;
+        const availableWidth = containerWidth;
+        const count = Math.floor((availableWidth + gapWidth) / (iconWidth + gapWidth));
+        setIconsPerRow(Math.max(3, count)); // Минимум 3 иконки в ряду
+      }
+    };
+    
+    calculateIconsPerRow();
+    window.addEventListener('resize', calculateIconsPerRow);
+    return () => window.removeEventListener('resize', calculateIconsPerRow);
+  }, []);
+  
   const avatarContainerHeights = useMemo(
-    () => ({
-      collapsed: 64,
-      expanded: Math.ceil(avatarOptions.length / 6) * 60,
-    }),
-    [avatarOptions.length]
+    () => {
+      const rowHeight = 52; // 44px + 8px gap
+      const collapsedRows = 2; // Показываем 2 ряда в свернутом виде
+      return {
+        collapsed: collapsedRows * rowHeight,
+        expanded: Math.ceil(avatarOptions.length / iconsPerRow) * rowHeight,
+      };
+    },
+    [avatarOptions.length, iconsPerRow]
   );
 
 
@@ -1405,241 +1434,301 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       <div className="p-4 sm:p-6">
         {currentStage === "setup" ? (
           /* Этап настройки чата */
-          <div className="max-w-md mx-auto">
-            <div className="text-center mb-8">
-              <h3 className="text-xl font-semibold text-[var(--text-white)] mb-2">
-                {t("library.setupGroupChatTitle")}
-              </h3>
-              <p className="text-[var(--text-gray)]">
-                {t("library.setupGroupChat")}
-              </p>
-            </div>
+          <div className="max-w-lg mx-auto">
+            {/* Glassmorphism Card Container */}
+            <div className="relative overflow-hidden rounded-3xl border border-[var(--border-color)]/50 bg-[var(--bg-secondary)]/60 backdrop-blur-2xl backdrop-saturate-150 shadow-2xl shadow-black/10">
+              {/* Gradient Overlay for depth */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/5 via-transparent to-[var(--accent)]/10 pointer-events-none" />
+              
+              {/* Subtle noise texture overlay */}
+              <div 
+                className="absolute inset-0 opacity-[0.015] pointer-events-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                }}
+              />
 
-            {/* Выбранные персонажи */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-tg-text-secondary mb-3">
-                {t("library.selectedCharacters")}:
-              </h4>
-              <div className="flex gap-3 flex-wrap">
-                {selectedPersonas.map((personaId) => {
-                  const persona = aiPersonas.find((p) => p.id === personaId);
-                  if (!persona) return null;
+              {/* Content */}
+              <div className="relative p-6 sm:p-8">
+                {/* Header */}
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--accent)]/10 backdrop-blur-sm mb-4 ring-1 ring-[var(--accent)]/20">
+                    <HiMiniUserGroup className="w-8 h-8 text-[var(--accent)]" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-[var(--text-white)] mb-2">
+                    {t("library.setupGroupChatTitle")}
+                  </h3>
+                  <p className="text-[var(--text-gray)] text-sm">
+                    {t("library.setupGroupChat")}
+                  </p>
+                </div>
 
-                  return (
-                    <div
-                      key={personaId}
-                      className="flex items-center gap-2 bg-tg-bg border border-tg-border rounded-lg p-2"
-                    >
-                      {persona.imageSrc && shouldLoadImages ? (
-                        <img
-                          src={shouldLoadImages ? persona.imageSrc : ''}
-                          alt={persona.name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                          {persona.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <span className="text-sm text-tg-text">
-                        {persona.name}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                {/* Выбранные персонажи */}
+                <div className="mb-6">
+                  <h4 className="text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
+                    {t("library.selectedCharacters")}
+                  </h4>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedPersonas.map((personaId) => {
+                      const persona = aiPersonas.find((p) => p.id === personaId);
+                      if (!persona) return null;
 
-            {/* Настройка аватара */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-tg-text mb-3">
-                Аватар чата
-              </label>
-
-              {/* Загрузка своего аватара (только для Plus/Pro) */}
-              {isPlusOrProUser && (
-                <div className="mb-4">
-                  <label className="block text-xs text-tg-text-secondary mb-2">
-                    Загрузить своё изображение (только для Plus/Pro)
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <div
-                      onClick={() => groupAvatarFileInputRef.current?.click()}
-                      className="w-16 h-16 rounded-lg border-2 border-dashed border-tg-border hover:border-[var(--accent)] cursor-pointer flex items-center justify-center transition-colors relative overflow-hidden"
-                    >
-                      {chatAvatarPreview ? (
-                        <img
-                          src={chatAvatarPreview}
-                          alt="Avatar preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <MdAddAPhoto className="text-2xl text-tg-text-secondary" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <button
-                        type="button"
-                        onClick={() => groupAvatarFileInputRef.current?.click()}
-                        className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                      >
-                        {chatAvatarPreview ? "Изменить" : "Загрузить изображение"}
-                      </button>
-                      {chatAvatarPreview && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChatAvatarFile(null);
-                            setChatAvatarPreview(null);
-                            setChatAvatar("group");
-                          }}
-                          className="ml-2 text-sm text-red-500 hover:text-red-400 transition-colors"
+                      return (
+                        <motion.div
+                          key={personaId}
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="flex items-center gap-2 bg-[var(--bg-primary)]/80 backdrop-blur-sm border border-[var(--border-color)]/60 rounded-xl px-3 py-2 shadow-sm"
                         >
-                          Удалить
-                        </button>
-                      )}
-                      <p className="text-xs text-tg-text-secondary mt-1">
-                        JPG, PNG, GIF или WebP, до 5MB
-                      </p>
-                    </div>
-                  </div>
-                  <input
-                    ref={groupAvatarFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        if (file.size > 5 * 1024 * 1024) {
-                          showError("Файл слишком большой. Максимальный размер: 5MB");
-                          return;
-                        }
-                        if (!file.type.startsWith("image/")) {
-                          showError("Пожалуйста, выберите изображение");
-                          return;
-                        }
-                        setChatAvatarFile(file);
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setChatAvatarPreview(reader.result);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    style={{ display: "none" }}
-                  />
-                </div>
-              )}
-
-              {/* Превью выбранной иконки (если не загружено изображение) */}
-              {!chatAvatarPreview && chatAvatar && (
-                <div className="mb-6 flex justify-center">
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-xl border-4 border-[var(--accent)]/20">
-                    <div
-                      className="absolute inset-0 bg-center bg-cover"
-                      style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-white">
-                      {(() => {
-                        const SelectedIcon = avatarOptions.find(opt => opt.name === chatAvatar)?.icon || MdGroup;
-                        return <SelectedIcon className="text-4xl" style={{ transform: "scale(0.9)" }} />;
-                      })()}
-                    </div>
+                          {persona.imageSrcLow && shouldLoadImages ? (
+                            <img
+                              src={shouldLoadImages ? persona.imageSrcLow : ''}
+                              alt={persona.name}
+                              className="w-7 h-7 rounded-full object-cover ring-2 ring-[var(--border-color)]"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center text-white font-semibold text-xs ring-2 ring-[var(--border-color)]">
+                              {persona.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="text-sm text-[var(--text-white)] font-medium">
+                            {persona.name}
+                          </span>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
 
-              {/* Иконки аватаров (используются, если не загружено изображение) */}
-              {!chatAvatarPreview && (
-                <>
-                  <div
-                    className={`flex gap-3 flex-wrap overflow-hidden transition-all duration-300 ease-in-out ${showAllAvatars ? "pt-2" : ""
-                      }`}
-                    style={{
-                      maxHeight: showAllAvatars
-                        ? `${avatarContainerHeights.expanded}px`
-                        : `${avatarContainerHeights.collapsed}px`,
-                      opacity: showAllAvatars ? 1 : 0.95,
-                    }}
-                  >
-                    {(showAllAvatars
-                      ? avatarOptions
-                      : avatarOptions.slice(0, 6)
-                    ).map(({ icon: Icon, name }) => (
-                      <button
-                        key={name}
-                        onClick={() => setChatAvatar(name)}
-                        className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-colors relative overflow-hidden ${chatAvatar === name
-                          ? "border-[var(--accent)]"
-                          : "border-tg-border hover:border-tg-accent"
-                          }`}
+                {/* Настройка аватара */}
+                <div className="mb-6">
+                  <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
+                    {t("library.chatAvatar", { defaultValue: "Аватар чата" })}
+                  </label>
+
+                  {/* Загрузка своего аватара (только для Plus/Pro) */}
+                  {isPlusOrProUser && (
+                    <div className="mb-5">
+                      <label className="block text-xs text-[var(--text-gray)] mb-2">
+                        {t("library.uploadImagePlusPro", { defaultValue: "Upload image (Plus/Pro)" })}
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <motion.div
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => groupAvatarFileInputRef.current?.click()}
+                          className="w-16 h-16 rounded-xl border-2 border-dashed border-[var(--border-color)]/60 hover:border-[var(--accent)] cursor-pointer flex items-center justify-center transition-all relative overflow-hidden bg-[var(--bg-primary)]/50 backdrop-blur-sm"
+                        >
+                          {chatAvatarPreview ? (
+                            <img
+                              src={chatAvatarPreview}
+                              alt="Avatar preview"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <MdAddAPhoto className="text-2xl text-[var(--text-gray)]" />
+                          )}
+                        </motion.div>
+                        <div className="flex-1">
+                          <button
+                            type="button"
+                            onClick={() => groupAvatarFileInputRef.current?.click()}
+                            className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                          >
+                            {chatAvatarPreview ? t("library.change", { defaultValue: "Изменить" }) : t("library.uploadImage", { defaultValue: "Загрузить изображение" })}
+                          </button>
+                          {chatAvatarPreview && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setChatAvatarFile(null);
+                                setChatAvatarPreview(null);
+                                setChatAvatar("group");
+                              }}
+                              className="ml-2 text-sm text-red-500 hover:text-red-400 transition-colors"
+                            >
+                              {t("library.remove", { defaultValue: "Удалить" })}
+                            </button>
+                          )}
+                          <p className="text-xs text-[var(--text-gray)] mt-1">
+                            {t("library.imageFormatHint", { defaultValue: "JPG, PNG, GIF or WebP, up to 5MB" })}
+                          </p>
+                        </div>
+                      </div>
+                      <input
+                        ref={groupAvatarFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              showError("Файл слишком большой. Максимальный размер: 5MB");
+                              return;
+                            }
+                            if (!file.type.startsWith("image/")) {
+                              showError("Пожалуйста, выберите изображение");
+                              return;
+                            }
+                            setChatAvatarFile(file);
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setChatAvatarPreview(reader.result);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        style={{ display: "none" }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Превью выбранной иконки (если не загружено изображение) */}
+                  {!chatAvatarPreview && chatAvatar && (
+                    <div className="mb-6 flex justify-center">
+                      <motion.div 
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="relative w-24 h-24 rounded-full overflow-hidden shadow-2xl ring-4 ring-[var(--accent)]/20 ring-offset-2 ring-offset-[var(--bg-secondary)]"
                       >
                         <div
-                          className="absolute inset-0 bg-center bg-cover opacity-60"
+                          className="absolute inset-0 bg-center bg-cover"
                           style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
                         />
-                        <Icon className={`text-xl relative z-10 ${chatAvatar === name ? "text-[var(--accent)]" : "text-tg-text"}`} />
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-              {!chatAvatarPreview && avatarOptions.length > 6 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllAvatars((prev) => !prev)}
-                  className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-tg-border bg-[var(--bg-tertiary)] hover:bg-[var(--bg-secondary)] text-xs font-medium text-tg-text-secondary hover:text-tg-text transition-all shadow-sm"
-                >
-                  {showAllAvatars ? (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        <div className="absolute inset-0 flex items-center justify-center text-white">
+                          {(() => {
+                            const SelectedIcon = avatarOptions.find(opt => opt.name === chatAvatar)?.icon || MdGroup;
+                            return <SelectedIcon className="text-4xl drop-shadow-lg" style={{ transform: "scale(0.9)" }} />;
+                          })()}
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {/* Иконки аватаров (используются, если не загружено изображение) */}
+                  {!chatAvatarPreview && (
                     <>
-                      <MdExpandLess className="text-base" />
-                      <span>
-                        {t("library.hideAvatars", { defaultValue: "Скрыть" })}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <MdExpandMore className="text-base" />
-                      <span>
-                        {t("library.showAllAvatars", {
-                          defaultValue: "Показать все",
-                        })}
-                      </span>
+                      <div
+                        ref={avatarContainerRef}
+                        className={`flex gap-2 flex-wrap overflow-hidden transition-all duration-300 ease-in-out ${showAllAvatars ? "pt-2" : ""
+                          }`}
+                        style={{
+                          maxHeight: showAllAvatars
+                            ? `${avatarContainerHeights.expanded}px`
+                            : `${avatarContainerHeights.collapsed}px`,
+                          opacity: showAllAvatars ? 1 : 0.95,
+                        }}
+                      >
+                        {(showAllAvatars
+                          ? avatarOptions
+                          : avatarOptions.slice(0, iconsPerRow * 2 - 1)
+                        ).map(({ icon: Icon, name }) => (
+                          <motion.button
+                            key={name}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setChatAvatar(name)}
+                            className={`w-11 h-11 rounded-xl border-2 flex items-center justify-center transition-all relative overflow-hidden ${chatAvatar === name
+                              ? "border-[var(--accent)] bg-[var(--accent)]/10 shadow-lg shadow-[var(--accent)]/20"
+                              : "border-[var(--border-color)]/60 hover:border-[var(--accent)]/50 bg-[var(--bg-primary)]/50 backdrop-blur-sm"
+                              }`}
+                          >
+                            <div
+                              className="absolute inset-0 bg-center bg-cover opacity-40"
+                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
+                            />
+                            <Icon className={`text-lg relative z-10 transition-colors ${chatAvatar === name ? "text-[var(--accent)]" : "text-[var(--text-white)]"}`} />
+                          </motion.button>
+                        ))}
+                        {/* Показываем счетчик оставшихся иконок */}
+                        {!showAllAvatars && avatarOptions.length > (iconsPerRow * 2 - 1) && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowAllAvatars(true)}
+                            className="w-11 h-11 rounded-xl border-2 border-[var(--border-color)]/60 bg-[var(--bg-primary)]/50 backdrop-blur-sm flex items-center justify-center transition-all relative overflow-hidden"
+                          >
+                            <div
+                              className="absolute inset-0 bg-center bg-cover opacity-40"
+                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
+                            />
+                            <span className="text-sm font-semibold text-[var(--text-white)] relative z-10">
+                              +{avatarOptions.length - (iconsPerRow * 2 - 1)}
+                            </span>
+                          </motion.button>
+                        )}
+                      </div>
                     </>
                   )}
-                </button>
-              )}
-            </div>
+                  {!chatAvatarPreview && avatarOptions.length > 6 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAvatars((prev) => !prev)}
+                      className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border-color)]/60 bg-[var(--bg-primary)]/50 hover:bg-[var(--bg-tertiary)]/70 text-xs font-medium text-[var(--text-gray)] hover:text-[var(--text-white)] transition-all backdrop-blur-sm"
+                    >
+                      {showAllAvatars ? (
+                        <>
+                          <MdExpandLess className="text-base" />
+                          <span>
+                            {t("library.hideAvatars", { defaultValue: "Скрыть" })}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <MdExpandMore className="text-base" />
+                          <span>
+                            {t("library.showAllAvatars", {
+                              defaultValue: "Показать все",
+                            })}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
 
-            {/* Настройка имени */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-tg-text mb-3">
-                Название чата
-              </label>
-              <input
-                type="text"
-                value={chatName}
-                onChange={(e) => setChatName(e.target.value)}
-                placeholder="Введите название чата..."
-                className="w-full px-4 py-3 bg-tg-bg border border-tg-border rounded-lg text-tg-text placeholder-tg-text-secondary focus:outline-none focus:border-tg-accent focus:ring-2 focus:ring-tg-accent/20"
-              />
-            </div>
+                {/* Настройка имени */}
+                <div className="mb-6">
+                  <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
+                    {t("library.chatName", { defaultValue: "Название чата" })}
+                  </label>
+                  <div className="relative chat-input-frosted rounded-2xl">
+                    <input
+                      type="text"
+                      value={chatName}
+                      onChange={(e) => setChatName(e.target.value)}
+                      placeholder={t("library.chatNamePlaceholder", { defaultValue: "Enter chat name..." })}
+                      className="w-full px-4 py-3.5 bg-transparent border-0 rounded-2xl text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:ring-0 transition-all"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <MdChat className="text-[var(--text-gray)] text-lg" />
+                    </div>
+                  </div>
+                </div>
 
-            {/* Кнопки действий */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setCurrentStage("selection")}
-                className="flex-1 px-4 py-3 bg-tg-bg border border-tg-border rounded-lg text-tg-text hover:bg-tg-hover transition-colors"
-              >
-                Назад
-              </button>
-              <button
-                onClick={handleCreateGroupChat}
-                disabled={!chatName.trim()}
-                className="flex-1 px-4 py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:bg-[var(--muted)] disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-              >
-                Создать чат
-              </button>
+                {/* Кнопки действий */}
+                <div className="flex gap-3 pt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setCurrentStage("selection")}
+                    className="flex-1 px-4 py-3.5 bg-[var(--bg-primary)]/60 backdrop-blur-sm border border-[var(--border-color)]/60 rounded-xl text-[var(--text-white)] hover:bg-[var(--bg-tertiary)]/70 transition-all font-medium"
+                  >
+                    {t("library.back", { defaultValue: "Назад" })}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={handleCreateGroupChat}
+                    disabled={!chatName.trim()}
+                    className="flex-1 px-4 py-3.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:bg-[var(--bg-tertiary)]/50 disabled:text-[var(--text-gray)] disabled:cursor-not-allowed text-white rounded-xl transition-all font-medium shadow-lg shadow-[var(--accent)]/25 flex items-center justify-center gap-2"
+                  >
+                    <HiMiniUserGroup className="text-lg" />
+                    {t("library.create", { defaultValue: "Create" })}
+                  </motion.button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

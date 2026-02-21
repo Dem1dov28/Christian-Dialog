@@ -108,6 +108,7 @@ function MainApp() {
 
   const {
     conversations,
+    hasLoadedConversations,
     systemChat,
     activeConversation,
     messages,
@@ -453,6 +454,27 @@ function MainApp() {
     return cleanup;
   }, []);
 
+  // Эффект для перенаправления на /Library при загрузке приложения
+  // На мобильных: открываем библиотеку только если нет чатов (и обычных и групповых)
+  // На десктопе: всегда открываем библиотеку
+  React.useEffect(() => {
+    // Ждём полной загрузки и загрузки чатов
+    // Проверяем, что это первая загрузка (не возврат назад)
+    const hasRedirected = sessionStorage.getItem('app_initial_redirect_done');
+    
+    if (isInitialLoadComplete && hasLoadedConversations && location.pathname === '/' && !hasRedirected) {
+      sessionStorage.setItem('app_initial_redirect_done', 'true');
+      
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+      const hasChats = conversations && conversations.length > 0;
+      const shouldOpenLibrary = !isMobile || !hasChats;
+      
+      if (shouldOpenLibrary) {
+        navigate('/Library', { replace: true });
+      }
+    }
+  }, [isInitialLoadComplete, hasLoadedConversations, location.pathname, conversations, navigate]);
+
   // Синхронизация URL с состоянием (обработка кнопки "назад" в браузере)
   // Используем ref для отслеживания предыдущего pathname
   const prevPathnameRef = React.useRef(location.pathname);
@@ -738,14 +760,27 @@ function ProtectedRoute({ children }) {
 // Компонент для публичных маршрутов (только для неавторизованных)
 function PublicRoute({ children, allowAuthenticated = false }) {
   const { isAuthenticated, isInitializing } = useAuth();
+  const { conversations, hasLoadedConversations } = useChats();
   const location = useLocation();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
+  // Ждём загрузки аутентификации
   if (isInitializing) {
     return <LoadingScreen isVisible={true} />;
   }
 
+  // Для авторизованных на мобильных: ждём загрузки чатов перед редиректом
+  if (isAuthenticated && !allowAuthenticated && isMobile && !hasLoadedConversations) {
+    return <LoadingScreen isVisible={true} />;
+  }
+
   if (isAuthenticated && !allowAuthenticated) {
-    return <Navigate to="/Library" replace />;
+    // На мобильных устройствах: открываем библиотеку только если нет чатов
+    // На десктопе: всегда открываем библиотеку
+    const hasChats = conversations && conversations.length > 0;
+    const shouldOpenLibrary = !isMobile || !hasChats;
+    
+    return <Navigate to={shouldOpenLibrary ? "/Library" : "/"} replace />;
   }
 
   return children;

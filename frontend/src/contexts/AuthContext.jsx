@@ -226,6 +226,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       apiClient.setToken(null);
       localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
+      sessionStorage.removeItem('app_initial_redirect_done'); // Сбрасываем флаг редиректа
     }
   };
 
@@ -243,6 +244,7 @@ export const AuthProvider = ({ children }) => {
   // Принудительный выход при ошибке авторизации
   const forceLogout = () => {
     localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
+    sessionStorage.removeItem('app_initial_redirect_done'); // Сбрасываем флаг редиректа
     apiClient.setToken(null);
     setUser(null);
     setIsAuthenticated(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MdClose, MdCheck, MdAdd, MdDelete, MdAddAPhoto } from "react-icons/md";
+import { MdClose, MdCheck, MdAdd, MdDelete, MdAddAPhoto, MdSearch } from "react-icons/md";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useNotification } from "../../contexts/NotificationContext";
@@ -94,12 +94,12 @@ const EditGroupChatModal = ({
     const trimmedTitle = newTitle.trim();
     
     if (!trimmedTitle) {
-      showError("Название чата не может быть пустым");
+      showError(t("library.chatNameRequired", { defaultValue: "Название чата не может быть пустым" }));
       return;
     }
 
     if (selectedAgentIds.length < 2) {
-      showError("Выберите минимум 2 участника");
+      showError(t("library.minParticipantsRequired", { defaultValue: "Выберите минимум 2 участника" }));
       return;
     }
 
@@ -248,7 +248,7 @@ const EditGroupChatModal = ({
 
       {/* Modal */}
       <div
-        className={`fixed left-1/2 transform -translate-x-1/2 w-full max-w-2xl max-h-[80vh] bg-[var(--bg-secondary)]/90 backdrop-blur-xl border border-[var(--border-color)]/50 rounded-2xl shadow-2xl z-50 transition-all duration-300 flex flex-col ${
+        className={`fixed left-1/2 transform -translate-x-1/2 w-full max-w-2xl max-h-[80vh] bg-[var(--bg-secondary)]/70 backdrop-blur-2xl backdrop-saturate-150 border border-[var(--border-color)]/50 rounded-3xl shadow-2xl shadow-black/20 z-50 transition-all duration-300 flex flex-col overflow-hidden ${
           isShown
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4 pointer-events-none"
@@ -261,14 +261,30 @@ const EditGroupChatModal = ({
         onKeyDown={handleKeyPress}
         tabIndex={-1}
       >
+        {/* Gradient Overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/5 via-transparent to-[var(--accent)]/10 pointer-events-none" />
+        
+        {/* Subtle noise texture overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.015] pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
+
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]/50">
-          <h3 className="text-lg font-semibold text-[var(--text-white)]">
-            Редактировать групповой чат
-          </h3>
+        <div className="relative flex items-center justify-between p-5 border-b border-[var(--border-color)]/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center ring-1 ring-[var(--accent)]/20">
+              <MdGroups className="w-5 h-5 text-[var(--accent)]" />
+            </div>
+            <h3 className="text-lg font-bold text-[var(--text-white)]">
+              {t("library.editGroupChat", { defaultValue: "Редактировать групповой чат" })}
+            </h3>
+          </div>
           <button
             onClick={handleClose}
-            className="text-[var(--text-gray)] hover:text-[var(--text-white)] transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-gray)] hover:text-[var(--text-white)] hover:bg-[var(--bg-primary)]/50 transition-all"
             disabled={isSaving}
           >
             <MdClose className="w-5 h-5" />
@@ -276,33 +292,33 @@ const EditGroupChatModal = ({
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="relative flex-1 overflow-y-auto p-5 space-y-5">
           {/* Название чата */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-white)] mb-2">
-              Название чата
+            <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
+              {t("library.chatName", { defaultValue: "Название чата" })}
             </label>
             <input
               ref={inputRef}
               type="text"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Введите название чата"
+              placeholder={t("library.chatNamePlaceholder", { defaultValue: "Введите название чата" })}
               maxLength={200}
               disabled={isSaving}
-              className="w-full px-4 py-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+              className="w-full px-4 py-3.5 rounded-xl bg-[var(--bg-primary)]/80 backdrop-blur-sm border border-[var(--border-color)]/60 text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20 transition-all"
             />
           </div>
 
           {/* Аватар */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-white)] mb-2">
-              Аватар чата
+            <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
+              {t("library.chatAvatar", { defaultValue: "Аватар чата" })}
             </label>
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-4 mb-4">
               <div
                 onClick={() => groupAvatarFileInputRef.current?.click()}
-                className="w-16 h-16 rounded-lg border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] cursor-pointer flex items-center justify-center transition-colors relative overflow-hidden"
+                className="w-16 h-16 rounded-xl border-2 border-dashed border-[var(--border-color)]/60 hover:border-[var(--accent)] cursor-pointer flex items-center justify-center transition-all relative overflow-hidden bg-[var(--bg-primary)]/50 backdrop-blur-sm"
               >
                 {groupAvatarPreview ? (
                   <img
@@ -318,9 +334,9 @@ const EditGroupChatModal = ({
                 <button
                   type="button"
                   onClick={() => groupAvatarFileInputRef.current?.click()}
-                  className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                  className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
                 >
-                  {groupAvatarPreview ? "Изменить" : "Загрузить изображение"}
+                  {groupAvatarPreview ? t("library.change", { defaultValue: "Изменить" }) : t("library.uploadImage", { defaultValue: "Загрузить изображение" })}
                 </button>
                 {groupAvatarPreview && (
                   <button
@@ -332,7 +348,7 @@ const EditGroupChatModal = ({
                     }}
                     className="ml-2 text-sm text-red-500 hover:text-red-400 transition-colors"
                   >
-                    Удалить
+                    {t("library.remove", { defaultValue: "Удалить" })}
                   </button>
                 )}
               </div>
@@ -360,7 +376,7 @@ const EditGroupChatModal = ({
             />
             
             {/* Иконки аватаров */}
-            <div className="grid grid-cols-8 gap-2">
+            <div className="flex gap-2 flex-wrap">
               {avatarOptions.map((option) => {
                 const IconComponent = option.icon;
                 const isSelected = groupAvatar === option.name && !groupAvatarPreview;
@@ -374,13 +390,17 @@ const EditGroupChatModal = ({
                       setGroupAvatarPreview(null);
                     }}
                     disabled={isSaving}
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all relative overflow-hidden ${
                       isSelected
-                        ? "bg-[var(--accent)] text-white scale-110"
-                        : "bg-[var(--bg-primary)] text-[var(--text-gray)] hover:bg-[var(--bg-tertiary)]"
+                        ? "border-2 border-[var(--accent)] bg-[var(--accent)]/10 shadow-lg shadow-[var(--accent)]/20"
+                        : "border-2 border-[var(--border-color)]/60 bg-[var(--bg-primary)]/50 backdrop-blur-sm hover:border-[var(--accent)]/50"
                     }`}
                   >
-                    <IconComponent className="text-xl" />
+                    <div
+                      className="absolute inset-0 bg-center bg-cover opacity-40"
+                      style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
+                    />
+                    <IconComponent className={`text-lg relative z-10 transition-colors ${isSelected ? "text-[var(--accent)]" : "text-[var(--text-white)]"}`} />
                   </button>
                 );
               })}
@@ -389,21 +409,24 @@ const EditGroupChatModal = ({
 
           {/* Участники */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-white)] mb-2">
-              Участники ({selectedAgentIds.length})
+            <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
+              {t("library.participantsCount", { count: selectedAgentIds.length, defaultValue: `Участники (${selectedAgentIds.length})` })}
             </label>
             
             {/* Поиск */}
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Поиск участников..."
-              className="w-full px-4 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all mb-3"
-            />
+            <div className="relative mb-3">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("library.searchParticipants", { defaultValue: "Поиск участников..." })}
+                className="w-full px-4 py-2.5 pl-10 rounded-xl bg-[var(--bg-primary)]/80 backdrop-blur-sm border border-[var(--border-color)]/60 text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20 transition-all"
+              />
+              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-gray)] text-lg" />
+            </div>
 
             {/* Список участников */}
-            <div className="max-h-60 overflow-y-auto space-y-2">
+            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
               {filteredAgents.map((agent) => {
                 const isSelected = selectedAgentIds.includes(agent.id);
                 const translatedAgent = translateAgent(agent);
@@ -413,28 +436,30 @@ const EditGroupChatModal = ({
                     type="button"
                     onClick={() => toggleAgentSelection(agent.id)}
                     disabled={isSaving}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
                       isSelected
-                        ? "bg-[var(--accent)]/20 border-2 border-[var(--accent)]"
-                        : "bg-[var(--bg-primary)] border-2 border-transparent hover:border-[var(--border-color)]"
+                        ? "bg-[var(--accent)]/15 border-2 border-[var(--accent)]/60 shadow-sm"
+                        : "bg-[var(--bg-primary)]/60 backdrop-blur-sm border-2 border-transparent hover:border-[var(--border-color)]/60"
                     }`}
                   >
                     {agent.image_url || agent.avatar_url ? (
                       <img
                         src={agent.image_url || agent.avatar_url}
                         alt={translatedAgent.name}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-[var(--border-color)]"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center text-white font-semibold ring-2 ring-[var(--border-color)]">
                         {translatedAgent.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="flex-1 text-left text-[var(--text-white)]">
+                    <span className="flex-1 text-left text-[var(--text-white)] font-medium">
                       {translatedAgent.name}
                     </span>
                     {isSelected && (
-                      <MdCheck className="text-[var(--accent)] text-xl" />
+                      <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                        <MdCheck className="text-white text-sm" />
+                      </div>
                     )}
                   </button>
                 );
@@ -444,18 +469,18 @@ const EditGroupChatModal = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--border-color)]/50">
+        <div className="relative flex items-center justify-end gap-3 p-5 border-t border-[var(--border-color)]/50">
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="px-4 py-2 rounded-lg text-[var(--text-gray)] hover:text-[var(--text-white)] hover:bg-[var(--hover-bg)] transition-colors disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl text-[var(--text-gray)] hover:text-[var(--text-white)] hover:bg-[var(--bg-primary)]/60 backdrop-blur-sm transition-all font-medium disabled:opacity-50"
           >
             {t("common.cancel", { defaultValue: "Отмена" })}
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving || !newTitle.trim() || selectedAgentIds.length < 2}
-            className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium shadow-lg shadow-[var(--accent)]/25"
           >
             {isSaving ? (
               <>

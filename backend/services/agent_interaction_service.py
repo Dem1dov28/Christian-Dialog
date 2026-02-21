@@ -342,7 +342,9 @@ class AgentInteractionService:
         user_message: str,
         previous_responses: List[Dict[str, Any]],
         interaction_type: Optional[InteractionType] = None,
-        conversation_pattern: Optional[InteractionPattern] = None
+        conversation_pattern: Optional[InteractionPattern] = None,
+        agent_own_history: Optional[List[str]] = None,  # Agent's own previous messages
+        all_discussed_points: Optional[List[str]] = None  # Key points already discussed
     ) -> str:
         """Построить контекст для агента с учётом типа взаимодействия.
 
@@ -358,13 +360,30 @@ class AgentInteractionService:
         # --- Ответы других участников (если есть) ---
         if previous_responses:
             parts.append("\nНа это уже ответили:")
-            for resp in previous_responses:
+            # Show up to 5 recent messages (optimized for tokens)
+            recent_responses = previous_responses[-5:] if len(previous_responses) > 5 else previous_responses
+            for resp in recent_responses:
                 name = resp.get("agent_name", "Агент")
                 msg = (resp.get("message") or "").strip()
                 if msg:
-                    # Показываем первые 200 символов, чтобы не перегружать контекст
+                    # Shorter snippets to save tokens (up to 200 chars)
                     snippet = msg[:200] + ("…" if len(msg) > 200 else "")
                     parts.append(f"  {name}: {snippet}")
+
+        # --- Agent's own previous messages (to prevent self-repetition) ---
+        if agent_own_history and len(agent_own_history) > 0:
+            parts.append(f"\n[Ты уже говорил:]")
+            # Show only last 1-2 own messages to save tokens
+            own_msgs_to_show = agent_own_history[-2:] if len(agent_own_history) > 1 else agent_own_history[-1:]
+            for i, own_msg in enumerate(own_msgs_to_show, 1):
+                snippet = own_msg[:150] + ("…" if len(own_msg) > 150 else "")
+                parts.append(f"  {i}. {snippet}")
+
+        # --- Key points already discussed (only for longer conversations) ---
+        if all_discussed_points and len(all_discussed_points) > 0 and len(previous_responses) > 5:
+            parts.append(f"\n[Уже сказано — не повторяй:]")
+            for point in all_discussed_points[-3:]:  # Show last 3 key points only
+                parts.append(f"  • {point}")
 
         # --- Подсказка о характере текущего обмена ---
         pattern_hints = {
@@ -379,24 +398,29 @@ class AgentInteractionService:
         if conversation_pattern and conversation_pattern in pattern_hints:
             parts.append(f"\n[{pattern_hints[conversation_pattern]}]")
 
-        # --- Краткая ненавязчивая инструкция ---
+        # --- Stronger anti-duplication instruction ---
         turn_hints = {
             InteractionType.QUESTION: (
-                f"Теперь слово {agent_name}. Ответь на вопрос в своей манере."
+                f"Теперь слово {agent_name}. Ответь на вопрос в своей манере. "
+                f"НЕ повторяй то, что уже сказано выше — предложи что-то новое."
             ),
             InteractionType.DISAGREEMENT: (
-                f"Теперь слово {agent_name}. Выскажи свою позицию — согласись или возрази."
+                f"Теперь слово {agent_name}. Выскажи свою позицию — согласись или возрази. "
+                f"НЕ повторяй чужие аргументы — вырази СВОЮ уникальную точку зрения."
             ),
             InteractionType.AGREEMENT: (
-                f"Теперь слово {agent_name}. Дополни сказанное — своими словами и примерами."
+                f"Теперь слово {agent_name}. Если согласен — НЕ повторяй то же самое. "
+                f"Вместо этого: добавь новый пример, развей мысль дальше или предложи следующий шаг."
             ),
             InteractionType.ADDITION: (
-                f"Теперь слово {agent_name}. Добавь свой взгляд на тему."
+                f"Теперь слово {agent_name}. Добавь свой взгляд на тему. "
+                f"Обязательно скажи что-то НОВОЕ, чего ещё не было в разговоре."
             ),
         }
         hint = turn_hints.get(
             interaction_type,
-            f"Теперь слово {agent_name}. Отвечай естественно, не повторяя уже сказанного."
+            f"Теперь слово {agent_name}. Отвечай естественно. "
+            f"ВАЖНО: НЕ повторяй уже сказанное — внеси в разговор что-то оригинальное."
         )
         parts.append(f"\n{hint}")
 

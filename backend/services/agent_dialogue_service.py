@@ -35,6 +35,10 @@ class AgentDialogueService(BaseService):
         self.role_service = AgentRoleService()
         self.memory_service = AgentMemoryService()
         self.coordination_service = AgentCoordinationService()
+        # Track per-agent message history and regeneration attempts
+        self.agent_message_history: Dict[int, Dict[int, List[str]]] = {}  # conversation_id -> agent_id -> messages
+        self.agent_regeneration_attempts: Dict[int, Dict[int, int]] = {}  # conversation_id -> agent_id -> attempts
+        self.discussed_key_points: Dict[int, List[str]] = {}  # conversation_id -> key points
     
     async def trigger_agent_conversation(
         self, 
@@ -99,9 +103,24 @@ class AgentDialogueService(BaseService):
                     language=language
                 )
                 
+                # Initialize tracking for this conversation
+                if conversation_id not in self.agent_message_history:
+                    self.agent_message_history[conversation_id] = {}
+                    self.agent_regeneration_attempts[conversation_id] = {}
+                    self.discussed_key_points[conversation_id] = []
+                
                 # Сохраняем ответ первого агента
                 # Если ответ - словарь (например, с картинкой), берем только текст для сохранения в БД
                 first_response_text = first_response.get("text", "") if isinstance(first_response, dict) else str(first_response)
+                
+                # Track first agent's message
+                if first_agent["id"] not in self.agent_message_history[conversation_id]:
+                    self.agent_message_history[conversation_id][first_agent["id"]] = []
+                self.agent_message_history[conversation_id][first_agent["id"]].append(first_response_text)
+                
+                # Extract and track key points from first message
+                first_key_points = self._extract_key_points(first_response_text)
+                self.discussed_key_points[conversation_id].extend(first_key_points)
                 
                 first_message = self._save_agent_message(
                     session, conversation_id, first_response_text, first_agent["id"]
@@ -157,6 +176,12 @@ class AgentDialogueService(BaseService):
                 # Обрабатываем ответы других агентов
                 agent_participation = {first_agent["id"]: 1}
                 
+                # Initialize tracking for this conversation
+                if conversation_id not in self.agent_message_history:
+                    self.agent_message_history[conversation_id] = {}
+                    self.agent_regeneration_attempts[conversation_id] = {}
+                    self.discussed_key_points[conversation_id] = []
+                
                 for agent in agent_queue:
                     # Добавляем небольшую задержку между ответами агентов для имитации естественности
                     # и предотвращения превышения лимитов API (Rate Limits)
@@ -167,6 +192,14 @@ class AgentDialogueService(BaseService):
                     total_participation = self.interaction_service.get_agent_participation_count(
                         conversation_id, agent["id"]
                     )
+                    
+                    # Check if agent has exceeded regeneration attempts ("three-strike" rule)
+                    reg_attempts = self.agent_regeneration_attempts.get(conversation_id, {}).get(agent["id"], 0)
+                    if reg_attempts >= 2:
+                        logger.warning(
+                            f"Agent {agent['id']} ({agent['name']}) exceeded regeneration attempts. Skipping."
+                        )
+                        continue
                     
                     # Назначаем роль агенту
                     agent_role = self.role_service.assign_role(
@@ -210,13 +243,21 @@ class AgentDialogueService(BaseService):
                         agent["id"], agents, conversation_context
                     )
                     
+                    # Get agent's own message history
+                    agent_own_history = self.agent_message_history.get(conversation_id, {}).get(agent["id"], [])
+                    
+                    # Get discussed key points
+                    discussed_points = self.discussed_key_points.get(conversation_id, [])
+                    
                     # Создаем улучшенный контекст для агента
                     base_context = self.interaction_service.build_context_for_agent(
                         agent,
                         user_message,
                         responses,
                         first_interaction_type,
-                        conversation_pattern
+                        conversation_pattern,
+                        agent_own_history=agent_own_history,
+                        all_discussed_points=discussed_points
                     )
                     
                     context = f"{base_context}\n\n{coordination_instructions}\n\n{role_instructions}"
@@ -232,27 +273,47 @@ class AgentDialogueService(BaseService):
                         language=language
                     )
                     
-                    # Проверяем, не повторяет ли агент предыдущие сообщения (улучшенный семантический анализ)
+                    # Проверяем, не повторяет ли агент предыдущие сообщения (ENHANCED семантический анализ)
                     previous_messages = [r.get("message", "") for r in responses]
-                    is_repetition, max_similarity, similar_message = self.semantic_service.analyze_message_novelty(
-                        agent_response,
-                        previous_messages,
-                        threshold=0.65  # Порог схожести
-                    )
+                    is_repetition, max_similarity, similar_message, is_self_repetition = \
+                        self.semantic_service.analyze_message_novelty_enhanced(
+                            agent_response,
+                            previous_messages,
+                            agent_own_history,
+                            threshold=0.55  # Stricter threshold
+                        )
                     
                     # Если повторение, пытаемся перегенерировать с более строгими инструкциями
                     if is_repetition:
                         logger.warning(
                             f"Agent {agent['id']} ({agent['name']}) повторяет сообщение. "
+                            f"Схожесть: {max_similarity:.2f}, Self-repetition: {is_self_repetition}. "
                             f"Схожесть с: {similar_message[:50]}..."
                         )
-                        # Добавляем более строгое предупреждение в контекст
-                        strict_context = context + (
-                            f"\n\n⚠️ ВНИМАНИЕ: Твой предыдущий ответ был слишком похож на: "
-                            f'"{similar_message[:100]}..."\n'
-                            "Дай ПОЛНОСТЬЮ НОВЫЙ ответ, используя другие слова и формулировки. "
-                            "Вырази ту же мысль, но по-другому, или добавь что-то принципиально новое."
-                        )
+                        
+                        # Increment regeneration attempts
+                        if conversation_id not in self.agent_regeneration_attempts:
+                            self.agent_regeneration_attempts[conversation_id] = {}
+                        self.agent_regeneration_attempts[conversation_id][agent["id"]] = \
+                            self.agent_regeneration_attempts[conversation_id].get(agent["id"], 0) + 1
+                        
+                        # Add more specific warning based on type of repetition
+                        if is_self_repetition:
+                            repetition_warning = (
+                                f"\n\n⚠️ ВНИМАНИЕ: Ты УЖЕ ГОВОРИЛ что-то похожее ранее в этом разговоре: "
+                                f'"{similar_message[:100]}..."\n'
+                                "Ты НЕ ДОЛЖЕН повторять свои предыдущие мысли. "
+                                "Скажи что-то ПОЛНОСТЬЮ НОВОЕ или промолчи."
+                            )
+                        else:
+                            repetition_warning = (
+                                f"\n\n⚠️ ВНИМАНИЕ: Твой ответ слишком похож на то, что уже сказал другой: "
+                                f'"{similar_message[:100]}..."\n'
+                                "Дай ПОЛНОСТЬЮ НОВЫЙ ответ. НЕ повторяй чужие идеи. "
+                                "Вырази СВОЮ уникальную точку зрения или промолчи."
+                            )
+                        
+                        strict_context = context + repetition_warning
                         
                         # Перегенерируем ответ
                         agent_response = await self.agent_service.generate_response(
@@ -263,23 +324,35 @@ class AgentDialogueService(BaseService):
                             language=language
                         )
                         
-                        # Проверяем еще раз
-                        is_still_repetition, _, _ = self.semantic_service.analyze_message_novelty(
+                        # Проверяем еще раз с еще более строгим порогом
+                        is_still_repetition, still_sim, _, _ = self.semantic_service.analyze_message_novelty_enhanced(
                             agent_response,
                             previous_messages,
-                            threshold=0.6
+                            agent_own_history,
+                            threshold=0.50  # Even stricter for second check
                         )
                         
                         if is_still_repetition:
                             logger.warning(
-                                f"Agent {agent['id']} все еще повторяется после перегенерации. "
-                                "Пропускаем ответ."
+                                f"Agent {agent['id']} все еще повторяется после перегенерации "
+                                f"(similarity: {still_sim:.2f}). Пропускаем ответ."
                             )
                             continue  # Пропускаем этого агента, если все еще повторяется
                     
                     # Сохраняем ответ
                     # Если ответ - словарь (например, с картинкой), берем только текст для сохранения в БД
                     agent_response_text = agent_response.get("text", "") if isinstance(agent_response, dict) else str(agent_response)
+                    
+                    # Track agent's own message
+                    if agent["id"] not in self.agent_message_history[conversation_id]:
+                        self.agent_message_history[conversation_id][agent["id"]] = []
+                    self.agent_message_history[conversation_id][agent["id"]].append(agent_response_text)
+                    
+                    # Extract and track key points from the message
+                    key_points = self._extract_key_points(agent_response_text)
+                    self.discussed_key_points[conversation_id].extend(key_points)
+                    # Keep only last 20 key points to avoid memory bloat
+                    self.discussed_key_points[conversation_id] = self.discussed_key_points[conversation_id][-20:]
                     
                     agent_message = self._save_agent_message(
                         session, conversation_id, agent_response_text, agent["id"]
@@ -334,6 +407,12 @@ class AgentDialogueService(BaseService):
     ) -> None:
         """Продолжить диалог между агентами"""
         try:
+            # Initialize tracking if needed
+            if conversation_id not in self.agent_message_history:
+                self.agent_message_history[conversation_id] = {}
+                self.agent_regeneration_attempts[conversation_id] = {}
+                self.discussed_key_points[conversation_id] = []
+            
             # Определяем приоритетных агентов для ответа
             priority_agents = dialogue_flow.get("priority_agents", [])
             if not priority_agents:
@@ -358,9 +437,21 @@ class AgentDialogueService(BaseService):
                 recent_messages
             )
             
+            # Check regeneration attempts ("three-strike" rule)
+            reg_attempts = self.agent_regeneration_attempts.get(conversation_id, {}).get(next_agent["id"], 0)
+            if reg_attempts >= 2:
+                logger.warning(
+                    f"Agent {next_agent['id']} ({next_agent['name']}) exceeded regeneration attempts in continuation. Skipping."
+                )
+                return
+            
             # Определяем тип взаимодействия и паттерн для контекста
             next_interaction_type = dialogue_flow.get("next_interaction_type", InteractionType.NEUTRAL)
             conversation_pattern = dialogue_flow.get("pattern", InteractionPattern.NEUTRAL)
+            
+            # Get agent's own history and discussed points
+            agent_own_history = self.agent_message_history.get(conversation_id, {}).get(next_agent["id"], [])
+            discussed_points = self.discussed_key_points.get(conversation_id, [])
             
             # Создаем контекст для агента
             context = self.interaction_service.build_context_for_agent(
@@ -368,7 +459,9 @@ class AgentDialogueService(BaseService):
                 user_message,
                 responses,
                 next_interaction_type,
-                conversation_pattern
+                conversation_pattern,
+                agent_own_history=agent_own_history,
+                all_discussed_points=discussed_points
             )
             
             # Агент продолжает диалог
@@ -380,24 +473,43 @@ class AgentDialogueService(BaseService):
                 language=language
             )
             
-            # Проверяем на повторения (улучшенный семантический анализ)
+            # Проверяем на повторения (ENHANCED семантический анализ)
             previous_messages = [r.get("message", "") for r in responses]
-            is_repetition, _, similar_message = self.semantic_service.analyze_message_novelty(
-                continuation_response,
-                previous_messages,
-                threshold=0.65
-            )
+            is_repetition, max_similarity, similar_message, is_self_repetition = \
+                self.semantic_service.analyze_message_novelty_enhanced(
+                    continuation_response,
+                    previous_messages,
+                    agent_own_history,
+                    threshold=0.55
+                )
             
             if is_repetition:
                 logger.warning(
                     f"Agent {next_agent['id']} ({next_agent['name']}) повторяет в продолжении диалога. "
+                    f"Схожесть: {max_similarity:.2f}, Self-repetition: {is_self_repetition}. "
                     f"Схожесть с: {similar_message[:50]}..."
                 )
-                # Перегенерируем с более строгими инструкциями
-                strict_context = context + (
-                    f"\n\n⚠️ ВНИМАНИЕ: Твой ответ слишком похож на предыдущие сообщения. "
-                    "Дай ПОЛНОСТЬЮ НОВЫЙ ответ, используя другие слова и формулировки."
-                )
+                
+                # Increment regeneration attempts
+                self.agent_regeneration_attempts[conversation_id][next_agent["id"]] = \
+                    self.agent_regeneration_attempts[conversation_id].get(next_agent["id"], 0) + 1
+                
+                # More specific warning
+                if is_self_repetition:
+                    repetition_warning = (
+                        f"\n\n⚠️ ВНИМАНИЕ: Ты УЖЕ ГОВОРИЛ что-то похожее: "
+                        f'"{similar_message[:100]}..."\n'
+                        "Ты НЕ ДОЛЖЕН повторять свои предыдущие мысли. "
+                        "Скажи что-то ПОЛНОСТЬЮ НОВОЕ."
+                    )
+                else:
+                    repetition_warning = (
+                        f"\n\n⚠️ ВНИМАНИЕ: Твой ответ слишком похож на: "
+                        f'"{similar_message[:100]}..."\n'
+                        "Дай ПОЛНОСТЬЮ НОВЫЙ ответ. НЕ повторяй чужие идеи."
+                    )
+                
+                strict_context = context + repetition_warning
                 continuation_response = await self.agent_service.generate_response(
                     next_agent["id"], 
                     strict_context,
@@ -405,10 +517,37 @@ class AgentDialogueService(BaseService):
                     is_multi_agent=True,
                     language=language
                 )
+                
+                # Check again with stricter threshold
+                is_still_repetition, still_sim, _, _ = self.semantic_service.analyze_message_novelty_enhanced(
+                    continuation_response,
+                    previous_messages,
+                    agent_own_history,
+                    threshold=0.50
+                )
+                
+                if is_still_repetition:
+                    logger.warning(
+                        f"Agent {next_agent['id']} still repeating after regeneration (similarity: {still_sim:.2f}). Skipping."
+                    )
+                    return
+            
+            # Track agent's message
+            if next_agent["id"] not in self.agent_message_history[conversation_id]:
+                self.agent_message_history[conversation_id][next_agent["id"]] = []
+            self.agent_message_history[conversation_id][next_agent["id"]].append(
+                continuation_response.get("text", "") if isinstance(continuation_response, dict) else str(continuation_response)
+            )
+            
+            # Extract and track key points
+            continuation_text = continuation_response.get("text", "") if isinstance(continuation_response, dict) else str(continuation_response)
+            key_points = self._extract_key_points(continuation_text)
+            self.discussed_key_points[conversation_id].extend(key_points)
+            self.discussed_key_points[conversation_id] = self.discussed_key_points[conversation_id][-20:]
             
             # Сохраняем продолжение диалога
             continuation_message = self._save_agent_message(
-                session, conversation_id, continuation_response, next_agent["id"]
+                session, conversation_id, continuation_text, next_agent["id"]
             )
             
             responses.append(self._create_response_dict(
@@ -585,24 +724,63 @@ class AgentDialogueService(BaseService):
                     language=language  # Передаем язык для ответа агента
                 )
                 
-                # Проверяем на повторения (улучшенный семантический анализ)
+                # Initialize tracking if needed
+                if conversation_id not in self.agent_message_history:
+                    self.agent_message_history[conversation_id] = {}
+                    self.agent_regeneration_attempts[conversation_id] = {}
+                    self.discussed_key_points[conversation_id] = []
+                
+                # Check regeneration attempts
+                reg_attempts = self.agent_regeneration_attempts.get(conversation_id, {}).get(agent["id"], 0)
+                if reg_attempts >= 2:
+                    logger.warning(
+                        f"Agent {agent['id']} ({agent['name']}) exceeded regeneration attempts in continue_dialogue. Skipping."
+                    )
+                    return {
+                        "conversation_id": conversation_id,
+                        "agent_responses": []
+                    }
+                
+                # Get agent's own history
+                agent_own_history = self.agent_message_history.get(conversation_id, {}).get(agent["id"], [])
+                
+                # Проверяем на повторения (ENHANCED семантический анализ)
                 previous_contents = [msg.content for msg in recent_messages if not msg.is_from_user]
-                is_repetition, _, similar_message = self.semantic_service.analyze_message_novelty(
-                    continuation_response,
-                    previous_contents,
-                    threshold=0.65
-                )
+                is_repetition, max_similarity, similar_message, is_self_repetition = \
+                    self.semantic_service.analyze_message_novelty_enhanced(
+                        continuation_response,
+                        previous_contents,
+                        agent_own_history,
+                        threshold=0.55
+                    )
                 
                 if is_repetition:
                     logger.warning(
                         f"Agent {agent['id']} ({agent['name']}) повторяет в continue_dialogue. "
+                        f"Схожесть: {max_similarity:.2f}, Self-repetition: {is_self_repetition}. "
                         f"Схожесть с: {similar_message[:50]}..."
                     )
-                    # Перегенерируем
-                    strict_context = context + (
-                        "\n\n⚠️ ВНИМАНИЕ: Твой ответ слишком похож на предыдущие сообщения. "
-                        "Дай ПОЛНОСТЬЮ НОВЫЙ ответ, используя другие слова и формулировки."
-                    )
+                    
+                    # Increment regeneration attempts
+                    self.agent_regeneration_attempts[conversation_id][agent["id"]] = \
+                        self.agent_regeneration_attempts[conversation_id].get(agent["id"], 0) + 1
+                    
+                    # More specific warning
+                    if is_self_repetition:
+                        repetition_warning = (
+                            f"\n\n⚠️ ВНИМАНИЕ: Ты УЖЕ ГОВОРИЛ что-то похожее: "
+                            f'"{similar_message[:100]}..."\n'
+                            "Ты НЕ ДОЛЖЕН повторять свои предыдущие мысли. "
+                            "Скажи что-то ПОЛНОСТЬЮ НОВОЕ."
+                        )
+                    else:
+                        repetition_warning = (
+                            "\n\n⚠️ ВНИМАНИЕ: Твой ответ слишком похож на предыдущие сообщения. "
+                            "Дай ПОЛНОСТЬЮ НОВЫЙ ответ, используя другие слова и формулировки. "
+                            "НЕ повторяй чужие идеи."
+                        )
+                    
+                    strict_context = context + repetition_warning
                     continuation_response = await self.agent_service.generate_response(
                         agent["id"], 
                         strict_context,
@@ -610,6 +788,23 @@ class AgentDialogueService(BaseService):
                         is_multi_agent=True,
                         language=language
                     )
+                    
+                    # Check again with stricter threshold
+                    is_still_repetition, still_sim, _, _ = self.semantic_service.analyze_message_novelty_enhanced(
+                        continuation_response,
+                        previous_contents,
+                        agent_own_history,
+                        threshold=0.50
+                    )
+                    
+                    if is_still_repetition:
+                        logger.warning(
+                            f"Agent {agent['id']} still repeating after regeneration (similarity: {still_sim:.2f}). Skipping."
+                        )
+                        return {
+                            "conversation_id": conversation_id,
+                            "agent_responses": []
+                        }
                 
                 # Сохраняем продолжение диалога
                 continuation_message = self._save_agent_message(
@@ -647,15 +842,30 @@ class AgentDialogueService(BaseService):
                             language=language
                         )
                         
-                        # Проверяем финальный ответ на повторения (улучшенный семантический анализ)
+                        # Get final agent's own history
+                        final_agent_history = self.agent_message_history.get(conversation_id, {}).get(final_agent["id"], [])
+                        
+                        # Проверяем финальный ответ на повторения (ENHANCED семантический анализ)
                         all_previous = previous_contents + [continuation_response]
-                        is_final_repetition, _, _ = self.semantic_service.analyze_message_novelty(
-                            final_response,
-                            all_previous,
-                            threshold=0.65
-                        )
+                        is_final_repetition, final_sim, _, is_final_self_rep = \
+                            self.semantic_service.analyze_message_novelty_enhanced(
+                                final_response,
+                                all_previous,
+                                final_agent_history,
+                                threshold=0.55
+                            )
                         
                         if not is_final_repetition:  # Сохраняем только если не повторение
+                            # Track final agent's message
+                            if final_agent["id"] not in self.agent_message_history[conversation_id]:
+                                self.agent_message_history[conversation_id][final_agent["id"]] = []
+                            self.agent_message_history[conversation_id][final_agent["id"]].append(final_response)
+                            
+                            # Track key points
+                            final_key_points = self._extract_key_points(final_response)
+                            self.discussed_key_points[conversation_id].extend(final_key_points)
+                            self.discussed_key_points[conversation_id] = self.discussed_key_points[conversation_id][-20:]
+                            
                             final_message = self._save_agent_message(
                                 db_session, conversation_id, final_response, final_agent["id"], is_chat_active=is_chat_active
                             )
@@ -665,7 +875,8 @@ class AgentDialogueService(BaseService):
                             ))
                         else:
                             logger.warning(
-                                f"Финальный ответ агента {final_agent['id']} был пропущен из-за повторения."
+                                f"Финальный ответ агента {final_agent['id']} был пропущен из-за повторения "
+                                f"(similarity: {final_sim:.2f}, self-repetition: {is_final_self_rep})."
                             )
                 
                 logger.info(f"Continued dialogue {conversation_id} with {len(responses)} responses")
@@ -796,4 +1007,33 @@ class AgentDialogueService(BaseService):
             "message": message,
             "message_id": message_id
         }
+    
+    def _extract_key_points(self, message: str, max_points: int = 3) -> List[str]:
+        """Extract key points/ideas from a message for deduplication tracking
+        
+        Args:
+            message: The message text
+            max_points: Maximum number of key points to extract
+            
+        Returns:
+            List of key point strings
+        """
+        # Simple extraction based on sentence splitting and key concept detection
+        sentences = message.replace('!', '.').replace('?', '.').split('.')
+        key_points = []
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 20:  # Meaningful sentence
+                # Extract significant words (4+ characters)
+                words = [w.lower() for w in sentence.split() if len(w) >= 4]
+                if len(words) >= 3:  # At least 3 significant words
+                    # Create a key point summary (first 10 words)
+                    point = ' '.join(sentence.split()[:10])
+                    key_points.append(point)
+                    
+            if len(key_points) >= max_points:
+                break
+        
+        return key_points
     

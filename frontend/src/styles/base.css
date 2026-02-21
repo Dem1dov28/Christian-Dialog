@@ -67,14 +67,6 @@ body.app-with-theme-bg {
   }
 }
 
-/* Utility class to use Comfortaa only where applied */
-.font-comfortaa {
-  font-family: "Comfortaa", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 700;
-  font-style: normal;
-}
-
 /* App root wrapper (без transform, чтобы корректно работал drag-and-drop).
    height: 100% чтобы уважать safe-area padding у #root, а не переполнять его. */
 .app-root {

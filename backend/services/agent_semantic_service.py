@@ -161,7 +161,7 @@ class AgentSemanticService:
         self,
         new_message: str,
         previous_messages: List[str],
-        threshold: float = 0.65
+        threshold: float = 0.55  # Lowered from 0.65 for stricter detection
     ) -> Tuple[bool, float, Optional[str]]:
         """Анализировать новизну сообщения относительно предыдущих
         
@@ -180,9 +180,8 @@ class AgentSemanticService:
         most_similar = None
         
         for prev_msg in previous_messages:
-            similarity = self.analyze_semantic_similarity(
-                new_message, prev_msg, method="hybrid"
-            )
+            # Use enhanced similarity with n-gram analysis
+            similarity = self._calculate_enhanced_similarity(new_message, prev_msg)
             
             if similarity > max_similarity:
                 max_similarity = similarity
@@ -190,6 +189,104 @@ class AgentSemanticService:
         
         is_repetition = max_similarity >= threshold
         return (is_repetition, max_similarity, most_similar)
+    
+    def _calculate_enhanced_similarity(self, text1: str, text2: str) -> float:
+        """Calculate enhanced similarity with n-gram phrase detection
+        
+        This detects when the same ideas are expressed using similar phrases,
+        even with different wordings.
+        """
+        # Base semantic similarity
+        base_similarity = self.analyze_semantic_similarity(text1, text2, method="hybrid")
+        
+        # N-gram analysis for phrase-level similarity
+        text1_lower = text1.lower().strip()
+        text2_lower = text2.lower().strip()
+        
+        # Extract n-grams (3-5 word phrases)
+        ngrams1 = self._extract_ngrams(text1_lower, n=3)
+        ngrams2 = self._extract_ngrams(text2_lower, n=3)
+        
+        if ngrams1 and ngrams2:
+            # Calculate Jaccard similarity for n-grams
+            intersection = len(ngrams1.intersection(ngrams2))
+            union = len(ngrams1.union(ngrams2))
+            ngram_similarity = intersection / union if union > 0 else 0.0
+            
+            # Boost similarity if there are common phrases
+            if intersection >= 2:  # At least 2 common 3-word phrases
+                phrase_boost = min(intersection * 0.15, 0.3)
+                base_similarity = min(base_similarity + phrase_boost, 1.0)
+        
+        # Key concept overlap analysis
+        concepts1 = set(self._extract_significant_words(text1))
+        concepts2 = set(self._extract_significant_words(text2))
+        
+        if concepts1 and concepts2:
+            concept_overlap = len(concepts1.intersection(concepts2))
+            total_concepts = len(concepts1.union(concepts2))
+            
+            # If high concept overlap, increase similarity
+            if total_concepts > 0:
+                concept_ratio = concept_overlap / total_concepts
+                if concept_ratio > 0.7:  # More than 70% concept overlap
+                    base_similarity = min(base_similarity + 0.1, 1.0)
+        
+        return base_similarity
+    
+    def _extract_ngrams(self, text: str, n: int = 3) -> set:
+        """Extract n-grams (n-word phrases) from text"""
+        words = re.findall(r'\b\w+\b', text.lower())
+        
+        # Filter out stop words for cleaner n-grams
+        stop_words = {"и", "в", "на", "с", "по", "для", "от", "до", "из", "к", 
+                     "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
+                     "это", "что", "как", "не", "но", "то", "так", "же", "бы", "быть"}
+        
+        filtered_words = [w for w in words if w not in stop_words]
+        
+        if len(filtered_words) < n:
+            return set()
+        
+        ngrams = set()
+        for i in range(len(filtered_words) - n + 1):
+            ngram = " ".join(filtered_words[i:i+n])
+            ngrams.add(ngram)
+        
+        return ngrams
+    
+    def analyze_message_novelty_enhanced(
+        self,
+        new_message: str,
+        previous_messages: List[str],
+        agent_own_messages: List[str],  # Agent's own previous messages
+        threshold: float = 0.55
+    ) -> Tuple[bool, float, Optional[str], bool]:
+        """Enhanced novelty analysis that also checks agent's own message history
+        
+        Returns:
+            Tuple[is_repetition, max_similarity, most_similar_message, is_self_repetition]
+        """
+        # Check against all previous messages
+        is_repetition, max_similarity, most_similar = self.analyze_message_novelty(
+            new_message, previous_messages, threshold
+        )
+        
+        # Also check against agent's own messages (stricter threshold for self-repetition)
+        self_threshold = threshold * 0.9  # 10% stricter for self-repetition
+        is_self_repetition = False
+        
+        if agent_own_messages:
+            is_self_rep, self_sim, self_similar = self.analyze_message_novelty(
+                new_message, agent_own_messages, self_threshold
+            )
+            if is_self_rep and self_sim > max_similarity:
+                is_self_repetition = True
+                max_similarity = self_sim
+                most_similar = self_similar
+                is_repetition = True
+        
+        return (is_repetition, max_similarity, most_similar, is_self_repetition)
     
     def find_semantic_gaps(
         self,
