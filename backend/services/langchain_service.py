@@ -1,4 +1,5 @@
 from typing import Dict, Any, Optional, List
+from difflib import SequenceMatcher
 from dotenv import load_dotenv
 import logging
 import warnings
@@ -161,6 +162,54 @@ class LangChainService:
         # Отслеживаем последний определённый язык пользователя для каждой беседы,
         # чтобы стабилизировать ответы модели, когда определение языка затруднено
         self.last_detected_language: Dict[str, str] = {}
+        # Анти-повтор: если новый ответ слишком похож на недавние, делаем один retry.
+        self.max_repeat_similarity = 0.88
+        self.max_repeat_retries = 1
+
+    @staticmethod
+    def _normalize_repeat_text(text: str) -> str:
+        """Нормализация текста для проверки повторов."""
+        if not text:
+            return ""
+        return " ".join(str(text).strip().lower().split())
+
+    def _get_recent_ai_texts(self, memory: ConversationBufferWindowMemory, limit: int = 4) -> List[str]:
+        """Достать последние ответы ассистента из memory."""
+        result: List[str] = []
+        for msg in reversed(memory.chat_memory.messages):
+            if isinstance(msg, AIMessage):
+                content = str(msg.content or "").strip()
+                if content:
+                    result.append(content)
+                if len(result) >= limit:
+                    break
+        return result
+
+    def _is_repetitive_response(self, candidate: str, recent_ai_texts: List[str]) -> bool:
+        """Проверить, не является ли ответ повтором недавних ответов."""
+        candidate_norm = self._normalize_repeat_text(candidate)
+        if not candidate_norm:
+            return False
+
+        for prev in recent_ai_texts:
+            prev_norm = self._normalize_repeat_text(prev)
+            if not prev_norm:
+                continue
+
+            # Прямое включение коротких ответов — явный повтор.
+            if candidate_norm == prev_norm:
+                return True
+            if len(candidate_norm) >= 30 and candidate_norm in prev_norm:
+                return True
+            if len(prev_norm) >= 30 and prev_norm in candidate_norm:
+                return True
+
+            # Похожесть по SequenceMatcher.
+            similarity = SequenceMatcher(None, candidate_norm, prev_norm).ratio()
+            if similarity >= self.max_repeat_similarity:
+                return True
+
+        return False
     
     def _get_memory(self, conversation_id: Optional[str] = None) -> ConversationBufferWindowMemory:
         """Получить или создать Memory для беседы
@@ -613,6 +662,31 @@ class LangChainService:
                 return fallback_response
             
             response_text = response.content
+
+            # Анти-повтор: если ответ почти совпадает с недавними, просим модель перефразировать,
+            # сохранив стиль персонажа и смысл.
+            if conversation_id and isinstance(response_text, str):
+                recent_ai_texts = self._get_recent_ai_texts(memory)
+                if self._is_repetitive_response(response_text, recent_ai_texts):
+                    logger.info("🔁 [ANTI-REPEAT] Обнаружен повтор для '%s', выполняем retry", agent_name)
+                    retry_messages = list(messages)
+                    retry_messages.append(
+                        HumanMessage(
+                            content=(
+                                "Пожалуйста, ответь иначе: сохрани характер и стиль персонажа, "
+                                "но не повторяй дословно недавние формулировки. "
+                                "Дай свежий ракурс по сути вопроса."
+                            )
+                        )
+                    )
+                    for _ in range(self.max_repeat_retries):
+                        retry_response = await llm.ainvoke(retry_messages)
+                        retry_text = str(retry_response.content or "").strip()
+                        if retry_text and not self._is_repetitive_response(retry_text, recent_ai_texts):
+                            response_text = retry_text
+                            logger.info("✅ [ANTI-REPEAT] Получен более вариативный ответ для '%s'", agent_name)
+                            break
+
             logger.debug(f"Получен ответ через LangChain для агента {agent_name}")
             
             # Сохраняем сообщения в Memory
