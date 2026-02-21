@@ -262,193 +262,152 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     return iconMap[iconName] || MdStar;
   };
 
-  // Функция для определения категорий персонажа (может возвращать несколько категорий)
+  // Static category mapping keyed by Russian DB name (originalName) — avoids
+  // false positives from keyword matching on description text.
+  const AGENT_CATEGORIES = useMemo(() => ({
+    "иисус": ["religion"],
+    "будда": ["religion"],
+    "моисей": ["religion"],
+    "святой франциск ассизский": ["religion"],
+    "лао-цзы": ["philosophy", "religion"],
+
+    "альберт эйнштейн": ["science"],
+    "исаак ньютон": ["science"],
+    "чарльз дарвин": ["science"],
+    "никола тесла": ["science", "inventions"],
+    "мария склодовская-кюри": ["science"],
+    "николай коперник": ["science"],
+    "галилео галилей": ["science"],
+    "архимед": ["science"],
+    "михаил ломоносов": ["science"],
+    "стивен хокинг": ["science"],
+    "алан тьюринг": ["science", "inventions"],
+    "авиценна": ["science"],
+    "гипатия александрийская": ["science", "philosophy"],
+    "мария монтессори": ["science"],
+    "рене декарт": ["philosophy", "science"],
+    "зигмунд фрейд": ["science", "philosophy"],
+    "ада лавлейс": ["science", "inventions"],
+
+    "наполеон бонапарт": ["politics"],
+    "чингисхан": ["politics"],
+    "александр македонский": ["politics"],
+    "владимир ленин": ["politics"],
+    "иосиф сталин": ["politics"],
+    "джордж вашингтон": ["politics"],
+    "гай юлий цезарь": ["politics"],
+    "уинстон черчилль": ["politics"],
+    "клеопатра": ["politics"],
+    "жанна д'арк": ["politics"],
+    "авраам линкольн": ["politics"],
+    "елизавета ii": ["politics"],
+    "маргарет тэтчер": ["politics"],
+    "франклин делано рузвельт": ["politics"],
+    "нельсон мандела": ["politics"],
+    "мартин лютер кинг-младший": ["politics"],
+    "махатма ганди": ["politics"],
+    "пётр i": ["politics"],
+    "екатерина ii": ["politics"],
+    "королева виктория": ["politics"],
+    "джон кеннеди": ["politics"],
+    "октавиан август": ["politics"],
+    "изабелла кастильская": ["politics"],
+    "елизавета i": ["politics"],
+    "генрих ii валуа": ["politics"],
+    "мария терезия": ["politics"],
+    "дональд трамп": ["politics", "business"],
+    "владимир зеленский": ["politics"],
+    "сунь ятсен": ["politics"],
+    "владимир путин": ["politics"],
+    "бенджамин франклин": ["politics", "science", "inventions"],
+    "марк аврелий": ["politics", "philosophy"],
+
+    "сократ": ["philosophy"],
+    "платон": ["philosophy"],
+    "аристотель": ["philosophy"],
+    "фридрих ницше": ["philosophy"],
+    "конфуций": ["philosophy"],
+    "карл маркс": ["philosophy"],
+    "сенека": ["philosophy"],
+    "сунь-цзы": ["philosophy"],
+
+    "томас эдисон": ["inventions"],
+    "генри форд": ["inventions", "business"],
+    "александр грэм белл": ["inventions"],
+    "карл бенц": ["inventions"],
+    "джеймс ватт": ["inventions"],
+    "леонардо да винчи": ["art", "science", "inventions"],
+    "стив джобс": ["business", "inventions"],
+
+    "винсент ван гог": ["art"],
+    "пабло пикассо": ["art"],
+    "сальвадор дали": ["art"],
+    "рафаэль санти": ["art"],
+    "микеланджело буонарроти": ["art"],
+    "фрида кало": ["art"],
+    "вольфганг амадей моцарт": ["art"],
+    "людвиг ван бетховен": ["art"],
+    "иоганн себастьян бах": ["art"],
+    "пётр ильич чайковский": ["art"],
+    "элвис пресли": ["art"],
+    "фредди меркьюри": ["art"],
+    "майкл джексон": ["art"],
+    "виктор цой": ["art"],
+    "мэрилин монро": ["art"],
+    "марлон брандо": ["art"],
+    "чарли чаплин": ["art"],
+
+    "уильям шекспир": ["literature"],
+    "лев толстой": ["literature"],
+    "фёдор достоевский": ["literature"],
+    "михаил булгаков": ["literature"],
+    "антон чехов": ["literature"],
+    "александр сергеевич пушкин": ["literature"],
+    "данте алигьери": ["literature"],
+    "иоганн вольфганг фон гёте": ["literature"],
+    "франц кафка": ["literature"],
+    "жюль верн": ["literature"],
+    "чарльз диккенс": ["literature"],
+    "джейн остин": ["literature"],
+    "оскар уайльд": ["literature"],
+    "дж. р. р. толкин": ["literature"],
+    "джеймс джойс": ["literature"],
+    "эрнест хемингуэй": ["literature"],
+    "эрих мария ремарк": ["literature"],
+
+    "илон маск": ["business"],
+    "павел дуров": ["business"],
+  }), []);
+
   const getCharacterCategory = useCallback((persona) => {
-    if (!persona || !persona.category) {
-      return [];
+    if (!persona) return [];
+
+    const key = (persona.originalName || persona.name || "").toLowerCase().trim();
+    const ids = AGENT_CATEGORIES[key];
+    if (ids) {
+      return ids.map((id) => ({ id, label: t(`library.categories.${id}`) }));
     }
 
-    const category = (persona.category || "").toLowerCase();
-    const name = (persona.name || "").toLowerCase();
-    const description = (persona.description || "").toLowerCase();
-    const combined = `${category} ${name} ${description}`;
-
-    const categories = [];
-
-    // Религия
-    if (
-      category.includes("религия") || category.includes("религиоз") ||
-      category.includes("religion") || category.includes("religious") ||
-      category.includes("бог") || category.includes("божество") ||
-      category.includes("god") || category.includes("deity") ||
-      category.includes("пророк") || category.includes("prophet") ||
-      category.includes("священнослужитель") || category.includes("priest") ||
-      category.includes("папа") || category.includes("pope") ||
-      category.includes("святой") || category.includes("saint") ||
-      combined.includes("религия") || combined.includes("религиоз") ||
-      combined.includes("бог") || combined.includes("божество") ||
-      combined.includes("пророк") || combined.includes("святой") ||
-      name.includes("иисус") || name.includes("мухаммед") ||
-      name.includes("будда") || name.includes("исус") ||
-      name.includes("jesus") || name.includes("muhammad") ||
-      name.includes("buddha") || name.includes("моисей") ||
-      name.includes("moses")
-    ) {
-      categories.push({ id: "religion", label: t("library.categories.religion") });
+    // Fallback: check the DB category field (but NOT description text)
+    const cat = (persona.category || "").toLowerCase();
+    const result = [];
+    const catMap = {
+      religion: ["религия", "religion"],
+      science: ["наука", "science", "ученый", "scientist"],
+      politics: ["политик", "politics", "правитель", "ruler"],
+      philosophy: ["философ", "philosophy"],
+      inventions: ["изобретатель", "inventor", "инженер", "engineer"],
+      art: ["художник", "artist", "композитор", "composer", "музыкант", "musician"],
+      literature: ["писатель", "writer", "литература", "literature"],
+      business: ["бизнес", "business", "предприниматель", "entrepreneur"],
+    };
+    for (const [catId, keywords] of Object.entries(catMap)) {
+      if (keywords.some((kw) => cat.includes(kw))) {
+        result.push({ id: catId, label: t(`library.categories.${catId}`) });
+      }
     }
-
-    // Наука
-    if (
-      category.includes("ученый") || category.includes("ученые") ||
-      category.includes("scientist") || category.includes("scientists") ||
-      category.includes("наука") || category.includes("science") ||
-      category.includes("физик") || category.includes("physicist") ||
-      category.includes("математик") || category.includes("mathematician") ||
-      category.includes("химик") || category.includes("chemist") ||
-      category.includes("биолог") || category.includes("biologist") ||
-      category.includes("астроном") || category.includes("astronomer") ||
-      category.includes("медик") || category.includes("physician") ||
-      combined.includes("ученый") || combined.includes("ученые") ||
-      combined.includes("наука") || combined.includes("science") ||
-      combined.includes("физик") || combined.includes("математик") ||
-      combined.includes("химик") || combined.includes("биолог") ||
-      name.includes("эйнштейн") || name.includes("ньютон") ||
-      name.includes("дарвин") || name.includes("тесла") ||
-      name.includes("einstein") || name.includes("newton") ||
-      name.includes("darwin") || name.includes("tesla")
-    ) {
-      categories.push({ id: "science", label: t("library.categories.science") });
-    }
-
-    // Политика
-    if (
-      category.includes("политик") || category.includes("politics") ||
-      category.includes("правитель") || category.includes("правители") ||
-      category.includes("ruler") || category.includes("rulers") ||
-      category.includes("президент") || category.includes("president") ||
-      category.includes("король") || category.includes("king") ||
-      category.includes("император") || category.includes("emperor") ||
-      category.includes("царь") || category.includes("tsar") ||
-      category.includes("королева") || category.includes("queen") ||
-      category.includes("министр") || category.includes("minister") ||
-      category.includes("премьер") || category.includes("prime minister") ||
-      combined.includes("политик") || combined.includes("politics") ||
-      combined.includes("правитель") || combined.includes("президент") ||
-      combined.includes("король") || combined.includes("император") ||
-      combined.includes("царь") || combined.includes("королева") ||
-      name.includes("путин") || name.includes("putin") ||
-      name.includes("ленин") || name.includes("сталин") ||
-      name.includes("lenin") || name.includes("stalin") ||
-      name.includes("марк аврелий") || name.includes("marcus aurelius")
-    ) {
-      categories.push({ id: "politics", label: t("library.categories.politics") });
-    }
-
-    // Философия
-    if (
-      category.includes("философ") || category.includes("философы") ||
-      category.includes("philosopher") || category.includes("philosophers") ||
-      category.includes("философия") || category.includes("philosophy") ||
-      combined.includes("философ") || combined.includes("философы") ||
-      combined.includes("философия") || combined.includes("philosopher") ||
-      combined.includes("philosophy") ||
-      name.includes("платон") || name.includes("сократ") ||
-      name.includes("ницше") || name.includes("кант") ||
-      name.includes("гегель") ||
-      name.includes("plato") || name.includes("socrates") ||
-      name.includes("nietzsche") || name.includes("kant") ||
-      name.includes("hegel") || name.includes("марк аврелий") ||
-      name.includes("marcus aurelius") || name.includes("аристотель") ||
-      name.includes("aristotle")
-    ) {
-      categories.push({ id: "philosophy", label: t("library.categories.philosophy") });
-    }
-
-    // Изобретения
-    if (
-      category.includes("изобретатель") || category.includes("inventor") ||
-      category.includes("изобретение") || category.includes("invention") ||
-      category.includes("инженер") || category.includes("engineer") ||
-      category.includes("конструктор") || category.includes("designer") ||
-      category.includes("техник") || category.includes("technician") ||
-      combined.includes("изобретатель") || combined.includes("inventor") ||
-      combined.includes("изобретение") || combined.includes("invention") ||
-      combined.includes("инженер") || combined.includes("конструктор") ||
-      name.includes("эдисон") || name.includes("бель") ||
-      name.includes("ford") || name.includes("wright") ||
-      name.includes("edison") || name.includes("bell") ||
-      name.includes("ford") || name.includes("wright")
-    ) {
-      categories.push({ id: "inventions", label: t("library.categories.inventions") });
-    }
-
-    // Искусство
-    if (
-      category.includes("художник") || category.includes("artist") ||
-      category.includes("поэт") || category.includes("poet") ||
-      category.includes("музыкант") || category.includes("musician") ||
-      category.includes("композитор") || category.includes("composer") ||
-      category.includes("актер") || category.includes("actor") ||
-      category.includes("режиссер") || category.includes("director") ||
-      category.includes("искусство") || category.includes("art") ||
-      category.includes("живопись") || category.includes("painting") ||
-      category.includes("скульптор") || category.includes("sculptor") ||
-      combined.includes("художник") ||
-      combined.includes("поэт") || combined.includes("музыкант") ||
-      combined.includes("композитор") || combined.includes("актер") ||
-      combined.includes("режиссер") ||
-      combined.includes("искусство") || combined.includes("творчество") ||
-      combined.includes("artist") ||
-      combined.includes("poet") || combined.includes("musician")
-    ) {
-      categories.push({ id: "art", label: t("library.categories.art") });
-    }
-
-    // Литература
-    if (
-      category.includes("писатель") || category.includes("writer") ||
-      category.includes("литература") || category.includes("literature") ||
-      category.includes("автор") || category.includes("author") ||
-      category.includes("книга") || category.includes("book") ||
-      category.includes("роман") || category.includes("novel") ||
-      category.includes("поэзия") || category.includes("poetry") ||
-      combined.includes("писатель") || combined.includes("литература") ||
-      combined.includes("автор") || combined.includes("книга") ||
-      combined.includes("роман") || combined.includes("поэзия") ||
-      combined.includes("writer") || combined.includes("literature") ||
-      combined.includes("author") || combined.includes("book") ||
-      combined.includes("novel") || combined.includes("poetry")
-    ) {
-      categories.push({ id: "literature", label: t("library.categories.literature") });
-    }
-
-    // Бизнес
-    if (
-      category.includes("бизнес") || category.includes("business") ||
-      category.includes("предприниматель") || category.includes("entrepreneur") ||
-      category.includes("бизнесмен") || category.includes("businessman") ||
-      category.includes("инвестор") || category.includes("investor") ||
-      category.includes("менеджер") || category.includes("manager") ||
-      category.includes("директор") || category.includes("director") ||
-      category.includes("ceo") || category.includes("генеральный директор") ||
-      category.includes("миллиардер") || category.includes("billionaire") ||
-      category.includes("миллионер") || category.includes("millionaire") ||
-      combined.includes("бизнес") || combined.includes("предприниматель") ||
-      combined.includes("бизнесмен") || combined.includes("инвестор") ||
-      combined.includes("менеджер") || combined.includes("директор") ||
-      combined.includes("миллиардер") || combined.includes("миллионер") ||
-      combined.includes("business") || combined.includes("entrepreneur") ||
-      combined.includes("investor") || combined.includes("manager") ||
-      combined.includes("billionaire") || combined.includes("millionaire") ||
-      name.includes("гейтс") || name.includes("gates") ||
-      name.includes("брэнсон") || name.includes("branson") ||
-      name.includes("баффет") || name.includes("buffett")
-    ) {
-      categories.push({ id: "business", label: t("library.categories.business") });
-    }
-
-    return categories;
-  }, [t]);
+    return result;
+  }, [t, AGENT_CATEGORIES]);
 
   // Маппинг категорий для поиска
   const getCategorySearchTerms = (persona) => {
@@ -525,17 +484,26 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
       const translatedAgent = translateAgent(agent);
       // Формируем полный URL для аватара, если это относительный путь
       let imageSrc = getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "medium");
-      // Формируем URL для _low версии (для маленьких иконок в списке выбранных)
       let imageSrcLow = getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "low");
-      // description из API/конфига — показывается в модалке при клике на карточку
-      const description = translatedAgent.description ?? agent.description ?? "";
-      // Сохраняем оригинальное имя агента (ключ для переводов)
+      const rawDesc = translatedAgent.description ?? agent.description ?? "";
+      const yearsMatch = rawDesc.trim().match(/^\(([^)]+)\)/);
+      const years = yearsMatch ? yearsMatch[1] : null;
+      let description = rawDesc.trim().replace(/^\([^)]+\)\s*/, "");
+      const dotPos = description.indexOf(". ");
+      const head = dotPos >= 0 ? description.slice(0, dotPos) : description.slice(0, 300);
+      const inlineYear = head.match(/\s*\([^)]*\d+\s*[–—\-]\s*\d+[^)]*\)/);
+      if (inlineYear) description = description.replace(inlineYear[0], "");
+      description = description.trim();
+      if (description.length > 0) {
+        description = description.charAt(0).toUpperCase() + description.slice(1);
+      }
       const originalName = agent.name;
       return {
         id: translatedAgent.id,
         name: translatedAgent.name,
-        originalName, // Оригинальное имя для поиска в переводах
+        originalName,
         description,
+        years,
         instructions: translatedAgent.instructions, // Добавляем инструкции для биографии
         colorClass: translatedAgent.color_class,
         iconName: translatedAgent.icon_name,
@@ -1850,6 +1818,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5">{persona.years}</p>
+                                      )}
                                     </div>
 
                                     {/* Кнопки редактирования и удаления для созданных агентов */}
@@ -1971,9 +1942,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Информация о персонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
+                                      )}
 
                                       {/* Описание - всегда видимое */}
                                       {persona.description && (
@@ -2110,9 +2084,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
+                                      )}
                                       {persona.description && (
                                         <div className="hidden md:block">
                                           <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
@@ -2247,9 +2224,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
+                                      )}
                                       {persona.description && (
                                         <div className="hidden md:block">
                                           <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-3 text-center leading-relaxed mb-2">
@@ -2385,9 +2365,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     </div>
 
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-2">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
+                                      )}
                                       {/* Описание - всегда видимое */}
                                       {persona.description && (
                                         <div className="hidden md:block">
@@ -2520,9 +2503,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Информация о персонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
+                                      )}
                                       <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
                                         {persona.description || "AI персонаж"}
                                       </p>
@@ -2651,9 +2637,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
+                                      )}
                                       {persona.description && (
                                         <div className="hidden md:block">
                                           <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">
@@ -2786,9 +2775,12 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300 mb-1 sm:mb-2">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
+                                      {persona.years && (
+                                        <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
+                                      )}
                                       {persona.description && (
                                         <div className="hidden md:block">
                                           <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 group-hover:text-tg-text transition-colors duration-300">

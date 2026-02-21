@@ -19,39 +19,32 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
     onClose();
   };
 
-  // Пытаемся извлечь годы из description (из ведущего блока в скобках)
-  const getYears = () => {
+  // Use pre-extracted years from persona if available, otherwise parse description
+  const years = persona.years ?? (() => {
     if (!persona.description) return null;
-    const desc = persona.description.trim();
+    const m = persona.description.trim().match(/^\(([^)]+)\)/);
+    return m ? m[1] : null;
+  })();
 
-    // Пытаемся взять весь ведущий блок в скобках: "(…)"
-    const leadingBlock = desc.match(/^\(([^)]+)\)/);
-    if (leadingBlock) {
-      return leadingBlock[1];
-    }
-
-    // Запасной вариант: паттерн типа "(1979–1990)"
-    const fallback = desc.match(/\((\d{1,4}[^)]+)\)/);
-    if (fallback) return fallback[1];
-
-    return null;
-  };
-
-  // Биография: убираем ведущий блок с годами "(…) ", чтобы не дублировать
-  const getBiography = () => {
+  const biography = (() => {
     const desc = persona.description ?? persona.instructions;
-    if (desc && typeof desc === "string" && desc.trim()) {
-      // Снимаем ведущий "(…) " — годы уже отображаются отдельно
-      const stripped = desc.trim().replace(/^\([^)]+\)\s*/, "");
-      return stripped || desc.trim();
+    if (!desc || typeof desc !== "string" || !desc.trim()) {
+      return t("library.noDescription", {
+        defaultValue: "Информация о персонаже будет добавлена позже."
+      });
     }
-    return t("library.noDescription", {
-      defaultValue: "Информация о персонаже будет добавлена позже."
-    });
-  };
-
-  const years = getYears();
-  const biography = getBiography();
+    // If years were already extracted upstream, description is already clean
+    if (persona.years !== undefined) return desc;
+    // Fallback: strip leading year block and inline duplicate
+    let text = desc.trim().replace(/^\([^)]+\)\s*/, "");
+    const dot = text.indexOf(". ");
+    const head = dot >= 0 ? text.slice(0, dot) : text.slice(0, 300);
+    const inlineYear = head.match(/\s*\([^)]*\d+\s*[–—\-]\s*\d+[^)]*\)/);
+    if (inlineYear) text = text.replace(inlineYear[0], "");
+    text = text.trim();
+    if (text.length > 0) text = text.charAt(0).toUpperCase() + text.slice(1);
+    return text || desc.trim();
+  })();
 
   return (
     <AnimatePresence>
@@ -161,4 +154,3 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
 };
 
 export default PersonaDetailModal;
-
