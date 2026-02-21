@@ -66,6 +66,32 @@
   gap: 20px;
 }
 
+/* Предупреждение при редактировании */
+.create-agent-edit-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  margin-bottom: 4px;
+}
+
+.create-agent-warning-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.create-agent-edit-warning p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #fca5a5;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
 /* Секция аватара */
 .create-agent-avatar-section {
   display: flex;
@@ -164,6 +190,62 @@
   font-size: 0.75rem;
   color: var(--text-dim, #888);
   margin: 0;
+}
+
+/* Заголовок поля промпта с кнопкой AI */
+.create-agent-prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.create-agent-prompt-header label {
+  flex: 1;
+}
+
+/* Кнопка раскрытия промпта AI */
+.create-agent-expand-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.create-agent-expand-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5558e3 0%, #7c4ddb 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.create-agent-expand-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.create-agent-expand-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Кнопки */

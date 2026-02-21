@@ -92,6 +92,7 @@ class UnifiedAPI {
     this.getMyAgents = () => agents.getMyAgents();
     this.createUserAgent = (formData) => agents.createUserAgent(formData);
     this.updateUserAgent = (agentId, formData) => agents.updateUserAgent(agentId, formData);
+    this.expandPrompt = (name, description, currentPrompt) => agents.expandPrompt(name, description, currentPrompt);
 
     // Chats методы
     this.createChat = (agentId) => chats.createChat(agentId);

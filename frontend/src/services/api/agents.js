@@ -44,5 +44,20 @@ export class AgentsAPI {
   async updateUserAgent(agentId, formData) {
     return this.client.putFormData(`/agents/user/${agentId}`, formData);
   }
+
+  // Раскрыть промпт с помощью AI (DeepSeek)
+  async expandPrompt(name, description, currentPrompt) {
+    try {
+      const result = await this.client.post("/agents/expand-prompt", {
+        name,
+        description,
+        current_prompt: currentPrompt
+      });
+      return result;
+    } catch (error) {
+      console.error("[API] expandPrompt error:", error);
+      throw error;
+    }
+  }
 }
 

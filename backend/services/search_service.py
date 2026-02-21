@@ -354,6 +354,7 @@ class SearchService(BaseService):
                 "agent_color": first_agent.color_class or "bg-purple-500",
                 "agent_icon": multi_conversation.group_avatar or "group",
                 "group_avatar": multi_conversation.group_avatar or "group",
+                "group_avatar_url": multi_conversation.group_avatar_url,
             }
         else:
             return {
@@ -362,6 +363,7 @@ class SearchService(BaseService):
                 "agent_color": "bg-purple-500",
                 "agent_icon": multi_conversation.group_avatar or "group",
                 "group_avatar": multi_conversation.group_avatar or "group",
+                "group_avatar_url": multi_conversation.group_avatar_url,
             }
     
     def _sanitize_message_content(self, content: Optional[str]) -> str:
@@ -415,6 +417,7 @@ class SearchService(BaseService):
             "relevance_score": relevance,
             "type": "message",
             "group_avatar": agent_info.get("group_avatar") if is_group else None,
+            "group_avatar_url": agent_info.get("group_avatar_url") if is_group else None,
         }
 
         if is_channel and conversation:
@@ -801,6 +804,10 @@ class SearchService(BaseService):
             # ОБРАБОТКА ОБЫЧНЫХ ЧАТОВ
             logger.info("Processing regular conversation results...")
             for message, conversation, agent in regular_results:
+                # Пропускаем сообщения из разговоров с удаленными агентами
+                if conversation and conversation.agent_id and not agent:
+                    logger.debug(f"Пропускаем сообщение {message.id}: агент {conversation.agent_id} не существует")
+                    continue
                 agent_info = self.get_agent_info_for_regular_chat(conversation, agent, session)
                 result = self.format_message_result(message, conversation, agent_info, query, is_group=False)
                 enhanced_results.append(result)
@@ -898,10 +905,23 @@ class SearchService(BaseService):
         
         messages = session.exec(messages_statement).all()
         
-        # Добавляем информацию о чате к сообщениям
+        # Добавляем информацию о чате к сообщениям и фильтруем сообщения от удаленных агентов
+        filtered_messages = []
         for message in messages:
             conversation = session.get(Conversation, message.conversation_id)
-            message.conversation_title = conversation.title if conversation else "Неизвестный чат"
+            if conversation:
+                # Пропускаем сообщения из разговоров с удаленными агентами
+                if conversation.agent_id:
+                    agent = session.get(Agent, conversation.agent_id)
+                    if not agent:
+                        logger.debug(f"Пропускаем сообщение {message.id}: агент {conversation.agent_id} не существует")
+                        continue
+                message.conversation_title = conversation.title
+                filtered_messages.append(message)
+            else:
+                message.conversation_title = "Неизвестный чат"
+                filtered_messages.append(message)
+        messages = filtered_messages
         
         # Улучшаем результаты с релевантностью
         enhanced_conversations = self.enhance_search_results(conversations, query, "conversation")

@@ -67,7 +67,7 @@ const ForgotPassword = () => {
       if (response.success) {
         // Проверяем, что showNotification является функцией
         if (typeof showNotification === 'function') {
-          showNotification(t("auth.forgotPassword.success") || "Code verified successfully!", "success");
+          showNotification(t("auth.forgotPassword.success"), "success");
         }
         
         // Navigate to password reset page with token

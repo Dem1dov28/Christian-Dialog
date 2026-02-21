@@ -1503,7 +1503,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                 {/* Настройка аватара */}
                 <div className="mb-6">
                   <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
-                    {t("library.chatAvatar", { defaultValue: "Аватар чата" })}
+                    {t("library.chatAvatar")}
                   </label>
 
                   {/* Загрузка своего аватара (только для Plus/Pro) */}
@@ -1535,7 +1535,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             onClick={() => groupAvatarFileInputRef.current?.click()}
                             className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
                           >
-                            {chatAvatarPreview ? t("library.change", { defaultValue: "Изменить" }) : t("library.uploadImage", { defaultValue: "Загрузить изображение" })}
+                            {chatAvatarPreview ? t("library.change") : t("library.uploadImage")}
                           </button>
                           {chatAvatarPreview && (
                             <button
@@ -1547,7 +1547,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                               }}
                               className="ml-2 text-sm text-red-500 hover:text-red-400 transition-colors"
                             >
-                              {t("library.remove", { defaultValue: "Удалить" })}
+                              {t("library.remove")}
                             </button>
                           )}
                           <p className="text-xs text-[var(--text-gray)] mt-1">
@@ -1563,11 +1563,11 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                           const file = e.target.files[0];
                           if (file) {
                             if (file.size > 5 * 1024 * 1024) {
-                              showError("Файл слишком большой. Максимальный размер: 5MB");
+                              showError(t("library.fileTooLarge"));
                               return;
                             }
                             if (!file.type.startsWith("image/")) {
-                              showError("Пожалуйста, выберите изображение");
+                              showError(t("library.pleaseSelectImage"));
                               return;
                             }
                             setChatAvatarFile(file);
@@ -1671,16 +1671,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                         <>
                           <MdExpandLess className="text-base" />
                           <span>
-                            {t("library.hideAvatars", { defaultValue: "Скрыть" })}
+                            {t("library.hideAvatars")}
                           </span>
                         </>
                       ) : (
                         <>
                           <MdExpandMore className="text-base" />
                           <span>
-                            {t("library.showAllAvatars", {
-                              defaultValue: "Показать все",
-                            })}
+                            {t("library.showAllAvatars")}
                           </span>
                         </>
                       )}
@@ -1691,7 +1689,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                 {/* Настройка имени */}
                 <div className="mb-6">
                   <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
-                    {t("library.chatName", { defaultValue: "Название чата" })}
+                    {t("library.chatName")}
                   </label>
                   <div className="relative chat-input-frosted rounded-2xl">
                     <input
@@ -1715,7 +1713,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                     onClick={() => setCurrentStage("selection")}
                     className="flex-1 px-4 py-3.5 bg-[var(--bg-primary)]/60 backdrop-blur-sm border border-[var(--border-color)]/60 rounded-xl text-[var(--text-white)] hover:bg-[var(--bg-tertiary)]/70 transition-all font-medium"
                   >
-                    {t("library.back", { defaultValue: "Назад" })}
+                    {t("library.back")}
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.01 }}
@@ -1814,35 +1812,37 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
-                                      {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
-                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
+                                      {/* Контейнер для аватара с относительным позиционированием для наложения слоев */}
+                                      <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+                                        {/* Fallback - всегда рендерится как базовый слой */}
+                                        <div
+                                          className={`absolute inset-0 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                        {/* Изображение - рендерится поверх fallback */}
+                                        {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages && (
                                           <img
-                                            src={shouldLoadImages ? persona.imageSrc : ''}
+                                            src={persona.imageSrc}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="absolute inset-0 w-full h-full rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 z-10"
                                             onError={(e) => {
-                                              // Если изображение не загрузилось, скрываем его и показываем fallback
+                                              // Если изображение не загрузилось, скрываем его (fallback останется видимым)
                                               console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
                                               e.target.style.display = "none";
-                                              const fallback = e.target.parentElement?.nextElementSibling;
-                                              if (fallback) {
-                                                fallback.style.display = "flex";
-                                              }
                                             }}
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                        </div>
-                                      ) : null}
-                                      <div
-                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${(persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages) ? "hidden" : ""}`}
-                                      >
-                                        {IconComponent && (
-                                          <IconComponent
-                                            className="text-2xl sm:text-3xl relative z-10"
-                                            style={{ transform: "scale(0.8)" }}
-                                          />
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        {/* Градиент поверх изображения */}
+                                        {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages && (
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none" />
+                                        )}
                                       </div>
                                     </div>
 
@@ -1884,7 +1884,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("created")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}
@@ -2023,7 +2023,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("characters")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}
@@ -2160,7 +2160,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("tools")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}
@@ -2297,7 +2297,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("models")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}
@@ -2361,35 +2361,27 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
-                                        <div className={`relative ${!shouldLoadImages ? 'hidden' : ''}`}>
+                                        <div className="relative">
                                           <img
-                                            src={shouldLoadImages ? persona.imageSrc : ''}
+                                            src={persona.imageSrc}
                                             alt={persona.name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
-                                            onError={(e) => {
-                                              // Если изображение не загрузилось, скрываем его и показываем fallback
-                                              console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
-                                              e.target.style.display = "none";
-                                              const fallback = e.target.parentElement?.nextElementSibling;
-                                              if (fallback) {
-                                                fallback.style.display = "flex";
-                                              }
-                                            }}
                                           />
                                           <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
-                                      ) : null}
-                                      <div
-                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden ${(persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages) ? "hidden" : ""}`}
-                                      >
-                                        {IconComponent && (
-                                          <IconComponent
-                                            className="text-2xl sm:text-3xl relative z-10"
-                                            style={{ transform: "scale(0.8)" }}
-                                          />
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                      </div>
+                                      ) : (
+                                        <div
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                        >
+                                          {IconComponent && (
+                                            <IconComponent
+                                              className="text-2xl sm:text-3xl relative z-10"
+                                              style={{ transform: "scale(0.8)" }}
+                                            />
+                                          )}
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        </div>
+                                      )}
                                     </div>
 
                                     <div className="text-center relative z-10">
@@ -2441,7 +2433,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("created")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}
@@ -2572,7 +2564,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("characters")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}
@@ -2707,7 +2699,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("tools")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}
@@ -2842,7 +2834,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   onClick={() => handleShowMore("models")}
                                   className="px-6 py-2 rounded-full border border-white/10 dark:border-white/10 text-sm font-medium text-[var(--text-white)] hover:border-white/20 dark:hover:border-white/20 transition-all duration-200 bg-white/15 dark:bg-[rgba(0,0,0,0.15)] backdrop-blur-[12px] backdrop-saturate-[180%] shadow-[0_2px_15px_rgba(0,0,0,0.15)] hover:bg-white/20 dark:hover:bg-[rgba(0,0,0,0.2)]"
                                 >
-                                  {t('common.showMore', { defaultValue: 'Показать ещё' })}
+                                  {t('common.showMore')}
                                 </button>
                               </div>
                             )}

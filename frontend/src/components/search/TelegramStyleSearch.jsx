@@ -295,10 +295,10 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
         }
       }
 
-      return title || "Чат";
+      return title || t("common.chat");
     }
 
-    return "Чат";
+    return t("common.chat");
   };
 
   // Функция для получения типа агента
@@ -365,7 +365,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <h4 className="font-medium text-[var(--text-white)] text-sm truncate">
-                {message.conversation_title || "Чат"}
+                {message.conversation_title || t("common.chat")}
               </h4>
               <div className="flex items-center space-x-2">
                 {message.relevance_score > 0 && (
@@ -384,7 +384,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
             {message.is_pinned && (
               <div className="flex items-center mt-2 text-xs text-[var(--accent)]">
                 <MdPushPin className="mr-1" />
-                Закреплено
+                {t("chat.pinned")}
               </div>
             )}
           </div>
@@ -417,7 +417,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Поиск..."
+              placeholder={t("chat.searchPlaceholder")}
               className="w-full pl-10 pr-10 py-3 bg-tg-bg-secondary border-none rounded-lg text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               autoFocus
             />
@@ -478,7 +478,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
         <div className="p-4 border-b border-tg-border bg-tg-bg-dark">
             <div className="flex items-center space-x-2">
               <MdSort className="text-[var(--text-gray)]" />
-              <span className="text-sm text-[var(--text-gray)]">Сортировка:</span>
+              <span className="text-sm text-[var(--text-gray)]">{t("chat.sortBy")}:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -498,7 +498,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
           {isSearching ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
-              <span className="ml-3 text-[var(--text-gray)]">Поиск...</span>
+              <span className="ml-3 text-[var(--text-gray)]">{t("common.searchingMessages")}</span>
             </div>
           ) : searchQuery.trim() ? (
             <div className="p-4">
@@ -507,7 +507,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-[var(--text-gray)]">
-                      Чаты и контакты
+                      {t("chat.chatsAndContacts")}
                     </h3>
                     {searchStats.total > 0 && (
                       <span className="text-xs text-[var(--text-gray)]">
@@ -529,7 +529,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
                   ) : (
                     <div className="text-center py-8 text-[var(--text-gray)]">
                       <MdChat className="mx-auto text-4xl mb-3" />
-                      <p>Чаты не найдены</p>
+                      <p>{t("chat.noChatsFound")}</p>
                     </div>
                   )}
                 </div>
@@ -540,7 +540,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-[var(--text-gray)]">
-                      Сообщения
+                      {t("chat.messages")}
                     </h3>
                     {searchStats.total > 0 && (
                       <span className="text-xs text-[var(--text-gray)]">
@@ -562,7 +562,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
                   ) : (
                     <div className="text-center py-8 text-[var(--text-gray)]">
                       <MdGroup className="mx-auto text-4xl mb-3" />
-                      <p>Сообщения не найдены</p>
+                      <p>{t("chat.messagesNotFound")}</p>
                     </div>
                   )}
                 </div>
@@ -571,7 +571,7 @@ const TelegramStyleSearch = ({ isOpen, onClose }) => {
           ) : (
             <div className="text-center py-8 text-[var(--text-gray)]">
               <MdSearch className="mx-auto text-4xl mb-3" />
-              <p>Введите запрос для поиска</p>
+              <p>{t("chat.enterQueryToSearchMessages")}</p>
             </div>
           )}
         </div>

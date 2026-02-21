@@ -161,9 +161,7 @@ export function useChatInput({
   // Обработка выбора файлов
   const handleFileSelect = useCallback((e) => {
     if (isChannelChat) {
-      showError(t("chat.channelAttachmentsNotSupported", {
-        defaultValue: "В каналах пока нельзя отправлять файлы",
-      }));
+      showError(t("chat.channelAttachmentsNotSupported"));
       e.target.value = "";
       return;
     }
@@ -176,7 +174,7 @@ export function useChatInput({
     const remainingSlots = maxFiles - currentCount;
 
     if (remainingSlots <= 0) {
-      showError(t("chat.maxFilesError", { defaultValue: "Максимум 3 файла" }));
+      showError(t("chat.maxFilesError"));
       e.target.value = "";
       return;
     }
@@ -187,8 +185,7 @@ export function useChatInput({
     if (skippedCount > 0) {
       showError(t("chat.filesLimitMessage", {
         count: remainingSlots,
-        skipped: skippedCount,
-        defaultValue: `Можно добавить только ${remainingSlots} файл(ов). Пропущено: ${skippedCount}`
+        skipped: skippedCount
       }));
     }
 
@@ -257,9 +254,7 @@ export function useChatInput({
     setIsDragging(false);
 
     if (isChannelChat) {
-      showError(t("chat.channelAttachmentsNotSupported", {
-        defaultValue: "В каналах пока нельзя отправлять файлы",
-      }));
+      showError(t("chat.channelAttachmentsNotSupported"));
       return;
     }
 
@@ -271,7 +266,7 @@ export function useChatInput({
     const remainingSlots = maxFiles - currentCount;
 
     if (remainingSlots <= 0) {
-      showError(t("chat.maxFilesError", { defaultValue: "Максимум 3 файла" }));
+      showError(t("chat.maxFilesError"));
       return;
     }
 
@@ -281,8 +276,7 @@ export function useChatInput({
     if (skippedCount > 0) {
       showError(t("chat.filesLimitMessage", {
         count: remainingSlots,
-        skipped: skippedCount,
-        defaultValue: `Можно добавить только ${remainingSlots} файл(ов). Пропущено: ${skippedCount}`
+        skipped: skippedCount
       }));
     }
 
@@ -332,7 +326,7 @@ export function useChatInput({
     const remainingSlots = maxFiles - currentCount;
 
     if (remainingSlots <= 0) {
-      showError(t("chat.maxFilesError", { defaultValue: "Максимум 3 файла" }));
+      showError(t("chat.maxFilesError"));
       return;
     }
 
@@ -342,8 +336,7 @@ export function useChatInput({
     if (skippedCount > 0) {
       showError(t("chat.filesLimitMessage", {
         count: remainingSlots,
-        skipped: skippedCount,
-        defaultValue: `Можно добавить только ${remainingSlots} файл(ов). Пропущено: ${skippedCount}`
+        skipped: skippedCount
       }));
     }
 
@@ -387,7 +380,7 @@ export function useChatInput({
         }
       } catch (error) {
         console.error("Ошибка при обработке изображения из буфера обмена:", error);
-        errors.push(t("chat.clipboardImageError", { defaultValue: "Ошибка при обработке изображения" }));
+        errors.push(t("chat.clipboardImageError"));
       }
     }
 
@@ -434,12 +427,12 @@ export function useChatInput({
     }
 
     if (inputValue.length > 7500) {
-      showError(t("chat.messageTooLong", { defaultValue: "Сообщение слишком длинное" }));
+      showError(t("chat.messageTooLong"));
       return;
     }
 
     if (isDialogueLoading) {
-      showError(t("chat.waitForGeneration", { defaultValue: "Дождитесь завершения генерации" }));
+      showError(t("chat.waitForGeneration"));
       return;
     }
 
@@ -486,7 +479,7 @@ export function useChatInput({
         cleanReplyContent = "...";
       }
 
-      const authorName = replyToMessage.author_name || replyToMessage.agent_name || t("chat.replyToMessage", { defaultValue: "Сообщение" });
+      const authorName = replyToMessage.author_name || replyToMessage.agent_name || t("chat.replyToMessage");
       const replyToMessageId = replyToMessage.original_message_id || replyToMessage.id;
 
       const escapeHtml = (text) => {
@@ -519,16 +512,12 @@ export function useChatInput({
     // Обработка каналов
     if (isChannelChat) {
       if (attachedFiles.length > 0) {
-        showError(t("chat.channelAttachmentsNotSupported", {
-          defaultValue: "В каналах пока нельзя отправлять файлы",
-        }));
+        showError(t("chat.channelAttachmentsNotSupported"));
         return;
       }
 
       if (!canWriteChannel) {
-        showError(t("chat.channelReadOnlyError", {
-          defaultValue: "У вас нет прав для публикации в этом канале",
-        }));
+        showError(t("chat.channelReadOnlyError"));
         return;
       }
 
@@ -540,9 +529,7 @@ export function useChatInput({
         console.error("Failed to publish channel message:", error);
         showError(
           error?.message ||
-          t("chat.channelPublishError", {
-            defaultValue: "Не удалось отправить сообщение в канале",
-          })
+          t("chat.channelPublishError")
         );
         clearInput(finalMessage);
       }
@@ -627,14 +614,14 @@ export function useChatInput({
               }
             } catch (e) {
               console.error("Failed to parse response:", e);
-              showError(t("chat.sendFailed", { defaultValue: "Не удалось отправить сообщение" }));
+              showError(t("chat.sendFailed"));
             }
           } else {
             try {
               const errorData = JSON.parse(xhr.responseText);
-              showError(errorData.detail || t("chat.uploadFailed", { defaultValue: "Ошибка загрузки" }));
+              showError(errorData.detail || t("chat.uploadFailed"));
             } catch (e) {
-              showError(t("chat.uploadFailed", { defaultValue: "Ошибка загрузки" }));
+              showError(t("chat.uploadFailed"));
             }
           }
           setIsLoading(false);
@@ -642,13 +629,13 @@ export function useChatInput({
 
         xhr.onerror = () => {
           setUploadProgress(null);
-          showError("Upload failed. Please try again.");
+          showError(t("chat.uploadFailed"));
           setIsLoading(false);
         };
 
         xhr.ontimeout = () => {
           setUploadProgress(null);
-          showError("Upload failed. Please try again.");
+          showError(t("chat.uploadFailed"));
           setIsLoading(false);
         };
 
@@ -663,7 +650,7 @@ export function useChatInput({
       } catch (error) {
         setUploadProgress(null);
         console.error("Failed to send message with files:", error);
-        showError("Failed to send message with files");
+        showError(t("library.failedSendMessageWithFiles"));
         setIsLoading(false);
       }
     } else {

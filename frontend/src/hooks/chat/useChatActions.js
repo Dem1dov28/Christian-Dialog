@@ -64,9 +64,7 @@ export function useChatActions({
       try {
         if (typeof window !== "undefined" && window.prompt) {
           window.prompt(
-            t("chat.manualCopyPrompt", {
-              defaultValue: "Скопируйте текст сообщения и нажмите Ctrl+C / ⌘C:",
-            }),
+            t("chat.manualCopyPrompt"),
             textToCopy
           );
           // Считаем, что пользователь получил текст для копирования
@@ -84,19 +82,19 @@ export function useChatActions({
   const handleSave = useCallback(
     async (messageId, { silent = false } = {}) => {
       if (!isAuthenticated) {
-        showError(t("chat.needLogin", { defaultValue: "Необходима авторизация" }));
+        showError(t("chat.needLogin"));
         return;
       }
 
       if (!activeConversation) {
-        showError(t("chat.noActiveChat", { defaultValue: "Нет активного чата" }));
+        showError(t("chat.noActiveChat"));
         return;
       }
 
       try {
         const message = messages.find((msg) => msg.id === messageId);
         if (!message) {
-          showError(t("chat.messageNotFound", { defaultValue: "Сообщение не найдено" }));
+          showError(t("chat.messageNotFound"));
           return;
         }
 
@@ -128,7 +126,7 @@ export function useChatActions({
         }
 
         if (!silent) {
-          showSuccess(t("chat.messageSaved", { defaultValue: "Сообщение сохранено" }));
+          showSuccess(t("chat.messageSaved"));
         }
         return savedMessage;
       } catch (error) {
@@ -137,7 +135,7 @@ export function useChatActions({
         } else {
           showError(
             error?.response?.data?.detail ||
-            t("chat.saveError", { defaultValue: "Не удалось сохранить сообщение" })
+            t("chat.saveError")
           );
         }
         return false;
@@ -161,18 +159,18 @@ export function useChatActions({
   const handleDelete = useCallback(
     async (messageId) => {
       if (!activeConversation) {
-        showError(t("chat.noActiveChat", { defaultValue: "Нет активного чата" }));
+        showError(t("chat.noActiveChat"));
         return;
       }
 
       try {
         await deleteMessage(messageId);
-        showSuccess(t("chat.messageDeleted", { defaultValue: "Сообщение удалено" }));
+        showSuccess(t("chat.messageDeleted"));
       } catch (error) {
         console.error("Failed to delete message:", error);
         showError(
           error?.response?.data?.detail ||
-          t("chat.deleteError", { defaultValue: "Не удалось удалить сообщение" })
+          t("chat.deleteError")
         );
       }
     },
@@ -186,9 +184,7 @@ export function useChatActions({
         const message = messages.find((msg) => msg.id === messageId);
         if (!message) {
           showError(
-            t("chat.messageNotFound", {
-              defaultValue: "Сообщение не найдено",
-            })
+            t("chat.messageNotFound")
           );
           return;
         }
@@ -209,9 +205,7 @@ export function useChatActions({
 
         if (!textToCopy || typeof textToCopy !== "string") {
           showError(
-            t("chat.noTextToCopy", {
-              defaultValue: "Нет текста для копирования",
-            })
+            t("chat.noTextToCopy")
           );
           return;
         }
@@ -219,24 +213,18 @@ export function useChatActions({
         const ok = await copyToClipboard(textToCopy);
         if (!ok) {
           showError(
-            t("chat.copyError", {
-              defaultValue: "Не удалось скопировать сообщение",
-            })
+            t("chat.copyError")
           );
           return;
         }
 
         showSuccess(
-          t("chat.messageCopied", {
-            defaultValue: "Сообщение скопировано",
-          })
+          t("chat.messageCopied")
         );
       } catch (error) {
         console.error("Failed to copy message:", error);
         showError(
-          t("chat.copyError", {
-            defaultValue: "Не удалось скопировать сообщение",
-          })
+          t("chat.copyError")
         );
       }
     },
@@ -253,7 +241,7 @@ export function useChatActions({
           .sort((a, b) => a.id - b.id);
 
         if (selectedMessages.length === 0) {
-          showError(t("chat.noMessagesSelected", { defaultValue: "Нет выбранных сообщений" }));
+          showError(t("chat.noMessagesSelected"));
           return;
         }
 
@@ -272,8 +260,8 @@ export function useChatActions({
           }
 
           const author = message.is_from_user
-            ? t("chat.you", { defaultValue: "Вы" })
-            : message.agentName || t("chat.agent", { defaultValue: "Агент" });
+            ? t("chat.you")
+            : message.agentName || t("common.agent");
 
           textToCopy += `${author}: ${messageText}`;
           if (index < selectedMessages.length - 1) {
@@ -283,9 +271,7 @@ export function useChatActions({
 
         if (!textToCopy || typeof textToCopy !== "string") {
           showError(
-            t("chat.noTextToCopy", {
-              defaultValue: "Нет текста для копирования",
-            })
+            t("chat.noTextToCopy")
           );
           return;
         }
@@ -293,22 +279,17 @@ export function useChatActions({
         const ok = await copyToClipboard(textToCopy);
         if (!ok) {
           showError(
-            t("chat.copyError", {
-              defaultValue: "Не удалось скопировать сообщения",
-            })
+            t("chat.copyError")
           );
           return;
         }
 
         showSuccess(
-          t("chat.messagesCopied", {
-            count: selectedMessages.length,
-            defaultValue: `Скопировано ${selectedMessages.length} сообщений`,
-          })
+          t("chat.messagesCopied", { count: selectedMessages.length })
         );
       } catch (error) {
         console.error("Failed to copy messages:", error);
-        showError(t("chat.copyError", { defaultValue: "Не удалось скопировать сообщения" }));
+        showError(t("chat.copyError"));
       }
     },
     [messages, copyToClipboard, showError, showSuccess, t]
@@ -321,7 +302,7 @@ export function useChatActions({
         const selectedIds = Array.from(selectedMessagesSet);
 
         if (selectedIds.length === 0) {
-          showError(t("chat.noMessagesSelected", { defaultValue: "Нет выбранных сообщений" }));
+          showError(t("chat.noMessagesSelected"));
           return;
         }
 
@@ -331,14 +312,11 @@ export function useChatActions({
 
         clearSelection();
         showSuccess(
-          t("chat.messagesDeleted", {
-            count: selectedIds.length,
-            defaultValue: `Удалено ${selectedIds.length} сообщений`,
-          })
+          t("chat.messageDeletedBulk", { count: selectedIds.length })
         );
       } catch (error) {
         console.error("Failed to delete messages:", error);
-        showError(t("chat.deleteError", { defaultValue: "Не удалось удалить сообщения" }));
+        showError(t("chat.deleteErrorBulk"));
       }
     },
     [deleteMessage, showError, showSuccess, t]
@@ -355,10 +333,10 @@ export function useChatActions({
           chat_id: activeConversation?.id,
         });
 
-        showSuccess(t("chat.complaintSent", { defaultValue: "Жалоба отправлена" }));
+        showSuccess(t("chat.complaintSent"));
       } catch (error) {
         console.error("Failed to send report:", error);
-        showError(t("chat.complaintError", { defaultValue: "Не удалось отправить жалобу" }));
+        showError(t("chat.complaintError"));
       }
     },
     [activeConversation?.id, showError, showSuccess, t]

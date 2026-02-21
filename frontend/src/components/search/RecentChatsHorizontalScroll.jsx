@@ -27,6 +27,11 @@ const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
   const { conversations } = useChats();
   const { agents, getAgent } = useAgents();
   const { t, translateAgent } = useLanguage();
+  
+  // Создаем Set с ID агентов для быстрой проверки
+  const agentIds = useMemo(() => {
+    return new Set(agents.map(a => a.id));
+  }, [agents]);
 
   // Получаем последние чаты, отсортированные по времени обновления
   const recentChats = useMemo(() => {
@@ -36,10 +41,21 @@ const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
 
     // Сортируем по updated_at (последние сначала) и берем первые 10
     return conversations
-      .filter((chat) => chat.updated_at) // Фильтруем чаты с updated_at
+      .filter((chat) => {
+        // Фильтруем чаты без updated_at
+        if (!chat.updated_at) return false;
+        
+        // Фильтруем обычные чаты (не групповые, не каналы) с удаленными агентами
+        const isChannel = chat.is_channel || chat.isChannel;
+        if (!chat.is_group && !isChannel && chat.agent_id) {
+          if (!agentIds.has(chat.agent_id)) return false; // Агент удален, не показываем чат
+        }
+        
+        return true;
+      })
       .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
       .slice(0, 10);
-  }, [conversations]);
+  }, [conversations, agentIds]);
 
   // Функция для получения инициалов из названия чата
   const getInitials = (name) => {
@@ -258,7 +274,7 @@ const RecentChatsHorizontalScroll = ({ onChatSelect }) => {
           {t("chat.recentChats")}
         </h3>
         <span className="text-xs text-[var(--text-dim)]">
-          {recentChats.length} {t("chat.chatsCount")}
+          {t("chat.chatsCount", { count: recentChats.length })}
         </span>
       </div>
 

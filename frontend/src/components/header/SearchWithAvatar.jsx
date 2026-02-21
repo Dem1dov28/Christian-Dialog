@@ -47,6 +47,8 @@ import apiClient from "../../services/api";
 import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 import RecentChatsHorizontalScroll from "../search/RecentChatsHorizontalScroll";
 import ChatItem from "../chat/ChatItem";
+import ruAgentTranslations from "../../locales/agents_ru.json";
+import enAgentTranslations from "../../locales/agents_en.json";
 
 const SearchWithAvatar = forwardRef(
   ({ onSearchToggle, sidebarRef, onChatSelect, currentChatId, onMenuClick }, ref) => {
@@ -711,7 +713,7 @@ const SearchWithAvatar = forwardRef(
           conversation.group_agent_ids
             ?.map((agentId) => {
               const agent = agents.find((a) => a.id === agentId);
-              return agent ? agent.name : `Агент ${agentId}`;
+              return agent ? translateAgent(agent).name : `${t("common.agent")} ${agentId}`;
             })
             .join(", ") || "";
 
@@ -721,8 +723,7 @@ const SearchWithAvatar = forwardRef(
           time: formatTime(conversation.updated_at || conversation.created_at),
           preview:
             agentNames ||
-            `Групповой чат с ${conversation.group_agent_ids?.length || 0
-            } участниками`,
+            t("chat.groupChatWithCount", { count: conversation.group_agent_ids?.length || 0 }),
           colorClass: "bg-[var(--accent)]",
           iconName: conversation.group_avatar || "group",
           imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
@@ -912,9 +913,16 @@ const SearchWithAvatar = forwardRef(
       const agentsWithRelevance = agents.map((agent) => {
         let relevance = 0;
 
+        // Получаем переведенные имена для поиска
+        const agentKey = agent.name;
+        const ruName = ruAgentTranslations?.agents?.[agentKey]?.name || agent.name;
+        const enName = enAgentTranslations?.agents?.[agentKey]?.name || agent.name;
+        const ruNameLower = ruName.toLowerCase();
+        const enNameLower = enName.toLowerCase();
+
         // 1. Точное совпадение имени с учетом регистра - высший приоритет
-        if (agent.name?.includes(query)) {
-          if (agent.name.startsWith(query)) {
+        if (agent.name?.includes(query) || ruName.includes(query) || enName.includes(query)) {
+          if (agent.name.startsWith(query) || ruName.startsWith(query) || enName.startsWith(query)) {
             relevance += 100; // Начало имени
           } else {
             relevance += 90; // Обычное точное вхождение
@@ -922,18 +930,26 @@ const SearchWithAvatar = forwardRef(
         }
 
         // 2. Совпадение имени без учета регистра
-        if (agent.name?.toLowerCase().includes(queryLower)) {
-          if (agent.name.toLowerCase().startsWith(queryLower)) {
+        if (agent.name?.toLowerCase().includes(queryLower) || 
+            ruNameLower.includes(queryLower) || 
+            enNameLower.includes(queryLower)) {
+          if (agent.name.toLowerCase().startsWith(queryLower) || 
+              ruNameLower.startsWith(queryLower) || 
+              enNameLower.startsWith(queryLower)) {
             relevance += 80; // Начало имени
           } else {
             relevance += 70; // Обычное вхождение
           }
         }
 
-        // 3. Поиск по описанию
-        if (agent.description?.includes(query)) {
+        // 3. Поиск по описанию (также на обоих языках)
+        const ruDescription = ruAgentTranslations?.agents?.[agentKey]?.description || "";
+        const enDescription = enAgentTranslations?.agents?.[agentKey]?.description || "";
+        if (agent.description?.includes(query) || ruDescription.includes(query) || enDescription.includes(query)) {
           relevance += 60; // Точное совпадение в описании
-        } else if (agent.description?.toLowerCase().includes(queryLower)) {
+        } else if (agent.description?.toLowerCase().includes(queryLower) || 
+                   ruDescription.toLowerCase().includes(queryLower) || 
+                   enDescription.toLowerCase().includes(queryLower)) {
           relevance += 50; // Совпадение без учета регистра
         }
 
@@ -1091,14 +1107,10 @@ const SearchWithAvatar = forwardRef(
                       <>
                         <div className="flex items-center justify-between mb-3 w-full px-3 pt-3">
                           <h3 className="text-sm font-medium text-[var(--text-dim)]">
-                            Чаты
+                            {t("chat.chats")}
                           </h3>
                           <span className="text-xs text-[var(--text-dim)]">
-                            {getFilteredChats.chats.length}{" "}
-                            {getPluralForm(
-                              getFilteredChats.chats.length,
-                              "чат"
-                            )}
+                            {t("chat.chatsCount", { count: getFilteredChats.chats.length })}
                           </span>
                         </div>
                         <div className="space-y-1 mb-4 w-full">
@@ -1139,14 +1151,10 @@ const SearchWithAvatar = forwardRef(
                       <>
                         <div className="flex items-center justify-between mb-3 w-full px-3">
                           <h3 className="text-sm font-medium text-[var(--text-dim)]">
-                            Группы
+                            {t("chat.groupChat")}
                           </h3>
                           <span className="text-xs text-[var(--text-dim)]">
-                            {getFilteredChats.groups.length}{" "}
-                            {getPluralForm(
-                              getFilteredChats.groups.length,
-                              "группа"
-                            )}
+                            {t("chat.groupsCount", { count: getFilteredChats.groups.length })}
                           </span>
                         </div>
                         <div className="space-y-1 w-full pb-3">
@@ -1196,6 +1204,7 @@ const SearchWithAvatar = forwardRef(
                             const IconComponent = agent.icon_name
                               ? getIconComponent(agent.icon_name)
                               : null;
+                            const translatedAgent = translateAgent(agent);
 
                             return (
                               <div key={agent.id} className="relative w-full">
@@ -1209,7 +1218,7 @@ const SearchWithAvatar = forwardRef(
                                       return avatarUrl ? (
                                         <img
                                           src={avatarUrl}
-                                          alt={agent.name}
+                                          alt={translatedAgent.name}
                                           className="w-12 h-12 rounded-full object-cover shadow-md select-none"
                                           onError={(e) => {
                                             console.warn("Failed to load agent avatar:", avatarUrl);
@@ -1233,7 +1242,7 @@ const SearchWithAvatar = forwardRef(
                                           />
                                         ) : (
                                           <span className="text-lg font-semibold">
-                                            {agent.name.charAt(0).toUpperCase()}
+                                            {translatedAgent.name.charAt(0).toUpperCase()}
                                           </span>
                                         )}
                                       </div>
@@ -1242,25 +1251,13 @@ const SearchWithAvatar = forwardRef(
                                   <div className="flex-1 min-w-0 w-full">
                                     <div className="flex justify-between items-center mb-0.5 w-full">
                                       <p className="flex-1 min-w-0 truncate text-base font-semibold text-[var(--text-white)]">
-                                        {agent.name}
-                                      </p>
-                                      <p className="text-[12px] text-[var(--text-gray)]">
-                                        {agent.category === "chats"
-                                          ? t("common.character")
-                                          : agent.category === "work"
-                                            ? t("common.work")
-                                            : agent.category === "system"
-                                              ? t("common.system")
-                                              : agent.category === "favorites"
-                                                ? t("common.favorites")
-                                                : t("common.agent")}
+                                        {translatedAgent.name}
                                       </p>
                                     </div>
                                     <div className="flex items-center justify-between w-full">
                                       <div className="flex items-center flex-1 min-w-0 w-full">
                                         <p className="flex-1 min-w-0 text-[13px] truncate text-[var(--text-gray)]">
-                                          {agent.description ||
-                                            "AI агент для общения"}
+                                          {translatedAgent.description}
                                         </p>
                                       </div>
                                     </div>
@@ -1279,7 +1276,7 @@ const SearchWithAvatar = forwardRef(
                       getFilteredAgents.length === 0 && (
                         <div className="text-center py-8 text-[var(--text-dim)] px-3 pb-3">
                           <MdChat className="mx-auto text-4xl mb-3" />
-                          <p>Чаты не найдены</p>
+                          <p>{t("chat.noChatsFound")}</p>
                         </div>
                       )}
                   </div>
@@ -1297,14 +1294,10 @@ const SearchWithAvatar = forwardRef(
                       <>
                         <div className="flex items-center justify-between mb-3 w-full px-3 pt-3">
                           <h3 className="text-sm font-medium text-[var(--text-dim)]">
-                            Сообщения
+                            {t("chat.messages")}
                           </h3>
                           <span className="text-xs text-[var(--text-dim)]">
-                            {searchedMessages.length}{" "}
-                            {getPluralForm(
-                              searchedMessages.length,
-                              "сообщение"
-                            )}
+                            {t("chat.messagesCount", { count: searchedMessages.length })}
                           </span>
                         </div>
                         <div className="space-y-1 w-full pb-3">
@@ -1321,7 +1314,13 @@ const SearchWithAvatar = forwardRef(
                                 onClick={() => handleMessageSelect(message)}
                               >
                                 <div className="flex-shrink-0 mr-3">
-                                  {message.agent_avatar ? (
+                                  {message.is_group && message.group_avatar_url ? (
+                                    <img
+                                      src={getGroupChatAvatarUrl(message.group_avatar_url)}
+                                      alt={message.agent_name}
+                                      className="w-12 h-12 rounded-full object-cover shadow-md select-none"
+                                    />
+                                  ) : message.agent_avatar ? (
                                     <img
                                       src={getAgentAvatarUrl(message.agent_avatar, null, "low")}
                                       alt={message.agent_name}

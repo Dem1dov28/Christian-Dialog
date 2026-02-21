@@ -10,8 +10,29 @@ const ChatSearch = ({ isOpen, onClose }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const { conversations, selectConversation } = useChats();
-  const { getAgent } = useAgents();
+  const { agents, getAgent } = useAgents();
   const { t, translateAgent, language } = useLanguage();
+  
+  // Создаем Set с ID агентов для быстрой проверки
+  const agentIds = useMemo(() => {
+    return new Set(agents.map(a => a.id));
+  }, [agents]);
+  
+  // Фильтруем conversations, исключая чаты с удаленными агентами
+  const validConversations = useMemo(() => {
+    return conversations.filter((conversation) => {
+      // Пропускаем групповые чаты и каналы
+      if (conversation.is_group || conversation.is_channel || conversation.isChannel) {
+        return true;
+      }
+      // Пропускаем чаты без agent_id
+      if (!conversation.agent_id) {
+        return true;
+      }
+      // Фильтруем чаты с удаленными агентами
+      return agentIds.has(conversation.agent_id);
+    });
+  }, [conversations, agentIds]);
 
   // Фильтрация чатов по поисковому запросу
   const filteredConversations = useMemo(() => {
@@ -19,7 +40,7 @@ const ChatSearch = ({ isOpen, onClose }) => {
 
     const query = searchQuery.toLowerCase().trim();
 
-    return conversations.filter((conversation) => {
+    return validConversations.filter((conversation) => {
       // Поиск по названию чата
       const titleMatch = conversation.title?.toLowerCase().includes(query);
 
@@ -28,7 +49,7 @@ const ChatSearch = ({ isOpen, onClose }) => {
 
       return titleMatch || agentMatch;
     });
-  }, [conversations, searchQuery]);
+  }, [validConversations, searchQuery]);
 
   // Обработка поиска
   useEffect(() => {
@@ -114,10 +135,10 @@ const ChatSearch = ({ isOpen, onClose }) => {
         }
       }
 
-      return title || "Чат";
+      return title || t("common.chat");
     }
 
-    return "Чат";
+    return t("common.chat");
   };
 
   // Обработка выбора чата
@@ -148,7 +169,7 @@ const ChatSearch = ({ isOpen, onClose }) => {
       <div className="bg-tg-bg border border-tg-border rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
         {/* Заголовок */}
         <div className="flex items-center justify-between p-4 border-b border-tg-border">
-          <h2 className="text-lg font-semibold text-[var(--text-white)]">Поиск по чатам</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-white)]">{t("chat.searchInChats")}</h2>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-tg-bg-secondary rounded-lg transition-colors"
@@ -166,7 +187,7 @@ const ChatSearch = ({ isOpen, onClose }) => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Поиск по названию чата или агенту..."
+              placeholder={t("common.searchPlaceholder")}
               className="w-full pl-10 pr-4 py-3 bg-tg-bg-secondary border border-tg-border rounded-lg text-[var(--text-white)] placeholder-tg-text-secondary focus:outline-none focus:border-tg-accent focus:ring-2 focus:ring-tg-accent/20 transition-all duration-200"
               autoFocus
             />
@@ -185,12 +206,12 @@ const ChatSearch = ({ isOpen, onClose }) => {
               {isSearching ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-2 border-tg-accent border-t-transparent"></div>
-                  <span className="ml-3 text-[var(--text-white)]-secondary">Поиск...</span>
+                  <span className="ml-3 text-[var(--text-white)]-secondary">{t("common.searchingMessages")}</span>
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="space-y-2">
                   <p className="text-sm text-[var(--text-white)]-secondary mb-3">
-                    Найдено чатов: {searchResults.length}
+                    {t("chat.chatsCount", { count: searchResults.length })}
                   </p>
                   {searchResults.map((conversation) => (
                     <div
@@ -229,9 +250,9 @@ const ChatSearch = ({ isOpen, onClose }) => {
               ) : (
                 <div className="text-center py-8">
                   <MdSearch className="mx-auto text-[var(--text-white)]-secondary text-4xl mb-3" />
-                  <p className="text-[var(--text-white)]-secondary">Чаты не найдены</p>
+                  <p className="text-[var(--text-white)]-secondary">{t("chat.noChatsFound")}</p>
                   <p className="text-sm text-[var(--text-white)]-secondary mt-1">
-                    Попробуйте изменить поисковый запрос
+                    {t("common.tryChangingQuery")}
                   </p>
                 </div>
               )}
@@ -242,7 +263,7 @@ const ChatSearch = ({ isOpen, onClose }) => {
         {/* Подсказки */}
         {!searchQuery.trim() && (
           <div className="p-4 text-center text-[var(--text-white)]-secondary">
-            <p>Введите название чата или имя агента для поиска</p>
+            <p>{t("chat.enterQueryToSearchMessages")}</p>
           </div>
         )}
       </div>

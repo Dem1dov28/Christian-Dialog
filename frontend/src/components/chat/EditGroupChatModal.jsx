@@ -94,12 +94,12 @@ const EditGroupChatModal = ({
     const trimmedTitle = newTitle.trim();
     
     if (!trimmedTitle) {
-      showError(t("library.chatNameRequired", { defaultValue: "Название чата не может быть пустым" }));
+      showError(t("library.chatNameRequired"));
       return;
     }
 
     if (selectedAgentIds.length < 2) {
-      showError(t("library.minParticipantsRequired", { defaultValue: "Выберите минимум 2 участника" }));
+      showError(t("library.minParticipantsRequired"));
       return;
     }
 
@@ -146,7 +146,7 @@ const EditGroupChatModal = ({
         });
       }
 
-      showSuccess("Групповой чат успешно обновлен");
+      showSuccess(t("library.groupChatUpdated"));
       
       // Вызываем callback для обновления UI
       if (onUpdate) {
@@ -160,7 +160,7 @@ const EditGroupChatModal = ({
       handleClose();
     } catch (error) {
       console.error("Failed to update group chat:", error);
-      showError(error.message || "Не удалось обновить групповой чат");
+      showError(error.message || t("library.failedUpdateGroupChat"));
     } finally {
       setIsSaving(false);
     }
@@ -180,7 +180,7 @@ const EditGroupChatModal = ({
       if (prev.includes(agentId)) {
         // Не позволяем удалить последнего участника
         if (prev.length <= 2) {
-          showError("В групповом чате должно быть минимум 2 участника");
+          showError(t("library.minParticipantsError"));
           return prev;
         }
         return prev.filter((id) => id !== agentId);
@@ -279,7 +279,7 @@ const EditGroupChatModal = ({
               <MdGroups className="w-5 h-5 text-[var(--accent)]" />
             </div>
             <h3 className="text-lg font-bold text-[var(--text-white)]">
-              {t("library.editGroupChat", { defaultValue: "Редактировать групповой чат" })}
+              {t("library.editGroupChat")}
             </h3>
           </div>
           <button
@@ -361,7 +361,7 @@ const EditGroupChatModal = ({
                 const file = e.target.files[0];
                 if (file) {
                   if (file.size > 5 * 1024 * 1024) {
-                    showError("Файл слишком большой. Максимальный размер: 5MB");
+                    showError(t("library.fileTooLarge"));
                     return;
                   }
                   setGroupAvatarFile(file);

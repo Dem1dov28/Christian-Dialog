@@ -490,6 +490,21 @@ class LangChainService:
         Raises:
             Exception: При ошибке генерации ответа (возвращается fallback)
         """
+        # Validate image_attachments to prevent 'str' object has no attribute 'get' error
+        if image_attachments is not None:
+            if not isinstance(image_attachments, list):
+                logger.warning(f"image_attachments is not a list, resetting to None. Type: {type(image_attachments)}")
+                image_attachments = None
+            else:
+                # Filter out any non-dict items in image_attachments
+                valid_attachments = []
+                for i, att in enumerate(image_attachments):
+                    if isinstance(att, dict):
+                        valid_attachments.append(att)
+                    else:
+                        logger.warning(f"image_attachments[{i}] is not a dict, skipping. Type: {type(att)}, Value: {att}")
+                image_attachments = valid_attachments if valid_attachments else None
+        
         try:
             # Если есть изображения, используем vision-модель для их обработки
             # Всегда используем vision-модель из конфигурации для гарантированной поддержки изображений
@@ -574,7 +589,14 @@ class LangChainService:
             # Извлекаем текст текущего сообщения пользователя для сравнения
             current_user_text = user_message
             if isinstance(user_message, list):
-                text_parts = [item.get("text", "") for item in user_message if isinstance(item, dict) and item.get("type") == "text"]
+                text_parts = []
+                for item in user_message:
+                    if isinstance(item, dict):
+                        if item.get("type") == "text":
+                            text_parts.append(item.get("text", ""))
+                    else:
+                        logger.warning(f"user_message item is not a dict, converting to string. Type: {type(item)}, Value: {item}")
+                        text_parts.append(str(item))
                 current_user_text = " ".join(text_parts) if text_parts else ""
             
             # Если последнее сообщение в истории - это сообщение пользователя, которое
@@ -606,6 +628,9 @@ class LangChainService:
                 
                 # Добавляем изображения
                 for img_info in image_attachments:
+                    if not isinstance(img_info, dict):
+                        logger.warning(f"img_info is not a dict, skipping. Type: {type(img_info)}")
+                        continue
                     image_data_uri = img_info.get("base64", "")
                     if image_data_uri:
                         # LangChain поддерживает изображения через формат OpenAI
@@ -799,6 +824,21 @@ class LangChainService:
         Returns:
             Ответ от модели
         """
+        # Validate image_attachments to prevent 'str' object has no attribute 'get' error
+        if image_attachments is not None:
+            if not isinstance(image_attachments, list):
+                logger.warning(f"_try_with_fallback_model: image_attachments is not a list, resetting to None. Type: {type(image_attachments)}")
+                image_attachments = None
+            else:
+                # Filter out any non-dict items in image_attachments
+                valid_attachments = []
+                for i, att in enumerate(image_attachments):
+                    if isinstance(att, dict):
+                        valid_attachments.append(att)
+                    else:
+                        logger.warning(f"_try_with_fallback_model: image_attachments[{i}] is not a dict, skipping. Type: {type(att)}, Value: {att}")
+                image_attachments = valid_attachments if valid_attachments else None
+        
         # Используем ту же логику, что и в основном методе
         if image_attachments and len(image_attachments) > 0:
             llm = self._get_vision_llm(fallback_model)
@@ -852,6 +892,9 @@ class LangChainService:
         if image_attachments and len(image_attachments) > 0:
             content = []
             for img_att in image_attachments:
+                if not isinstance(img_att, dict):
+                    logger.warning(f"img_att is not a dict, skipping. Type: {type(img_att)}")
+                    continue
                 if img_att.get("type") == "image_url" and img_att.get("image_url"):
                     content.append({
                         "type": "image_url",
@@ -860,13 +903,19 @@ class LangChainService:
             if isinstance(user_message, str):
                 content.insert(0, {"type": "text", "text": user_message})
             elif isinstance(user_message, list):
-                text_parts = [item.get("text", "") for item in user_message if isinstance(item, dict) and item.get("type") == "text"]
+                text_parts = []
+                for item in user_message:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        text_parts.append(item.get("text", ""))
                 if text_parts:
                     content.insert(0, {"type": "text", "text": " ".join(text_parts)})
             messages.append(HumanMessage(content=content))
         else:
             if isinstance(user_message, list):
-                text_parts = [item.get("text", "") for item in user_message if isinstance(item, dict) and item.get("type") == "text"]
+                text_parts = []
+                for item in user_message:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        text_parts.append(item.get("text", ""))
                 user_message = " ".join(text_parts) if text_parts else str(user_message)
             messages.append(HumanMessage(content=user_message))
         
@@ -878,7 +927,10 @@ class LangChainService:
         if conversation_id:
             user_message_text = user_message
             if isinstance(user_message, list):
-                text_parts = [item.get("text", "") for item in user_message if isinstance(item, dict) and item.get("type") == "text"]
+                text_parts = []
+                for item in user_message:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        text_parts.append(item.get("text", ""))
                 user_message_text = " ".join(text_parts) if text_parts else str(user_message)
             
             memory.chat_memory.add_user_message(user_message_text)

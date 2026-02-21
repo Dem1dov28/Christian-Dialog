@@ -1,9 +1,11 @@
 import React, { useState, useRef } from "react";
 import { MdClose, MdAddAPhoto, MdPerson } from "react-icons/md";
+import { IoSparkles } from "react-icons/io5";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
+import api from "../../services/api";
 import "../../styles/create-agent-modal.css";
 
 const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) => {
@@ -16,6 +18,7 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
   const [instructions, setInstructions] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [isExpandingPrompt, setIsExpandingPrompt] = useState(false);
   const fileInputRef = useRef(null);
 
   const isEditMode = !!agentToEdit;
@@ -124,13 +127,41 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
   };
 
   const handleClose = () => {
-    if (!isLoading) {
+    if (!isLoading && !isExpandingPrompt) {
       setName("");
       setDescription("");
       setInstructions("");
       setAvatarFile(null);
       setAvatarPreview(null);
       onClose();
+    }
+  };
+
+  const handleExpandPrompt = async () => {
+    if (!name.trim()) {
+      showError(t("library.createModal.errorEmptyNameForExpand"));
+      return;
+    }
+
+    setIsExpandingPrompt(true);
+    try {
+      const result = await api.expandPrompt(
+        name.trim(),
+        description.trim() || null,
+        instructions.trim() || null
+      );
+      
+      if (result.expanded_prompt) {
+        setInstructions(result.expanded_prompt);
+        showSuccess(t("library.createModal.promptExpanded"));
+      } else {
+        showError(t("library.createModal.errorExpandPrompt"));
+      }
+    } catch (error) {
+      console.error("Error expanding prompt:", error);
+      showError(error.message || t("library.createModal.errorExpandPrompt"));
+    } finally {
+      setIsExpandingPrompt(false);
     }
   };
 
@@ -155,6 +186,14 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
         </div>
 
         <form onSubmit={handleSubmit} className="create-agent-form">
+          {/* Предупреждение при редактировании */}
+          {isEditMode && (
+            <div className="create-agent-edit-warning">
+              <span className="create-agent-warning-icon">⚠️</span>
+              <p>{t("library.createModal.editWarning")}</p>
+            </div>
+          )}
+
           {/* Аватар */}
           <div className="create-agent-avatar-section">
             <div
@@ -213,9 +252,29 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
 
           {/* Промпт */}
           <div className="create-agent-field">
-            <label htmlFor="agent-instructions">
-              {t("library.createModal.promptLabel")}
-            </label>
+            <div className="create-agent-prompt-header">
+              <label htmlFor="agent-instructions">
+                {t("library.createModal.promptLabel")}
+              </label>
+              <button
+                type="button"
+                className="create-agent-expand-btn"
+                onClick={handleExpandPrompt}
+                disabled={isExpandingPrompt || !name.trim()}
+                title={t("library.createModal.expandPromptTitle")}
+              >
+                {isExpandingPrompt ? (
+                  <span className="create-agent-expand-spinner" />
+                ) : (
+                  <IoSparkles size={16} />
+                )}
+                <span>
+                  {isExpandingPrompt
+                    ? t("library.createModal.expanding")
+                    : t("library.createModal.expandPrompt")}
+                </span>
+              </button>
+            </div>
             <textarea
               id="agent-instructions"
               value={instructions}
@@ -223,6 +282,7 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
               placeholder={t("library.createModal.promptPlaceholder")}
               rows={6}
               required
+              disabled={isExpandingPrompt}
             />
             <p className="create-agent-field-hint">
               {t("library.createModal.promptHint")}

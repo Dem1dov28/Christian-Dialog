@@ -1,10 +1,11 @@
 from typing import List, Optional
-from fastapi import Depends, HTTPException, Query, status, UploadFile, File, Form
+from fastapi import Depends, HTTPException, Query, status, UploadFile, File, Form, Body
 from sqlmodel import Session
 import logging
 import os
 import uuid
 from pathlib import Path
+from pydantic import BaseModel
 
 from models.agent import AgentCreate, AgentPublic, AgentUpdate, UserAgentCreate
 from models.user import User
@@ -12,6 +13,17 @@ from core.dependencies import get_current_active_user, get_session
 from services.agent_service import AgentService
 from services.user_agent_service import UserAgentService
 from services.subscription_service import SubscriptionService
+from services.langchain_service import LangChainService
+
+
+class ExpandPromptRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    current_prompt: Optional[str] = None
+
+
+class ExpandPromptResponse(BaseModel):
+    expanded_prompt: str
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +54,7 @@ def create_agent_endpoints(app, agent_service: AgentService, user_agent_service:
                 detail=f"Не удалось создать агента: {str(e)}"
             )
 
-    @app.get("/agents/", response_model=List[AgentPublic])
+    @app.get("/agents/", response_model=List[AgentPublic], response_model_exclude_none=False)
     def read_agents(
         current_user: User = Depends(get_current_active_user),
         offset: int = Query(0, ge=0, description="Смещение для пагинации"),
@@ -53,6 +65,8 @@ def create_agent_endpoints(app, agent_service: AgentService, user_agent_service:
         try:
             # Получаем глобальных агентов и персональных агентов текущего пользователя
             agents = agent_service.get_all_agents(category=category, user_id=current_user.id)
+            
+
             
             # Применяем пагинацию
             paginated_agents = agents[offset:offset + limit]
@@ -77,6 +91,74 @@ def create_agent_endpoints(app, agent_service: AgentService, user_agent_service:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Не удалось получить список категорий"
+            )
+
+    @app.post("/agents/expand-prompt", response_model=ExpandPromptResponse)
+    async def expand_prompt(
+        request: ExpandPromptRequest,
+        current_user: User = Depends(get_current_active_user)
+    ):
+        """Expand basic prompt into detailed using AI"""
+        try:
+            langchain_service = LangChainService()
+            
+            # Build AI request with English prompts
+            system_message = (
+                "You are an expert at creating system prompts for AI assistants and characters. "
+                "Your task is to transform a brief character description into a detailed system prompt "
+                "that defines their behavior, personality, speech mannerisms, and communication style. "
+                "Always respond in English."
+            )
+            
+            user_message = f"""Create a detailed system prompt for a character based on the following information:
+
+Character Name: {request.name}
+"""
+            if request.description:
+                user_message += f"Description: {request.description}\n"
+            
+            if request.current_prompt:
+                user_message += f"Basic Idea: {request.current_prompt}\n"
+            
+            user_message += """
+Create a detailed system prompt in English that includes:
+1. Who this character is — their role, profession, status
+2. Personality and character — how they behave, their traits
+3. Speech mannerisms — communication style, vocabulary, speech patterns
+4. Attitude towards the user — how they interact, how formal/friendly they are
+5. Behavioral quirks — what makes them unique
+6. Restrictions — what they should NOT do (never break character, never mention they are AI)
+
+The prompt should be written in first person ("You are ...", "Your task is ...").
+Be creative and detailed, but don't overload — optimally 8-15 sentences."""
+
+            # Call AI for generation with specific model for prompt expansion
+            expanded_prompt = await langchain_service.generate_response(
+                agent_name="Prompt Expander",
+                instructions=system_message,
+                user_message=user_message,
+                conversation_id=None,
+                model="arcee-ai/trinity-large-preview:free"
+            )
+            
+            expanded_prompt = expanded_prompt.strip() if expanded_prompt else ""
+            
+            if not expanded_prompt:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to generate prompt"
+                )
+            
+            logger.info(f"Prompt expanded for user {current_user.id}, persona: {request.name}")
+            return ExpandPromptResponse(expanded_prompt=expanded_prompt)
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error expanding prompt: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error generating prompt: {str(e)}"
             )
 
     # ==================== ПОЛЬЗОВАТЕЛЬСКИЕ ПЕРСОНАЖИ ====================
@@ -382,7 +464,7 @@ def create_agent_endpoints(app, agent_service: AgentService, user_agent_service:
                         detail="Нельзя удалить чужого персонажа"
                     )
                 
-                success = agent_service.delete_agent(agent_id)
+                success = agent_service.delete_agent(agent_id, current_user.id)
                 if not success:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,

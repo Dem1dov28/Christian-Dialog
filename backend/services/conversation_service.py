@@ -212,6 +212,14 @@ class ConversationService(BaseService):
                 
                 for conv in conversations:
                     try:
+                        # Пропускаем разговоры с удаленными агентами (если agent_id не указан явно)
+                        # Если agent_id указан явно, мы хотим получить разговор даже с удаленным агентом
+                        if conv.agent_id and not agent_id:
+                            agent = session.get(Agent, conv.agent_id)
+                            if not agent:
+                                logger.debug(f"Пропускаем разговор {conv.id}: агент {conv.agent_id} не существует")
+                                continue
+                        
                         conv_data = ConversationPublic.model_validate(conv).model_dump()
                         
                         # 📬 КРИТИЧНО: Явно добавляем unread_count, если его нет в сериализованных данных

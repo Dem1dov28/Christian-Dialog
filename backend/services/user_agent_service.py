@@ -3,6 +3,9 @@ from sqlmodel import Session, select
 import logging
 
 from models.agent import Agent, AgentPublic
+from models.conversation import Conversation
+from models.message import Message
+from models.file_attachment import FileAttachment
 from services.base_service import BaseService
 
 logger = logging.getLogger(__name__)
@@ -236,7 +239,7 @@ class UserAgentService(BaseService):
             raise
     
     def delete_user_agent(self, agent_id: int, user_id: int) -> bool:
-        """Удалить пользовательского агента
+        """Удалить пользовательского агента и все связанные данные (чаты, сообщения, файлы)
         
         Args:
             agent_id: ID агента
@@ -258,17 +261,65 @@ class UserAgentService(BaseService):
                     logger.warning(f"Попытка удалить агента {agent_id} пользователем {user_id}: права доступа отсутствуют")
                     return False
                 
+                agent_name = agent.name
+                
+                # Получаем все разговоры с этим агентом для данного пользователя
+                conversations = session.exec(
+                    select(Conversation).where(
+                        Conversation.agent_id == agent_id,
+                        Conversation.user_id == user_id
+                    )
+                ).all()
+                
+                conversation_ids = [conv.id for conv in conversations]
+                logger.info(f"Найдено {len(conversation_ids)} разговоров для удаления с агентом {agent_id}")
+                
+                # Удаляем файловые вложения для всех сообщений в этих разговорах
+                if conversation_ids:
+                    # Получаем все сообщения из этих разговоров
+                    messages = session.exec(
+                        select(Message).where(Message.conversation_id.in_(conversation_ids))
+                    ).all()
+                    message_ids = [msg.id for msg in messages]
+                    
+                    # Удаляем файловые вложения
+                    if message_ids:
+                        attachments = session.exec(
+                            select(FileAttachment).where(FileAttachment.message_id.in_(message_ids))
+                        ).all()
+                        
+                        for attachment in attachments:
+                            try:
+                                # Удаляем физический файл
+                                import os
+                                if os.path.exists(attachment.file_path):
+                                    os.remove(attachment.file_path)
+                                session.delete(attachment)
+                            except Exception as file_error:
+                                logger.warning(f"Ошибка при удалении файла {attachment.file_path}: {file_error}")
+                                # Продолжаем удаление даже если файл не удалось удалить
+                        
+                        logger.info(f"Удалено {len(attachments)} файловых вложений для агента {agent_id}")
+                    
+                    # Удаляем сообщения
+                    for message in messages:
+                        session.delete(message)
+                    logger.info(f"Удалено {len(messages)} сообщений для агента {agent_id}")
+                    
+                    # Удаляем разговоры
+                    for conv in conversations:
+                        session.delete(conv)
+                    logger.info(f"Удалено {len(conversations)} разговоров для агента {agent_id}")
+                
                 # Удаляем из кэша активных агентов
                 if self.agent_service and agent_id in self.agent_service.active_agents:
                     del self.agent_service.active_agents[agent_id]
                 
-                # Деактивируем агента вместо физического удаления
-                # Это позволяет сохранить историю чатов с этим персонажем
-                agent.is_active = False
-                session.add(agent)
+                # Физически удаляем агента
+                session.delete(agent)
                 session.commit()
                 
-                logger.info(f"Пользовательский агент {agent_id} ({agent.name}) деактивирован пользователем {user_id}")
+                logger.info(f"Пользовательский агент {agent_id} ({agent_name}) и все связанные данные полностью удалены пользователем {user_id}")
                 return True
         except Exception as e:
             logger.error(f"Ошибка при удалении пользовательского агента {agent_id}: {e}", exc_info=True)

@@ -115,6 +115,28 @@ export const LanguageProvider = ({ children }) => {
   const t = useMemo(() => {
     const currentTranslations = translations[language] || translations[DEFAULT_LANGUAGE];
 
+    // Helper function to get plural suffix based on count and language
+    const getPluralSuffix = (count) => {
+      if (language === 'ru') {
+        // Russian plural rules: 1 (one), 2-4 (few), 5+ (many), 11-14 (many)
+        const lastDigit = count % 10;
+        const lastTwoDigits = count % 100;
+        if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+          return 'many';
+        }
+        if (lastDigit === 1) {
+          return 'one';
+        }
+        if (lastDigit >= 2 && lastDigit <= 4) {
+          return 'few';
+        }
+        return 'many';
+      } else {
+        // English plural rules: 1 (one), 0 and 2+ (other)
+        return count === 1 ? 'one' : 'other';
+      }
+    };
+
     return (key, params = {}) => {
       const keys = key.split('.');
       let value = currentTranslations;
@@ -123,7 +145,7 @@ export const LanguageProvider = ({ children }) => {
         if (value && typeof value === 'object' && k in value) {
           value = value[k];
         } else {
-          // Fallback to Russian if translation not found
+          // Fallback to default language if translation not found
           const fallbackTranslations = translations[DEFAULT_LANGUAGE];
           let fallbackValue = fallbackTranslations;
           for (const fk of keys) {
@@ -135,6 +157,32 @@ export const LanguageProvider = ({ children }) => {
           }
           value = fallbackValue;
           break;
+        }
+      }
+
+      // Handle plural forms if count is provided
+      if (params.count !== undefined) {
+        const suffix = getPluralSuffix(params.count);
+        // Try to find plural form: key_one, key_few, key_many, key_other
+        const baseKey = keys[keys.length - 1];
+        const pluralKey = `${baseKey}_${suffix}`;
+        
+        // Navigate to parent object to look for plural key
+        let parent = currentTranslations;
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (parent && typeof parent === 'object' && keys[i] in parent) {
+            parent = parent[keys[i]];
+          } else {
+            parent = null;
+            break;
+          }
+        }
+        
+        // Use plural key if found, otherwise fall back to base key
+        if (parent && typeof parent === 'object' && pluralKey in parent) {
+          value = parent[pluralKey];
+        } else if (parent && typeof parent === 'object' && baseKey in parent) {
+          value = parent[baseKey];
         }
       }
 

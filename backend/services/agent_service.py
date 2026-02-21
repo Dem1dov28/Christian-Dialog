@@ -5,6 +5,8 @@ import re
 
 from models.agent import Agent, AgentCreate, AgentPublic
 from models.conversation import Conversation
+from models.message import Message
+from models.file_attachment import FileAttachment
 from models.multi_agent_conversation import MultiAgentConversation
 from services.base_service import BaseService
 from services.langchain_service import LangChainService
@@ -158,7 +160,12 @@ class AgentService(BaseService):
                                 f"Дубликат агента по названию '{agent.name}': оставляем ID={agent.id}, удаляем ID={existing.id}"
                             )
                 
-                return [AgentPublic.model_validate(agent) for agent in unique_agents_map.values()]
+                result = [AgentPublic.model_validate(agent) for agent in unique_agents_map.values()]
+                # DEBUG: Логируем пользовательских агентов с аватарами
+                for agent in result:
+                    if agent.user_id:
+                        logger.info(f"[DEBUG] User agent {agent.name}: avatar_url={agent.avatar_url}, image_url={agent.image_url}")
+                return result
         except Exception as e:
             logger.error(f"Ошибка при получении агентов: {e}", exc_info=True)
             return []
@@ -311,11 +318,12 @@ class AgentService(BaseService):
             logger.error(f"Ошибка при обновлении агента {agent_id}: {e}", exc_info=True)
             raise
     
-    def delete_agent(self, agent_id: int) -> bool:
-        """Удалить агента
+    def delete_agent(self, agent_id: int, user_id: Optional[int] = None) -> bool:
+        """Удалить агента и все связанные данные (чаты, сообщения, файлы)
         
         Args:
             agent_id: ID агента для удаления
+            user_id: ID пользователя (опционально, для фильтрации разговоров)
             
         Returns:
             True, если агент успешно удален, False если не найден
@@ -327,13 +335,61 @@ class AgentService(BaseService):
                     logger.warning(f"Попытка удалить несуществующего агента: {agent_id}")
                     return False
                 
+                agent_name = agent.name
+                
+                # Получаем все разговоры с этим агентом
+                query = select(Conversation).where(Conversation.agent_id == agent_id)
+                if user_id:
+                    query = query.where(Conversation.user_id == user_id)
+                conversations = session.exec(query).all()
+                
+                conversation_ids = [conv.id for conv in conversations]
+                logger.info(f"Найдено {len(conversation_ids)} разговоров для удаления с агентом {agent_id}")
+                
+                # Удаляем файловые вложения для всех сообщений в этих разговорах
+                if conversation_ids:
+                    # Получаем все сообщения из этих разговоров
+                    messages = session.exec(
+                        select(Message).where(Message.conversation_id.in_(conversation_ids))
+                    ).all()
+                    message_ids = [msg.id for msg in messages]
+                    
+                    # Удаляем файловые вложения
+                    if message_ids:
+                        attachments = session.exec(
+                            select(FileAttachment).where(FileAttachment.message_id.in_(message_ids))
+                        ).all()
+                        
+                        for attachment in attachments:
+                            try:
+                                # Удаляем физический файл
+                                import os
+                                if os.path.exists(attachment.file_path):
+                                    os.remove(attachment.file_path)
+                                session.delete(attachment)
+                            except Exception as file_error:
+                                logger.warning(f"Ошибка при удалении файла {attachment.file_path}: {file_error}")
+                                # Продолжаем удаление даже если файл не удалось удалить
+                        
+                        logger.info(f"Удалено {len(attachments)} файловых вложений для агента {agent_id}")
+                    
+                    # Удаляем сообщения
+                    for message in messages:
+                        session.delete(message)
+                    logger.info(f"Удалено {len(messages)} сообщений для агента {agent_id}")
+                    
+                    # Удаляем разговоры
+                    for conv in conversations:
+                        session.delete(conv)
+                    logger.info(f"Удалено {len(conversations)} разговоров для агента {agent_id}")
+                
                 # Удаляем из активных агентов
                 if agent_id in self.active_agents:
                     del self.active_agents[agent_id]
                 
                 session.delete(agent)
                 session.commit()
-                logger.info(f"Агент {agent_id} успешно удален")
+                logger.info(f"Агент {agent_id} ({agent_name}) и все связанные данные полностью удалены")
                 return True
         except Exception as e:
             logger.error(f"Ошибка при удалении агента {agent_id}: {e}", exc_info=True)

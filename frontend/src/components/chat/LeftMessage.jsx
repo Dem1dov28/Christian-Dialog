@@ -1095,7 +1095,7 @@ export default function LeftMessage({
 
       } catch (error) {
         console.error('Error checking test answers:', error);
-        showError('Не удалось проверить ответы. Попробуйте еще раз.');
+        showError(t("library.failedCheckAnswers"));
         checkButton.disabled = false;
         checkButton.textContent = 'Проверить';
       }

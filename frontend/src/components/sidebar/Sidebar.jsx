@@ -356,11 +356,11 @@ const Sidebar = ({
           [t("common.tools")]: "tools",
           [t("common.models")]: "models",
           [t("library.channelsTitle", { defaultValue: "Каналы" })]: "channels",
-          "Все чаты": "chats",
-          "Персонажи": "characters",
-          "Инструменты": "tools",
-          "Модели": "models",
-          "Каналы": "channels",
+          [t("common.allChats")]: "chats",
+          [t("common.characters")]: "characters",
+          [t("common.tools")]: "tools",
+          [t("common.models")]: "models",
+          [t("library.channelsTitle", { defaultValue: "Каналы" })]: "channels",
         };
         const folderSysType = nameMap[f.name] || null;
         return folderSysType === sysType;
@@ -1107,8 +1107,7 @@ const Sidebar = ({
         ),
         preview:
           agentNames ||
-          `Групповой чат с ${conversation.group_agent_ids?.length || 0
-          } участниками`,
+          t("chat.groupChatWithCount", { count: conversation.group_agent_ids?.length || 0 }),
         colorClass: "bg-purple-500",
         iconName: conversation.group_avatar || "group",
         imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
@@ -1274,8 +1273,7 @@ const Sidebar = ({
             ),
             preview:
               agentNames ||
-              `Групповой чат с ${conversation.group_agent_ids?.length || 0
-              } участниками`,
+              t("chat.groupChatWithCount", { count: conversation.group_agent_ids?.length || 0 }),
             colorClass: "bg-purple-500",
             iconName: conversation.group_avatar || "group",
             imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть
@@ -1429,8 +1427,7 @@ const Sidebar = ({
                 preview: decoded
                   ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
                   : agentNames ||
-                  `Групповой чат с ${conversation.group_agent_ids?.length || 0
-                  } участниками`,
+                  t("chat.groupChatWithCount", { count: conversation.group_agent_ids?.length || 0 }),
                 colorClass: "bg-purple-500",
                 iconName: conversation.group_avatar || "group",
                 imageSrc: getGroupChatAvatarUrl(conversation.group_avatar_url), // Используем загруженный аватар, если есть

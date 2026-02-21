@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import apiClient from "../services/api";
 
@@ -17,6 +17,19 @@ export const AgentsProvider = ({ children }) => {
   const [agents, setAgents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Callback для действий после обновления агента (например, обновление списка чатов)
+  const [onAgentUpdatedCallback, setOnAgentUpdatedCallback] = useState(null);
+  
+  // Регистрация callback для обновления агента
+  const registerAgentUpdateCallback = useCallback((callback) => {
+    setOnAgentUpdatedCallback(() => callback);
+  }, []);
+  
+  // Отмена регистрации callback
+  const unregisterAgentUpdateCallback = useCallback(() => {
+    setOnAgentUpdatedCallback(null);
+  }, []);
 
   // Загружаем агентов только когда пользователь авторизован
   useEffect(() => {
@@ -125,6 +138,10 @@ export const AgentsProvider = ({ children }) => {
   const updateUserAgent = async (agentId, { name, description, instructions, avatar }) => {
     try {
       setIsLoading(true);
+      
+      // Проверяем, изменяется ли промпт или аватар (это вызовет удаление чатов на бэкенде)
+      const isPromptOrAvatarChanged = !!instructions || !!avatar;
+      
       const formData = new FormData();
       if (name) formData.append("name", name);
       if (instructions) formData.append("instructions", instructions);
@@ -135,6 +152,13 @@ export const AgentsProvider = ({ children }) => {
       setAgents((prev) => prev.map((agent) => 
         agent.id === agentId ? updatedAgent : agent
       ));
+      
+      // Если изменился промпт или аватар, вызываем callback для обновления UI
+      if (isPromptOrAvatarChanged && onAgentUpdatedCallback) {
+        console.log("[AgentsContext] Agent prompt/avatar changed, triggering UI update callback");
+        await onAgentUpdatedCallback(agentId, { promptChanged: !!instructions, avatarChanged: !!avatar });
+      }
+      
       return updatedAgent;
     } catch (error) {
       console.error("Failed to update user agent:", error);
@@ -300,6 +324,9 @@ export const AgentsProvider = ({ children }) => {
     updateUserAgent,
     deleteUserAgent: deleteAgent, // Используем тот же метод
     getUserAgents,
+    // Callback для обновления агента
+    registerAgentUpdateCallback,
+    unregisterAgentUpdateCallback,
   };
 
   return (

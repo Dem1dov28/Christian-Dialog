@@ -109,14 +109,10 @@ export function useChatComputedValues({
   const messagePlaceholder = useMemo(() => {
     if (isChannelChat) {
       return canWriteChannel
-        ? t("chat.channelOwnerPlaceholder", {
-            defaultValue: "Поделитесь новостью или обновлением...",
-          })
-        : t("chat.channelReadOnlyPlaceholder", {
-            defaultValue: "Канал доступен только для чтения",
-          });
+        ? t("chat.channelOwnerPlaceholder")
+        : t("chat.channelReadOnlyPlaceholder");
     }
-    return t("chat.messagePlaceholder", { defaultValue: "Message..." });
+    return t("chat.typeMessage");
   }, [isChannelChat, canWriteChannel, t]);
 
   // Пустое состояние промпта
@@ -186,7 +182,7 @@ export function useChatComputedValues({
     if (isChannelChat) {
       return (
         activeConversation.title ||
-        t("chat.channelTitleFallback", { defaultValue: "Канал" })
+        t("chat.channelTitleFallback")
       );
     }
 

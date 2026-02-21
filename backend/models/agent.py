@@ -37,6 +37,15 @@ class AgentPublic(AgentBase):
     id: int
     created_at: datetime
     user_id: Optional[int] = None
+    # Явно переопределяем поля для сериализации (включаем None значения)
+    avatar_url: Optional[str] = Field(default=None, serialization_alias="avatar_url")
+    image_url: Optional[str] = Field(default=None, serialization_alias="image_url")
+    
+    model_config = {
+        "populate_by_name": True,
+        "from_attributes": True,
+        "json_schema_serialization_defaults_required": False,
+    }
 
 
 class AgentCreate(AgentBase):

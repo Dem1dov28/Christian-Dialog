@@ -321,20 +321,20 @@ function MainApp() {
   const handleReportSubmit = async (reportData) => {
     try {
       await apiClient.post("/api/reports", reportData);
-      showSuccess(t("report.success", "Ваша жалоба будет рассмотрена в течение 24 часов"));
+      showSuccess(t("report.success"));
     } catch (error) {
       console.error("Error submitting report:", error);
-      showError(t("errors.reportSubmission", "Не удалось отправить жалобу"));
+      showError(t("errors.reportSubmission"));
     }
   };
 
   const handleSupportSubmit = async (supportData) => {
     try {
       await apiClient.post("/api/support", supportData);
-      showSuccess(t("support.requestSent", "Запрос отправлен в службу поддержки"));
+      showSuccess(t("support.requestSent"));
     } catch (error) {
       console.error("Error submitting support request:", error);
-      showError(t("support.requestError", "Не удалось отправить запрос"));
+      showError(t("support.requestError"));
     }
   };
 
