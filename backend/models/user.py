@@ -7,7 +7,7 @@ from datetime import datetime
 class UserBase(SQLModel):
     """Базовая модель пользователя"""
     username: str = Field(..., min_length=3, max_length=50)
-    email: str = Field(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     full_name: Optional[str] = Field(default=None, max_length=100)
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
     is_active: bool = Field(default=True)
@@ -25,14 +25,14 @@ class UserBase(SQLModel):
 
 class UserCreate(SQLModel):
     """Модель для создания пользователя"""
-    email: str = Field(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     full_name: Optional[str] = Field(default=None, max_length=100)
     password: str = Field(..., min_length=6, max_length=100)
     username: Optional[str] = Field(
         default=None,
         min_length=3,
         max_length=50,
-        pattern=r'^[a-zA-Z0-9._-]+$',
+        regex=r'^[a-zA-Z0-9._-]+$',
         description="Желаемый username пользователя (если не указан, генерируется автоматически)"
     )
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
@@ -41,11 +41,11 @@ class UserCreate(SQLModel):
 
 class UserUpdate(SQLModel):
     """Модель для обновления пользователя"""
-    email: Optional[str] = Field(default=None, pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email: Optional[str] = Field(default=None, regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     full_name: Optional[str] = Field(default=None, max_length=100)
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
     password: Optional[str] = Field(default=None, min_length=6, max_length=100)
-    username: Optional[str] = Field(default=None, min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9._-]+$')
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50, regex=r'^[a-zA-Z0-9._-]+$')
 
 
 
@@ -53,7 +53,7 @@ class User(UserBase, table=True):
     """Основная модель пользователя в базе данных"""
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(..., unique=True, index=True, min_length=3, max_length=50)
-    email: str = Field(..., unique=True, index=True, pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email: str = Field(..., unique=True, index=True, regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     full_name: Optional[str] = Field(default=None, max_length=100)
     avatar_url: Optional[str] = Field(default=None, description="URL аватара пользователя")
     is_active: bool = Field(default=True)
@@ -233,7 +233,7 @@ class UsageStatsResponse(SQLModel):
 class ChatExportRequest(SQLModel):
     """Модель для запроса экспорта чата"""
     conversation_id: int
-    format: str = Field(default="txt", pattern=r'^(txt|json|csv)$')
+    format: str = Field(default="txt", regex=r'^(txt|json|csv)$')
 
 
 class ChatExportResponse(SQLModel):
@@ -256,7 +256,7 @@ class APIUpgradeResponse(SQLModel):
 
 class SubscriptionUpgradeRequest(SQLModel):
     """Модель для запроса обновления подписки"""
-    subscription_tier: str = Field(..., pattern=r'^(free|plus|pro|api)$')
+    subscription_tier: str = Field(..., regex=r'^(free|plus|pro|api)$')
     api_key: Optional[str] = Field(default=None, min_length=10, max_length=100)
 
 
@@ -285,7 +285,7 @@ class SubscriptionStatusResponse(SQLModel):
 
 class CheckEmailRequest(SQLModel):
     """Модель для запроса проверки email"""
-    email: str = Field(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 
 class CheckEmailResponse(SQLModel):
@@ -296,7 +296,7 @@ class CheckEmailResponse(SQLModel):
 
 class ForgotPasswordRequest(SQLModel):
     """Модель для запроса сброса пароля"""
-    email: str = Field(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 
 class ForgotPasswordResponse(SQLModel):
