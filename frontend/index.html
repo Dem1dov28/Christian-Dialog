@@ -116,8 +116,17 @@
     <!-- Favicon -->
     <link rel="icon" type="image/webp" href="/favicon.webp" />
     <title>Epochal Dialog — Общайтесь с историческими личностями через AI</title>
-    <!-- Telegram Web App SDK - загружается только при открытии в Telegram -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Telegram Web App SDK — только при открытии из Telegram (tgWebAppData в hash) -->
+    <script>
+      (function(){
+        try {
+          var h = window.location.hash.slice(1);
+          if (h && new URLSearchParams(h).get('tgWebAppData')) {
+            document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>');
+          }
+        } catch(e) {}
+      })();
+    </script>
     
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
