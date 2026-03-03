@@ -73,6 +73,12 @@ html.tg-webapp #root {
   padding-bottom: var(--safe-area-inset-bottom);
 }
 
+/* Drawer-панель (боковое меню): в Telegram не должна уходить под Dynamic Island и хедер */
+html.tg-webapp .drawer-sheet {
+  top: var(--safe-area-inset-top);
+  height: calc(100% - var(--safe-area-inset-top));
+}
+
 /* Класс для применения фонового изображения темы — используется только в авторизованной части приложения */
 body.app-with-theme-bg {
   background-image: var(--bg-image);

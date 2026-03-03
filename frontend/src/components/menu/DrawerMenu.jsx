@@ -50,7 +50,7 @@ const SheetContent = ({ isOpen, onClose, children }) => {
       <Overlay isOpen={isOpen} onClose={onClose} />
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-[110] h-full w-full max-w-[340px] transform bg-[var(--bg-secondary)] shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-[110] h-full w-full max-w-[340px] transform bg-[var(--bg-secondary)] shadow-xl transition-transform duration-300 ease-in-out drawer-sheet",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ width: "min(340px, 90vw)" }}
