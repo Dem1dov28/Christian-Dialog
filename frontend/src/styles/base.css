@@ -55,11 +55,9 @@ body {
 #root {
   height: 100%;
   overflow: hidden;
-  /* safe-area только по вертикали — top (Dynamic Island, notch) и bottom (home bar).
-     left/right убраны: они нужны только в landscape с notch, но вызывают
-     обрезку контента по бокам в portrait на iOS. */
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* safe-area: только в Telegram (см. html.tg-webapp). На веб — 0, иначе лишний отступ на десктопе. */
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* Telegram WebApp: опускаем контент ниже — Dynamic Island + хедер (кнопка «Закрыть»).
