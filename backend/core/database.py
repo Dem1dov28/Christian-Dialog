@@ -2,7 +2,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from typing import Generator, Optional
 import os
 import logging
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 
 # Импортируем все модели для создания таблиц
 from models.agent import Agent
@@ -54,50 +54,41 @@ engine = create_engine(
 
 
 def get_column_names(conn, table_name: str) -> set:
-    """Получение списка колонок таблицы для PostgreSQL."""
-    inspector = inspect(engine)
+    """Получение списка колонок таблицы для PostgreSQL.
+    Использует переданное соединение напрямую через information_schema,
+    чтобы видеть незакоммиченные изменения текущей транзакции и избежать дедлоков.
+    """
     try:
-        columns = inspector.get_columns(table_name)
-        return {col["name"] for col in columns}
+        result = conn.execute(
+            text("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = :table_name
+            """),
+            {"table_name": table_name},
+        )
+        return {row[0] for row in result.fetchall()}
     except Exception as e:
-        logger.debug(f"Ошибка при получении колонок таблицы {table_name}: {e}")
-        # Fallback на прямой SQL запрос (параметризованно — без риска SQL injection)
-        try:
-            result = conn.execute(
-                text("""
-                    SELECT column_name 
-                    FROM information_schema.columns 
-                    WHERE table_name = :table_name
-                """),
-                {"table_name": table_name},
-            )
-            return {row[0] for row in result.fetchall()}
-        except Exception as e2:
-            logger.error(f"Ошибка при fallback получении колонок: {e2}")
-            return set()
+        logger.error(f"Ошибка при получении колонок таблицы {table_name}: {e}")
+        return set()
 
 
 def table_exists(conn, table_name: str) -> bool:
     """Проверка существования таблицы в PostgreSQL."""
-    inspector = inspect(engine)
     try:
-        return table_name.lower() in [t.lower() for t in inspector.get_table_names()]
-    except Exception:
-        # Fallback на прямой SQL
-        try:
-            result = conn.execute(
-                text("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_name = :table_name
-                    )
-                """),
-                {"table_name": table_name}
-            )
-            return result.scalar()
-        except Exception as e:
-            logger.error(f"Ошибка при проверке существования таблицы {table_name}: {e}")
-            return False
+        result = conn.execute(
+            text("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = :table_name
+                )
+            """),
+            {"table_name": table_name},
+        )
+        return result.scalar()
+    except Exception as e:
+        logger.error(f"Ошибка при проверке существования таблицы {table_name}: {e}")
+        return False
 
 
 def create_db_and_tables():
