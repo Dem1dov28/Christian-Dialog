@@ -117,6 +117,7 @@ async def lifespan(app: FastAPI):
     
     create_db_and_tables()
     agent_service.initialize_agents()
+    logger.info("Application startup complete")
     
     # Создаем необходимые директории для файлов
     from pathlib import Path
