@@ -74,59 +74,41 @@ class RateLimiter:
     def is_allowed(
         self,
         client_id: str,
+        path: str,
         max_requests: int,
         window_seconds: int
     ) -> Tuple[bool, int]:
         """
-        Check if request is allowed
-        
-        Args:
-            client_id: Client identifier
-            max_requests: Maximum number of requests
-            window_seconds: Time window in seconds
-            
-        Returns:
-            Tuple of (is_allowed, remaining_requests)
+        Check if request is allowed. Лимит считается отдельно для каждого path,
+        иначе все запросы клиента (auth, agents, chat…) складывались бы в один счётчик.
         """
-        # Если доступен Redis — используем его (production-ready)
+        bucket = f"{client_id}:{path}"
         if USE_REDIS and _redis_client is not None:
-            return self._is_allowed_redis(client_id, max_requests, window_seconds)
-        
-        # Fallback: in-memory реализация (для dev / локального запуска)
+            return self._is_allowed_redis(bucket, max_requests, window_seconds)
+
         self._cleanup_old_entries()
-        
         now = datetime.utcnow()
         cutoff_time = now - timedelta(seconds=window_seconds)
-        
-        # Filter requests within time window
-        self.requests[client_id] = [
-            req_time for req_time in self.requests[client_id]
-            if req_time > cutoff_time
+        self.requests[bucket] = [
+            t for t in self.requests[bucket] if t > cutoff_time
         ]
-        
-        # Check if limit exceeded
-        request_count = len(self.requests[client_id])
-        if request_count >= max_requests:
+        if len(self.requests[bucket]) >= max_requests:
             return False, 0
-        
-        # Add current request
-        self.requests[client_id].append(now)
-        
-        remaining = max_requests - request_count - 1
-        return True, remaining
+        self.requests[bucket].append(now)
+        return True, max_requests - len(self.requests[bucket])
 
     def _is_allowed_redis(
         self,
-        client_id: str,
+        bucket: str,
         max_requests: int,
         window_seconds: int
     ) -> Tuple[bool, int]:
         """
         Реализация rate limiting с использованием Redis (sliding window).
+        bucket = client_id:path — отдельный счётчик на каждую комбинацию.
         """
         assert _redis_client is not None  # для type checker
-        
-        key = f"rate_limit:{client_id}"
+        key = f"rate_limit:{bucket}"
         now = datetime.utcnow().timestamp()
         window_start = now - window_seconds
         
@@ -149,33 +131,25 @@ class RateLimiter:
             return True, remaining
         except Exception as e:  # pragma: no cover - безопасный fallback
             logger.error(f"Redis error in rate limiter, fallback to in-memory: {e}")
-            # На ошибке Redis не блокируем пользователя, но продолжаем с in-memory
-            return self._is_allowed_memory_fallback(client_id, max_requests, window_seconds)
+            return self._is_allowed_memory_fallback(bucket, max_requests, window_seconds)
 
     def _is_allowed_memory_fallback(
         self,
-        client_id: str,
+        bucket: str,
         max_requests: int,
         window_seconds: int
     ) -> Tuple[bool, int]:
         """Отдельный метод для in-memory логики (используется как fallback)."""
         self._cleanup_old_entries()
-        
         now = datetime.utcnow()
         cutoff_time = now - timedelta(seconds=window_seconds)
-        
-        self.requests[client_id] = [
-            req_time for req_time in self.requests[client_id]
-            if req_time > cutoff_time
+        self.requests[bucket] = [
+            t for t in self.requests[bucket] if t > cutoff_time
         ]
-        
-        request_count = len(self.requests[client_id])
-        if request_count >= max_requests:
+        if len(self.requests[bucket]) >= max_requests:
             return False, 0
-        
-        self.requests[client_id].append(now)
-        remaining = max_requests - request_count - 1
-        return True, remaining
+        self.requests[bucket].append(now)
+        return True, max_requests - len(self.requests[bucket])
 
 
 # Global rate limiter instance
@@ -248,9 +222,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Get client identifier
         client_id = rate_limiter._get_client_id(request)
         
-        # Check rate limit
+        # Check rate limit (отдельный счётчик на каждый path)
         is_allowed, remaining = rate_limiter.is_allowed(
-            client_id, max_requests, window_seconds
+            client_id, path, max_requests, window_seconds
         )
         
         if not is_allowed:
