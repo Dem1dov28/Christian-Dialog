@@ -41,12 +41,17 @@ class RateLimiter:
         self.last_cleanup = datetime.utcnow()
     
     def _get_client_id(self, request: Request) -> str:
-        """Get client identifier for rate limiting"""
-        # Используем IP адрес
-        client_ip = request.client.host if request.client else "unknown"
-        
-        # Для авторизованных пользователей можно использовать user_id
-        # Но для простоты используем IP
+        """Get client identifier for rate limiting.
+        За nginx/proxy берём реальный IP из X-Forwarded-For или X-Real-IP,
+        иначе все пользователи считались бы одним (IP прокси) и делили лимит."""
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            # Первый IP в цепочке — оригинальный клиент
+            client_ip = forwarded.split(",")[0].strip()
+        else:
+            client_ip = request.headers.get("X-Real-IP")
+        if not client_ip:
+            client_ip = request.client.host if request.client else "unknown"
         return client_ip
     
     def _cleanup_old_entries(self):
