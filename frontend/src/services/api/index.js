@@ -59,8 +59,12 @@ class UnifiedAPI {
     this.loginWithTelegram = (initData) => auth.loginWithTelegram(initData);
     this.sendTelegramLinkCode = (email) => auth.sendTelegramLinkCode(email);
     this.verifyAndLinkTelegram = (email, code, initData) => auth.verifyAndLinkTelegram(email, code, initData);
+    this.linkTelegram = (initData) => auth.linkTelegram(initData);
+    this.unlinkGoogle = () => auth.unlinkGoogle();
     this.getTelegramOIDCConfig = () => auth.getTelegramOIDCConfig();
     this.loginWithTelegramOIDC = (payload) => auth.loginWithTelegramOIDC(payload);
+    this.getTelegramWidgetConfig = () => auth.getTelegramWidgetConfig();
+    this.loginWithTelegramWidget = (data) => auth.loginWithTelegramWidget(data);
     this.loginWithGoogle = (credential, clientId) => auth.loginWithGoogle(credential, clientId);
     this.logout = () => auth.logout();
     this.getCurrentUser = () => auth.getCurrentUser();

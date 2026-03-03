@@ -69,13 +69,14 @@ from config import (
     COOKIE_SECURE,
     COOKIE_SAMESITE,
     TELEGRAM_BOT_TOKEN,
+    TELEGRAM_BOT_USERNAME,
     TELEGRAM_ENABLED,
     TELEGRAM_OIDC_CLIENT_ID,
     TELEGRAM_OIDC_CLIENT_SECRET,
     TELEGRAM_OIDC_ENABLED,
     TELEGRAM_OIDC_REDIRECT_URI,
 )
-from core.telegram import validate_telegram_init_data, parse_telegram_user
+from core.telegram import validate_telegram_init_data, parse_telegram_user, validate_telegram_widget_data
 from core.telegram_oidc import verify_telegram_id_token
 
 logger = logging.getLogger(__name__)
@@ -108,6 +109,17 @@ class TelegramOIDCRequest(BaseModel):
     code: Optional[str] = None
     code_verifier: Optional[str] = None
     redirect_uri: Optional[str] = None
+
+
+class TelegramWidgetAuthRequest(BaseModel):
+    """Telegram Login Widget — данные из callback onTelegramAuth(user)."""
+    id: int
+    first_name: str = ""
+    last_name: Optional[str] = ""
+    username: Optional[str] = None
+    photo_url: Optional[str] = None
+    auth_date: int = 0
+    hash: str = ""
 
 
 def _is_local_avatar(avatar_url: Optional[str]) -> bool:
@@ -659,6 +671,68 @@ def verify_and_link_telegram(
     return _do_telegram_login(response, user, db, "verify_and_link_telegram")
 
 
+class LinkTelegramRequest(BaseModel):
+    init_data: str
+
+
+@router.post("/link-telegram")
+def link_telegram(
+    payload: LinkTelegramRequest,
+    response: Response,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session),
+):
+    """Привязать Telegram к уже авторизованному пользователю (после входа через Google и т.д.)."""
+    if not TELEGRAM_ENABLED:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Telegram is not configured")
+    parsed = validate_telegram_init_data(payload.init_data, TELEGRAM_BOT_TOKEN)
+    if not parsed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Telegram initData")
+    tg_user = parse_telegram_user(parsed)
+    telegram_id = str(tg_user.get("id", ""))
+    if not telegram_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram user id required")
+    telegram_username = tg_user.get("username") or None
+    existing = db.exec(select(User).where(User.telegram_id == telegram_id)).first()
+    if existing and existing.id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This Telegram is linked to another account")
+    user = db.get(User, current_user.id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user.telegram_id = telegram_id
+    user.telegram_username = telegram_username
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return _do_telegram_login(response, user, db, "link_telegram")
+
+
+@router.post("/unlink-google")
+def unlink_google(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session),
+):
+    """Отвязать Google от аккаунта. Разрешено только если есть другой способ входа (Telegram или пароль)."""
+    user = db.get(User, current_user.id)
+    if not user or not getattr(user, "google_id", None):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google is not linked")
+    has_telegram = bool(getattr(user, "telegram_id", None))
+    has_password = bool(getattr(user, "hashed_password", None))
+    if not has_telegram and not has_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Set a password or link Telegram first before unlinking Google"
+        )
+    user.google_id = None
+    user.auth_provider = "telegram" if has_telegram else "local"
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"success": True, "message": "Google unlinked"}
+
+
 # --- Log In With Telegram (OIDC) ---
 
 def _exchange_telegram_code_for_id_token(code: str, code_verifier: str, redirect_uri: str) -> Optional[str]:
@@ -822,6 +896,109 @@ def get_telegram_oidc_config():
         "client_id": TELEGRAM_OIDC_CLIENT_ID,
         "redirect_uri": TELEGRAM_OIDC_REDIRECT_URI,
         "auth_url": "https://oauth.telegram.org/auth",
+    }
+
+
+# --- Telegram Login Widget (классический виджет, без OIDC) ---
+
+def _process_telegram_widget_user(db: Session, data: dict) -> User:
+    """Создаёт или находит пользователя по данным Telegram Login Widget."""
+    telegram_id = str(data.get("id", ""))
+    if not telegram_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram user id missing")
+
+    first_name = data.get("first_name", "")
+    last_name = data.get("last_name") or ""
+    full_name = " ".join(filter(None, [first_name, last_name])).strip() or None
+    telegram_username = data.get("username")
+    avatar_url = data.get("photo_url")
+
+    user = db.exec(select(User).where(User.telegram_id == telegram_id)).first()
+    if user:
+        updated = False
+        if telegram_username and getattr(user, "telegram_username", None) != telegram_username:
+            user.telegram_username = telegram_username
+            updated = True
+        if full_name and not user.full_name:
+            user.full_name = full_name
+            updated = True
+        has_local = _is_local_avatar(getattr(user, "avatar_url", None))
+        if avatar_url and not has_local and user.avatar_url != avatar_url:
+            user.avatar_url = avatar_url
+            updated = True
+        if updated:
+            user.updated_at = datetime.utcnow()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+
+    username_base = (telegram_username or f"tg_{telegram_id}").replace(" ", "_")[:30]
+    if not re.match(r"^[a-zA-Z0-9._-]+$", username_base):
+        username_base = f"tg_{telegram_id}"
+    username = username_base
+    n = 0
+    while db.exec(select(User).where(User.username == username)).first():
+        n += 1
+        username = f"{username_base}_{n}"[:50]
+
+    email = f"tg_{telegram_id}@telegram.placeholder"
+    random_password = token_urlsafe(16)
+    user_create = UserCreate(
+        email=email,
+        password=random_password,
+        full_name=full_name,
+        avatar_url=avatar_url,
+        username=username,
+    )
+    user = create_user(db, user_create)
+    user.telegram_id = telegram_id
+    user.telegram_username = telegram_username
+    user.auth_provider = "telegram"
+    user.email_verified = False
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    logger.info(f"Created Telegram Widget user: id={user.id}, telegram_id={telegram_id}")
+    return user
+
+
+@router.post("/telegram-widget")
+def login_with_telegram_widget(
+    payload: TelegramWidgetAuthRequest,
+    response: Response,
+    db: Session = Depends(get_session),
+):
+    """
+    Вход через Telegram Login Widget (data-onauth callback).
+    Проверяет hash, создаёт или находит пользователя, возвращает токен.
+    """
+    if not TELEGRAM_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Telegram authentication is not configured"
+        )
+
+    data = payload.model_dump()
+    if not validate_telegram_widget_data(data, TELEGRAM_BOT_TOKEN):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Telegram widget data"
+        )
+
+    user = _process_telegram_widget_user(db, data)
+    return _do_telegram_login(response, user, db, "telegram_widget")
+
+
+@router.get("/telegram-widget/config")
+def get_telegram_widget_config():
+    """Конфиг для Telegram Login Widget (bot_username для data-telegram-login)."""
+    if not TELEGRAM_ENABLED or not TELEGRAM_BOT_USERNAME:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "bot_username": TELEGRAM_BOT_USERNAME,
     }
 
 

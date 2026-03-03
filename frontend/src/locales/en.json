@@ -521,7 +521,12 @@
       "loggedOutAllDevices": "Logged out from all devices successfully",
       "usernameUpdated": "Username updated successfully",
       "enterPassword": "Enter your password to confirm",
-      "passwordRequired": "Password is required for security"
+      "passwordRequired": "Password is required for security",
+      "linkTelegram": {
+        "title": "Link Telegram",
+        "description": "Open the app in Telegram and enter your email to sign in with the same account.",
+        "cta": "Open in Telegram"
+      }
     },
     "current_language": "English",
     "language_ru": "Русский",

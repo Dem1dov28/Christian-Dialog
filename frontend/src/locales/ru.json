@@ -524,7 +524,12 @@
       "loggedOutAllDevices": "Успешно вышли со всех устройств",
       "usernameUpdated": "Имя пользователя успешно обновлено",
       "enterPassword": "Введите пароль для подтверждения",
-      "passwordRequired": "Пароль требуется для безопасности"
+      "passwordRequired": "Пароль требуется для безопасности",
+      "linkTelegram": {
+        "title": "Привязать Telegram",
+        "description": "Откройте приложение в Telegram и введите ваш email, чтобы войти в тот же аккаунт.",
+        "cta": "Открыть в Telegram"
+      }
     },
     "current_language": "Русский",
     "language_ru": "Русский",

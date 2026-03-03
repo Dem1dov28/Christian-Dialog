@@ -13,7 +13,7 @@ import { buildTelegramAuthUrl } from "@/utils/telegramOIDC";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, loginWithGoogle, loginWithTelegram, sendTelegramLinkCode, verifyAndLinkTelegram, isLoading } = useAuth();
+  const { login, loginWithGoogle, loginWithTelegram, loginWithTelegramWidget, sendTelegramLinkCode, verifyAndLinkTelegram, refreshUserData, isLoading } = useAuth();
   const { isTelegram, initData } = useTelegramWebApp();
   const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
@@ -28,15 +28,53 @@ const Login = () => {
   const [linkEmail, setLinkEmail] = useState("");
   const [linkCode, setLinkCode] = useState("");
   const [telegramOIDCConfig, setTelegramOIDCConfig] = useState(null);
+  const [telegramWidgetConfig, setTelegramWidgetConfig] = useState(null);
   const telegramLoginTried = useRef(false);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const googleLocale = language === "ru" ? "ru" : "en";
 
   useEffect(() => {
     if (!isTelegram) {
+      apiClient.getTelegramWidgetConfig().then(setTelegramWidgetConfig).catch(() => setTelegramWidgetConfig({ enabled: false }));
       apiClient.getTelegramOIDCConfig().then(setTelegramOIDCConfig).catch(() => setTelegramOIDCConfig({ enabled: false }));
     }
   }, [isTelegram]);
+
+  // Callback для Telegram Login Widget — вызывается скриптом виджета
+  const widgetCallbackRef = useRef(null);
+  widgetCallbackRef.current = async (user) => {
+    try {
+      setError("");
+      await loginWithTelegramWidget(user);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err?.message || (language === "ru" ? "Ошибка входа через Telegram" : "Telegram login error"));
+    }
+  };
+
+  useEffect(() => {
+    if (!telegramWidgetConfig?.enabled || !telegramWidgetConfig?.bot_username) return;
+    window.onTelegramAuth = (user) => {
+      if (widgetCallbackRef.current) widgetCallbackRef.current(user);
+    };
+    const container = document.getElementById("telegram-login-widget-container");
+    if (!container) return;
+    // Удаляем старый скрипт, если есть
+    const existing = container.querySelector('script[data-telegram-login]');
+    if (existing) existing.remove();
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://telegram.org/js/telegram-widget.js?23";
+    script.setAttribute("data-telegram-login", telegramWidgetConfig.bot_username);
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-onauth", "onTelegramAuth");
+    script.setAttribute("data-request-access", "write");
+    container.appendChild(script);
+    return () => {
+      delete window.onTelegramAuth;
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+  }, [telegramWidgetConfig?.enabled, telegramWidgetConfig?.bot_username]);
 
   const handleTelegramOIDCLogin = async () => {
     if (!telegramOIDCConfig?.enabled) return;
@@ -302,11 +340,51 @@ const Login = () => {
                   </Button>
                 </form>
               )}
-              <div className="border-t border-white/10 pt-4 mt-4">
+              <div className="border-t border-white/10 pt-4 mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground text-center">
                   {language === "ru"
-                    ? "Аккаунт с таким email должен существовать на сайте (регистрация через веб или Google)."
-                    : "Account with this email must exist on the website (registered via web or Google)."}
+                    ? "Аккаунт с таким email должен существовать на сайте."
+                    : "Account with this email must exist on the website."}
+                </p>
+                {googleClientId && (
+                  <div className="w-full flex justify-center">
+                    <div className="google-login-override w-full max-w-[320px] rounded-full">
+                      <GoogleLogin
+                        onSuccess={async (credentialResponse) => {
+                          try {
+                            setError("");
+                            await loginWithGoogle({
+                              credential: credentialResponse.credential,
+                              clientId: credentialResponse.clientId || googleClientId,
+                            });
+                            if (initData) {
+                              await apiClient.linkTelegram(initData);
+                              await refreshUserData();
+                            }
+                          } catch (err) {
+                            setError(err?.message || (language === "ru" ? "Ошибка привязки" : "Link failed"));
+                          }
+                        }}
+                        onError={() => setError(language === "ru" ? "Ошибка входа через Google" : "Google sign-in failed")}
+                        useOneTap={false}
+                        size="medium"
+                        text="signin_with"
+                        shape="pill"
+                        theme="outline"
+                        locale={googleLocale}
+                        width="280"
+                      />
+                    </div>
+                  </div>
+                )}
+                <p className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/register")}
+                    className="text-primary hover:underline text-sm font-medium"
+                  >
+                    {language === "ru" ? "Нет аккаунта? Зарегистрироваться" : "No account? Register"}
+                  </button>
                 </p>
               </div>
             </div>
@@ -453,8 +531,11 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Telegram Login (OIDC) — только вне Mini App */}
-          {telegramOIDCConfig?.enabled && (
+          {/* Telegram Login — виджет (приоритет) или OIDC */}
+          {telegramWidgetConfig?.enabled && telegramWidgetConfig?.bot_username && (
+            <div className="w-full flex justify-center mb-3 [@media(max-height:629px)]:mb-2" id="telegram-login-widget-container" />
+          )}
+          {!telegramWidgetConfig?.enabled && telegramOIDCConfig?.enabled && (
             <div className="w-full flex justify-center mb-3 [@media(max-height:629px)]:mb-2">
               <Button
                 type="button"

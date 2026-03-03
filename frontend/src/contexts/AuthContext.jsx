@@ -249,6 +249,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithTelegramWidget = async (widgetData) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.loginWithTelegramWidget(widgetData);
+      const userFromLogin = response?.user;
+      try {
+        const fullUser = await apiClient.getCurrentUser();
+        setUser(fullUser);
+        localStorage.setItem("user_data", JSON.stringify(fullUser));
+      } catch (e) {
+        setUser(userFromLogin || response?.user);
+        localStorage.setItem("user_data", JSON.stringify(userFromLogin || response?.user));
+      }
+      setIsAuthenticated(true);
+      try { localStorage.removeItem('telegram_skip_auto_login'); } catch (_) {}
+      try {
+        const stats = await apiClient.getUsageStats();
+        setUsageStats(stats);
+      } catch (error) {
+        console.error("Failed to load usage stats:", error);
+      }
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loginWithGoogle = async ({ credential, clientId }) => {
     console.log("[AuthContext] loginWithGoogle called:", {
       hasCredential: !!credential,
@@ -543,6 +572,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Отвязать Google от аккаунта
+  const unlinkGoogle = async () => {
+    try {
+      await apiClient.unlinkGoogle();
+      await refreshUserData();
+    } catch (error) {
+      console.error("AuthContext: Failed to unlink Google:", error);
+      throw error;
+    }
+  };
+
   // Выйти со всех устройств
   const logoutAllDevices = async () => {
     try {
@@ -564,6 +604,7 @@ export const AuthProvider = ({ children }) => {
     usageStats,
     login,
     loginWithTelegram,
+    loginWithTelegramWidget,
     sendTelegramLinkCode,
     verifyAndLinkTelegram,
     loginWithGoogle,
@@ -580,6 +621,7 @@ export const AuthProvider = ({ children }) => {
     refreshUserData,
     deleteUserAccount,
     logoutAllDevices,
+    unlinkGoogle,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

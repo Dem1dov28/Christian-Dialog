@@ -146,6 +146,7 @@ BEPAID_ENABLED = bool(BEPAID_SHOP_ID and BEPAID_SECRET_KEY and BEPAID_PLAN_PLUS_
 
 # Telegram Mini App (бот для Mini App — верификация initData и Stars)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "").replace("@", "").strip()
 TELEGRAM_ENABLED = bool(TELEGRAM_BOT_TOKEN)
 # Цены в Stars: Plus ~160, Pro ~400 (примерно $2 и $5 при курсе ~$0.013/Star)
 TELEGRAM_STARS_PRICE_PLUS = int(os.getenv("TELEGRAM_STARS_PRICE_PLUS", "160"))

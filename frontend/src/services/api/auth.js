@@ -117,6 +117,16 @@ export class AuthAPI {
     return this.client.post("/auth/telegram-oidc", payload);
   }
 
+  // Telegram Login Widget (классический виджет) — конфиг
+  async getTelegramWidgetConfig() {
+    return this.client.get("/auth/telegram-widget/config");
+  }
+
+  // Telegram Login Widget — отправка данных из callback onTelegramAuth
+  async loginWithTelegramWidget(widgetData) {
+    return this.client.post("/auth/telegram-widget", widgetData);
+  }
+
   // Проверить код и привязать Telegram к аккаунту
   async verifyAndLinkTelegram(email, code, initData) {
     return this.client.post("/auth/verify-and-link-telegram", {
@@ -124,6 +134,16 @@ export class AuthAPI {
       code,
       init_data: initData,
     });
+  }
+
+  // Привязать Telegram к уже авторизованному пользователю (после входа через Google)
+  async linkTelegram(initData) {
+    return this.client.post("/auth/link-telegram", { init_data: initData });
+  }
+
+  // Отвязать Google от аккаунта
+  async unlinkGoogle() {
+    return this.client.post("/auth/unlink-google");
   }
 
   // Вход через Google OAuth
