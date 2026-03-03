@@ -26,12 +26,14 @@ import SubscriptionStatus from "./SubscriptionStatus";
 import UsageStatistics from "./UsageStatistics";
 import { useMaxWidth } from "../../hooks/common/use-mobile";
 import { useNavigate } from "react-router-dom";
+import { useTelegramWebApp } from "../../hooks/useTelegramWebApp";
 
 // i18n function stub for localization - теперь используем LanguageContext
 
 const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect }) => {
   const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData, deleteUserAccount, logoutAllDevices } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { isTelegram } = useTelegramWebApp();
   const { showSuccess, showError } = useNotification();
   const { clearAllConversations } = useChats();
   const { loadFolders } = useFolders();
@@ -116,7 +118,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
 
   const handleLogout = async () => {
     try {
-      if (window.confirm(t("profile.confirm.logout"))) {
+      if (isTelegram || window.confirm(t("profile.confirm.logout"))) {
         await logout();
       }
     } catch (error) {

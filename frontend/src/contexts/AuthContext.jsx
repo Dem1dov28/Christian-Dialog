@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
       try {
         // В Telegram Mini App: пробуем войти по initData (если пользователь не вышел явно)
         const tgInitData = typeof window !== "undefined" && window.Telegram?.WebApp?.initData;
-        if (tgInitData && !sessionStorage.getItem("telegram_skip_auto_login")) {
+        if (tgInitData && !localStorage.getItem("telegram_skip_auto_login")) {
           try {
             const tgResponse = await apiClient.loginWithTelegram(tgInitData);
             if (tgResponse?.user) {
@@ -164,6 +164,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("user_data", JSON.stringify(response.user));
       }
       setIsAuthenticated(true);
+      try { localStorage.removeItem('telegram_skip_auto_login'); } catch (_) {}
       // Загружаем статистику использования
       try {
         const stats = await apiClient.getUsageStats();
@@ -196,6 +197,7 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem("user_data", JSON.stringify(response.user));
         }
         setIsAuthenticated(true);
+        try { localStorage.removeItem('telegram_skip_auto_login'); } catch (_) {}
         try {
           const stats = await apiClient.getUsageStats();
           setUsageStats(stats);
@@ -230,6 +232,7 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem("user_data", JSON.stringify(response.user));
         }
         setIsAuthenticated(true);
+        try { localStorage.removeItem('telegram_skip_auto_login'); } catch (_) {}
         try {
           const stats = await apiClient.getUsageStats();
           setUsageStats(stats);
@@ -323,7 +326,7 @@ export const AuthProvider = ({ children }) => {
       apiClient.setToken(null);
       localStorage.removeItem("user_data");
       sessionStorage.removeItem('app_initial_redirect_done');
-      sessionStorage.setItem('telegram_skip_auto_login', '1'); // В Mini App после выхода не входить снова автоматически
+      try { localStorage.setItem('telegram_skip_auto_login', '1'); } catch (_) {}
     }
   };
 
@@ -340,8 +343,9 @@ export const AuthProvider = ({ children }) => {
 
   // Принудительный выход при ошибке авторизации
   const forceLogout = () => {
-    localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
-    sessionStorage.removeItem('app_initial_redirect_done'); // Сбрасываем флаг редиректа
+    localStorage.removeItem("user_data");
+    try { localStorage.setItem('telegram_skip_auto_login', '1'); } catch (_) {}
+    sessionStorage.removeItem('app_initial_redirect_done');
     apiClient.setToken(null);
     setUser(null);
     setIsAuthenticated(false);
