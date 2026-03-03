@@ -116,7 +116,20 @@ async def lifespan(app: FastAPI):
         # Не прерываем запуск, но логируем предупреждение
     
     create_db_and_tables()
-    agent_service.initialize_agents()
+
+    def _init_agents():
+        try:
+            agent_service.initialize_agents()
+            logger.info("Agent cache initialized")
+        except Exception as e:
+            logger.warning("Agent initialization failed (non-fatal): %s", e, exc_info=True)
+
+    import threading
+    t = threading.Thread(target=_init_agents, daemon=True)
+    t.start()
+    t.join(timeout=10)  # Ждём максимум 10 сек
+    if t.is_alive():
+        logger.warning("Agent initialization timeout, continuing in background")
     logger.info("Application startup complete")
     
     # Создаем необходимые директории для файлов
