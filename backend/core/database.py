@@ -206,6 +206,15 @@ def ensure_user_social_columns(connection=None):
                 conn.execute(text("ALTER TABLE \"user\" ADD COLUMN google_id VARCHAR"))
                 conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_user_google_id ON \"user\"(google_id) WHERE google_id IS NOT NULL"))
                 logger.info("Добавлена колонка google_id в таблицу user")
+
+            if "telegram_id" not in columns:
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN telegram_id VARCHAR"))
+                conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_user_telegram_id ON \"user\"(telegram_id) WHERE telegram_id IS NOT NULL"))
+                logger.info("Добавлена колонка telegram_id в таблицу user")
+
+            if "telegram_username" not in columns:
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN telegram_username VARCHAR"))
+                logger.info("Добавлена колонка telegram_username в таблицу user")
             
             if should_close:
                 conn.commit()

@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthBackground } from "@/components/auth/AuthBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTelegramWebApp } from "@/hooks/useTelegramWebApp";
 import { GoogleLogin } from "@react-oauth/google";
 import { SEO } from "@/components/common/SEO";
+import apiClient from "@/services/api";
+import { buildTelegramAuthUrl } from "@/utils/telegramOIDC";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, loginWithGoogle, isLoading } = useAuth();
+  const { login, loginWithGoogle, loginWithTelegram, sendTelegramLinkCode, verifyAndLinkTelegram, isLoading } = useAuth();
+  const { isTelegram, initData } = useTelegramWebApp();
   const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
     email: "",
@@ -19,8 +23,45 @@ const Login = () => {
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showTelegramLinkForm, setShowTelegramLinkForm] = useState(false);
+  const [linkStep, setLinkStep] = useState("email"); // "email" | "code"
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkCode, setLinkCode] = useState("");
+  const [telegramOIDCConfig, setTelegramOIDCConfig] = useState(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const googleLocale = language === "ru" ? "ru" : "en";
+
+  useEffect(() => {
+    if (!isTelegram) {
+      apiClient.getTelegramOIDCConfig().then(setTelegramOIDCConfig).catch(() => setTelegramOIDCConfig({ enabled: false }));
+    }
+  }, [isTelegram]);
+
+  const handleTelegramOIDCLogin = async () => {
+    if (!telegramOIDCConfig?.enabled) return;
+    try {
+      const url = await buildTelegramAuthUrl(telegramOIDCConfig.client_id, telegramOIDCConfig.redirect_uri);
+      window.location.href = url;
+    } catch (err) {
+      setError(err?.message || "Ошибка входа через Telegram");
+    }
+  };
+
+  // В Telegram: при монтировании пробуем войти; если needs_link — показываем форму привязки
+  useEffect(() => {
+    if (!isTelegram || !initData) return;
+    let cancelled = false;
+    const tryTg = async () => {
+      try {
+        const res = await loginWithTelegram(initData);
+        if (!cancelled && res?.needs_link) setShowTelegramLinkForm(true);
+      } catch {
+        if (!cancelled) setShowTelegramLinkForm(true);
+      }
+    };
+    tryTg();
+    return () => { cancelled = true; };
+  }, [isTelegram, initData, loginWithTelegram]);
 
   const handleChange = (e) => {
     setFormData({
@@ -89,6 +130,37 @@ const Login = () => {
       } else {
         setError(errorMessage);
       }
+    }
+  };
+
+  const handleSendLinkCode = async (e) => {
+    e?.preventDefault();
+    setError("");
+    setEmailError("");
+    if (!linkEmail?.trim()) {
+      setEmailError(language === "ru" ? "Введите email" : "Enter email");
+      return;
+    }
+    try {
+      await sendTelegramLinkCode(linkEmail.trim());
+      setLinkStep("code");
+    } catch (err) {
+      setError(err.message || (language === "ru" ? "Не удалось отправить код" : "Failed to send code"));
+    }
+  };
+
+  const handleVerifyAndLink = async (e) => {
+    e?.preventDefault();
+    setError("");
+    if (!linkCode?.trim() || linkCode.length !== 6) {
+      setError(language === "ru" ? "Введите 6-значный код" : "Enter 6-digit code");
+      return;
+    }
+    try {
+      await verifyAndLinkTelegram(linkEmail.trim(), linkCode.trim(), initData);
+      // Успех — AuthContext обновит isAuthenticated, произойдёт редирект
+    } catch (err) {
+      setError(err.message || (language === "ru" ? "Неверный код" : "Invalid code"));
     }
   };
 
@@ -170,7 +242,66 @@ const Login = () => {
             </div>
           )}
 
-          {/* Form */}
+          {/* Telegram: форма привязки аккаунта */}
+          {showTelegramLinkForm && isTelegram && initData && (
+            <div className="space-y-5">
+              <p className="text-sm text-muted-foreground text-center">
+                {language === "ru"
+                  ? "У вас уже есть аккаунт? Введите email, чтобы привязать Telegram."
+                  : "Already have an account? Enter your email to link Telegram."}
+              </p>
+              {linkStep === "email" ? (
+                <form onSubmit={handleSendLinkCode} className="space-y-4">
+                  <Input
+                    type="email"
+                    placeholder={language === "ru" ? "Email аккаунта" : "Account email"}
+                    value={linkEmail}
+                    onChange={(e) => { setLinkEmail(e.target.value); setError(""); }}
+                    disabled={isLoading}
+                    className="w-full"
+                  />
+                  <Button type="submit" variant="neomorphic" size="lg" className="w-full" disabled={isLoading}>
+                    {isLoading ? "..." : (language === "ru" ? "Отправить код" : "Send code")}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyAndLink} className="space-y-4">
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder={language === "ru" ? "Код из письма" : "Code from email"}
+                    value={linkCode}
+                    onChange={(e) => { setLinkCode(e.target.value.replace(/\D/g, "")); setError(""); }}
+                    disabled={isLoading}
+                    className="w-full"
+                  />
+                  <Button type="submit" variant="neomorphic" size="lg" className="w-full" disabled={isLoading}>
+                    {isLoading ? "..." : (language === "ru" ? "Привязать аккаунт" : "Link account")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => { setLinkStep("email"); setLinkCode(""); setError(""); }}
+                  >
+                    {language === "ru" ? "← Другой email" : "← Different email"}
+                  </Button>
+                </form>
+              )}
+              <div className="border-t border-white/10 pt-4 mt-4">
+                <p className="text-xs text-muted-foreground text-center">
+                  {language === "ru"
+                    ? "Аккаунт с таким email должен существовать на сайте (регистрация через веб или Google)."
+                    : "Account with this email must exist on the website (registered via web or Google)."}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Form (скрыт при привязке Telegram) */}
+          {!showTelegramLinkForm && (
           <form onSubmit={handleSubmit} className="space-y-5 [@media(max-height:629px)]:space-y-2.5">
             <div className="space-y-4 [@media(max-height:629px)]:space-y-2">
               <div className="group relative">
@@ -265,8 +396,11 @@ const Login = () => {
               </a>
             </div>
           </form>
+          )}
 
-          {/* Divider */}
+          {/* Divider (скрыт при привязке Telegram) */}
+          {!showTelegramLinkForm && (
+          <>
           <div className="relative my-6 [@media(max-height:629px)]:my-3">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/10 bg-gradient-to-r from-transparent via-white/20 to-transparent h-px"></div>
@@ -275,6 +409,25 @@ const Login = () => {
               <span className="px-4 [@media(max-height:629px)]:px-2 bg-card/50 backdrop-blur-md rounded-full border border-white/5 shadow-sm">{t("auth.login.orSeparator")}</span>
             </div>
           </div>
+
+          {/* Telegram Login (OIDC) — только вне Mini App */}
+          {telegramOIDCConfig?.enabled && (
+            <div className="w-full flex justify-center mb-3 [@media(max-height:629px)]:mb-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full max-w-[360px] rounded-full border-white/10 bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] dark:text-[#54a9eb] hover:text-[#0088cc] dark:hover:text-[#54a9eb] border hover:border-[#0088cc]/40 transition-all duration-300"
+                onClick={handleTelegramOIDCLogin}
+                disabled={isLoading}
+              >
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                </svg>
+                {language === "ru" ? "Войти через Telegram" : "Log in with Telegram"}
+              </Button>
+            </div>
+          )}
 
           {/* Google Login Button */}
           {googleClientId && (
@@ -297,6 +450,8 @@ const Login = () => {
                 />
               </div>
             </div>
+          )}
+          </>
           )}
 
           {/* Removed bottom register prompt */}

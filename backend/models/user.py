@@ -20,7 +20,7 @@ class UserBase(SQLModel):
     api_access: bool = Field(default=False)
     api_key: Optional[str] = Field(default=None)
     expires_at: Optional[datetime] = Field(default=None)
-    auth_provider: str = Field(default="local", description="Тип аутентификации (local, google)")
+    auth_provider: str = Field(default="local", description="Тип аутентификации (local, google, telegram)")
 
 
 class UserCreate(SQLModel):
@@ -88,6 +88,13 @@ class User(UserBase, table=True):
         unique=True,
         index=True,
     )
+    telegram_id: Optional[str] = Field(
+        default=None,
+        description="Telegram user id (из initData)",
+        unique=True,
+        index=True,
+    )
+    telegram_username: Optional[str] = Field(default=None, description="Telegram @username")
     pinned_chats: str = Field(default="[]", description="JSON список ID закрепленных чатов")
     
 

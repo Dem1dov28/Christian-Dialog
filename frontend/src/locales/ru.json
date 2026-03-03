@@ -669,6 +669,7 @@
     "subscriptionSuccess": "Подписка успешно оформлена",
     "redirecting": "Перенаправление на главную...",
     "payWithCrypto": "Оплатить криптой",
+    "payWithStars": "Оплатить Stars",
     "paymentSuccessHint": "Оплата прошла успешно. Подписка активирована. Спасибо!",
     "paymentFailed": "Оплата не прошла",
     "paymentFailedHint": "Платёж отменён или произошла ошибка. Попробуйте ещё раз.",

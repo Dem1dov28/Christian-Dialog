@@ -144,6 +144,23 @@ BEPAID_BACKEND_BASE = os.getenv("BEPAID_BACKEND_BASE", "http://localhost:8000")
 # Включить интеграцию с BePaid (если False, кнопки оплаты не ведут в BePaid)
 BEPAID_ENABLED = bool(BEPAID_SHOP_ID and BEPAID_SECRET_KEY and BEPAID_PLAN_PLUS_ID and BEPAID_PLAN_PRO_ID)
 
+# Telegram Mini App (бот для Mini App — верификация initData и Stars)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_ENABLED = bool(TELEGRAM_BOT_TOKEN)
+# Цены в Stars: Plus ~160, Pro ~400 (примерно $2 и $5 при курсе ~$0.013/Star)
+TELEGRAM_STARS_PRICE_PLUS = int(os.getenv("TELEGRAM_STARS_PRICE_PLUS", "160"))
+TELEGRAM_STARS_PRICE_PRO = int(os.getenv("TELEGRAM_STARS_PRICE_PRO", "400"))
+
+# Telegram OIDC Login (Log In With Telegram — для обычного сайта, не Mini App)
+# Получить в @BotFather → Bot Settings → Web Login (Client ID и Client Secret)
+TELEGRAM_OIDC_CLIENT_ID = os.getenv("TELEGRAM_OIDC_CLIENT_ID", "")
+TELEGRAM_OIDC_CLIENT_SECRET = os.getenv("TELEGRAM_OIDC_CLIENT_SECRET", "")
+TELEGRAM_OIDC_ENABLED = bool(TELEGRAM_OIDC_CLIENT_ID and TELEGRAM_OIDC_CLIENT_SECRET)
+
+# Redirect URI для Telegram OIDC (должен быть в Allowed URLs в @BotFather → Web Login)
+# Пример: https://epochaldialog.com/auth/telegram-callback
+TELEGRAM_OIDC_REDIRECT_URI = os.getenv("TELEGRAM_OIDC_REDIRECT_URI", "http://localhost:5173/auth/telegram-callback")
+
 # Настройки разработки
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 PORT = int(os.getenv("PORT", "8000"))

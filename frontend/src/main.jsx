@@ -4,6 +4,14 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.jsx";
 import "./index.css";
 
+// Инициализация Telegram Web App при открытии в Telegram
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.enableClosingConfirmation();
+}
+
 const container = document.getElementById("root");
 const root = createRoot(container);
 

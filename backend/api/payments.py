@@ -24,6 +24,10 @@ from services.cryptocloud_service import (
     handle_postback as cryptocloud_handle_postback,
     is_cryptocloud_enabled,
 )
+from services.telegram_stars_service import (
+    create_invoice_link as telegram_stars_create_invoice,
+    is_telegram_stars_enabled,
+)
 
 logger = logging.getLogger(__name__)
 security_basic = HTTPBasic(auto_error=False)
@@ -41,6 +45,7 @@ def get_payments_config():
     return {
         "cryptocloud_enabled": is_cryptocloud_enabled(),
         "bepaid_enabled": is_bepaid_enabled(),
+        "telegram_stars_enabled": is_telegram_stars_enabled(),
     }
 
 
@@ -116,6 +121,56 @@ async def cryptocloud_postback(
             detail="Postback processing failed",
         )
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Telegram Stars — создать инвойс (для Mini App)
+# ---------------------------------------------------------------------------
+
+class TelegramStarsCheckoutRequest(BaseModel):
+    tier: str  # "plus" | "pro"
+
+
+class TelegramStarsCheckoutResponse(BaseModel):
+    invoice_url: str | None = None
+    error: str | None = None
+    enabled: bool = True
+
+
+@router.post("/telegram-stars/create-invoice", response_model=TelegramStarsCheckoutResponse)
+async def post_telegram_stars_create_invoice(
+    body: TelegramStarsCheckoutRequest,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Создать инвойс Telegram Stars. Возвращает invoice_url.
+    Frontend в Mini App вызывает WebApp.openInvoice(invoice_url).
+    """
+    if body.tier not in ("plus", "pro"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="tier должен быть plus или pro",
+        )
+
+    titles = {"plus": "Plus", "pro": "Pro"}
+    descriptions = {
+        "plus": "Подписка Plus — 500 сообщений/месяц, доступ к Plus-агентам",
+        "pro": "Подписка Pro — расширенные возможности, API",
+    }
+    invoice_url = telegram_stars_create_invoice(
+        user_id=current_user.id,
+        tier=body.tier,
+        title=titles[body.tier],
+        description=descriptions[body.tier],
+    )
+
+    if not invoice_url:
+        return TelegramStarsCheckoutResponse(
+            error="Не удалось создать счёт",
+            enabled=is_telegram_stars_enabled(),
+        )
+
+    return TelegramStarsCheckoutResponse(invoice_url=invoice_url, enabled=True)
 
 
 # ---------------------------------------------------------------------------

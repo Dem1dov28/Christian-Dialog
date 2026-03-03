@@ -28,6 +28,35 @@ export const AuthProvider = ({ children }) => {
 
     const initAuth = async () => {
       try {
+        // В Telegram Mini App: пробуем войти по initData
+        const tgInitData = typeof window !== "undefined" && window.Telegram?.WebApp?.initData;
+        if (tgInitData) {
+          try {
+            const tgResponse = await apiClient.loginWithTelegram(tgInitData);
+            if (tgResponse?.user) {
+              const fullUser = await apiClient.getCurrentUser();
+              setUser(fullUser);
+              localStorage.setItem("user_data", JSON.stringify(fullUser));
+              setIsAuthenticated(true);
+              try {
+                const stats = await apiClient.getUsageStats();
+                setUsageStats(stats);
+              } catch (e) {
+                console.error("Failed to load usage stats:", e);
+              }
+              setIsInitializing(false);
+              setIsInitialized(true);
+              return;
+            }
+            // needs_link — пользователь не привязан, продолжаем обычную инициализацию
+          } catch (tgErr) {
+            // 503, 400 и т.д. — Telegram auth не настроен или initData невалиден
+            if (tgErr.status !== 429 && tgErr.message?.includes?.("Network") === false) {
+              console.warn("[AuthContext] Telegram login skipped:", tgErr.message);
+            }
+          }
+        }
+
         // Проверяем наличие признака аутентификации перед вызовом verifyToken
         // чтобы избежать 401 ошибки в консоли для неавторизованных пользователей
         const hasAuthIndicator = document.cookie.includes('access_token') || 
@@ -141,6 +170,73 @@ export const AuthProvider = ({ children }) => {
         setUsageStats(stats);
       } catch (error) {
         console.error("Failed to load usage stats:", error);
+      }
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithTelegram = async (initData) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.loginWithTelegram(initData);
+      if (response?.needs_link) {
+        return { needs_link: true };
+      }
+      if (response?.user) {
+        try {
+          const fullUser = await apiClient.getCurrentUser();
+          setUser(fullUser);
+          localStorage.setItem("user_data", JSON.stringify(fullUser));
+        } catch (e) {
+          setUser(response.user);
+          localStorage.setItem("user_data", JSON.stringify(response.user));
+        }
+        setIsAuthenticated(true);
+        try {
+          const stats = await apiClient.getUsageStats();
+          setUsageStats(stats);
+        } catch (error) {
+          console.error("Failed to load usage stats:", error);
+        }
+        return response;
+      }
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendTelegramLinkCode = async (email) => {
+    return apiClient.sendTelegramLinkCode(email);
+  };
+
+  const verifyAndLinkTelegram = async (email, code, initData) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.verifyAndLinkTelegram(email, code, initData);
+      if (response?.user) {
+        try {
+          const fullUser = await apiClient.getCurrentUser();
+          setUser(fullUser);
+          localStorage.setItem("user_data", JSON.stringify(fullUser));
+        } catch (e) {
+          setUser(response.user);
+          localStorage.setItem("user_data", JSON.stringify(response.user));
+        }
+        setIsAuthenticated(true);
+        try {
+          const stats = await apiClient.getUsageStats();
+          setUsageStats(stats);
+        } catch (error) {
+          console.error("Failed to load usage stats:", error);
+        }
+        return response;
       }
       return response;
     } catch (error) {
@@ -462,6 +558,9 @@ export const AuthProvider = ({ children }) => {
     isInitializing,
     usageStats,
     login,
+    loginWithTelegram,
+    sendTelegramLinkCode,
+    verifyAndLinkTelegram,
     loginWithGoogle,
     register,
     logout,

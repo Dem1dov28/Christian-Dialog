@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Response
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select, func, or_, and_
 from sqlalchemy import text
@@ -59,9 +60,23 @@ from models.attraction_visit import AttractionVisit
 from models.file_attachment import FileAttachment
 from models.folder import Folder
 from models.user_channel_subscription import UserChannelSubscription
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from config import GOOGLE_ALLOWED_CLIENT_IDS, GOOGLE_CLIENT_ID, EMAIL_VERIFICATION_REQUIRED, COOKIE_SECURE, COOKIE_SAMESITE
+from config import (
+    GOOGLE_ALLOWED_CLIENT_IDS,
+    GOOGLE_CLIENT_ID,
+    EMAIL_VERIFICATION_REQUIRED,
+    COOKIE_SECURE,
+    COOKIE_SAMESITE,
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_ENABLED,
+    TELEGRAM_OIDC_CLIENT_ID,
+    TELEGRAM_OIDC_CLIENT_SECRET,
+    TELEGRAM_OIDC_ENABLED,
+    TELEGRAM_OIDC_REDIRECT_URI,
+)
+from core.telegram import validate_telegram_init_data, parse_telegram_user
+from core.telegram_oidc import verify_telegram_id_token
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +86,28 @@ logger = logging.getLogger(__name__)
 class GoogleAuthRequest(BaseModel):
     credential: str
     client_id: Optional[str] = None
+
+
+class TelegramAuthRequest(BaseModel):
+    init_data: str
+
+
+class SendTelegramLinkCodeRequest(BaseModel):
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+
+class VerifyAndLinkTelegramRequest(BaseModel):
+    email: str = Field(..., regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    code: str = Field(..., min_length=6, max_length=6)
+    init_data: str
+
+
+class TelegramOIDCRequest(BaseModel):
+    """Log In With Telegram — принимает либо id_token, либо code+code_verifier для обмена."""
+    id_token: Optional[str] = None
+    code: Optional[str] = None
+    code_verifier: Optional[str] = None
+    redirect_uri: Optional[str] = None
 
 
 def _is_local_avatar(avatar_url: Optional[str]) -> bool:
@@ -432,6 +469,360 @@ def login_with_google(
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         user=user_response
     )
+
+
+# --- Telegram Mini App auth ---
+
+def _do_telegram_login(response: Response, user: User, logger_ctx: str = ""):
+    """Общая логика установки cookie и возврата токена после успешной аутентификации Telegram."""
+    update_user_last_login(user)
+    try:
+        from services.folder_service import FolderService
+        folder_service = FolderService()
+        folder_service.ensure_system_folders_exist(user.id)
+    except Exception as e:
+        logger.error(f"Error ensuring system folders for user {user.id}: {e}", exc_info=True)
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username, "user_id": user.id},
+        expires_delta=access_token_expires,
+    )
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=create_user_response(user)
+    )
+
+
+@router.post("/telegram")
+def login_with_telegram(
+    payload: TelegramAuthRequest,
+    response: Response,
+    db: Session = Depends(get_session),
+):
+    """
+    Вход через Telegram initData. Если пользователь уже привязан — логин.
+    Если нет — возвращает needs_link: true для привязки к существующему аккаунту.
+    Новые пользователи создаются с username из telegram (или tg_<id>).
+    """
+    if not TELEGRAM_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Telegram authentication is not configured"
+        )
+
+    parsed = validate_telegram_init_data(payload.init_data, TELEGRAM_BOT_TOKEN)
+    if not parsed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Telegram initData"
+        )
+
+    tg_user = parse_telegram_user(parsed)
+    if not tg_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Telegram user data not found in initData"
+        )
+
+    telegram_id = str(tg_user.get("id", ""))
+    if not telegram_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Telegram user id is required"
+        )
+
+    first_name = tg_user.get("first_name", "")
+    last_name = tg_user.get("last_name", "")
+    full_name = " ".join(filter(None, [first_name, last_name])).strip() or None
+    telegram_username = tg_user.get("username") or None
+
+    user = db.exec(select(User).where(User.telegram_id == telegram_id)).first()
+
+    if user:
+        if telegram_username and (getattr(user, "telegram_username", None) != telegram_username):
+            user.telegram_username = telegram_username
+            user.updated_at = datetime.utcnow()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return _do_telegram_login(response, user, "login_with_telegram")
+
+    # Пользователь не найден по telegram_id — возвращаем needs_link для привязки
+    return JSONResponse(
+        status_code=200,
+        content={"needs_link": True, "message": "Привяжите существующий аккаунт"},
+    )
+
+
+@router.post("/send-telegram-link-code")
+def send_telegram_link_code(request: SendTelegramLinkCodeRequest, db: Session = Depends(get_session)):
+    """Отправить код на email для привязки аккаунта Telegram."""
+    if not TELEGRAM_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Telegram linking is not configured"
+        )
+
+    user = get_user_by_email(db, request.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь с таким email не найден"
+        )
+
+    from services.verification_code_service import verification_code_service
+    success = verification_code_service.send_telegram_link_code(request.email)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Не удалось отправить код. Попробуйте позже."
+        )
+
+    return {"success": True, "message": "Код отправлен на email"}
+
+
+@router.post("/verify-and-link-telegram", response_model=Token)
+def verify_and_link_telegram(
+    payload: VerifyAndLinkTelegramRequest,
+    response: Response,
+    db: Session = Depends(get_session),
+):
+    """
+    Проверить код, найти пользователя по email, привязать telegram_id и вернуть токен.
+    """
+    if not TELEGRAM_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Telegram linking is not configured"
+        )
+
+    parsed = validate_telegram_init_data(payload.init_data, TELEGRAM_BOT_TOKEN)
+    if not parsed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Telegram initData"
+        )
+
+    tg_user = parse_telegram_user(parsed)
+    telegram_id = str(tg_user.get("id", ""))
+    if not telegram_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Telegram user id is required"
+        )
+
+    telegram_username = tg_user.get("username") or None
+
+    from services.verification_code_service import verification_code_service
+    verify_result = verification_code_service.verify_code(payload.email, payload.code)
+    if not verify_result.success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=verify_result.message or "Неверный или просроченный код"
+        )
+
+    user = get_user_by_email(db, payload.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь не найден"
+        )
+
+    existing_tg = db.exec(select(User).where(User.telegram_id == telegram_id)).first()
+    if existing_tg and existing_tg.id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот Telegram уже привязан к другому аккаунту"
+        )
+
+    user.telegram_id = telegram_id
+    user.telegram_username = telegram_username
+    user.auth_provider = getattr(user, "auth_provider", "local") or "local"
+    if user.auth_provider == "local":
+        user.auth_provider = "telegram"
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return _do_telegram_login(response, user, "verify_and_link_telegram")
+
+
+# --- Log In With Telegram (OIDC) ---
+
+def _exchange_telegram_code_for_id_token(code: str, code_verifier: str, redirect_uri: str) -> Optional[str]:
+    """Обмен authorization code на id_token через Telegram OAuth."""
+    import base64
+
+    credentials = base64.b64encode(
+        f"{TELEGRAM_OIDC_CLIENT_ID}:{TELEGRAM_OIDC_CLIENT_SECRET}".encode()
+    ).decode()
+
+    import httpx
+    with httpx.Client(timeout=15) as client:
+        resp = client.post(
+            "https://oauth.telegram.org/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri,
+                "client_id": TELEGRAM_OIDC_CLIENT_ID,
+                "code_verifier": code_verifier,
+            },
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": f"Basic {credentials}",
+            },
+        )
+        if resp.status_code != 200:
+            logger.warning(f"Telegram OIDC token exchange failed: {resp.status_code} {resp.text}")
+            return None
+        data = resp.json()
+        return data.get("id_token")
+
+
+def _process_telegram_oidc_user(db: Session, payload: dict) -> User:
+    """Создаёт или находит пользователя по OIDC payload (sub=telegram_id, name, preferred_username, picture)."""
+    telegram_id = str(payload.get("sub", "") or payload.get("id", ""))
+    if not telegram_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram user id missing")
+
+    full_name = payload.get("name")
+    telegram_username = payload.get("preferred_username") or payload.get("username")
+    avatar_url = payload.get("picture")
+
+    user = db.exec(select(User).where(User.telegram_id == telegram_id)).first()
+    if user:
+        updated = False
+        if telegram_username and getattr(user, "telegram_username", None) != telegram_username:
+            user.telegram_username = telegram_username
+            updated = True
+        if full_name and not user.full_name:
+            user.full_name = full_name
+            updated = True
+        has_local = _is_local_avatar(getattr(user, "avatar_url", None))
+        if avatar_url and not has_local and user.avatar_url != avatar_url:
+            user.avatar_url = avatar_url
+            updated = True
+        if updated:
+            user.updated_at = datetime.utcnow()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+
+    username_base = (telegram_username or f"tg_{telegram_id}").replace(" ", "_")[:30]
+    if not re.match(r"^[a-zA-Z0-9._-]+$", username_base):
+        username_base = f"tg_{telegram_id}"
+    username = username_base
+    n = 0
+    while db.exec(select(User).where(User.username == username)).first():
+        n += 1
+        username = f"{username_base}_{n}"[:50]
+
+    email = f"tg_{telegram_id}@telegram.placeholder"
+    random_password = token_urlsafe(16)
+    user_create = UserCreate(
+        email=email,
+        password=random_password,
+        full_name=full_name,
+        avatar_url=avatar_url,
+        username=username,
+    )
+    user = create_user(db, user_create)
+    user.telegram_id = telegram_id
+    user.telegram_username = telegram_username
+    user.auth_provider = "telegram"
+    user.email_verified = False
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    logger.info(f"Created Telegram OIDC user: id={user.id}, telegram_id={telegram_id}")
+    return user
+
+
+@router.post("/telegram-oidc")
+def login_with_telegram_oidc(
+    payload: TelegramOIDCRequest,
+    response: Response,
+    db: Session = Depends(get_session),
+):
+    """
+    Log In With Telegram (OIDC).
+    Принимает id_token (от popup) или code+code_verifier+redirect_uri (от redirect flow).
+    """
+    if not TELEGRAM_OIDC_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Telegram Login is not configured"
+        )
+
+    id_token_str = payload.id_token
+
+    if not id_token_str and payload.code and payload.code_verifier and payload.redirect_uri:
+        if payload.redirect_uri.rstrip("/") != TELEGRAM_OIDC_REDIRECT_URI.rstrip("/"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid redirect_uri"
+            )
+        id_token_str = _exchange_telegram_code_for_id_token(
+            payload.code, payload.code_verifier, payload.redirect_uri
+        )
+        if not id_token_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to exchange code for token"
+            )
+
+    if not id_token_str:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide id_token or code+code_verifier+redirect_uri"
+        )
+
+    oidc_payload = verify_telegram_id_token(id_token_str, TELEGRAM_OIDC_CLIENT_ID)
+    if not oidc_payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Telegram id_token"
+        )
+
+    user = _process_telegram_oidc_user(db, oidc_payload)
+
+    try:
+        from services.folder_service import FolderService
+        folder_service = FolderService()
+        folder_service.ensure_system_folders_exist(user.id)
+    except Exception as e:
+        logger.error(f"Error ensuring system folders for user {user.id}: {e}", exc_info=True)
+
+    return _do_telegram_login(response, user, "telegram_oidc")
+
+
+@router.get("/telegram-oidc/config")
+def get_telegram_oidc_config():
+    """Публичная конфигурация для фронтенда (client_id, redirect_uri, auth_url)."""
+    if not TELEGRAM_OIDC_ENABLED:
+        return {"enabled": False}
+
+    return {
+        "enabled": True,
+        "client_id": TELEGRAM_OIDC_CLIENT_ID,
+        "redirect_uri": TELEGRAM_OIDC_REDIRECT_URI,
+        "auth_url": "https://oauth.telegram.org/auth",
+    }
 
 
 @router.get("/me", response_model=UserResponse)

@@ -56,6 +56,11 @@ class UnifiedAPI {
     // Auth методы
     this.register = (userData) => auth.register(userData);
     this.login = (credentials) => auth.login(credentials);
+    this.loginWithTelegram = (initData) => auth.loginWithTelegram(initData);
+    this.sendTelegramLinkCode = (email) => auth.sendTelegramLinkCode(email);
+    this.verifyAndLinkTelegram = (email, code, initData) => auth.verifyAndLinkTelegram(email, code, initData);
+    this.getTelegramOIDCConfig = () => auth.getTelegramOIDCConfig();
+    this.loginWithTelegramOIDC = (payload) => auth.loginWithTelegramOIDC(payload);
     this.loginWithGoogle = (credential, clientId) => auth.loginWithGoogle(credential, clientId);
     this.logout = () => auth.logout();
     this.getCurrentUser = () => auth.getCurrentUser();
@@ -73,6 +78,7 @@ class UnifiedAPI {
     this.getPaymentsConfig = () => auth.getPaymentsConfig();
     this.createCryptoInvoice = (tier) => auth.createCryptoInvoice(tier);
     this.createCheckout = (tier, returnUrl) => auth.createCheckout(tier, returnUrl);
+    this.createTelegramStarsInvoice = (tier) => auth.createTelegramStarsInvoice(tier);
     this.checkEmailExists = (email) => auth.checkEmailExists(email);
     this.sendPasswordResetCode = (email) => auth.sendPasswordResetCode(email);
     this.sendResetCode = (email) => auth.sendResetCode(email);

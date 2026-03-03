@@ -22,6 +22,7 @@ const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess.jsx"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess.jsx"));
 const PaymentFailed = lazy(() => import("./pages/PaymentFailed.jsx"));
+const TelegramCallback = lazy(() => import("./pages/TelegramCallback.jsx"));
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
@@ -857,6 +858,10 @@ export default function App() {
                                         <ResetPassword />
                                       </PublicRoute>
                                     }
+                                  />
+                                  <Route
+                                    path="/auth/telegram-callback"
+                                    element={<TelegramCallback />}
                                   />
                                 <Route
                                   path="/subscription-success"

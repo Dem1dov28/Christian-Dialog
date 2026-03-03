@@ -5,6 +5,7 @@ import PricingCard from "./PricingCard";
 import { getPricingData } from "../../data/pricingData";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useTelegramWebApp } from "../../hooks/useTelegramWebApp";
 import { SEO } from "@/components/common/SEO";
 import apiClient from "../../services/api";
 
@@ -17,6 +18,8 @@ const PricingPage = ({ isVisible, onClose }) => {
   const [upgradeSuccess, setUpgradeSuccess] = useState(null);
   const [cryptocloudEnabled, setCryptocloudEnabled] = useState(false);
   const [bepaidEnabled, setBepaidEnabled] = useState(false);
+  const [telegramStarsEnabled, setTelegramStarsEnabled] = useState(false);
+  const { isTelegram } = useTelegramWebApp();
 
   useEffect(() => {
     if (isVisible) {
@@ -27,6 +30,7 @@ const PricingPage = ({ isVisible, onClose }) => {
         .then((r) => {
           setCryptocloudEnabled(r.cryptocloud_enabled === true);
           setBepaidEnabled(r.bepaid_enabled === true);
+          setTelegramStarsEnabled(r.telegram_stars_enabled === true);
         })
         .catch(() => {
           setCryptocloudEnabled(false);
@@ -83,6 +87,28 @@ const PricingPage = ({ isVisible, onClose }) => {
       setUpgradeError(response.error || t("pricing.upgradeError"));
     } catch (error) {
       console.error("Checkout error:", error);
+      setUpgradeError(error.message || t("pricing.upgradeError"));
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
+  const handlePayWithStars = async (tier) => {
+    const webApp = window.Telegram?.WebApp;
+    if (!webApp?.openInvoice) {
+      setUpgradeError("Оплата Stars доступна только в Telegram");
+      return;
+    }
+    try {
+      setIsUpgrading(true);
+      setUpgradeError(null);
+      const response = await apiClient.createTelegramStarsInvoice(tier);
+      if (response.invoice_url) {
+        webApp.openInvoice(response.invoice_url);
+      } else {
+        setUpgradeError(response.error || t("pricing.upgradeError"));
+      }
+    } catch (error) {
       setUpgradeError(error.message || t("pricing.upgradeError"));
     } finally {
       setIsUpgrading(false);
@@ -166,15 +192,18 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("plus")
                   ? t("pricing.currentPlan")
-                  : cryptocloudEnabled
-                    ? t("pricing.payWithCrypto")
-                    : bepaidEnabled
-                      ? t("pricing.payWithCard")
-                      : t("pricing.switchToPlus")
+                  : isTelegram && telegramStarsEnabled
+                    ? t("pricing.payWithStars") || "Оплатить Stars"
+                    : cryptocloudEnabled
+                      ? t("pricing.payWithCrypto")
+                      : bepaidEnabled
+                        ? t("pricing.payWithCard")
+                        : t("pricing.switchToPlus")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus")) {
-                  if (cryptocloudEnabled) handlePayWithCrypto("plus");
+                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("plus");
+                  else if (cryptocloudEnabled) handlePayWithCrypto("plus");
                   else if (bepaidEnabled) handlePayWithCard("plus");
                   else handleUpgrade("plus");
                 }
@@ -190,15 +219,18 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
-                  : cryptocloudEnabled
-                    ? t("pricing.payWithCrypto")
-                    : bepaidEnabled
-                      ? t("pricing.payWithCard")
-                      : t("pricing.switchToPro")
+                  : isTelegram && telegramStarsEnabled
+                    ? t("pricing.payWithStars") || "Оплатить Stars"
+                    : cryptocloudEnabled
+                      ? t("pricing.payWithCrypto")
+                      : bepaidEnabled
+                        ? t("pricing.payWithCard")
+                        : t("pricing.switchToPro")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro")) {
-                  if (cryptocloudEnabled) handlePayWithCrypto("pro");
+                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("pro");
+                  else if (cryptocloudEnabled) handlePayWithCrypto("pro");
                   else if (bepaidEnabled) handlePayWithCard("pro");
                   else handleUpgrade("pro");
                 }

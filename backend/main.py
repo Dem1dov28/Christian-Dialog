@@ -47,6 +47,7 @@ from api.support import create_support_endpoints
 from api.static_files import router as static_files_router
 from api.file_attachments import router as file_attachments_router
 from api.payments import router as payments_router
+from api.telegram_webhook import router as telegram_webhook_router
 from services.agent_service import AgentService
 from services.user_agent_service import UserAgentService
 from services.attraction_visit_service import AttractionVisitService
@@ -182,6 +183,7 @@ create_support_endpoints(app)
 app.include_router(static_files_router)
 app.include_router(file_attachments_router)
 app.include_router(payments_router)
+app.include_router(telegram_webhook_router)
 
 
 @app.get("/test-search-db")

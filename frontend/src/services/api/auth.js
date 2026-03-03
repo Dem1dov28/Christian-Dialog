@@ -96,6 +96,36 @@ export class AuthAPI {
     }
   }
 
+  // Вход через Telegram initData
+  async loginWithTelegram(initData) {
+    const response = await this.client.post("/auth/telegram", { init_data: initData });
+    return response;
+  }
+
+  // Отправить код на email для привязки Telegram
+  async sendTelegramLinkCode(email) {
+    return this.client.post("/auth/send-telegram-link-code", { email });
+  }
+
+  // Log In With Telegram (OIDC) — получить конфиг
+  async getTelegramOIDCConfig() {
+    return this.client.get("/auth/telegram-oidc/config");
+  }
+
+  // Log In With Telegram (OIDC) — обмен code на токен
+  async loginWithTelegramOIDC(payload) {
+    return this.client.post("/auth/telegram-oidc", payload);
+  }
+
+  // Проверить код и привязать Telegram к аккаунту
+  async verifyAndLinkTelegram(email, code, initData) {
+    return this.client.post("/auth/verify-and-link-telegram", {
+      email,
+      code,
+      init_data: initData,
+    });
+  }
+
   // Вход через Google OAuth
   async loginWithGoogle(credential, clientId = null) {
     const payload = {
@@ -356,9 +386,14 @@ export class AuthAPI {
 
   // --- Платежи ---
 
-  // Узнать, какие провайдеры включены: { cryptocloud_enabled, bepaid_enabled }
+  // Узнать, какие провайдеры включены: { cryptocloud_enabled, bepaid_enabled, telegram_stars_enabled }
   async getPaymentsConfig() {
     return this.client.get("/payments/config");
+  }
+
+  // Создать инвойс Telegram Stars (для Mini App)
+  async createTelegramStarsInvoice(tier) {
+    return this.client.post("/payments/telegram-stars/create-invoice", { tier });
   }
 
   // CryptoCloud: создать крипто-инвойс → получить link на страницу оплаты
