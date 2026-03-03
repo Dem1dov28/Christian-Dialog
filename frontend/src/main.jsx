@@ -14,22 +14,26 @@ if (tg) {
   if (tg.isVersionAtLeast?.("6.2")) { try { tg.enableClosingConfirmation(); } catch (_) {} }
   if (tg.isVersionAtLeast?.("7.7")) { try { tg.disableVerticalSwipes(); } catch (_) {} }
 
-  // Применяем safe area insets из Telegram API — env() ненадёжен в WebView на iOS (Dynamic Island, notch).
-  // Bot API 8.0+ предоставляет safeAreaInset и contentSafeAreaInset.
+  // Safe area: Dynamic Island + хедер Telegram (кнопка «Закрыть») перекрывают верх приложения.
+  // Bot API 8.0+: safeAreaInset (устройство) + contentSafeAreaInset (UI Telegram).
+  // Без 8.0: фиксированный отступ 48px, чтобы опустить контент ниже кнопки «Закрыть».
+  const TG_HEADER_BUFFER = 48;
   function applyTelegramSafeArea() {
-    if (!tg.isVersionAtLeast?.("8.0")) return;
-    const safe = tg.safeAreaInset;
-    const content = tg.contentSafeAreaInset;
     const root = document.documentElement.style;
-    if (safe) {
-      if (typeof safe.top === "number") root.setProperty("--tg-safe-area-inset-top", `${safe.top}px`);
-      if (typeof safe.bottom === "number") root.setProperty("--tg-safe-area-inset-bottom", `${safe.bottom}px`);
-      if (typeof safe.left === "number") root.setProperty("--tg-safe-area-inset-left", `${safe.left}px`);
-      if (typeof safe.right === "number") root.setProperty("--tg-safe-area-inset-right", `${safe.right}px`);
-    }
-    if (content) {
-      if (typeof content.top === "number") root.setProperty("--tg-content-safe-area-inset-top", `${content.top}px`);
-      if (typeof content.bottom === "number") root.setProperty("--tg-content-safe-area-inset-bottom", `${content.bottom}px`);
+    if (tg.isVersionAtLeast?.("8.0")) {
+      const safe = tg.safeAreaInset;
+      const content = tg.contentSafeAreaInset;
+      const safeTop = (safe && typeof safe.top === "number") ? safe.top : 0;
+      const contentTop = (content && typeof content.top === "number") ? content.top : 0;
+      const topOffset = Math.max(safeTop + contentTop, TG_HEADER_BUFFER);
+      root.setProperty("--tg-top-offset", `${topOffset}px`);
+      if (safe) {
+        if (typeof safe.top === "number") root.setProperty("--tg-safe-area-inset-top", `${safe.top}px`);
+        if (typeof safe.bottom === "number") root.setProperty("--tg-safe-area-inset-bottom", `${safe.bottom}px`);
+      }
+      if (content && typeof content.bottom === "number") root.setProperty("--tg-content-safe-area-inset-bottom", `${content.bottom}px`);
+    } else {
+      root.setProperty("--tg-top-offset", `${TG_HEADER_BUFFER}px`);
     }
   }
   applyTelegramSafeArea();

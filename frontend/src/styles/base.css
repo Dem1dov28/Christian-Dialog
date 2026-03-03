@@ -62,10 +62,10 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Telegram WebApp: env(safe-area-inset-*) ненадёжен в WebView на iOS (Dynamic Island).
-   Используем значения из Telegram API (Bot 8.0+), синхронизируемые в main.jsx. */
+/* Telegram WebApp: опускаем контент ниже — Dynamic Island + хедер (кнопка «Закрыть»).
+   --tg-top-offset задаётся в main.jsx: safeAreaInset + contentSafeAreaInset или 48px (Bot API < 8.0). */
 html.tg-webapp {
-  --safe-area-inset-top: var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-area-inset-top: var(--tg-top-offset, 48px);
   --safe-area-inset-bottom: var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 }
 html.tg-webapp #root {
