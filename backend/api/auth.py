@@ -473,9 +473,9 @@ def login_with_google(
 
 # --- Telegram Mini App auth ---
 
-def _do_telegram_login(response: Response, user: User, logger_ctx: str = ""):
+def _do_telegram_login(response: Response, user: User, db: Session, logger_ctx: str = ""):
     """Общая логика установки cookie и возврата токена после успешной аутентификации Telegram."""
-    update_user_last_login(user)
+    update_user_last_login(db, user)
     try:
         from services.folder_service import FolderService
         folder_service = FolderService()
@@ -556,7 +556,7 @@ def login_with_telegram(
             db.add(user)
             db.commit()
             db.refresh(user)
-        return _do_telegram_login(response, user, "login_with_telegram")
+        return _do_telegram_login(response, user, db, "login_with_telegram")
 
     # Пользователь не найден по telegram_id — возвращаем needs_link для привязки
     return JSONResponse(
@@ -656,7 +656,7 @@ def verify_and_link_telegram(
     db.commit()
     db.refresh(user)
 
-    return _do_telegram_login(response, user, "verify_and_link_telegram")
+    return _do_telegram_login(response, user, db, "verify_and_link_telegram")
 
 
 # --- Log In With Telegram (OIDC) ---
@@ -808,7 +808,7 @@ def login_with_telegram_oidc(
     except Exception as e:
         logger.error(f"Error ensuring system folders for user {user.id}: {e}", exc_info=True)
 
-    return _do_telegram_login(response, user, "telegram_oidc")
+    return _do_telegram_login(response, user, db, "telegram_oidc")
 
 
 @router.get("/telegram-oidc/config")
