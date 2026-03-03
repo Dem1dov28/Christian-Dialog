@@ -670,6 +670,7 @@
     "redirecting": "Перенаправление на главную...",
     "payWithCrypto": "Оплатить криптой",
     "payWithStars": "Оплатить Stars",
+    "starsOpenedInNewTab": "Ссылка открыта. После оплаты в Telegram обновите страницу.",
     "paymentSuccessHint": "Оплата прошла успешно. Подписка активирована. Спасибо!",
     "paymentFailed": "Оплата не прошла",
     "paymentFailedHint": "Платёж отменён или произошла ошибка. Попробуйте ещё раз.",

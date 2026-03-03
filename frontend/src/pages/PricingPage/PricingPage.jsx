@@ -94,17 +94,19 @@ const PricingPage = ({ isVisible, onClose }) => {
   };
 
   const handlePayWithStars = async (tier) => {
-    const webApp = window.Telegram?.WebApp;
-    if (!webApp?.openInvoice) {
-      setUpgradeError("Оплата Stars доступна только в Telegram");
-      return;
-    }
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
+      setUpgradeSuccess(null);
       const response = await apiClient.createTelegramStarsInvoice(tier);
       if (response.invoice_url) {
-        webApp.openInvoice(response.invoice_url);
+        const webApp = window.Telegram?.WebApp;
+        if (webApp?.openInvoice) {
+          webApp.openInvoice(response.invoice_url);
+        } else {
+          window.open(response.invoice_url, "_blank", "noopener,noreferrer");
+          setUpgradeSuccess(t("pricing.starsOpenedInNewTab") || "Ссылка открыта. После оплаты в Telegram обновите страницу.");
+        }
       } else {
         setUpgradeError(response.error || t("pricing.upgradeError"));
       }
@@ -192,7 +194,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("plus")
                   ? t("pricing.currentPlan")
-                  : isTelegram && telegramStarsEnabled
+                  : telegramStarsEnabled
                     ? t("pricing.payWithStars") || "Оплатить Stars"
                     : cryptocloudEnabled
                       ? t("pricing.payWithCrypto")
@@ -202,7 +204,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus")) {
-                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("plus");
+                  if (telegramStarsEnabled) handlePayWithStars("plus");
                   else if (cryptocloudEnabled) handlePayWithCrypto("plus");
                   else if (bepaidEnabled) handlePayWithCard("plus");
                   else handleUpgrade("plus");
@@ -219,7 +221,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
-                  : isTelegram && telegramStarsEnabled
+                  : telegramStarsEnabled
                     ? t("pricing.payWithStars") || "Оплатить Stars"
                     : cryptocloudEnabled
                       ? t("pricing.payWithCrypto")
@@ -229,7 +231,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro")) {
-                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("pro");
+                  if (telegramStarsEnabled) handlePayWithStars("pro");
                   else if (cryptocloudEnabled) handlePayWithCrypto("pro");
                   else if (bepaidEnabled) handlePayWithCard("pro");
                   else handleUpgrade("pro");
