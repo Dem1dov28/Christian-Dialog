@@ -5,9 +5,11 @@ import App from "./App.jsx";
 import { setViewportHeight } from "./utils/viewportHeight.js";
 import "./index.css";
 
-// Инициализация Telegram Web App при открытии в Telegram
+// Инициализация Telegram Web App — только при открытии ВНУТРИ Telegram.
+// tg существует всегда (скрипт загружен), но initData — только когда открыто из Telegram.
 const tg = window.Telegram?.WebApp;
-if (tg) {
+const isInTelegram = Boolean(tg?.initData);
+if (tg && isInTelegram) {
   document.documentElement.classList.add("tg-webapp");
   tg.ready();
   tg.expand();
