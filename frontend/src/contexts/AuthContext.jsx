@@ -28,9 +28,9 @@ export const AuthProvider = ({ children }) => {
 
     const initAuth = async () => {
       try {
-        // В Telegram Mini App: пробуем войти по initData
+        // В Telegram Mini App: пробуем войти по initData (если пользователь не вышел явно)
         const tgInitData = typeof window !== "undefined" && window.Telegram?.WebApp?.initData;
-        if (tgInitData) {
+        if (tgInitData && !sessionStorage.getItem("telegram_skip_auto_login")) {
           try {
             const tgResponse = await apiClient.loginWithTelegram(tgInitData);
             if (tgResponse?.user) {
@@ -321,8 +321,9 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       apiClient.setToken(null);
-      localStorage.removeItem("user_data"); // Очищаем сохраненные данные пользователя
-      sessionStorage.removeItem('app_initial_redirect_done'); // Сбрасываем флаг редиректа
+      localStorage.removeItem("user_data");
+      sessionStorage.removeItem('app_initial_redirect_done');
+      sessionStorage.setItem('telegram_skip_auto_login', '1'); // В Mini App после выхода не входить снова автоматически
     }
   };
 

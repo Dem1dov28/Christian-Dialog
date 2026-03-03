@@ -101,9 +101,18 @@ const PricingPage = ({ isVisible, onClose }) => {
       const response = await apiClient.createTelegramStarsInvoice(tier);
       if (response.invoice_url) {
         const webApp = window.Telegram?.WebApp;
-        if (webApp?.openInvoice) {
-          webApp.openInvoice(response.invoice_url);
-        } else {
+        const version = parseFloat(webApp?.version || "0") || 0;
+        const useOpenInvoice = webApp?.openInvoice && version >= 6.1;
+        let opened = false;
+        if (useOpenInvoice) {
+          try {
+            webApp.openInvoice(response.invoice_url);
+            opened = true;
+          } catch (_) {
+            // openInvoice выбросил — fallback на window.open
+          }
+        }
+        if (!opened) {
           window.open(response.invoice_url, "_blank", "noopener,noreferrer");
           setUpgradeSuccess(t("pricing.starsOpenedInNewTab") || "Ссылка открыта. После оплаты в Telegram обновите страницу.");
         }
