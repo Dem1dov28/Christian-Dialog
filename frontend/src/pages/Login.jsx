@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ const Login = () => {
   const [linkEmail, setLinkEmail] = useState("");
   const [linkCode, setLinkCode] = useState("");
   const [telegramOIDCConfig, setTelegramOIDCConfig] = useState(null);
+  const telegramLoginTried = useRef(false);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const googleLocale = language === "ru" ? "ru" : "en";
 
@@ -48,8 +49,10 @@ const Login = () => {
   };
 
   // В Telegram: при монтировании пробуем войти; если needs_link — показываем форму привязки
+  // Один вызов (telegramLoginTried) — иначе при 429 мог бы запускаться бесконечный цикл запросов
   useEffect(() => {
-    if (!isTelegram || !initData) return;
+    if (!isTelegram || !initData || telegramLoginTried.current) return;
+    telegramLoginTried.current = true;
     let cancelled = false;
     const tryTg = async () => {
       try {

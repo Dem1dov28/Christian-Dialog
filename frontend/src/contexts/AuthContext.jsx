@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import apiClient from "../services/api";
 
 const AuthContext = createContext();
@@ -179,7 +179,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithTelegram = async (initData) => {
+  const loginWithTelegram = useCallback(async (initData) => {
     try {
       setIsLoading(true);
       const response = await apiClient.loginWithTelegram(initData);
@@ -210,7 +210,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const sendTelegramLinkCode = async (email) => {
     return apiClient.sendTelegramLinkCode(email);
