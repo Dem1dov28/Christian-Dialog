@@ -11,8 +11,8 @@ if (tg) {
   document.documentElement.classList.add("tg-webapp");
   tg.ready();
   tg.expand();
-  try { tg.enableClosingConfirmation(); } catch (_) {}
-  try { tg.disableVerticalSwipes(); } catch (_) {}
+  if (tg.isVersionAtLeast?.("6.2")) { try { tg.enableClosingConfirmation(); } catch (_) {} }
+  if (tg.isVersionAtLeast?.("7.7")) { try { tg.disableVerticalSwipes(); } catch (_) {} }
 
   // Применяем safe area insets из Telegram API — env() ненадёжен в WebView на iOS (Dynamic Island, notch).
   // Bot API 8.0+ предоставляет safeAreaInset и contentSafeAreaInset.
