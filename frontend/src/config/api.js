@@ -4,8 +4,15 @@
 let _base = import.meta.env.VITE_API_BASE_URL ||
   (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
 
-// Mixed Content: страница по HTTPS не может запрашивать HTTP. Меняем только протокол, сохраняя хост.
+// Убираем trailing slash
+_base = (_base || "").replace(/\/+$/, "");
+
+// Mixed Content: страница по HTTPS не может запрашивать HTTP. Принудительно HTTPS.
 if (typeof window !== "undefined" && window.location.protocol === "https:" && _base.startsWith("http://")) {
+  _base = "https://" + _base.slice(7);
+}
+// В production (epochaldialog.com) всегда https
+if (_base.includes("epochaldialog.com") && _base.startsWith("http://")) {
   _base = "https://" + _base.slice(7);
 }
 
