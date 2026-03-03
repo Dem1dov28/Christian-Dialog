@@ -110,7 +110,7 @@ const RenameChatModal = ({
         style={{
           maxHeight: "60vh",
           margin: "0 1rem",
-          bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))'
+          bottom: 'calc(6rem + var(--safe-area-inset-bottom))'
         }}
         onClick={(e) => e.stopPropagation()}
       >

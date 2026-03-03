@@ -1183,7 +1183,7 @@ export default function Chat({
                     onClick={handleScrollDownClick}
                     className="fixed right-4 z-50 w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
                     style={{
-                      bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))'
+                      bottom: 'calc(5rem + var(--safe-area-inset-bottom))'
                     }}
                     aria-label="Scroll down"
                   >

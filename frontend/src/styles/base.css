@@ -11,6 +11,12 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Унифицированные safe-area переменные: в Telegram переопределяются в html.tg-webapp */
+  :root {
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 html {
@@ -49,11 +55,22 @@ body {
 #root {
   height: 100%;
   overflow: hidden;
-  /* safe-area только по вертикали — top (notch) и bottom (home bar).
+  /* safe-area только по вертикали — top (Dynamic Island, notch) и bottom (home bar).
      left/right убраны: они нужны только в landscape с notch, но вызывают
      обрезку контента по бокам в portrait на iOS. */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Telegram WebApp: env(safe-area-inset-*) ненадёжен в WebView на iOS (Dynamic Island).
+   Используем значения из Telegram API (Bot 8.0+), синхронизируемые в main.jsx. */
+html.tg-webapp {
+  --safe-area-inset-top: var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-area-inset-bottom: var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+}
+html.tg-webapp #root {
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
 }
 
 /* Класс для применения фонового изображения темы — используется только в авторизованной части приложения */

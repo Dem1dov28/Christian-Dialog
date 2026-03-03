@@ -2947,7 +2947,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   className="fixed right-4 w-11 h-11 rounded-full flex items-center justify-center shadow-lg z-50 transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl"
                   style={{
                     backgroundColor: "var(--accent)",
-                    bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))'
+                    bottom: 'calc(1rem + var(--safe-area-inset-bottom))'
                   }}
                   title={t("common.next") || "Продолжить"}
                 >
