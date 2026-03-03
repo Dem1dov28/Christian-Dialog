@@ -70,9 +70,18 @@
           setTimeout(setViewportHeight, 150);
         });
         // Блокируем pinch-to-zoom жестами на iOS (user-scalable=no игнорируется с iOS 10)
-        document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
-        document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
-        document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
+        // Не блокируем в полях ввода — иначе нельзя вводить текст
+        function isEditable(el) {
+          var t = el && el.tagName ? el.tagName.toUpperCase() : '';
+          return t === 'INPUT' || t === 'TEXTAREA' || (el && el.isContentEditable);
+        }
+        function blockGesture(e) {
+          if (isEditable(e.target)) return;
+          e.preventDefault();
+        }
+        document.addEventListener('gesturestart', blockGesture, { passive: false });
+        document.addEventListener('gesturechange', blockGesture, { passive: false });
+        document.addEventListener('gestureend', blockGesture, { passive: false });
       })();
     </script>
     
@@ -199,6 +208,12 @@
       /* Prevent text selection during load */
       .loading * {
         user-select: none;
+      }
+
+      /* Inputs must always be editable (Telegram WebView) */
+      input, textarea, [contenteditable="true"] {
+        -webkit-user-select: text !important;
+        user-select: text !important;
       }
 
       /* Critical viewport height fix */

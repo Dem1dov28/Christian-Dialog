@@ -45,6 +45,12 @@ body {
   user-select: none;
 }
 
+/* Inputs must always be editable (Telegram WebView, etc.) */
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
 /* Critical viewport height fix */
 :root {
   --vh: 1vh;

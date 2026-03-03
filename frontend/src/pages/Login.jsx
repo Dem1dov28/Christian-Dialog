@@ -259,6 +259,8 @@ const Login = () => {
                     onChange={(e) => { setLinkEmail(e.target.value); setError(""); }}
                     disabled={isLoading}
                     className="w-full"
+                    autoComplete="email"
+                    style={{ WebkitUserSelect: "text", userSelect: "text" }}
                   />
                   <Button type="submit" variant="neomorphic" size="lg" className="w-full" disabled={isLoading}>
                     {isLoading ? "..." : (language === "ru" ? "Отправить код" : "Send code")}
@@ -275,6 +277,8 @@ const Login = () => {
                     onChange={(e) => { setLinkCode(e.target.value.replace(/\D/g, "")); setError(""); }}
                     disabled={isLoading}
                     className="w-full"
+                    autoComplete="one-time-code"
+                    style={{ WebkitUserSelect: "text", userSelect: "text" }}
                   />
                   <Button type="submit" variant="neomorphic" size="lg" className="w-full" disabled={isLoading}>
                     {isLoading ? "..." : (language === "ru" ? "Привязать аккаунт" : "Link account")}

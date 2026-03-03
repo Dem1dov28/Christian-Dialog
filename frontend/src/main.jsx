@@ -9,7 +9,8 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
-  tg.enableClosingConfirmation();
+  try { tg.enableClosingConfirmation(); } catch (_) {}
+  try { tg.disableVerticalSwipes(); } catch (_) {}
 }
 
 const container = document.getElementById("root");
