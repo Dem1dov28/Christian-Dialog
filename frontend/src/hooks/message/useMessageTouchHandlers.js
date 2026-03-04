@@ -19,12 +19,23 @@ export function useMessageTouchHandlers({
   isSelecting,
   openMenuAtEventWithChecks,
 }) {
-  // Обработчик долгого нажатия на сообщение
+  // Обработчик долгого нажатия на сообщение — открывает модалку с действиями
   const handleMessageLongPress = useCallback(
-    (e, messageId) => {
-      // Если сообщение уже выделено - разрешаем нативное выделение текста
-      // Не обрабатываем long press для выделенных сообщений
+    (e, messageId, clientX, clientY) => {
+      // Если сообщение уже выделено — при долгом нажатии запускаем режим выделения
       if (selectedMessagesSet.has(messageId)) {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedMessagesSet((prev) => {
+          const next = new Set(prev);
+          next.add(messageId);
+          requestAnimationFrame(() => {
+            setIsSelecting(true);
+            setIsContainerDragSelecting(true);
+            setDragSelectionMode("add");
+          });
+          return next;
+        });
         return;
       }
 
@@ -41,22 +52,17 @@ export function useMessageTouchHandlers({
         }
       }
 
-      // Запускаем выделение - сначала добавляем сообщение, потом активируем режим
-      // Это гарантирует, что сообщение будет выделено до активации режима
-      setSelectedMessagesSet((prev) => {
-        const next = new Set(prev);
-        next.add(messageId);
-        // Активируем режим выделения сразу после добавления сообщения
-        // Используем requestAnimationFrame для синхронизации с рендером
-        requestAnimationFrame(() => {
-          setIsSelecting(true);
-          setIsContainerDragSelecting(true);
-          setDragSelectionMode("add");
-        });
-        return next;
-      });
+      // Открываем модалку с действиями (pin, copy и т.д.)
+      const syntheticEvent = {
+        clientX: clientX ?? e.touches?.[0]?.clientX ?? 0,
+        clientY: clientY ?? e.touches?.[0]?.clientY ?? 0,
+        target: e.target,
+        preventDefault: () => {},
+        stopPropagation: () => {},
+      };
+      openMenuAtEventWithChecks(syntheticEvent, messageId);
     },
-    [selectedMessagesSet, setSelectedMessagesSet, setIsSelecting, setIsContainerDragSelecting, setDragSelectionMode]
+    [selectedMessagesSet, setSelectedMessagesSet, setIsSelecting, setIsContainerDragSelecting, setDragSelectionMode, openMenuAtEventWithChecks]
   );
 
   // Обработчик начала touch-события на сообщении
@@ -111,7 +117,7 @@ export function useMessageTouchHandlers({
               window.getSelection().removeAllRanges();
             }
 
-            handleMessageLongPress(e, messageId);
+            handleMessageLongPress(e, messageId, handler.startX, handler.startY);
           }
         }, 500);
       }
@@ -251,29 +257,8 @@ export function useMessageTouchHandlers({
             next.add(messageId);
             return next;
           });
-        } else {
-          // Open Menu (только если нет активного выделения)
-          // Не открываем меню, если пользователь выделяет текст
-          const selection = window.getSelection();
-          if (selection && selection.toString().trim().length > 0) {
-            messageTouchHandlersRef.current.delete(messageId);
-            return;
-          }
-
-          // Предотвращаем стандартное поведение (клик), чтобы меню не закрылось сразу же
-          if (e.cancelable) e.preventDefault();
-          e.stopPropagation();
-
-          const touch = e.changedTouches[0];
-          const syntheticEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            target: e.target,
-            preventDefault: () => {},
-            stopPropagation: () => {},
-          };
-          openMenuAtEventWithChecks(syntheticEvent, messageId);
         }
+        // Короткий тап — ничего не делаем (модалка с действиями открывается при долгом нажатии)
       }
 
       messageTouchHandlersRef.current.delete(messageId);
@@ -286,7 +271,6 @@ export function useMessageTouchHandlers({
       setIsSelecting,
       setIsContainerDragSelecting,
       setDragSelectionMode,
-      openMenuAtEventWithChecks,
       contextMenu.visible,
       activeMessageId,
       setContextMenu,

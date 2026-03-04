@@ -508,7 +508,12 @@ export const ChatsProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoadedConversations, setHasLoadedConversations] = useState(false); // Флаг: разговоры были загружены хотя бы раз
   const [error, setError] = useState(null);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, reason: "limit" });
+  const setShowUpgradeModal = useCallback((show, reason = "limit") => {
+    setUpgradeModal((prev) => ({ ...prev, isOpen: !!show, reason: show ? (reason || prev.reason) : "limit" }));
+  }, []);
+  const showUpgradeModal = upgradeModal.isOpen;
+  const upgradeModalReason = upgradeModal.reason;
 
   // Состояние загрузки конкретного чата
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -4590,6 +4595,7 @@ export const ChatsProvider = ({ children }) => {
     pinnedMessages,
     isSystemChatHidden,
     showUpgradeModal,
+    upgradeModalReason,
     setShowUpgradeModal,
     checkMessageLimit,
     loadConversations,

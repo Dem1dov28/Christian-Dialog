@@ -161,7 +161,7 @@ const PricingPage = ({ isVisible, onClose }) => {
   const pricingData = getPricingData(t);
 
   const overlay = (
-    <div className={`${styles.overlay} ${isClosing ? styles.closing : ""}`}>
+    <div className={`${styles.overlay} ${isClosing ? styles.closing : ""} ${isTelegram ? "tg-safe-area-overlay" : ""}`}>
       <SEO
         title="Тарифы и подписки"
         description="Выберите подходящий тариф для Epochal Dialog. Бесплатный план, Plus и Pro подписки с расширенными возможностями общения с AI-историческими личностями."

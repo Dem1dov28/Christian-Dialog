@@ -3,10 +3,14 @@ import { FiX } from "react-icons/fi";
 import { useLanguage } from "../../contexts/LanguageContext";
 import styles from "./UpgradeModal.module.css";
 
-const UpgradeModal = ({ isOpen, onClose, onUpgrade, currentTier = "free" }) => {
+const UpgradeModal = ({ isOpen, onClose, onUpgrade, currentTier = "free", reason = "limit" }) => {
   const { t } = useLanguage();
   
   if (!isOpen) return null;
+
+  const isFeature = reason === "feature";
+  const titleKey = isFeature ? "modals.upgrade.titleFeature" : "modals.upgrade.title";
+  const descKey = isFeature ? "modals.upgrade.descriptionFeature" : "modals.upgrade.description";
 
   const handleUpgrade = () => {
     const targetTier = currentTier === "free" ? "plus" : "pro";
@@ -26,9 +30,9 @@ const UpgradeModal = ({ isOpen, onClose, onUpgrade, currentTier = "free" }) => {
         <button className={styles.closeButton} onClick={onClose}>
           <FiX />
         </button>
-        <h2 className={styles.title}>{t("modals.upgrade.title")}</h2>
+        <h2 className={styles.title}>{t(titleKey)}</h2>
         <p className={styles.description}>
-          {t("modals.upgrade.description")}
+          {t(descKey)}
         </p>
         <button className={styles.upgradeButton} onClick={handleUpgrade}>
           {t("modals.upgrade.goToPricing")}

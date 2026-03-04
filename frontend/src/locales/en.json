@@ -557,6 +557,8 @@
     "upgrade": {
       "title": "Message limit reached",
       "description": "You have used all available messages. Upgrade your subscription to continue chatting with AI agents.",
+      "titleFeature": "Feature unavailable",
+      "descriptionFeature": "This feature is available on the Plus or Pro plan. Upgrade your subscription to continue.",
       "goToPricing": "Go to pricing"
     }
   },

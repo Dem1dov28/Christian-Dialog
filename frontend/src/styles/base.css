@@ -71,6 +71,11 @@ html.tg-webapp #root {
   padding-bottom: var(--safe-area-inset-bottom);
 }
 
+/* Pricing overlay (рендерится в body): в Telegram нужен верхний отступ для safe-area */
+html.tg-webapp .tg-safe-area-overlay {
+  padding-top: var(--safe-area-inset-top);
+}
+
 /* Drawer-панель (боковое меню): в Telegram не должна уходить под Dynamic Island и хедер */
 html.tg-webapp .drawer-sheet {
   top: var(--safe-area-inset-top);

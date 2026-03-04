@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { BiCheckCircle, BiError, BiInfoCircle } from 'react-icons/bi';
+import { BiCheckCircle, BiError, BiInfoCircle, BiX } from 'react-icons/bi';
 
 const Notification = ({ 
   id, 
@@ -14,10 +14,8 @@ const Notification = ({
   const [isClosing, setIsClosing] = useState(false);
   const closingRef = useRef(false);
 
-  // Анимация появления
   useEffect(() => {
     setIsRendered(true);
-    // Двойной requestAnimationFrame для гарантии, что элемент отрендерен в начальном состоянии перед анимацией
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setIsShown(true);
@@ -42,7 +40,7 @@ const Notification = ({
     setTimeout(() => {
       setIsRendered(false);
       onClose?.(id);
-    }, 300); // Время для анимации исчезновения
+    }, 300);
   };
 
   const getIcon = () => {
@@ -104,7 +102,7 @@ const Notification = ({
           onClick={handleClose}
           className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
         >
-          <BiError className="text-lg" />
+          <BiX className="text-lg" />
         </button>
       </div>
     </div>

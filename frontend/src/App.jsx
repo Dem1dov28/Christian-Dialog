@@ -118,6 +118,7 @@ function MainApp() {
     pinnedChats,
     pinnedMessages,
     showUpgradeModal,
+    upgradeModalReason,
     setShowUpgradeModal,
     checkMessageLimit,
     loadConversations,
@@ -455,6 +456,13 @@ function MainApp() {
     return cleanup;
   }, []);
 
+  // Fallback для aigram:show-upgrade-modal (если компонент не получил onShowUpgradeModal)
+  React.useEffect(() => {
+    const handler = () => setShowUpgradeModal(true, "feature");
+    window.addEventListener("aigram:show-upgrade-modal", handler);
+    return () => window.removeEventListener("aigram:show-upgrade-modal", handler);
+  }, [setShowUpgradeModal]);
+
   // Эффект для перенаправления на /Library при загрузке приложения
   // На мобильных: открываем библиотеку только если нет чатов (и обычных и групповых)
   // На десктопе: всегда открываем библиотеку
@@ -604,7 +612,7 @@ function MainApp() {
         isCompactChatOpen={isCompactChatOpen}
         isMediumScreen={isMediumScreen}
         activeChatIdForChat={activeChatId}
-        onShowUpgradeModal={() => setShowUpgradeModal(true)}
+        onShowUpgradeModal={(reason) => setShowUpgradeModal(true, reason || "feature")}
       />
 
       {/* Modals - wrapped in Suspense for lazy loading */}
@@ -727,6 +735,7 @@ function MainApp() {
       <Suspense fallback={null}>
         <UpgradeModal
           isOpen={showUpgradeModal}
+          reason={upgradeModalReason}
           onClose={() => setShowUpgradeModal(false)}
           onUpgrade={(tier) => {
             setShowUpgradeModal(false);

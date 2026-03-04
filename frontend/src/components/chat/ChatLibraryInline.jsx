@@ -109,9 +109,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     if (!isProUser) {
       // Показываем модальное окно обновления подписки
       if (onShowUpgradeModal) {
-        onShowUpgradeModal();
+        onShowUpgradeModal("feature");
       } else {
-        // Fallback: отправляем событие для открытия модального окна
         window.dispatchEvent(new Event("aigram:show-upgrade-modal"));
       }
       showError("Создание собственных персонажей доступно только для пользователей с подпиской Pro");
@@ -1001,7 +1000,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     // но на всякий случай проверяем еще раз
     if (!isProUser) {
       if (onShowUpgradeModal) {
-        onShowUpgradeModal();
+        onShowUpgradeModal("feature");
       } else {
         window.dispatchEvent(new Event("aigram:show-upgrade-modal"));
       }
