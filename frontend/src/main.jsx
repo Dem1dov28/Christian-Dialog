@@ -11,6 +11,7 @@ const tg = window.Telegram?.WebApp;
 const isInTelegram = Boolean(tg?.initData);
 if (tg && isInTelegram) {
   document.documentElement.classList.add("tg-webapp");
+  if (/^ios$/i.test(tg.platform || "")) document.documentElement.classList.add("tg-ios");
   tg.ready();
   tg.expand();
   if (tg.isVersionAtLeast?.("6.2")) { try { tg.enableClosingConfirmation(); } catch (_) {} }
