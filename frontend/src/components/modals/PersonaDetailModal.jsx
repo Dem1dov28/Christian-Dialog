@@ -67,14 +67,23 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            style={{
+              paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
+              paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+              paddingLeft: 'max(1rem, env(safe-area-inset-left, 0px))',
+              paddingRight: 'max(1rem, env(safe-area-inset-right, 0px))',
+            }}
             onClick={handleOverlayClick}
           >
             <div
-              className="bg-[var(--bg-primary)] rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-[var(--border-color)]"
+              className="bg-[var(--bg-primary)] rounded-2xl max-w-md w-full overflow-hidden flex flex-col shadow-2xl border border-[var(--border-color)]"
+              style={{
+                maxHeight: 'min(90vh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem))',
+              }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Scrollable content: Image + Text */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* Header with back button */}
                 <div className="relative overflow-hidden bg-gradient-to-b from-gray-800 to-gray-900">
                   {/* Back button */}

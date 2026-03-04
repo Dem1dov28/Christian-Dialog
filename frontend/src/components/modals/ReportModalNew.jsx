@@ -125,12 +125,13 @@ export default function ReportModalNew({ isOpen, onClose, onSubmit }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
-                className="w-11 h-11 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
+                className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg"
                 style={{
-                  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
+                  backgroundColor: "var(--badge-red, #ef4444)",
+                  boxShadow: "0 4px 12px color-mix(in srgb, var(--badge-red, #ef4444) 40%, transparent)",
                 }}
               >
-                <MdReport className="text-white text-xl" />
+                <MdReport className="text-xl text-white" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold" style={{ color: "var(--text-white)" }}>

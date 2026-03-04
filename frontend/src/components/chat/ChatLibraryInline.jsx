@@ -104,6 +104,20 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     return true;
   }, [user]);
 
+  // Максимум персонажей в группе по тарифу: free=2, plus/pro/api=5
+  const maxGroupAgents = useMemo(() => {
+    if (!user) return 2;
+    const tier = user.subscription_tier || "free";
+    if (["plus", "pro", "api"].includes(tier)) {
+      if (user.expires_at) {
+        const expiresAt = new Date(user.expires_at);
+        if (expiresAt < new Date()) return 2; // истекла — как free
+      }
+      return 5;
+    }
+    return 2;
+  }, [user]);
+
   // Обработчик создания персонажа с проверкой подписки
   const handleCreateAgentClick = () => {
     if (!isProUser) {
@@ -1072,9 +1086,34 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     const isSelected = selectedPersonas.includes(personaId);
     if (isSelected) {
       setSelectedPersonas((prev) => prev.filter((id) => id !== personaId));
-    } else if (selectedPersonas.length < 5) {
-      // Увеличиваем лимит до 5 агентов
+    } else if (selectedPersonas.length < maxGroupAgents) {
       setSelectedPersonas((prev) => [...prev, personaId]);
+    } else {
+      // Лимит достигнут — показываем модалку обновления
+      if (onShowUpgradeModal) onShowUpgradeModal("feature");
+      else window.dispatchEvent(new Event("aigram:show-upgrade-modal"));
+      showError(t("library.upgradeToAddMoreCharacters", { defaultValue: "Обновите тариф Plus или Pro, чтобы добавить больше персонажей в группу." }));
+    }
+  };
+
+  // Обработчик клика по карточке в режиме группы: при достижении лимита — показ модалки
+  const handlePersonaCardClickWithLimit = (persona) => {
+    const isSelected = selectedPersonas.includes(persona.id);
+    const atLimit = selectedPersonas.length >= maxGroupAgents;
+    const canSelect = !isGroupCreationMode || selectedPersonas.length < maxGroupAgents || isSelected;
+    if (!canSelect && atLimit && !isSelected) {
+      if (onShowUpgradeModal) onShowUpgradeModal("feature");
+      else window.dispatchEvent(new Event("aigram:show-upgrade-modal"));
+      showError(t("library.upgradeToAddMoreCharacters", { defaultValue: "Обновите тариф Plus или Pro, чтобы добавить больше персонажей в группу." }));
+      return;
+    }
+    handlePersonaCardClick(persona);
+  };
+
+  // Переход к следующему этапу
+  const handleNextStage = () => {
+    if (currentStage === "selection" && selectedPersonas.length >= 2) {
+      setCurrentStage("setup");
     }
   };
 
@@ -1092,13 +1131,6 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     setSelectedPersonas([]);
   };
 
-  // Переход к следующему этапу
-  const handleNextStage = () => {
-    if (currentStage === "selection" && selectedPersonas.length >= 2) {
-      // Минимум 2 агента
-      setCurrentStage("setup");
-    }
-  };
 
   // Состояние для настройки чата
   const [chatName, setChatName] = useState("");
@@ -1743,7 +1775,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.created ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -1754,9 +1786,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -1875,7 +1907,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.characters ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -1886,9 +1918,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2017,7 +2049,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.tools ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -2028,9 +2060,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2157,7 +2189,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.models ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -2168,9 +2200,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2303,7 +2335,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.created ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -2314,9 +2346,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2436,7 +2468,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.characters ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -2447,9 +2479,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2570,7 +2602,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.tools ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -2581,9 +2613,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2708,7 +2740,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 const isSelected = selectedPersonas.includes(persona.id);
                                 const canSelect =
                                   !isGroupCreationMode ||
-                                  selectedPersonas.length < 5 ||
+                                  selectedPersonas.length < maxGroupAgents ||
                                   isSelected;
                                 const newlyAddedList = recentlyAddedIds.models ?? [];
                                 const animationIndex = newlyAddedList.indexOf(persona.id);
@@ -2719,9 +2751,9 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                   <div
                                     key={persona.id}
                                     onClick={() =>
-                                      canSelect && handlePersonaCardClick(persona)
+                                      handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-50 cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}

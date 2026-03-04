@@ -342,7 +342,7 @@
     "noCharactersAvailable": "No characters available",
     "chooseCharacters": "Choose characters to add",
     "createGroupChat": "Create Group Chat",
-    "selectGroupChat": "Select 2 to 5 characters for group chat ({{count}}/5)",
+    "selectGroupChat": "Select 2 to {{max}} characters for group chat ({{count}}/{{max}})",
     "setupGroupChat": "Set up avatar and chat name",
     "chatName": "Chat name",
     "chatNamePlaceholder": "Enter chat name...",
@@ -404,6 +404,7 @@
     "failedCheckAnswers": "Failed to check answers. Please try again.",
     "failedSendMessageWithFiles": "Failed to send message with files",
     "editingProOnly": "Editing your own characters is only available for Pro subscribers",
+    "upgradeToAddMoreCharacters": "Upgrade to Plus or Pro to add more characters to the group.",
     "createdBadge": "Created",
     "createModal": {
       "titleCreate": "Create Persona",

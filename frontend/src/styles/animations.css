@@ -446,6 +446,14 @@
   will-change: transform, opacity;
 }
 
+.notification-close-btn {
+  color: var(--text-gray);
+}
+
+.notification-close-btn:hover {
+  color: var(--text-white);
+}
+
 .highlight-message {
   animation: highlightMessage 2s ease-in-out;
 }

@@ -22,7 +22,7 @@
   width: 14px;
   height: 14px;
   margin-top: 2px;
-  color: #4ade80;
+  color: var(--accent);
 }
 
 .icon svg {
@@ -32,7 +32,7 @@
 }
 
 .featureText {
-  color: #ffffff;
+  color: var(--text-white);
   font-size: 13px;
   line-height: 1.4;
   flex: 1;

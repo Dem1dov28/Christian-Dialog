@@ -117,12 +117,13 @@ export default function SupportModalNew({ isOpen, onClose, onSubmit }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
-                className="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+                className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg"
                 style={{
-                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
+                  backgroundColor: "var(--accent)",
+                  boxShadow: "0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent)",
                 }}
               >
-                <MdSupportAgent className="text-white text-xl" />
+                <MdSupportAgent className="text-xl" style={{ color: "var(--accent-foreground, #ffffff)" }} />
               </div>
               <div>
                 <h3 className="text-lg font-semibold" style={{ color: "var(--text-white)" }}>

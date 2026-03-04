@@ -345,7 +345,7 @@
     "noCharactersAvailable": "Нет доступных персонажей",
     "chooseCharacters": "Выберите персонажей для добавления",
     "createGroupChat": "Создание группового чата",
-    "selectGroupChat": "Выберите от 2 до 5 персонажей для группового чата ({{count}}/5)",
+    "selectGroupChat": "Выберите от 2 до {{max}} персонажей для группового чата ({{count}}/{{max}})",
     "setupGroupChat": "Настройте аватар и имя чата",
     "chatName": "Название чата",
     "chatNamePlaceholder": "Введите название чата...",
@@ -407,6 +407,7 @@
     "failedCheckAnswers": "Не удалось проверить ответы. Попробуйте еще раз.",
     "failedSendMessageWithFiles": "Не удалось отправить сообщение с файлами",
     "editingProOnly": "Редактирование собственных персонажей доступно только для пользователей с подпиской Pro",
+    "upgradeToAddMoreCharacters": "Обновите тариф Plus или Pro, чтобы добавить больше персонажей в группу.",
     "createdBadge": "Создано",
     "createModal": {
       "titleCreate": "Создать персонажа",

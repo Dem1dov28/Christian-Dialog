@@ -22,17 +22,16 @@
 .container {
   width: 100%;
   height: 100%;
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--bg-primary);
+  color: var(--text-white);
   display: flex;
   flex-direction: column;
   position: relative;
   opacity: 0;
   animation: fadeIn 0.4s ease-out forwards;
   overflow-y: auto;
-  /* Firefox custom scrollbar */
   scrollbar-width: thin;
-  scrollbar-color: rgba(147, 51, 234, 0.6) transparent;
+  scrollbar-color: var(--accent) transparent;
   overscroll-behavior: contain;
 }
 
@@ -69,42 +68,24 @@
   }
 }
 
-.container {
-  width: 100%;
-  height: 100%;
-  background-color: #1a1a1a;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-/* WebKit custom scrollbar */
+/* WebKit custom scrollbar - цвета темы */
 .container::-webkit-scrollbar {
   width: 10px;
 }
 
 .container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-tertiary);
   border-radius: 8px;
 }
 
 .container::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(147, 51, 234, 0.7) 0%,   /* purple */
-    rgba(64, 224, 208, 0.6) 100%  /* turquoise */
-  );
+  background: var(--accent);
   border-radius: 8px;
-  border: 2px solid #1a1a1a; /* blend with background */
+  border: 2px solid var(--bg-primary);
 }
 
 .container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(147, 51, 234, 0.9) 0%,
-    rgba(64, 224, 208, 0.8) 100%
-  );
+  background: var(--accent-hover);
 }
 
 .header {
@@ -117,7 +98,7 @@
 .closeButton {
   background: none;
   border: none;
-  color: #ffffff;
+  color: var(--text-white);
   font-size: 24px;
   cursor: pointer;
   padding: 8px;
@@ -128,7 +109,7 @@
 }
 
 .closeButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--hover-bg);
 }
 
 .content {
@@ -153,6 +134,7 @@
   text-align: center;
   opacity: 0;
   animation: fadeIn 0.6s ease-out 0.2s forwards;
+  color: var(--text-white);
 }
 
 .cardsContainer {
@@ -184,7 +166,7 @@
 .apiKeyButton {
   background: none;
   border: none;
-  color: #ffffff;
+  color: var(--text-white);
   padding: 12px 24px;
   border-radius: 8px;
   font-size: 14px;
@@ -193,52 +175,13 @@
 }
 
 .apiKeyButton:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--hover-bg);
 }
 
-/* Light theme redesign: softer overlay and light content surface */
-:global(html:not(.dark)) .overlay {
-  background-color: rgba(255, 255, 255, 0.72);
+/* Overlay - лёгкий blur под цвет темы */
+.overlay {
   -webkit-backdrop-filter: blur(6px) saturate(120%);
   backdrop-filter: blur(6px) saturate(120%);
-}
-
-:global(html:not(.dark)) .container {
-  background-color: #ffffff;
-  color: #1f2937;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e5e7eb;
-}
-
-/* Light theme scrollbars */
-:global(html:not(.dark)) .container {
-  scrollbar-color: rgba(0, 0, 0, 0.35) transparent; /* Firefox */
-}
-
-:global(html:not(.dark)) .container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-:global(html:not(.dark)) .container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.35);
-  border: 2px solid #ffffff;
-}
-
-/* Light theme buttons/controls */
-:global(html:not(.dark)) .closeButton {
-  color: #374151;
-}
-
-:global(html:not(.dark)) .closeButton:hover {
-  background-color: rgba(0, 0, 0, 0.06);
-}
-
-:global(html:not(.dark)) .apiKeyButton {
-  color: #374151;
-}
-
-:global(html:not(.dark)) .apiKeyButton:hover {
-  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .apiKeyButton:disabled {
@@ -259,15 +202,15 @@
 }
 
 .successMessage {
-  background-color: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #22c55e;
+  background-color: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid var(--accent);
+  color: var(--accent);
 }
 
 .errorMessage {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background-color: color-mix(in srgb, var(--badge-red, #ef4444) 15%, transparent);
+  border: 1px solid var(--badge-red, #ef4444);
+  color: var(--badge-red, #ef4444);
 }
 
 .messageContent {
@@ -297,14 +240,14 @@
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  color: #ffffff;
+  color: var(--text-white);
 }
 
 .loadingSpinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #ffffff;
+  border: 3px solid var(--bg-tertiary);
+  border-top: 3px solid var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;

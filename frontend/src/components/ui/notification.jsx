@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { BiCheckCircle, BiError, BiInfoCircle, BiX } from 'react-icons/bi';
+import { BiCheckCircle, BiError, BiX } from 'react-icons/bi';
 
 const Notification = ({ 
   id, 
@@ -43,29 +43,27 @@ const Notification = ({
     }, 300);
   };
 
-  const getIcon = () => {
+  const getIconStyle = () => {
     switch (type) {
       case 'success':
-        return <BiCheckCircle className="text-green-500 text-xl" />;
+        return { color: 'var(--accent)' };
       case 'error':
-        return <BiError className="text-red-500 text-xl" />;
+        return { color: 'var(--badge-red, #ef4444)' };
       case 'info':
-        return <BiInfoCircle className="text-purple-500 text-xl" />;
       default:
-        return <BiInfoCircle className="text-purple-500 text-xl" />;
+        return { color: 'var(--accent)' };
     }
   };
 
-  const getBgColor = () => {
+  const getBgStyle = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+        return { background: 'var(--bg-secondary)', borderColor: 'var(--accent)', borderWidth: '1px', borderStyle: 'solid' };
       case 'error':
-        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+        return { background: 'var(--bg-secondary)', borderColor: 'var(--badge-red, #ef4444)', borderWidth: '1px', borderStyle: 'solid' };
       case 'info':
-        return 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800';
       default:
-        return 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
+        return { background: 'var(--bg-secondary)', borderColor: 'var(--accent)', borderWidth: '1px', borderStyle: 'solid' };
     }
   };
 
@@ -74,33 +72,32 @@ const Notification = ({
   return (
     <div
       className={`
-        max-w-sm w-full
-        ${getBgColor()}
-        border rounded-lg shadow-lg p-4
+        max-w-sm w-full rounded-lg shadow-lg p-4
         ${isClosing ? 'notification-slide-out' : isShown ? 'notification-slide-in' : ''}
       `}
       style={{
+        ...getBgStyle(),
         transform: (!isShown && !isClosing) ? 'translateX(100%)' : undefined,
         opacity: (!isShown && !isClosing) ? 0 : undefined,
       }}
     >
       <div className="flex items-start">
-        <div className="flex-shrink-0 mr-3">
-          {getIcon()}
+        <div className="flex-shrink-0 mr-3" style={getIconStyle()}>
+          {type === 'error' ? <BiError className="text-xl" /> : <BiCheckCircle className="text-xl" />}
         </div>
         <div className="flex-1 min-w-0">
           {title && (
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+            <div className="text-sm font-medium mb-1" style={{ color: 'var(--text-white)' }}>
               {title}
             </div>
           )}
-          <div className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="text-sm" style={{ color: 'var(--text-gray)' }}>
             {message}
           </div>
         </div>
         <button
           onClick={handleClose}
-          className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+          className="flex-shrink-0 ml-2 transition-colors duration-200 notification-close-btn"
         >
           <BiX className="text-lg" />
         </button>
