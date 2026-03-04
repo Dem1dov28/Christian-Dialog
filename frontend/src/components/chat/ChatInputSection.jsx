@@ -109,7 +109,7 @@ export default function ChatInputSection({
         left: 0,
         right: 0,
         zIndex: 100,
-        paddingBottom: 0,
+        paddingBottom: '0.5rem',
         backgroundColor: 'transparent',
         background: 'transparent',
         pointerEvents: 'auto',
