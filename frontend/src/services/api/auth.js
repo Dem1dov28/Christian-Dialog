@@ -146,6 +146,13 @@ export class AuthAPI {
     return this.client.post("/auth/unlink-telegram");
   }
 
+  // Привязать Google к аккаунту (при уже авторизованном пользователе)
+  async linkGoogle(credential, clientId = null) {
+    const payload = { credential };
+    if (clientId) payload.client_id = clientId;
+    return this.client.post("/auth/link-google", payload);
+  }
+
   // Отвязать Google от аккаунта
   async unlinkGoogle() {
     return this.client.post("/auth/unlink-google");

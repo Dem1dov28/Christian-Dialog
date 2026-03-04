@@ -531,11 +531,11 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Telegram Login — виджет (приоритет) или OIDC */}
-          {telegramWidgetConfig?.enabled && telegramWidgetConfig?.bot_username && (
+          {/* Telegram Login — виджет (веб) или OIDC (веб). В Mini App — только initData, не показываем OIDC/виджет */}
+          {!isTelegram && telegramWidgetConfig?.enabled && telegramWidgetConfig?.bot_username && (
             <div className="w-full flex justify-center mb-3 [@media(max-height:629px)]:mb-2" id="telegram-login-widget-container" />
           )}
-          {!telegramWidgetConfig?.enabled && telegramOIDCConfig?.enabled && (
+          {!isTelegram && !telegramWidgetConfig?.enabled && telegramOIDCConfig?.enabled && (
             <div className="w-full flex justify-center mb-3 [@media(max-height:629px)]:mb-2">
               <Button
                 type="button"

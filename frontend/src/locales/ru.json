@@ -676,6 +676,7 @@
     "payWithCrypto": "Оплатить криптой",
     "payWithStars": "Оплатить Stars",
     "starsOpenedInNewTab": "Ссылка открыта. После оплаты в Telegram обновите страницу.",
+    "starsOpenedInTelegram": "Окно оплаты открыто в Telegram. После оплаты обновите страницу.",
     "paymentSuccessHint": "Оплата прошла успешно. Подписка активирована. Спасибо!",
     "paymentFailed": "Оплата не прошла",
     "paymentFailedHint": "Платёж отменён или произошла ошибка. Попробуйте ещё раз.",

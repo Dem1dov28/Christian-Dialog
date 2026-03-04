@@ -593,6 +593,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const linkGoogle = async (credential, clientId) => {
+    try {
+      await apiClient.linkGoogle(credential, clientId);
+      await refreshUserData();
+    } catch (error) {
+      console.error("AuthContext: Failed to link Google:", error);
+      throw error;
+    }
+  };
+
   // Выйти со всех устройств
   const logoutAllDevices = async () => {
     try {
@@ -631,6 +641,7 @@ export const AuthProvider = ({ children }) => {
     refreshUserData,
     deleteUserAccount,
     logoutAllDevices,
+    linkGoogle,
     unlinkGoogle,
     unlinkTelegram,
   };

@@ -25,4 +25,7 @@ def create_user_response(user: User) -> UserResponse:
 
         pinned_chats=user.get_pinned_chat_ids() if hasattr(user, "get_pinned_chat_ids") else [],
         auth_provider=getattr(user, "auth_provider", "local"),
+        google_id=getattr(user, "google_id", None),
+        telegram_id=getattr(user, "telegram_id", None),
+        telegram_username=getattr(user, "telegram_username", None),
     )

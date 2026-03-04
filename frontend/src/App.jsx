@@ -819,22 +819,18 @@ export default function App() {
                             <ConnectionStatus />
                             <div className="flex w-full overflow-x-hidden overflow-y-auto" style={{ height: '100%', WebkitOverflowScrolling: 'touch' }}>
                               <Suspense fallback={<LoadingScreen isVisible={true} />}>
-                                <Routes>
-                                  {/* Публичные маршруты */}
-                                  <Route
-                                    path="/login"
-                                    element={
-                                      <PublicRoute>
-                                        {googleClientId ? (
-                                          <LazyGoogleOAuthProvider clientId={googleClientId}>
+                                {googleClientId ? (
+                                  <LazyGoogleOAuthProvider clientId={googleClientId}>
+                                    <Routes>
+                                      {/* Публичные маршруты */}
+                                      <Route
+                                        path="/login"
+                                        element={
+                                          <PublicRoute>
                                             <Login />
-                                          </LazyGoogleOAuthProvider>
-                                        ) : (
-                                          <Login />
-                                        )}
-                                      </PublicRoute>
-                                    }
-                                  />
+                                          </PublicRoute>
+                                        }
+                                      />
                                   <Route
                                     path="/register"
                                     element={
@@ -868,22 +864,6 @@ export default function App() {
                                   element={
                                     <ProtectedRoute>
                                       <SubscriptionSuccess />
-                                    </ProtectedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/successful-payment"
-                                  element={
-                                    <ProtectedRoute>
-                                      <PaymentSuccess />
-                                    </ProtectedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/failed-payment"
-                                  element={
-                                    <ProtectedRoute>
-                                      <PaymentFailed />
                                     </ProtectedRoute>
                                   }
                                 />
@@ -940,7 +920,25 @@ export default function App() {
 
                                   {/* 404 маршрут */}
                                   <Route path="*" element={<NotFound />} />
-                                </Routes>
+                                    </Routes>
+                                  </LazyGoogleOAuthProvider>
+                                ) : (
+                                  <Routes>
+                                    <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                                    <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+                                    <Route path="/forgot-password" element={<PublicRoute allowAuthenticated={true}><ForgotPassword /></PublicRoute>} />
+                                    <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+                                    <Route path="/auth/telegram-callback" element={<TelegramCallback />} />
+                                    <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
+                                    <Route path="/successful-payment" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+                                    <Route path="/failed-payment" element={<ProtectedRoute><PaymentFailed /></ProtectedRoute>} />
+                                    <Route path="/" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+                                    <Route path="/Library" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+                                    <Route path="/chat" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+                                    <Route path="/Subscription" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+                                    <Route path="*" element={<NotFound />} />
+                                  </Routes>
+                                )}
                               </Suspense>
 
                               {/* Toast уведомления */}

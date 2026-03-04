@@ -708,6 +708,75 @@ def link_telegram(
     return _do_telegram_login(response, user, db, "link_telegram")
 
 
+class LinkGoogleRequest(BaseModel):
+    credential: str
+    client_id: Optional[str] = None
+
+
+@router.post("/link-google", response_model=UserResponse)
+def link_google(
+    payload: LinkGoogleRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session),
+):
+    """Привязать Google к уже авторизованному пользователю."""
+    if not GOOGLE_ALLOWED_CLIENT_IDS:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google is not configured")
+
+    audience = payload.client_id or GOOGLE_CLIENT_ID or GOOGLE_ALLOWED_CLIENT_IDS[0]
+    if not audience:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google is not configured")
+
+    try:
+        id_info = id_token.verify_oauth2_token(
+            payload.credential,
+            google_request_adapter,
+            audience=audience,
+            clock_skew_in_seconds=60,
+        )
+    except ValueError as exc:
+        logger.warning(f"Invalid Google token for link: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token")
+
+    aud = id_info.get("aud")
+    if GOOGLE_ALLOWED_CLIENT_IDS and aud not in GOOGLE_ALLOWED_CLIENT_IDS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google client")
+
+    google_sub = id_info.get("sub")
+    email = id_info.get("email")
+    email_verified = id_info.get("email_verified", False)
+
+    if not google_sub or not email or not email_verified:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google response incomplete")
+
+    existing_google = db.exec(select(User).where(User.google_id == google_sub)).first()
+    if existing_google and existing_google.id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This Google account is linked to another user")
+
+    user = db.get(User, current_user.id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    full_name = id_info.get("name")
+    avatar_url = id_info.get("picture") or id_info.get("image") or id_info.get("avatar")
+    if isinstance(avatar_url, str):
+        avatar_url = avatar_url.strip() or None
+
+    user.google_id = google_sub
+    if full_name and not user.full_name:
+        user.full_name = full_name
+    has_local_avatar = _is_local_avatar(getattr(user, "avatar_url", None))
+    if avatar_url and not has_local_avatar:
+        user.avatar_url = avatar_url
+    if not user.email_verified and email_verified:
+        user.email_verified = True
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return create_user_response(user)
+
+
 @router.post("/unlink-google")
 def unlink_google(
     current_user: User = Depends(get_current_active_user),

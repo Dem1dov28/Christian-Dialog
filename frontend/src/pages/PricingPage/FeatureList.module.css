@@ -32,20 +32,39 @@
   flex: 1;
 }
 
-/* Responsive design */
-@media (max-width: 480px) {
+/* Responsive design — компактнее на мобильных */
+@media (max-width: 768px) {
   .featureItem {
-    margin-bottom: 10px;
-    gap: 10px;
+    margin-bottom: 8px;
+    gap: 8px;
   }
 
   .featureText {
     font-size: 13px;
+    line-height: 1.4;
   }
 
   .icon {
     width: 14px;
     height: 14px;
     margin-top: 1px;
+  }
+}
+
+@media (max-width: 480px) {
+  .featureItem {
+    margin-bottom: 5px;
+    gap: 6px;
+  }
+
+  .featureText {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .icon {
+    width: 12px;
+    height: 12px;
+    margin-top: 2px;
   }
 }

@@ -675,6 +675,7 @@
     "payWithCrypto": "Pay with crypto",
     "payWithStars": "Pay with Stars",
     "starsOpenedInNewTab": "Link opened. After paying in Telegram, refresh the page.",
+    "starsOpenedInTelegram": "Payment window opened in Telegram. Refresh the page after paying.",
     "paymentSuccessHint": "Payment successful. Subscription activated. Thank you!",
     "paymentFailed": "Payment failed",
     "paymentFailedHint": "Payment was cancelled or an error occurred. Please try again.",

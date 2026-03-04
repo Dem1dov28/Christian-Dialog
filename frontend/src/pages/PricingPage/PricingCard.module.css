@@ -159,52 +159,66 @@
     width: 100%;
     max-width: 350px;
     height: auto;
-    padding: 20px;
+    padding: 16px 18px;
+  }
+
+  .cardHeader {
+    margin-bottom: 16px;
   }
 
   .title {
-    font-size: 20px;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .price {
+    margin-bottom: 8px;
   }
 
   .amount {
-    font-size: 36px;
+    font-size: 32px;
+  }
+
+  .cardBody {
+    margin-bottom: 16px;
   }
 
   .button {
-    padding: 14px 24px;
-    font-size: 15px;
+    padding: 12px 20px;
+    font-size: 14px;
   }
 }
 
 @media (max-width: 480px) {
   .card {
-    padding: 16px;
+    padding: 12px 14px;
+  }
+
+  .cardHeader {
+    margin-bottom: 12px;
   }
 
   .title {
     font-size: 16px;
+    margin-bottom: 8px;
   }
 
   .amount {
-    font-size: 28px;
+    font-size: 26px;
   }
 
   .description {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .cardBody {
+    margin-bottom: 12px;
+  }
+
+  .button {
+    padding: 10px 16px;
     font-size: 13px;
   }
 }
 
-/* Force taller card on short viewports */
-@media (max-height: 700px) {
-  .card {
-    height: 900px;
-  }
-}
-
-@media (max-height: 600px) {
-  .card {
-    height: 750px;
-  }
-}
-
-/* Height-adaptive layout removed on request */

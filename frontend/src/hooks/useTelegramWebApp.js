@@ -7,8 +7,12 @@ import { useMemo } from "react";
 export function useTelegramWebApp() {
   return useMemo(() => {
     const webApp = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
-    const isTelegram = Boolean(webApp?.initData);
     const initData = webApp?.initData || null;
+    // Mini App: initData или tgWebAppData в URL (SDK может загрузиться позже)
+    const hasTgWebAppData =
+      typeof window !== "undefined" &&
+      Boolean(new URLSearchParams((window.location.hash || "").slice(1)).get("tgWebAppData"));
+    const isTelegram = Boolean(initData) || hasTgWebAppData;
 
     return {
       isTelegram,

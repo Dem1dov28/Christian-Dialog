@@ -321,22 +321,22 @@
 
 @media (max-width: 768px) {
   .content {
-    padding: 20px 16px;
+    padding: 16px 12px;
   }
 
   .title {
-    font-size: 24px;
-    margin-bottom: 24px;
+    font-size: 22px;
+    margin-bottom: 16px;
   }
 
   .cardsContainer {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
   }
 
   .apiKeyToggle {
-    margin-top: 20px;
+    margin-top: 16px;
   }
 
   .apiKeyButton {
@@ -347,10 +347,15 @@
 
 @media (max-width: 480px) {
   .title {
-    font-size: 20px;
+    font-size: 18px;
+    margin-bottom: 12px;
   }
 
   .content {
-    padding: 16px 12px;
+    padding: 12px 10px;
+  }
+
+  .cardsContainer {
+    gap: 10px;
   }
 }

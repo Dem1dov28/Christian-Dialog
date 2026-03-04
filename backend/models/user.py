@@ -204,6 +204,9 @@ class UserResponse(UserBase):
     expires_at: Optional[datetime] = None
     messages_cycle_started_at: Optional[datetime] = None
     pinned_chats: List[int] = []
+    google_id: Optional[str] = None
+    telegram_id: Optional[str] = None
+    telegram_username: Optional[str] = None
 
 
 

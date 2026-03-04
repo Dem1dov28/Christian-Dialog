@@ -10,7 +10,7 @@ import { SEO } from "@/components/common/SEO";
 import apiClient from "../../services/api";
 
 const PricingPage = ({ isVisible, onClose }) => {
-  const { user, upgradeSubscription } = useAuth();
+  const { user, upgradeSubscription, refreshUserData } = useAuth();
   const { t } = useLanguage();
   const [isClosing, setIsClosing] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -102,15 +102,25 @@ const PricingPage = ({ isVisible, onClose }) => {
       if (response.invoice_url) {
         const webApp = window.Telegram?.WebApp;
         const version = parseFloat(webApp?.version || "0") || 0;
-        const useOpenInvoice = webApp?.openInvoice && version >= 6.1;
         let opened = false;
-        if (useOpenInvoice) {
+
+        if (webApp?.openInvoice && version >= 6.1) {
           try {
-            webApp.openInvoice(response.invoice_url);
+            webApp.openInvoice(response.invoice_url, (status) => {
+              if (status === "paid" && refreshUserData) refreshUserData();
+            });
             opened = true;
           } catch (_) {
-            // openInvoice выбросил — fallback на window.open
+            // openInvoice выбросил — пробуем fallback
           }
+        }
+        // На Desktop openInvoice иногда не работает — открываем t.me ссылку через openTelegramLink
+        if (!opened && webApp?.openTelegramLink) {
+          try {
+            webApp.openTelegramLink(response.invoice_url);
+            opened = true;
+            setUpgradeSuccess(t("pricing.starsOpenedInTelegram") || "Окно оплаты открыто в Telegram. После оплаты обновите страницу.");
+          } catch (_) {}
         }
         if (!opened) {
           window.open(response.invoice_url, "_blank", "noopener,noreferrer");
@@ -203,7 +213,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("plus")
                   ? t("pricing.currentPlan")
-                  : telegramStarsEnabled
+                  : isTelegram && telegramStarsEnabled
                     ? t("pricing.payWithStars") || "Оплатить Stars"
                     : cryptocloudEnabled
                       ? t("pricing.payWithCrypto")
@@ -213,7 +223,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus")) {
-                  if (telegramStarsEnabled) handlePayWithStars("plus");
+                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("plus");
                   else if (cryptocloudEnabled) handlePayWithCrypto("plus");
                   else if (bepaidEnabled) handlePayWithCard("plus");
                   else handleUpgrade("plus");
@@ -230,7 +240,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
-                  : telegramStarsEnabled
+                  : isTelegram && telegramStarsEnabled
                     ? t("pricing.payWithStars") || "Оплатить Stars"
                     : cryptocloudEnabled
                       ? t("pricing.payWithCrypto")
@@ -240,7 +250,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro")) {
-                  if (telegramStarsEnabled) handlePayWithStars("pro");
+                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("pro");
                   else if (cryptocloudEnabled) handlePayWithCrypto("pro");
                   else if (bepaidEnabled) handlePayWithCard("pro");
                   else handleUpgrade("pro");
