@@ -706,7 +706,7 @@
     "proFeature2": "GPT-5, Claude Opus, DeepSeek Coder Pro, Grok",
     "proFeature3": "Up to 500 messages per day",
     "proFeature4": "Unlimited history storage",
-    "proFeature5": "Creation of custom agents",
+    "proFeature5": "Create your own characters",
     "proFeature6": "Maximum memory and context",
     "proFeature7": "API access for integration",
     "proFeature8": "Advanced agent settings (temperature, tokens, context)",
@@ -714,7 +714,7 @@
     "apiKeyFeature1": "Use your own API key",
     "apiKeyFeature2": "Integration with your LLM providers on which your agents will work",
     "apiKeyFeature3": "Basic platform functionality (as with Plus subscription)",
-    "apiKeyFeature4": "Up to 500 messages per month",
+    "apiKeyFeature4": "Up to 500 messages per day",
     "apiKeyFeature5": "Ability to integrate with your own systems"
   },
   "report": {

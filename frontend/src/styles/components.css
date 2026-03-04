@@ -122,8 +122,18 @@ button[aria-current="page"] .icon-box svg {
   background-color: transparent !important;
 }
 
-.chat-item:hover {
-  background-color: var(--hover-bg) !important;
+/* Hover только на устройствах с мышью (ПК). На телефоне hover отключён */
+@media (hover: hover) {
+  .chat-item:hover {
+    background-color: var(--hover-bg) !important;
+  }
+}
+
+/* На touch-устройствах явно отключаем выделение при псевдо-hover (после тапа) */
+@media (hover: none) {
+  .chat-item:hover {
+    background-color: transparent !important;
+  }
 }
 
 .chat-item:active {
@@ -135,9 +145,11 @@ button[aria-current="page"] .icon-box svg {
   background-color: var(--active-bg-chat) !important;
 }
 
-.chat-item.chat-item-pressed:hover {
-  background-color: var(--active-bg-chat) !important;
-  opacity: 0.9;
+@media (hover: hover) {
+  .chat-item.chat-item-pressed:hover {
+    background-color: var(--active-bg-chat) !important;
+    opacity: 0.9;
+  }
 }
 
 /* Постоянное выделение активного чата — только на десктопе */

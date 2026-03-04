@@ -72,6 +72,7 @@ export function DrawerMenu({
   isOpen = false,
   onClose = () => { },
   onProfileClick = () => { },
+  onOpenPricing = () => { },
   logoScale = 2,
 }) {
   const { user, logout } = useAuth();
@@ -184,14 +185,20 @@ export function DrawerMenu({
                 <span className="text-[var(--text-gray)] text-[14px] font-normal">
                   {user?.email || "user@epochaldialog.com"}
                 </span>
-                <span
-                  className={`text-[12px] font-medium mt-1 ${
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenPricing();
+                    onClose();
+                  }}
+                  title={t("modals.upgrade.goToPricing")}
+                  className={`text-left text-[12px] font-medium mt-1 transition-colors hover:underline focus:outline-none focus:underline ${
                     user?.subscription_tier === "plus" || user?.subscription_tier === "pro" || user?.subscription_tier === "api"
                       ? "text-[var(--accent)]"
                       : "text-[var(--text-gray)]"
                   }`}
                 >
-                  {user?.subscription_tier === "free"
+                  {t("profile.menu.subscription_status")}: {user?.subscription_tier === "free"
                     ? t("profile.subscription.free")
                     : user?.subscription_tier === "plus"
                       ? "Plus"
@@ -200,7 +207,7 @@ export function DrawerMenu({
                         : user?.subscription_tier === "api"
                           ? "API"
                           : t("profile.subscription.free")}
-                </span>
+                </button>
               </div>
             </div>
           </div>

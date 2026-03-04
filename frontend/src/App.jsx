@@ -553,7 +553,7 @@ function MainApp() {
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
         onProfileClick={openProfile}
-
+        onOpenPricing={openPricingPage}
       />
 
       {/* Основной Layout компонент */}

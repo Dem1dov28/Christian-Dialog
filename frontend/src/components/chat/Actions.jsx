@@ -3,7 +3,9 @@ import { getActionIcon } from "../../utils/actionIcons";
 import { useContextMenuAnimation } from "../../hooks/modal/useContextMenuAnimation";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-const TOUCH_GUARD_MS = 280;
+// Блокируем ghost click: на мобильных click возникает ~300ms после touchend.
+// При long-press палец может оказаться над кнопкой — guard предотвращает случайное срабатывание.
+const TOUCH_GUARD_MS = 500;
 
 const Actions = ({
   isOpen = true,

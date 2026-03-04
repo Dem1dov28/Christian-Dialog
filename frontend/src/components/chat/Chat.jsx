@@ -1238,6 +1238,8 @@ export default function Chat({
               left: contextMenu.x,
               top: contextMenu.y,
               zIndex: 10000,
+              // Когда меню закрыто — pointer-events: none: клики проходят к сообщениям под ним
+              pointerEvents: contextMenu.visible ? "auto" : "none",
             }}
             onClick={(e) => e.stopPropagation()}
             onContextMenu={(e) => e.preventDefault()}

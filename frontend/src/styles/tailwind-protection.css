@@ -52,8 +52,16 @@ button[data-id].selected:hover {
   transition: background-color 0.2s ease !important;
 }
 
-.chat-item:hover {
-  background-color: var(--hover-bg) !important;
+@media (hover: hover) {
+  .chat-item:hover {
+    background-color: var(--hover-bg) !important;
+  }
+}
+
+@media (hover: none) {
+  .chat-item:hover {
+    background-color: transparent !important;
+  }
 }
 
 .chat-item:active {
@@ -64,9 +72,11 @@ button[data-id].selected:hover {
   background-color: var(--active-bg-chat) !important;
 }
 
-.chat-item.chat-item-pressed:hover {
-  background-color: var(--active-bg-chat) !important;
-  opacity: 0.9;
+@media (hover: hover) {
+  .chat-item.chat-item-pressed:hover {
+    background-color: var(--active-bg-chat) !important;
+    opacity: 0.9;
+  }
 }
 
 @media (min-width: 769px) {
