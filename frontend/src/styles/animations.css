@@ -454,7 +454,7 @@
   animation: unread-badge-appear 0.3s ease-out;
 }
 
-.chat-item:not(.selected) .icon-box:hover {
+.chat-item:not(.chat-item-selected):not(.chat-item-pressed) .icon-box:hover {
   animation: unread-badge-pulse 2s ease-in-out infinite;
 }
 

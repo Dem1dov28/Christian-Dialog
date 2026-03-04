@@ -44,6 +44,7 @@ import {
   MdFilterList,
   MdArrowDropDown,
   MdArrowDownward,
+  MdCheckBoxOutlineBlank,
 } from "react-icons/md";
 
 /**
@@ -93,6 +94,7 @@ export const ActionIcons = {
   check: MdCheck,
   cancel: MdCancel,
   confirm: MdCheck,
+  select: MdCheckBoxOutlineBlank,
   
   // Дополнительные
   menuBook: MdMenuBook,

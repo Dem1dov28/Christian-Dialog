@@ -75,6 +75,7 @@ const ChatItem = ({
   const { t } = useLanguage();
   const { getAgent } = useAgents();
   const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [mousePosition, setMousePosition] = useState(null);
   // Функция для получения React Icon компонента по имени
@@ -168,10 +169,14 @@ const ChatItem = ({
     <div className="relative w-full">
       <div
         className={`has-ripple relative flex items-center w-full h-16 px-1.5 py-1.5 chat-item select-none ${
-          isSelected ? "selected" : ""
-        }`}
+          isPressed ? "chat-item-pressed" : ""
+        } ${isSelected ? "chat-item-selected" : ""}`}
         onClick={handleClick}
         onContextMenu={handleRightClick}
+        onPointerDown={() => setIsPressed(true)}
+        onPointerUp={() => setIsPressed(false)}
+        onPointerLeave={() => setIsPressed(false)}
+        onPointerCancel={() => setIsPressed(false)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

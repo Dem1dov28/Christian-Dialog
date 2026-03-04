@@ -60,13 +60,24 @@ button[data-id].selected:hover {
   background-color: var(--active-bg-chat) !important;
 }
 
-.chat-item.selected {
+.chat-item.chat-item-pressed {
   background-color: var(--active-bg-chat) !important;
 }
 
-.chat-item.selected:hover {
+.chat-item.chat-item-pressed:hover {
   background-color: var(--active-bg-chat) !important;
   opacity: 0.9;
+}
+
+@media (min-width: 769px) {
+  .chat-item.chat-item-selected {
+    background-color: var(--active-bg-chat) !important;
+  }
+
+  .chat-item.chat-item-selected:hover {
+    background-color: var(--active-bg-chat) !important;
+    opacity: 0.9;
+  }
 }
 
 /* Восстановление стилей для сайдбара */

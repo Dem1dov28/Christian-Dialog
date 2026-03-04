@@ -246,6 +246,9 @@ export default function Chat({
     toggleMessageSelection,
     addMessageToSelection,
     removeMessageFromSelection,
+    setIsSelecting,
+    setIsContainerDragSelecting,
+    setDragSelectionMode,
     handleMessageMouseDown,
     handleContentMouseDown,
     handleMessageMouseEnter,
@@ -1010,7 +1013,15 @@ export default function Chat({
     openMenuAtEventWithChecks,
   });
 
-  // Обработчики выделения сообщений теперь в useMessageSelection
+  const handleSelectMessage = useCallback(
+    (messageId) => {
+      addMessageToSelection(messageId);
+      setIsSelecting(true);
+      setIsContainerDragSelecting(true);
+      setDragSelectionMode("add");
+    },
+    [addMessageToSelection, setIsSelecting, setIsContainerDragSelecting, setDragSelectionMode]
+  );
 
   // openHeaderMenuAtEvent теперь в useContextMenu
 
@@ -1238,6 +1249,7 @@ export default function Chat({
               isOpen={contextMenu.visible}
               closeOnOutside={true}
               messageId={activeMessageId}
+              onSelect={!isChannelChat ? handleSelectMessage : undefined}
               onReply={handleReply}
               onCopy={
                 selectionActive

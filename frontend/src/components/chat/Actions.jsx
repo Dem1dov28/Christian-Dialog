@@ -1,21 +1,30 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { getActionIcon } from "../../utils/actionIcons";
 import { useContextMenuAnimation } from "../../hooks/modal/useContextMenuAnimation";
+import { useLanguage } from "../../contexts/LanguageContext";
 
-// Smoothly animates appear/disappear. Use `isOpen` to control visibility.
-// On exit animation end, calls `onExited`.
+const TOUCH_GUARD_MS = 280;
+
 const Actions = ({
   isOpen = true,
   onExited,
-  closeOnOutside = true, // По умолчанию закрываем при клике вне области
+  closeOnOutside = true,
   messageId,
   onReply,
   onCopy,
   onPin,
   onDelete,
+  onSelect,
   isSelectionMode = false,
   onUnselect,
 }) => {
+  const { t } = useLanguage();
+  const openedAtRef = useRef(0);
+
+  useEffect(() => {
+    if (isOpen) openedAtRef.current = Date.now();
+  }, [isOpen]);
+
   const { isRendered, isShown, containerRef, closeMenu, handleTransitionEnd } =
     useContextMenuAnimation({
       isOpen,
@@ -44,11 +53,10 @@ const Actions = ({
   const handleAction = (callback) => (event) => {
     event.preventDefault();
     event.stopPropagation();
+    if (Date.now() - openedAtRef.current < TOUCH_GUARD_MS) return;
     if (typeof callback === "function") {
-      // Pass messageId if consumer expects it
       callback(messageId);
     }
-    // Закрываем меню после выполнения действия
     closeMenu();
   };
 
@@ -104,6 +112,18 @@ const Actions = ({
           </>
         ) : (
           <>
+            {onSelect && (
+              <li>
+                <button
+                  type="button"
+                  className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
+                  onClick={handleAction(onSelect)}
+                >
+                  {React.createElement(getActionIcon("select"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
+                  <span className="text-base">{t("chat.selectMessage")}</span>
+                </button>
+              </li>
+            )}
             <li>
               <button
                 type="button"
@@ -111,7 +131,7 @@ const Actions = ({
                 onClick={handleAction(onReply)}
               >
                 {React.createElement(getActionIcon("reply"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
-                <span className="text-base">Reply</span>
+                <span className="text-base">{t("chat.reply")}</span>
               </button>
             </li>
             <li>

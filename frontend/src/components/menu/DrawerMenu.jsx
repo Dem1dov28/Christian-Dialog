@@ -177,12 +177,29 @@ export function DrawerMenu({
               <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg shadow-lg select-none ${user?.avatar_url ? "hidden" : ""}`}>
                 {user?.username?.charAt(0)?.toUpperCase() || user?.full_name?.charAt(0)?.toUpperCase() || "U"}
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <span className="text-[var(--text-white)] font-semibold text-[17px]">
                   {user?.full_name || user?.username || "User"}
                 </span>
                 <span className="text-[var(--text-gray)] text-[14px] font-normal">
                   {user?.email || "user@epochaldialog.com"}
+                </span>
+                <span
+                  className={`text-[12px] font-medium mt-1 ${
+                    user?.subscription_tier === "plus" || user?.subscription_tier === "pro" || user?.subscription_tier === "api"
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--text-gray)]"
+                  }`}
+                >
+                  {user?.subscription_tier === "free"
+                    ? t("profile.subscription.free")
+                    : user?.subscription_tier === "plus"
+                      ? "Plus"
+                      : user?.subscription_tier === "pro"
+                        ? "Pro"
+                        : user?.subscription_tier === "api"
+                          ? "API"
+                          : t("profile.subscription.free")}
                 </span>
               </div>
             </div>
