@@ -127,6 +127,27 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
                 agent_ids_list = json.loads(agent_ids) if isinstance(agent_ids, str) else agent_ids
             except (json.JSONDecodeError, TypeError):
                 agent_ids_list = []
+
+            # Проверяем лимит агентов в группе по подписке
+            subscription_status = SubscriptionService.check_subscription_status(current_user, session)
+            tier = subscription_status.get("subscription_tier", "free")
+            if subscription_status.get("is_expired"):
+                tier = "free"
+            max_group_agents = SubscriptionService.get_max_group_agents(tier)
+            if len(agent_ids_list) > max_group_agents:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"На вашем тарифе ({tier}) можно создать группу максимум из {max_group_agents} персонажей. Обновите подписку для больших групп."
+                )
+
+            # Проверяем лимит чатов
+            chats_count = SubscriptionService.count_user_chats(session, current_user.id)
+            max_chats = SubscriptionService.get_max_chats(tier)
+            if chats_count >= max_chats:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Достигнут лимит чатов ({max_chats}) на тарифе {tier}. Удалите ненужные чаты или обновите подписку."
+                )
             
             # Создаем объект для создания разговора
             # Если загружен файл аватара, используем дефолтную иконку "group", иначе используем выбранную иконку
@@ -165,13 +186,24 @@ def create_multi_agent_chat_endpoints(app, multi_agent_chat_service: MultiAgentC
         session: Session = Depends(get_session),
         current_user: User = Depends(get_current_active_user)
     ):
-        """Добавить агента в существующий разговор
-        
-        """
+        """Добавить агента в существующий разговор"""
         try:
             conversation_id = _parse_conversation_id(conversation_id)
             verify_conversation_access(conversation_id, current_user)
-            
+
+            # Проверяем лимит агентов в группе
+            subscription_status = SubscriptionService.check_subscription_status(current_user, session)
+            tier = subscription_status.get("subscription_tier", "free")
+            if subscription_status.get("is_expired"):
+                tier = "free"
+            max_group_agents = SubscriptionService.get_max_group_agents(tier)
+            current_agents = multi_agent_chat_service.get_conversation_agents(conversation_id)
+            if len(current_agents) >= max_group_agents:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"На вашем тарифе ({tier}) в группе может быть максимум {max_group_agents} персонажей. Обновите подписку."
+                )
+
             success = multi_agent_chat_service.add_agent_to_conversation(conversation_id, agent_id)
             if not success:
                 raise HTTPException(

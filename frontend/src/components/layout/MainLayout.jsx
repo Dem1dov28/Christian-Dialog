@@ -117,7 +117,7 @@ function MainLayout({
                   left: 0,
                   right: 0,
                   top: 0,
-                  bottom: 'var(--safe-area-inset-bottom)',
+                  bottom: 0,
                 }),
               }}
             >

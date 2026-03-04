@@ -253,7 +253,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           // Но uploadAvatar уже возвращает обновленного пользователя, так что просто обновляем локально
           localStorage.setItem("user_data", JSON.stringify(updatedUser));
         }
-        showSuccess(t("profile.avatar.uploadSuccess") || "Аватар успешно загружен");
+        /* Аватар обновлён — результат виден в UI */
       } catch (error) {
         console.error("Failed to upload avatar:", error);
         showError(error.message || t("profile.avatar.uploadError") || "Ошибка при загрузке аватара");

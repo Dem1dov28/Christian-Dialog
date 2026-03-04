@@ -93,7 +93,11 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
         return conversation
     
     @app.post("/chat/new")
-    async def create_new_chat(request: CreateChatRequest, current_user: User = Depends(get_current_active_user)):
+    async def create_new_chat(
+        request: CreateChatRequest,
+        current_user: User = Depends(get_current_active_user),
+        db: Session = Depends(get_session)
+    ):
         """Создать новый чат с агентом"""
         try:
             agent_id = validate_agent_id(request.agent_id)
@@ -110,6 +114,19 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Agent is not active"
+                )
+
+            # Проверяем лимит чатов по подписке
+            subscription_status = SubscriptionService.check_subscription_status(current_user, db)
+            tier = subscription_status.get("subscription_tier", "free")
+            if subscription_status.get("is_expired"):
+                tier = "free"
+            chats_count = SubscriptionService.count_user_chats(db, current_user.id)
+            max_chats = SubscriptionService.get_max_chats(tier)
+            if chats_count >= max_chats:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Достигнут лимит чатов ({max_chats}) на тарифе {tier}. Удалите ненужные чаты или обновите подписку."
                 )
             
             # Создаем новый разговор (тип agents_only по умолчанию)
@@ -225,6 +242,18 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             
             # Проверяем доступ к разговору
             conversation = verify_conversation_access(conversation_id, current_user)
+
+            # Проверяем лимит файлов по подписке (Free — нельзя прикреплять файлы)
+            subscription_status = SubscriptionService.check_subscription_status(current_user, db)
+            tier = subscription_status.get("subscription_tier", "free")
+            if subscription_status.get("is_expired"):
+                tier = "free"
+            max_files = SubscriptionService.get_max_files_per_message(tier)
+            if max_files < 1:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Прикрепление файлов доступно на тарифах Plus и Pro. Обновите подписку."
+                )
             
             # Валидация файла
             files_list = [file]
@@ -402,6 +431,20 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                             status_code=status.HTTP_403_FORBIDDEN,
                             detail="Users cannot write messages in channels. Only channel agents can post messages."
                         )
+
+            # Проверяем лимит файлов к сообщению
+            total_files_count = len(files) + len(attachment_ids)
+            if total_files_count > 0:
+                subscription_status = SubscriptionService.check_subscription_status(current_user, db)
+                tier = subscription_status.get("subscription_tier", "free")
+                if subscription_status.get("is_expired"):
+                    tier = "free"
+                max_files = SubscriptionService.get_max_files_per_message(tier)
+                if total_files_count > max_files:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"На тарифе {tier} можно прикрепить максимум {max_files} файл(а) к сообщению. Обновите подписку."
+                    )
             
             # Обработка файлов, если они есть
             uploaded_files = []

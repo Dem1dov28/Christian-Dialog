@@ -96,7 +96,6 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
           updateData.avatar = avatarFile;
         }
         agent = await updateUserAgent(agentToEdit.id, updateData);
-        showSuccess(t("library.createModal.successUpdated", { name: agent.name }));
       } else {
         // Создание нового агента
         agent = await createUserAgent({
@@ -105,7 +104,6 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
           instructions: instructions.trim(),
           avatar: avatarFile,
         });
-        showSuccess(t("library.createModal.successCreated", { name: agent.name }));
       }
 
       // Сбрасываем форму

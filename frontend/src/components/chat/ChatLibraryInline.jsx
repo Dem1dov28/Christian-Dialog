@@ -1026,7 +1026,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
     try {
       await deleteAgent(deleteAgentModal.agent.id);
-      showSuccess(t("library.deleteAgentConfirm", { name: deleteAgentModal.agent.name }));
+      /* Персонаж удалён — результат виден в UI */
       setDeleteAgentModal({ isOpen: false, agent: null });
     } catch (error) {
       console.error("Error deleting agent:", error);

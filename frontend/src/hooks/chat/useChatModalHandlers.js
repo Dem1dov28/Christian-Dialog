@@ -75,7 +75,7 @@ export function useChatModalHandlers({
 
     try {
       await clearConversationMessages(activeConversation.id);
-      showSuccess(t("chat.historyCleared"));
+      /* История очищена — результат виден в UI */
       setIsClearChatModalOpen(false);
     } catch (error) {
       console.error("Clear chat error:", error);
@@ -96,7 +96,6 @@ export function useChatModalHandlers({
     clearConversationMessages,
     setIsClearChatModalOpen,
     showError,
-    showSuccess,
     t,
   ]);
 

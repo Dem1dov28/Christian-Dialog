@@ -17,25 +17,37 @@ class SubscriptionService:
     # Подписка pro истекает через месяц (через expires_at)
     SUBSCRIPTION_CONFIGS = {
         "free": {
-            "messages_limit": 50,  # 50 сообщений в день (сброс через 24 часа)
+            "messages_limit": 50,
+            "max_chats": 10,
+            "max_group_agents": 2,
+            "max_files_per_message": 0,
             "api_access": False,
             "price": 0,
-            "duration_days": None,  # Бессрочно
+            "duration_days": None,
         },
         "plus": {
-            "messages_limit": 250,  # 250 сообщений в день (сброс через 24 часа)
+            "messages_limit": 150,
+            "max_chats": 25,
+            "max_group_agents": 5,
+            "max_files_per_message": 1,
             "api_access": False,
             "price": 2,
             "duration_days": 30,
         },
         "pro": {
-            "messages_limit": 500,  # 500 сообщений в день (сброс через 24 часа)
+            "messages_limit": 250,
+            "max_chats": 50,
+            "max_group_agents": 5,
+            "max_files_per_message": 3,
             "api_access": True,
             "price": 5,
-            "duration_days": 30,  # Pro версия истекает через месяц (подписка)
+            "duration_days": 30,
         },
         "api": {
-            "messages_limit": 500,  # 500 сообщений (сброс через 24 часа)
+            "messages_limit": 500,
+            "max_chats": 50,
+            "max_group_agents": 5,
+            "max_files_per_message": 3,
             "api_access": True,
             "price": 5,
             "duration_days": 30,
@@ -71,7 +83,45 @@ class SubscriptionService:
     @classmethod
     def get_subscription_config(cls, tier: str) -> dict:
         """Получить конфигурацию тарифа"""
-        return cls.SUBSCRIPTION_CONFIGS.get(tier, cls.SUBSCRIPTION_CONFIGS["free"])
+        return cls.SUBSCRIPTION_CONFIGS.get(tier, cls.SUBSCRIPTION_CONFIGS["free"]).copy()
+
+    @classmethod
+    def get_max_group_agents(cls, tier: str) -> int:
+        """Максимум агентов в групповом чате для тарифа"""
+        config = cls.get_subscription_config(tier)
+        return config.get("max_group_agents", 2)
+
+    @classmethod
+    def get_max_chats(cls, tier: str) -> int:
+        """Максимум чатов в списке для тарифа"""
+        config = cls.get_subscription_config(tier)
+        return config.get("max_chats", 10)
+
+    @classmethod
+    def get_max_files_per_message(cls, tier: str) -> int:
+        """Максимум файлов к одному сообщению для тарифа"""
+        config = cls.get_subscription_config(tier)
+        return config.get("max_files_per_message", 0)
+
+    @classmethod
+    def count_user_chats(cls, db: Session, user_id: int) -> int:
+        """Подсчитать чаты пользователя (Conversation + MultiAgentConversation), исключая системный чат и каналы"""
+        from models.conversation import Conversation
+        from models.multi_agent_conversation import MultiAgentConversation
+
+        conv_count = db.exec(
+            select(func.count(Conversation.id))
+            .where(Conversation.user_id == user_id)
+            .where(Conversation.is_system_chat == False)  # noqa: E712
+            .where(Conversation.is_channel == False)  # noqa: E712 - exclude channels
+        ).first() or 0
+
+        multi_count = db.exec(
+            select(func.count(MultiAgentConversation.id))
+            .where(MultiAgentConversation.user_id == user_id)
+        ).first() or 0
+
+        return (conv_count or 0) + (multi_count or 0)
     
     @classmethod
     def upgrade_subscription(

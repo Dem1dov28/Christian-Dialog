@@ -146,7 +146,7 @@ const EditGroupChatModal = ({
         });
       }
 
-      showSuccess(t("library.groupChatUpdated"));
+      /* Групповой чат обновлён — результат виден в UI */
       
       // Вызываем callback для обновления UI
       if (onUpdate) {

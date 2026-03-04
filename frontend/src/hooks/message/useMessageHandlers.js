@@ -55,7 +55,6 @@ export function useMessageHandlers({
 
       try {
         await pinMessageInChat(activeConversation.id, messageId);
-        showSuccess(t("chat.messagePinned"));
       } catch (error) {
         console.error("Pin error:", error);
         showError(t("chat.messagePinError") + ": " + error.message);
@@ -66,7 +65,6 @@ export function useMessageHandlers({
       activeConversation,
       pinMessageInChat,
       showError,
-      showSuccess,
       t,
     ]
   );
@@ -80,12 +78,11 @@ export function useMessageHandlers({
 
       try {
         await unpinMessageFromChat(activeConversation.id, messageId);
-        showSuccess(t("chat.messageUnpinned"));
       } catch (error) {
         showError(t("chat.messageUnpinError"));
       }
     },
-    [activeConversation, unpinMessageFromChat, showError, showSuccess, t]
+    [activeConversation, unpinMessageFromChat, showError, t]
   );
 
   /**
@@ -99,19 +96,6 @@ export function useMessageHandlers({
         const results = await Promise.all(
           selectedIds.map((id) => handleSave(id, { silent: true }))
         );
-        const savedCount = results.filter(Boolean).length;
-        const alreadyCount = selectedIds.length - savedCount;
-        if (savedCount > 0) {
-          showSuccess(t("chat.savedCount", {
-            saved: savedCount,
-            already: alreadyCount
-              ? t("chat.alreadySaved", { count: alreadyCount })
-              : "",
-          }));
-        } else if (alreadyCount > 0) {
-          showSuccess(t("chat.allAlreadySaved", { count: alreadyCount }));
-        }
-
         // Обновляем Saved Messages после массового сохранения без полной перезагрузки
         if (systemChat?.id && updateMessagesForConversation) {
           const newMessages = results.filter(msg => msg && typeof msg === 'object');
@@ -134,10 +118,8 @@ export function useMessageHandlers({
       selectedIds,
       handleSave,
       systemChat,
-      loadMessages,
+      updateMessagesForConversation,
       clearSelection,
-      showSuccess,
-      t,
     ]
   );
 

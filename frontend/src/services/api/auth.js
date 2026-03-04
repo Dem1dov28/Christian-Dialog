@@ -344,9 +344,9 @@ export class AuthAPI {
   getMessagesLimit(tier) {
     const limits = {
       free: 50,
-      plus: 500,
-      pro: 2000,
-      api: 10000,
+      plus: 150,
+      pro: 250,
+      api: 500,
     };
     return limits[tier] || limits.free;
   }

@@ -125,9 +125,6 @@ export function useChatActions({
           }
         }
 
-        if (!silent) {
-          showSuccess(t("chat.messageSaved"));
-        }
         return savedMessage;
       } catch (error) {
         if (silent) {
@@ -165,7 +162,6 @@ export function useChatActions({
 
       try {
         await deleteMessage(messageId);
-        showSuccess(t("chat.messageDeleted"));
       } catch (error) {
         console.error("Failed to delete message:", error);
         showError(
@@ -212,15 +208,9 @@ export function useChatActions({
 
         const ok = await copyToClipboard(textToCopy);
         if (!ok) {
-          showError(
-            t("chat.copyError")
-          );
+          showError(t("chat.copyError"));
           return;
         }
-
-        showSuccess(
-          t("chat.messageCopied")
-        );
       } catch (error) {
         console.error("Failed to copy message:", error);
         showError(
@@ -278,15 +268,9 @@ export function useChatActions({
 
         const ok = await copyToClipboard(textToCopy);
         if (!ok) {
-          showError(
-            t("chat.copyError")
-          );
+          showError(t("chat.copyError"));
           return;
         }
-
-        showSuccess(
-          t("chat.messagesCopied", { count: selectedMessages.length })
-        );
       } catch (error) {
         console.error("Failed to copy messages:", error);
         showError(t("chat.copyError"));
@@ -311,9 +295,6 @@ export function useChatActions({
         await Promise.all(deletePromises);
 
         clearSelection();
-        showSuccess(
-          t("chat.messageDeletedBulk", { count: selectedIds.length })
-        );
       } catch (error) {
         console.error("Failed to delete messages:", error);
         showError(t("chat.deleteErrorBulk"));
