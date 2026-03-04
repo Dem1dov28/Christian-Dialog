@@ -733,6 +733,32 @@ def unlink_google(
     return {"success": True, "message": "Google unlinked"}
 
 
+@router.post("/unlink-telegram")
+def unlink_telegram(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session),
+):
+    """Отвязать Telegram от аккаунта. Разрешено только если есть другой способ входа (Google или пароль)."""
+    user = db.get(User, current_user.id)
+    if not user or not getattr(user, "telegram_id", None):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram is not linked")
+    has_google = bool(getattr(user, "google_id", None))
+    has_password = bool(getattr(user, "hashed_password", None))
+    if not has_google and not has_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Set a password or link Google first before unlinking Telegram",
+        )
+    user.telegram_id = None
+    user.telegram_username = None
+    user.auth_provider = "google" if has_google else "local"
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"success": True, "message": "Telegram unlinked"}
+
+
 # --- Log In With Telegram (OIDC) ---
 
 def _exchange_telegram_code_for_id_token(code: str, code_verifier: str, redirect_uri: str) -> Optional[str]:

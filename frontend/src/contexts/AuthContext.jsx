@@ -583,6 +583,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const unlinkTelegram = async () => {
+    try {
+      await apiClient.unlinkTelegram();
+      await refreshUserData();
+    } catch (error) {
+      console.error("AuthContext: Failed to unlink Telegram:", error);
+      throw error;
+    }
+  };
+
   // Выйти со всех устройств
   const logoutAllDevices = async () => {
     try {
@@ -622,6 +632,7 @@ export const AuthProvider = ({ children }) => {
     deleteUserAccount,
     logoutAllDevices,
     unlinkGoogle,
+    unlinkTelegram,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

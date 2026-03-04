@@ -60,6 +60,7 @@ class UnifiedAPI {
     this.sendTelegramLinkCode = (email) => auth.sendTelegramLinkCode(email);
     this.verifyAndLinkTelegram = (email, code, initData) => auth.verifyAndLinkTelegram(email, code, initData);
     this.linkTelegram = (initData) => auth.linkTelegram(initData);
+    this.unlinkTelegram = () => auth.unlinkTelegram();
     this.unlinkGoogle = () => auth.unlinkGoogle();
     this.getTelegramOIDCConfig = () => auth.getTelegramOIDCConfig();
     this.loginWithTelegramOIDC = (payload) => auth.loginWithTelegramOIDC(payload);

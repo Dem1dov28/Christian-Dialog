@@ -141,6 +141,11 @@ export class AuthAPI {
     return this.client.post("/auth/link-telegram", { init_data: initData });
   }
 
+  // Отвязать Telegram от аккаунта
+  async unlinkTelegram() {
+    return this.client.post("/auth/unlink-telegram");
+  }
+
   // Отвязать Google от аккаунта
   async unlinkGoogle() {
     return this.client.post("/auth/unlink-google");

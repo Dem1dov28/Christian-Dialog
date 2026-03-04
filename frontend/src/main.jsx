@@ -16,12 +16,19 @@ if (tg && isInTelegram) {
   if (tg.isVersionAtLeast?.("6.2")) { try { tg.enableClosingConfirmation(); } catch (_) {} }
   if (tg.isVersionAtLeast?.("7.7")) { try { tg.disableVerticalSwipes(); } catch (_) {} }
 
-  // Safe area: Dynamic Island + хедер Telegram (кнопка «Закрыть») перекрывают верх приложения.
-  // Bot API 8.0+: safeAreaInset (устройство) + contentSafeAreaInset (UI Telegram).
-  // Без 8.0: фиксированный отступ 48px, чтобы опустить контент ниже кнопки «Закрыть».
+  // Safe area: только на iOS — Dynamic Island + хедер (кнопка «Закрыть»). На Android отступ не нужен.
+  const isIOS = /^ios$/i.test(tg.platform || "");
   const TG_HEADER_BUFFER = 48;
   function applyTelegramSafeArea() {
     const root = document.documentElement.style;
+    if (!isIOS) {
+      root.setProperty("--tg-top-offset", "0px");
+      root.setProperty("--tg-safe-area-inset-top", "0px");
+      if (tg.isVersionAtLeast?.("8.0") && tg.safeAreaInset?.bottom != null) {
+        root.setProperty("--tg-safe-area-inset-bottom", `${tg.safeAreaInset.bottom}px`);
+      }
+      return;
+    }
     if (tg.isVersionAtLeast?.("8.0")) {
       const safe = tg.safeAreaInset;
       const content = tg.contentSafeAreaInset;
