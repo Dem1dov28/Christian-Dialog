@@ -228,11 +228,13 @@ function MainApp() {
     setIsPricingPageVisible(true);
   }, [navigate, location, setIsPricingPageVisible]);
 
+  const isClosingPricingRef = React.useRef(false);
   const closePricingPage = useCallback(() => {
+    isClosingPricingRef.current = true;
+    setIsPricingPageVisible(false);
     if (navigate && location?.pathname === '/Subscription') {
       navigate('/', { replace: true });
     }
-    setIsPricingPageVisible(false);
   }, [navigate, location, setIsPricingPageVisible]);
 
   // Используем хуки для обработчиков чатов
@@ -522,8 +524,12 @@ function MainApp() {
     }
     
     // Открываем PricingPage если URL /Subscription, но страница не видна
-    if (currentPathname === '/Subscription' && !isPricingPageVisible) {
+    // Не открываем, если пользователь только что закрыл панель (isClosingPricingRef)
+    if (currentPathname === '/Subscription' && !isPricingPageVisible && !isClosingPricingRef.current) {
       setIsPricingPageVisible(true);
+    }
+    if (currentPathname !== '/Subscription') {
+      isClosingPricingRef.current = false;
     }
   }, [location.pathname, activeChatId, setActiveChatId, isPricingPageVisible, setIsPricingPageVisible, isMediumScreen, isInlineLibraryOpen, setIsInlineLibraryOpen, isLibraryWithSidebar, setIsLibraryWithSidebar, setIsMediumScreenSidebarVisible, isUltraCompact, setIsCompactChatOpen]);
 

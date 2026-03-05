@@ -22,6 +22,7 @@ import { useChats } from "../../contexts/ChatsContext";
 import { useFolders } from "../../contexts/FoldersContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import apiClient from "../../services/api";
+import SubscriptionStatus from "./SubscriptionStatus";
 import UsageStatistics from "./UsageStatistics";
 import { useMaxWidth } from "../../hooks/common/use-mobile";
 import { useNavigate } from "react-router-dom";
@@ -403,6 +404,15 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           <p className="text-[var(--text-dim)] text-sm mb-4">
             {user?.email || "user@epochaldialog.com"}
           </p>
+
+          {/* Subscription Status */}
+          <div className="mb-4">
+            <SubscriptionStatus
+              key={`${user?.subscription_tier}-${user?.expires_at ?? ""}-${user?.messages_used ?? 0}`}
+              user={user}
+              onUpgrade={handleUpgradeClick}
+            />
+          </div>
 
           {/* Usage Statistics */}
           <div className="mb-4">
