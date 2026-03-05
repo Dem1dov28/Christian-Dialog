@@ -631,6 +631,42 @@ class AgentService(BaseService):
             # Инициализируем enhanced_message с исходным сообщением
             enhanced_message = message
 
+            # ПРИНУДИТЕЛЬНЫЙ поиск: если пользователь явно просит текст песни/стиха — вызываем web_search
+            # до генерации, чтобы модель получила реальные данные и не выдумывала
+            try:
+                from tools.web_search import is_lyrics_or_poem_request, build_lyrics_search_query, run_web_search_sync
+                msg_text = message
+                if isinstance(message, list):
+                    msg_text = " ".join(
+                        str(p.get("text", p) if isinstance(p, dict) else p)
+                        for p in message
+                    )
+                if is_lyrics_or_poem_request(str(msg_text)):
+                    agent_name_for_search = agent.get("name", "")
+                    search_query = build_lyrics_search_query(agent_name_for_search, str(msg_text))
+                    logger.info(f"🔍 [FORCED SEARCH] Запрос текста песни/стиха — принудительный поиск: {search_query}")
+                    search_result = run_web_search_sync(search_query)
+                    inject = (
+                        f"\n\n[ВАЖНО: Результат поиска в интернете. Используй ТОЛЬКО этот текст, не выдумывай и не сочиняй:\n"
+                        f"{search_result}\n"
+                        f"Конец результата поиска.]\n\n"
+                        f"Сообщение пользователя: "
+                    )
+                    if isinstance(enhanced_message, str):
+                        enhanced_message = inject + enhanced_message
+                    else:
+                        # список (multimodal)
+                        if enhanced_message and isinstance(enhanced_message[0], dict):
+                            first = enhanced_message[0]
+                            if first.get("type") == "text":
+                                first["text"] = inject + (first.get("text", "") or "")
+                            else:
+                                enhanced_message = [{"type": "text", "text": inject}] + list(enhanced_message)
+            except ImportError:
+                pass
+            except Exception as e:
+                logger.warning(f"Forced lyrics search failed: {e}", exc_info=True)
+
             # Используем LangChain сервис для генерации ответа
             # ВАЖНО: передаём enhanced_message, чтобы RAG-контекст (журнал задач, покупки и т.п.)
             # действительно участвовал в генерации ответа даже без инструментов

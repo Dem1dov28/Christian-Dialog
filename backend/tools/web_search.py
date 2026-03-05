@@ -100,6 +100,43 @@ def _run_web_search(query: str, max_results: int = 8) -> str:
         return f"Ошибка поиска: {str(e)}. Попробуй переформулировать запрос."
 
 
+def run_web_search_sync(query: str, max_results: int = 8) -> str:
+    """Синхронный вызов поиска без LangChain-обёртки. Для принудительного поиска в agent_service."""
+    return _run_web_search(query, max_results=max_results)
+
+
+def is_lyrics_or_poem_request(text: str) -> bool:
+    """Проверяет, просит ли пользователь текст песни/стиха."""
+    if not text or not isinstance(text, str):
+        return False
+    t = text.lower().strip()
+    patterns = [
+        r"текст\s+(песн|стих)",
+        r"(напиши|пришли|дай|покажи|скинь)\s+.*(текст|слова)",
+        r"слова\s+(песн|стих)",
+        r"полный\s+текст",
+        r"(песн|стих)[аиу]?\s+[«\"'].*[»\"']",
+        r"lyrics",
+        r"текст\s+песни",
+        r"текст\s+стиха",
+    ]
+    return any(re.search(p, t) for p in patterns)
+
+
+def build_lyrics_search_query(agent_name: str, user_message: str) -> str:
+    """Строит поисковый запрос для текста песни/стиха: автор + название."""
+    # Убираем служебные фразы, оставляем название
+    msg = user_message.strip()
+    for phrase in ["напиши текст", "пришли текст", "дай текст", "покажи текст", "скинь текст",
+                   "напиши слова", "пришли слова", "текст песни", "текст стиха", "слова песни"]:
+        msg = re.sub(re.escape(phrase), "", msg, flags=re.I)
+    msg = re.sub(r"\s+", " ", msg).strip(" .,!?")
+    # Итоговый запрос: автор + оставшееся
+    if msg:
+        return f"{agent_name} {msg} текст"
+    return f"{agent_name} песни текст"
+
+
 # LangChain tool для использования в цепочках
 @tool
 def web_search(query: str) -> str:
