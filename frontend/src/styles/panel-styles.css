@@ -635,6 +635,37 @@ input:checked + .toggle-slider:before {
   transform: translateY(0);
 }
 
+.usage-stats-separated {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+.usage-stat-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.usage-stat-block-messages {
+  flex: 2 1 0;
+  padding-right: 16px;
+}
+
+.usage-stat-block-chats {
+  flex: 1 1 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.usage-stats-divider {
+  width: 1px;
+  flex-shrink: 0;
+  background: var(--border-color);
+  margin: 0 4px;
+}
+
 .usage-stats-bar {
   background: var(--bg-tertiary);
   border-radius: 4px;
@@ -798,6 +829,26 @@ input:checked + .toggle-slider:before {
 @media (max-width: 768px) {
   .subscription-status-card {
     padding: 12px;
+  }
+
+  .usage-stats-separated {
+    flex-direction: column;
+  }
+
+  .usage-stat-block-messages {
+    padding-right: 0;
+    padding-bottom: 12px;
+  }
+
+  .usage-stat-block-chats {
+    padding-left: 0;
+    padding-top: 12px;
+  }
+
+  .usage-stats-divider {
+    width: 100%;
+    height: 1px;
+    margin: 0;
   }
 
   .subscription-icon {

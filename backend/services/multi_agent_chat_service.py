@@ -9,6 +9,7 @@ from services.base_service import BaseService
 from services.multi_agent_conversation_service import MultiAgentConversationService
 from services.agent_dialogue_service import AgentDialogueService
 from services.agent_selector_service import AgentSelectorService
+from services.subscription_service import SubscriptionService
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +167,7 @@ class MultiAgentChatService(BaseService):
                 from models.multi_agent_conversation import MultiAgentConversation
                 multi_conversation = session.get(MultiAgentConversation, conversation_id)
                 if multi_conversation:
+                    SubscriptionService.record_message_sent(session, multi_conversation.user_id)
                     multi_conversation.updated_at = datetime.utcnow()
                     multi_conversation.unread_count = 0
                     logger.debug(f"Saved message in multi-agent chat {conversation_id}, updated time: {multi_conversation.updated_at}")
@@ -195,6 +197,7 @@ class MultiAgentChatService(BaseService):
                     
                     # Обновляем время последнего обновления разговора
                     if multi_conversation:
+                        SubscriptionService.record_message_sent(session, multi_conversation.user_id)
                         multi_conversation.updated_at = datetime.utcnow()
                         multi_conversation.unread_count = (multi_conversation.unread_count or 0) + 1
                         logger.debug(f"Saved agent message in multi-agent chat {conversation_id}, updated time: {multi_conversation.updated_at}")

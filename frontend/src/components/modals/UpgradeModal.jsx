@@ -3,7 +3,8 @@ import { FiX } from "react-icons/fi";
 import { useLanguage } from "../../contexts/LanguageContext";
 import styles from "./UpgradeModal.module.css";
 
-const UpgradeModal = ({ isOpen, onClose, onUpgrade, currentTier = "free", reason = "limit" }) => {
+// Модалка только открывает страницу тарифов. Апгрейд на Plus/Pro — только через оплату.
+const UpgradeModal = ({ isOpen, onClose, onOpenPricing, reason = "limit" }) => {
   const { t } = useLanguage();
   
   if (!isOpen) return null;
@@ -21,10 +22,9 @@ const UpgradeModal = ({ isOpen, onClose, onUpgrade, currentTier = "free", reason
       ? "modals.upgrade.descriptionFeature"
       : "modals.upgrade.description";
 
-  const handleUpgrade = () => {
-    const targetTier = currentTier === "free" ? "plus" : "pro";
-    onUpgrade(targetTier);
+  const handleOpenPricing = () => {
     onClose();
+    onOpenPricing?.();
   };
 
   const handleOverlayClick = (e) => {
@@ -43,7 +43,7 @@ const UpgradeModal = ({ isOpen, onClose, onUpgrade, currentTier = "free", reason
         <p className={styles.description}>
           {t(descKey)}
         </p>
-        <button className={styles.upgradeButton} onClick={handleUpgrade}>
+        <button className={styles.upgradeButton} onClick={handleOpenPricing}>
           {t("modals.upgrade.goToPricing")}
         </button>
       </div>

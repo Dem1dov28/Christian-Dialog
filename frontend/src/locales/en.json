@@ -658,6 +658,8 @@
   "pricing": {
     "title": "Choose a plan",
     "currentPlan": "Your current plan",
+    "yourPlanHigher": "You have a higher plan",
+    "paymentUnavailable": "Payment unavailable",
     "switchToFree": "Switch to Free",
     "switchToPlus": "Switch to Plus",
     "switchToPro": "Switch to Pro",

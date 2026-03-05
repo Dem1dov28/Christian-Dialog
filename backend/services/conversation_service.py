@@ -10,6 +10,7 @@ from models.agent import Agent
 from models.multi_agent_conversation import MultiAgentConversation
 from services.base_service import BaseService
 from services.file_storage_service import FileStorageService
+from services.subscription_service import SubscriptionService
 
 logger = logging.getLogger(__name__)
 
@@ -309,6 +310,7 @@ class ConversationService(BaseService):
                 if conversation:
                     conversation.updated_at = datetime.utcnow()
                     if not getattr(conversation, "is_system_chat", False):
+                        SubscriptionService.record_message_sent(session, conversation.user_id)
                         if is_from_user:
                             if conversation.unread_count:
                                 conversation.unread_count = 0

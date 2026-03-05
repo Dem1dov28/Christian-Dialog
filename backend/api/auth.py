@@ -1294,36 +1294,11 @@ def get_usage_stats(
     db: Session = Depends(get_session)
 ):
     """Получение статистики использования пользователя"""
-    # Для всех тарифов: ежедневный сброс сообщений в 00:00 UTC
-    # Считаем сообщения за текущий день
-    
-    now = datetime.utcnow()
-    
-    # Для всех тарифов считаем сообщения за текущий день (с 00:00 UTC)
-    period_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    # Сообщения за текущий день (все сообщения: пользователя + агентов)
-    messages_this_period = db.exec(
-        select(func.count(Message.id))
-        .join(Conversation)
-        .where(
-            Conversation.user_id == current_user.id,
-            Message.created_at >= period_start
-        )
-    ).first() or 0
-    
-    # Также учитываем сообщения из групповых чатов
-    multi_agent_messages_this_period = db.exec(
-        select(func.count(Message.id))
-        .join(MultiAgentConversation)
-        .where(
-            MultiAgentConversation.user_id == current_user.id,
-            Message.created_at >= period_start
-        )
-    ).first() or 0
-    
-    messages_this_period = messages_this_period + multi_agent_messages_this_period
-    
+    # Используем messages_used — счётчик не уменьшается при удалении чатов
+    SubscriptionService.ensure_message_cycle(db, current_user)
+    db.refresh(current_user)
+    messages_this_period = getattr(current_user, "messages_used", 0) or 0
+
     # Общее количество всех сообщений пользователя за все время (все сообщения: пользователя + агентов)
     messages_total = db.exec(
         select(func.count(Message.id))
@@ -1500,6 +1475,13 @@ async def upgrade_subscription_real(
                 detail=f"Invalid subscription tier: {subscription_tier}"
             )
 
+        # Plus и Pro — только через оплату (webhook после платежа). Нельзя переключиться без оплаты.
+        if subscription_tier in ("plus", "pro"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Для тарифов Plus и Pro необходима оплата. Используйте кнопку оплаты на странице тарифов.",
+            )
+
         # Используем SubscriptionService вместо дублирования логики
         result = SubscriptionService.upgrade_subscription(
             db, current_user, subscription_tier, api_key
@@ -1572,21 +1554,18 @@ def check_message_limit(
     Использует ту же логику, что и при отправке сообщения
     """
     try:
-        # Проверяем статус подписки (передаем сессию для сброса цикла)
         SubscriptionService.check_subscription_status(current_user, db)
-        
-        # Проверяем лимит сообщений
+        SubscriptionService.ensure_message_cycle(db, current_user)
+        db.refresh(current_user)
         can_send = SubscriptionService.can_send_message(current_user, db)
-        
-        # Получаем количество сообщений за сегодня для информации
-        messages_today = SubscriptionService.get_all_messages_count_today(db, current_user)
-        
+        used = getattr(current_user, "messages_used", 0) or 0
+
         return {
             "can_send": can_send,
-            "messages_today": messages_today,
+            "messages_today": used,
             "messages_limit": current_user.messages_limit,
             "subscription_tier": current_user.subscription_tier,
-            "remaining": max(0, current_user.messages_limit - messages_today)
+            "remaining": max(0, current_user.messages_limit - used)
         }
     except Exception as e:
         logger.error(f"Error checking message limit for user {current_user.id}: {e}", exc_info=True)

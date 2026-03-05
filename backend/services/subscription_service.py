@@ -390,6 +390,16 @@ class SubscriptionService:
                     logger.info(f"Reset daily message cycle for user {user.id} ({user.subscription_tier} tier): "
                               f"days_passed={days_passed}, new_cycle_start={now_normalized}, reset messages_used to 0")
                     return True
+
+            # Одноразовая синхронизация: если messages_used 0, но в БД есть сообщения за сегодня
+            used = getattr(user, "messages_used", 0) or 0
+            if used == 0:
+                db_count = cls.get_all_messages_count_today(db, user)
+                if db_count > 0:
+                    user.messages_used = db_count
+                    db.add(user)
+                    db.commit()
+                    logger.info(f"Synced messages_used for user {user.id} from DB: {db_count}")
             
             return False
         except Exception as e:
@@ -435,39 +445,41 @@ class SubscriptionService:
         ).first() or 0
         
         return regular_messages + multi_agent_messages
-    
+
+    @classmethod
+    def record_message_sent(cls, session: Session, user_id: int) -> None:
+        """
+        Записать отправку сообщения (увеличивает messages_used).
+        Используется для статистики и лимита. Счётчик не уменьшается при удалении чатов.
+        """
+        try:
+            user = session.get(User, user_id)
+            if not user:
+                return
+            cls.ensure_message_cycle(session, user)
+            user.messages_used = (getattr(user, "messages_used", 0) or 0) + 1
+            session.add(user)
+            session.commit()
+        except Exception as e:
+            logger.warning(f"Failed to record message sent for user {user_id}: {e}", exc_info=True)
+            session.rollback()
+
     @classmethod
     def can_send_message(cls, user: User, db: Session) -> bool:
         """
-        Проверить, может ли пользователь отправить сообщение
-        Проверяет общее количество всех сообщений (пользователя + агентов) за день
-        
-        Args:
-            user: Пользователь
-            db: Сессия базы данных
-        
-        Returns:
-            bool: Может ли отправить сообщение
+        Проверить, может ли пользователь отправить сообщение.
+        Использует messages_used (не уменьшается при удалении чатов).
         """
-        # Проверяем статус подписки
         subscription_status = cls.check_subscription_status(user, db)
-        
-        # Если подписка истекла, возвращаем False
         if subscription_status["is_expired"]:
             logger.debug(f"Subscription expired for user {user.id}")
             return False
-        
-        # Если лимит неограниченный (-1), разрешаем
         if user.messages_limit == -1:
             logger.debug(f"Unlimited messages for user {user.id}")
             return True
-        
-        # Получаем общее количество всех сообщений за сегодня (пользователя + агентов)
-        messages_today = cls.get_all_messages_count_today(db, user)
-        
-        # Проверяем, не превышен ли лимит
-        can_send = messages_today < user.messages_limit
-        logger.debug(f"User {user.id} can send message: {can_send} (messages_today={messages_today}, limit={user.messages_limit})")
+        used = getattr(user, "messages_used", 0) or 0
+        can_send = used < user.messages_limit
+        logger.debug(f"User {user.id} can send message: {can_send} (messages_used={used}, limit={user.messages_limit})")
         return can_send
     
     @classmethod
@@ -500,8 +512,8 @@ class SubscriptionService:
                 logger.debug(f"User {user.id} can send message")
                 return True
             else:
-                messages_today = cls.get_all_messages_count_today(db, user)
-                logger.warning(f"Cannot send message for user {user.id}: limit exceeded (messages_today={messages_today}, limit={user.messages_limit})")
+                used = getattr(user, "messages_used", 0) or 0
+                logger.warning(f"Cannot send message for user {user.id}: limit exceeded (messages_used={used}, limit={user.messages_limit})")
                 return False
         except Exception as e:
             logger.error(f"Error checking message limit for user {user.id}: {e}", exc_info=True)
