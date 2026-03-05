@@ -744,11 +744,7 @@ function MainApp() {
           isOpen={showUpgradeModal}
           reason={upgradeModalReason}
           onClose={() => setShowUpgradeModal(false)}
-          onUpgrade={(tier) => {
-            setShowUpgradeModal(false);
-            openPricingPage();
-          }}
-          currentTier={user?.subscription_tier || "free"}
+          onOpenPricing={openPricingPage}
         />
       </Suspense>
 

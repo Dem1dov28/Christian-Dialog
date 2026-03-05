@@ -86,9 +86,9 @@ const UsageStatistics = ({ usageStats, user }) => {
 
   return (
     <div className="subscription-status-card">
-      <div className="flex gap-4">
-        {/* Лимит сообщений — 2/3 ширины */}
-        <div className="min-w-0" style={{ flex: "2 1 0" }}>
+      <div className="usage-stats-separated">
+        {/* Блок сообщений */}
+        <div className="usage-stat-block usage-stat-block-messages">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <FiMessageSquare className="usage-stat-icon" />
@@ -116,8 +116,11 @@ const UsageStatistics = ({ usageStats, user }) => {
           </div>
         </div>
 
-        {/* Количество чатов — 1/3 ширины */}
-        <div className="flex flex-col justify-center min-w-0" style={{ flex: "1 1 0" }}>
+        {/* Разделитель */}
+        <div className="usage-stats-divider" aria-hidden="true" />
+
+        {/* Блок чатов */}
+        <div className="usage-stat-block usage-stat-block-chats">
           <div className="flex items-center gap-2 mb-1">
             <FiFolder className="usage-stat-icon" />
             <span className="usage-stat-label">{t("profile.usage.chats")}</span>

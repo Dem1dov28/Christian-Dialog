@@ -911,6 +911,8 @@ class AgentDialogueService(BaseService):
             # Обновляем время последнего обновления группового чата
             multi_conversation = session.get(MultiAgentConversation, conversation_id)
             if multi_conversation:
+                from services.subscription_service import SubscriptionService
+                SubscriptionService.record_message_sent(session, multi_conversation.user_id)
                 multi_conversation.updated_at = datetime.utcnow()
                 # 📬 Увеличиваем счетчик непрочитанных только если чат НЕ активен
                 if not is_chat_active:

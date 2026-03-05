@@ -154,9 +154,12 @@ const PricingPage = ({ isVisible, onClose }) => {
     }
   };
 
-  const isCurrentPlan = (tier) => {
-    return user?.subscription_tier === tier;
-  };
+  const isCurrentPlan = (tier) => user?.subscription_tier === tier;
+
+  const hasPaymentMethod = cryptocloudEnabled || bepaidEnabled || (isTelegram && telegramStarsEnabled);
+
+  // Pro — выше Plus и Free. Переход на них не показываем (бессмысленно).
+  const isProUser = user?.subscription_tier === "pro";
 
   const pricingData = getPricingData(t);
 
@@ -195,14 +198,14 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("free")
                   ? t("pricing.currentPlan")
-                  : t("pricing.switchToFree")
+                  : isProUser
+                    ? t("pricing.yourPlanHigher")
+                    : t("pricing.switchToFree")
               }
               buttonAction={() => {
-                if (!isCurrentPlan("free")) {
-                  handleUpgrade("free");
-                }
+                if (!isCurrentPlan("free") && !isProUser) handleUpgrade("free");
               }}
-              isCurrentPlan={isCurrentPlan("free")}
+              isCurrentPlan={isCurrentPlan("free") || isProUser}
               isDisabled={isUpgrading}
             />
             <PricingCard
@@ -213,24 +216,21 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("plus")
                   ? t("pricing.currentPlan")
-                  : isTelegram && telegramStarsEnabled
-                    ? t("pricing.payWithStars") || "Оплатить Stars"
-                    : cryptocloudEnabled
-                      ? t("pricing.payWithCrypto")
-                      : bepaidEnabled
-                        ? t("pricing.payWithCard")
-                        : t("pricing.switchToPlus")
+                  : isProUser
+                    ? t("pricing.yourPlanHigher")
+                    : hasPaymentMethod
+                      ? (isTelegram && telegramStarsEnabled ? t("pricing.payWithStars") : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
+                      : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
-                if (!isCurrentPlan("plus")) {
+                if (!isCurrentPlan("plus") && !isProUser && hasPaymentMethod) {
                   if (isTelegram && telegramStarsEnabled) handlePayWithStars("plus");
                   else if (cryptocloudEnabled) handlePayWithCrypto("plus");
                   else if (bepaidEnabled) handlePayWithCard("plus");
-                  else handleUpgrade("plus");
                 }
               }}
-              isCurrentPlan={isCurrentPlan("plus")}
-              isDisabled={isUpgrading}
+              isCurrentPlan={isCurrentPlan("plus") || isProUser}
+              isDisabled={isUpgrading || isProUser || (!hasPaymentMethod && !isCurrentPlan("plus"))}
             />
             <PricingCard
               title={pricingData.pro.title}
@@ -240,24 +240,19 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
-                  : isTelegram && telegramStarsEnabled
-                    ? t("pricing.payWithStars") || "Оплатить Stars"
-                    : cryptocloudEnabled
-                      ? t("pricing.payWithCrypto")
-                      : bepaidEnabled
-                        ? t("pricing.payWithCard")
-                        : t("pricing.switchToPro")
+                  : hasPaymentMethod
+                    ? (isTelegram && telegramStarsEnabled ? t("pricing.payWithStars") : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
+                    : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
-                if (!isCurrentPlan("pro")) {
+                if (!isCurrentPlan("pro") && hasPaymentMethod) {
                   if (isTelegram && telegramStarsEnabled) handlePayWithStars("pro");
                   else if (cryptocloudEnabled) handlePayWithCrypto("pro");
                   else if (bepaidEnabled) handlePayWithCard("pro");
-                  else handleUpgrade("pro");
                 }
               }}
               isCurrentPlan={isCurrentPlan("pro")}
-              isDisabled={isUpgrading}
+              isDisabled={isUpgrading || !hasPaymentMethod}
             />
           </div>
 

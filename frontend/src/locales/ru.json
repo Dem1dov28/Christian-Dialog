@@ -659,6 +659,8 @@
   "pricing": {
     "title": "Выберите план",
     "currentPlan": "Ваш текущий план",
+    "yourPlanHigher": "У вас более высокий план",
+    "paymentUnavailable": "Оплата недоступна",
     "switchToFree": "Перейти на Free",
     "switchToPlus": "Перейти на Plus",
     "switchToPro": "Перейти на Pro",
