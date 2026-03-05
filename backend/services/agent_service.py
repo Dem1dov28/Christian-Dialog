@@ -633,6 +633,7 @@ class AgentService(BaseService):
 
             # ПРИНУДИТЕЛЬНЫЙ поиск: если пользователь явно просит текст песни/стиха — вызываем web_search
             # до генерации, чтобы модель получила реальные данные и не выдумывала
+            used_forced_search = False
             try:
                 from tools.web_search import is_lyrics_or_poem_request, build_lyrics_search_query, run_web_search_sync
                 msg_text = message
@@ -646,6 +647,7 @@ class AgentService(BaseService):
                     search_query = build_lyrics_search_query(agent_name_for_search, str(msg_text))
                     logger.info(f"🔍 [FORCED SEARCH] Запрос текста песни/стиха — принудительный поиск: {search_query}")
                     search_result = run_web_search_sync(search_query)
+                    used_forced_search = True
                     inject = (
                         f"\n\n[ВАЖНО: Результат поиска в интернете. Используй ТОЛЬКО этот текст, не выдумывай и не сочиняй:\n"
                         f"{search_result}\n"
@@ -672,9 +674,15 @@ class AgentService(BaseService):
             # действительно участвовал в генерации ответа даже без инструментов
             # Всегда передаем user_rules (может быть пустым списком), чтобы принудительно обновить системное сообщение
             logger.debug(f"📝 [GENERATE RESPONSE] Вызываем LangChain для генерации обычного ответа")
-            # Используем модель из чата, если она установлена, иначе модель агента
-            model_to_use = conversation_model if conversation_model else agent.get("model")
-            logger.debug(f"🤖 [GENERATE RESPONSE] Используемая модель: {model_to_use} (из чата: {conversation_model is not None}, из агента: {conversation_model is None})")
+            # При использовании веб-поиска (forced search или tools) — более сильная модель для точной работы с фактами
+            if used_forced_search or (tools and len(tools) > 0):
+                from langchain_config import config
+                search_cfg = config.get_search_model_config()
+                model_to_use = search_cfg["model"]
+                logger.debug(f"🤖 [GENERATE RESPONSE] Режим поиска — используем модель: {model_to_use}")
+            else:
+                model_to_use = conversation_model if conversation_model else agent.get("model")
+                logger.debug(f"🤖 [GENERATE RESPONSE] Используемая модель: {model_to_use}")
             
             # Получаем инструкции агента, гарантируя, что они не None
             agent_instructions = agent.get("instructions") or ""

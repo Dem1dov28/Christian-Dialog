@@ -40,4 +40,13 @@ class LangChainConfig:
             "max_tokens": 200
         }
 
+    def get_search_model_config(self) -> dict:
+        """Модель для запросов с веб-поиском (факты, тексты песен, биография).
+        Более сильная модель — лучше следует инструкциям и точнее использует результаты поиска."""
+        return {
+            "model": os.getenv("SEARCH_MODEL", "openai/gpt-4o"),
+            "temperature": 0.7,
+            "max_tokens": 2048
+        }
+
 config = LangChainConfig()
