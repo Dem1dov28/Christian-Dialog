@@ -70,11 +70,15 @@ const ExpandableDescription = ({ text }) => {
   }, [text]);
 
   return (
-    <div className="flex flex-col items-center w-full px-2">
+    <div className="flex flex-col items-center w-full px-2 max-w-full min-w-0">
       <p
         ref={textRef}
         className="text-[var(--text-gray)] text-sm text-center transition-all duration-200"
-        style={!isExpanded ? { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" } : {}}
+        style={
+          !isExpanded
+            ? { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }
+            : { maxHeight: "min(200px, 40dvh)", overflowY: "auto", WebkitOverflowScrolling: "touch" }
+        }
       >
         {text}
       </p>

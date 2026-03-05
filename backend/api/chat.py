@@ -254,7 +254,12 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Прикрепление файлов доступно на тарифах Plus и Pro. Обновите подписку."
                 )
-            
+            if not SubscriptionService.can_upload_files(db, current_user, 1):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Дневной лимит файлов и изображений исчерпан. Лимит сбрасывается каждые сутки."
+                )
+
             # Валидация файла
             files_list = [file]
             is_valid, error, validation_results = file_validation_service.validate_files(files_list)
@@ -445,7 +450,14 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail=f"На тарифе {tier} можно прикрепить максимум {max_files} файл(а) к сообщению. Обновите подписку."
                     )
-            
+                # Проверка дневного лимита (только для новых файлов в multipart; предзагруженные уже учтены)
+                new_files_count = len(files) if files else 0
+                if new_files_count > 0 and not SubscriptionService.can_upload_files(db, current_user, new_files_count):
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail="Дневной лимит файлов и изображений исчерпан. Лимит сбрасывается каждые сутки."
+                    )
+
             # Обработка файлов, если они есть
             uploaded_files = []
             extracted_text_parts = []

@@ -46,6 +46,9 @@ function ChatInput({
   t,
   // AI model check
   isAIModelChat,
+  // File attachment: Plus/Pro only
+  canAttachFiles = true,
+  onShowUpgradeModal,
 }) {
   return (
     <div className="chat-input-transparent" style={{ padding: 0, margin: 0 }}>
@@ -196,13 +199,20 @@ function ChatInput({
         onPaste={onPaste}
       >
         <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 chat-input-transparent chat-input-frosted mx-auto w-full" style={{ maxWidth: '720px' }}>
-          {/* File Attachment Button */}
+          {/* File Attachment Button — для Plus/Pro/API */}
           {!isChannelChat && !isReadOnlyChannel && (
             <button
               type="button"
-              onClick={() => fileInputRef?.current?.click()}
+              onClick={() => {
+                if (canAttachFiles) {
+                  fileInputRef?.current?.click();
+                } else if (onShowUpgradeModal) {
+                  onShowUpgradeModal();
+                }
+              }}
               className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-[var(--text-gray)] hover:text-[var(--text-white)] hover:bg-[var(--bg-secondary)]/30 transition-colors chat-input-button-visible"
               aria-label={t("chat.attachFile", { defaultValue: "Прикрепить файл" })}
+              title={!canAttachFiles ? t("library.upgradeToAddMoreCharacters", { defaultValue: "Обновите тариф Plus или Pro" }) : undefined}
             >
               <MdAttachFile className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
@@ -297,6 +307,8 @@ ChatInput.propTypes = {
   t: PropTypes.func.isRequired,
   // AI model check
   isAIModelChat: PropTypes.bool,
+  canAttachFiles: PropTypes.bool,
+  onShowUpgradeModal: PropTypes.func,
 };
 
 export default ChatInput;

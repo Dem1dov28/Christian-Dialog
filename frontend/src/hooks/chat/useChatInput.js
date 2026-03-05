@@ -36,6 +36,8 @@ export function useChatInput({
   t,
   forceScrollToBottom,
   needInitialScrollRef,
+  canAttachFiles = true,
+  onShowUpgradeModal,
 }) {
   // Состояние поля ввода
   const [inputValue, setInputValue] = useState("");
@@ -165,6 +167,11 @@ export function useChatInput({
       e.target.value = "";
       return;
     }
+    if (!canAttachFiles && onShowUpgradeModal) {
+      onShowUpgradeModal();
+      e.target.value = "";
+      return;
+    }
 
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -216,7 +223,7 @@ export function useChatInput({
     }
 
     e.target.value = "";
-  }, [isChannelChat, attachedFiles.length, validateFile, showError, t]);
+  }, [isChannelChat, canAttachFiles, onShowUpgradeModal, attachedFiles.length, validateFile, showError, t]);
 
   // Удаление файла
   const handleRemoveFile = useCallback((fileId) => {
@@ -255,6 +262,10 @@ export function useChatInput({
 
     if (isChannelChat) {
       showError(t("chat.channelAttachmentsNotSupported"));
+      return;
+    }
+    if (!canAttachFiles && onShowUpgradeModal) {
+      onShowUpgradeModal();
       return;
     }
 
@@ -305,7 +316,7 @@ export function useChatInput({
     if (validFiles.length > 0) {
       setAttachedFiles(prev => [...prev, ...validFiles]);
     }
-  }, [isChannelChat, attachedFiles.length, validateFile, showError, t]);
+  }, [isChannelChat, canAttachFiles, onShowUpgradeModal, attachedFiles.length, validateFile, showError, t]);
 
   // Обработка вставки изображений из буфера обмена
   const handlePaste = useCallback(async (e) => {
@@ -316,6 +327,12 @@ export function useChatInput({
     const imageItems = items.filter(item => item.type.startsWith('image/'));
 
     if (imageItems.length === 0) {
+      return;
+    }
+
+    if (!canAttachFiles && onShowUpgradeModal) {
+      e.preventDefault();
+      onShowUpgradeModal();
       return;
     }
 
@@ -391,7 +408,7 @@ export function useChatInput({
     if (validFiles.length > 0) {
       setAttachedFiles(prev => [...prev, ...validFiles]);
     }
-  }, [attachedFiles.length, validateFile, showError, t]);
+  }, [attachedFiles.length, validateFile, showError, t, canAttachFiles, onShowUpgradeModal]);
 
   // Очистка поля ввода
   const clearInput = useCallback((restoreText = null) => {

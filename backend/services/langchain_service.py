@@ -90,7 +90,13 @@ class LangChainService:
         if has_tools:
             # Агенты с инструментами могут давать развёрнутые ответы
             format_instruction = (
-                "Отвечай содержательно и точно. Используй инструменты когда это уместно."
+                "Отвечай содержательно и точно. Используй инструменты когда это уместно.\n"
+                "ФАКТИЧЕСКИЕ ДАННЫЕ — не выдумывай:\n"
+                "- Если пользователь спрашивает о твоей биографии, датах, событиях твоей жизни — "
+                "и ты не уверен в точности, используй web_search для поиска достоверных данных.\n"
+                "- Если спрашивают тексты твоих песен, стихов, произведений — не сочиняй, ищи в интернете через web_search.\n"
+                "- То же для общеизвестных фактов, цитат, дат — если не знаешь точно, ищи через web_search.\n"
+                "- Отвечай от первого лица, опираясь на найденные данные, сохраняя образ персонажа."
             )
         elif is_multi_agent:
             # В групповом чате — живые, лаконичные реплики
@@ -473,7 +479,8 @@ class LangChainService:
         model: Optional[str] = None,
         user_rules: Optional[List[str]] = None,
         image_attachments: Optional[List[Dict]] = None,
-        language: Optional[str] = None
+        language: Optional[str] = None,
+        tools: Optional[List[Any]] = None
     ) -> str:
         """Генерировать ответ агента через LangChain и OpenRouter
         
@@ -529,10 +536,11 @@ class LangChainService:
             
             # Формируем системное сообщение с инструкциями
             is_multi_agent_ctx = bool(conversation_id and "_agent_" in str(conversation_id))
+            has_tools = bool(tools and len(tools) > 0)
             system_message = self._build_system_message(
                 agent_name=agent_name,
                 instructions=instructions,
-                has_tools=False,
+                has_tools=has_tools,
                 language_instruction=language_instruction,
                 is_multi_agent=is_multi_agent_ctx
             )
@@ -652,7 +660,37 @@ class LangChainService:
             actual_model = model or config.get_model_config()["model"]
             logger.info(f"📤 [LANGCHAIN] Отправляем запрос для '{agent_name}' (модель: {actual_model})")
             
-            response = await llm.ainvoke(messages)
+            # При наличии инструментов (web_search) привязываем их и обрабатываем tool_calls
+            if has_tools and tools:
+                llm_to_use = llm.bind_tools(tools)
+                tools_dict = {t.name: t for t in tools if hasattr(t, "name")}
+                response = await llm_to_use.ainvoke(messages)
+                has_tool_calls = hasattr(response, "tool_calls") and response.tool_calls
+                while has_tool_calls:
+                    logger.info(f"🔧 Персонаж запросил поиск: {[tc.get('name', '') if isinstance(tc, dict) else getattr(tc, 'name', '') for tc in response.tool_calls]}")
+                    tool_results = []
+                    for i, tc in enumerate(response.tool_calls):
+                        tname = tc.get("name", "") if isinstance(tc, dict) else getattr(tc, "name", "")
+                        targs = tc.get("args", {}) if isinstance(tc, dict) else getattr(tc, "args", {})
+                        tid = tc.get("id", f"call_{i}") if isinstance(tc, dict) else getattr(tc, "id", f"call_{i}")
+                        tool = tools_dict.get(tname)
+                        if tool:
+                            try:
+                                if hasattr(tool, "ainvoke"):
+                                    res = await tool.ainvoke(targs if isinstance(targs, dict) else {"query": targs})
+                                else:
+                                    res = tool.invoke(targs if isinstance(targs, dict) else {"query": targs})
+                                tool_results.append((tid, str(res)))
+                            except Exception as e:
+                                logger.warning(f"Ошибка web_search: {e}")
+                                tool_results.append((tid, f"Ошибка: {str(e)}"))
+                    messages.append(response)
+                    for tid, res in tool_results:
+                        messages.append(ToolMessage(content=res, tool_call_id=tid))
+                    response = await llm_to_use.ainvoke(messages)
+                    has_tool_calls = hasattr(response, "tool_calls") and response.tool_calls
+            else:
+                response = await llm.ainvoke(messages)
             
             # Если ответ пустой, пробуем fallback
             if not response.content or str(response.content).strip() == "":

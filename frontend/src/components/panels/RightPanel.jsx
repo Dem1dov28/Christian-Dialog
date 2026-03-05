@@ -74,7 +74,7 @@ const RightPanel = forwardRef(function RightPanel({
   if (isModal) {
     return (
       <div
-        className={`fixed inset-0 z-[70] flex items-center justify-center px-4 py-6 bg-black/50 backdrop-blur-sm ${isClosing ? 'ai-panel-backdrop-closing' : 'ai-panel-backdrop'}`}
+        className={`fixed inset-0 z-[110] flex items-center justify-center px-4 py-6 bg-black/50 backdrop-blur-sm ${isClosing ? 'ai-panel-backdrop-closing' : 'ai-panel-backdrop'}`}
         onClick={handleClose}
         role="dialog"
         aria-modal="true"

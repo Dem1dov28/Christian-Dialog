@@ -9,6 +9,8 @@ export function useClipboardPaste({
   validateFile,
   showError,
   t,
+  canAttachFiles = true,
+  onShowUpgradeModal,
 }) {
   const handlePasteLegacy = useCallback(
     async (e) => {
@@ -22,6 +24,13 @@ export function useClipboardPaste({
 
       if (imageItems.length === 0) {
         // Если нет изображений, позволяем стандартную вставку текста
+        return;
+      }
+
+      // Прикрепление файлов доступно только на тарифах Plus/Pro
+      if (!canAttachFiles && onShowUpgradeModal) {
+        e.preventDefault();
+        onShowUpgradeModal();
         return;
       }
 
@@ -110,7 +119,7 @@ export function useClipboardPaste({
         setAttachedFiles((prev) => [...prev, ...validFiles]);
       }
     },
-    [attachedFiles, setAttachedFiles, validateFile, showError, t]
+    [attachedFiles, setAttachedFiles, validateFile, showError, t, canAttachFiles, onShowUpgradeModal]
   );
 
   return { handlePasteLegacy };

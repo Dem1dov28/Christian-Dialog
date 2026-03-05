@@ -85,47 +85,47 @@ const UsageStatistics = ({ usageStats, user }) => {
   }, []);
 
   return (
-    <div className="space-y-3">
-      {/* Прогресс-бар сообщений */}
-      <div className="subscription-status-card">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <FiMessageSquare className="usage-stat-icon" />
-            <span className="text-sm font-medium text-[var(--text-white)]">
-              {t("profile.usage.messages")}
+    <div className="subscription-status-card">
+      <div className="flex gap-4">
+        {/* Лимит сообщений — 2/3 ширины */}
+        <div className="min-w-0" style={{ flex: "2 1 0" }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <FiMessageSquare className="usage-stat-icon" />
+              <span className="text-sm font-medium text-[var(--text-white)]">
+                {t("profile.usage.messages")}
+              </span>
+            </div>
+            <span className="text-sm text-[var(--text-dim)]">
+              {used} / {limit}
             </span>
           </div>
-          <span className="text-sm text-[var(--text-dim)]">
-            {used} / {limit}
-          </span>
+          <div className="usage-stats-bar">
+            <div
+              className={`usage-progress-fill ${getUsageColor(usagePercentage)}`}
+              style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+            ></div>
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-xs text-[var(--text-dim)]">
+              {usagePercentage}% {t("profile.usage.used")}
+            </span>
+            <span className="text-xs text-[var(--text-dim)]">
+              {timeUntilReset || t("common.loading")}
+            </span>
+          </div>
         </div>
 
-        <div className="usage-stats-bar">
-          <div
-            className={`usage-progress-fill ${getUsageColor(usagePercentage)}`}
-            style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-          ></div>
-        </div>
-
-        <div className="flex justify-between mt-1">
-          <span className="text-xs text-[var(--text-dim)]">
-            {usagePercentage}% {t("profile.usage.used")}
-          </span>
-          <span className="text-xs text-[var(--text-dim)]">
-            {timeUntilReset || t("common.loading")}
+        {/* Количество чатов — 1/3 ширины */}
+        <div className="flex flex-col justify-center min-w-0" style={{ flex: "1 1 0" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <FiFolder className="usage-stat-icon" />
+            <span className="usage-stat-label">{t("profile.usage.chats")}</span>
+          </div>
+          <span className="usage-stat-number">
+            {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
           </span>
         </div>
-      </div>
-
-      {/* Количество чатов (включая групповые) */}
-      <div className="usage-stat-card">
-        <div className="flex items-center gap-2 mb-1">
-          <FiFolder className="usage-stat-icon" />
-          <span className="usage-stat-label">{t("profile.usage.chats")}</span>
-        </div>
-        <span className="usage-stat-number">
-          {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
-        </span>
       </div>
     </div>
   );

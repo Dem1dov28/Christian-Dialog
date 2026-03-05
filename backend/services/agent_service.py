@@ -620,9 +620,13 @@ class AgentService(BaseService):
                 except Exception as e:
                     logger.warning(f"⚠️ [TOOLS DEBUG] Ошибка при загрузке категории из БД для агента {agent_id}: {e}")
             
-            # В проекте оставляем только персонажей: tool-агенты и model-агенты удалены.
-            # Инструменты к агентам больше не подключаем.
+            # Инструмент поиска в интернете для фактологических вопросов (биография, тексты, даты)
             tools = None
+            try:
+                from tools.web_search import web_search
+                tools = [web_search]
+            except ImportError as e:
+                logger.debug(f"Web search tool not available: {e}")
 
             # Инициализируем enhanced_message с исходным сообщением
             enhanced_message = message
@@ -652,6 +656,7 @@ class AgentService(BaseService):
                 user_rules=user_rules,  # Передаем правила пользователя (None или список)
                 image_attachments=image_attachments,  # Передаем изображения для моделей с vision
                 language=detected_language,  # Передаем язык для ответа
+                tools=tools,  # Веб-поиск для фактов (биография, тексты, даты)
             )
             
             logger.debug(f"✅ [GENERATE RESPONSE] LangChain вернул ответ длиной {len(str(llm_response))} символов")

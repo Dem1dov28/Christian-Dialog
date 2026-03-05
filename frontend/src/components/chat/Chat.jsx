@@ -346,6 +346,18 @@ export default function Chat({
     : false;
   const isReadOnlyChannel = isChannelChat && !canWriteChannel;
 
+  // Прикрепление файлов/фото доступно на тарифах Plus, Pro, API
+  const canAttachFiles = useMemo(() => {
+    if (!user) return false;
+    const tier = user.subscription_tier || "free";
+    if (!["plus", "pro", "api"].includes(tier)) return false;
+    if (user.expires_at) {
+      const expiresAt = new Date(user.expires_at);
+      if (expiresAt < new Date()) return false;
+    }
+    return true;
+  }, [user]);
+
   // Интеграция хука useContainerRef для управления ref контейнера
   const { containerRefCallback, chatContainerRect } = useContainerRef({
     containerRef,
@@ -628,6 +640,8 @@ export default function Chat({
     currentAgentId,
     // УДАЛЕНО - переменные для удаленных инструментов
     isDialogueLoading,
+    canAttachFiles,
+    onShowUpgradeModal: () => setShowUpgradeModal(true, "feature"),
     sendMessage,
     sendGroupMessage,
     loadMessages,
@@ -695,6 +709,8 @@ export default function Chat({
     validateFile,
     showError,
     t,
+    canAttachFiles,
+    onShowUpgradeModal: () => setShowUpgradeModal(true, "feature"),
   });
 
   // Интеграция хука useChatActions для управления действиями с сообщениями
@@ -1231,15 +1247,14 @@ export default function Chat({
           <ChatWelcomeMessage t={t} />
         )}
 
-        {menuRendered && (
+        {menuRendered && typeof window !== "undefined" && createPortal(
           <div
             data-actions-menu
             style={{
-              position: "absolute",
+              position: "fixed",
               left: contextMenu.x,
               top: contextMenu.y,
-              zIndex: 10000,
-              // Когда меню закрыто — pointer-events: none: клики проходят к сообщениям под ним
+              zIndex: 10001,
               pointerEvents: contextMenu.visible ? "auto" : "none",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1272,7 +1287,8 @@ export default function Chat({
                 setActiveMessageId(null);
               }}
             />
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 
@@ -1319,6 +1335,8 @@ export default function Chat({
         isChatSelected={isChatSelected}
         isInlineLibraryOpen={isInlineLibraryOpen}
         isChannelChat={isChannelChat}
+        canAttachFiles={canAttachFiles}
+        onShowUpgradeModal={() => setShowUpgradeModal(true, "feature")}
         // УДАЛЕНО - onCreateNewNote (инструмент удален)
         // УДАЛЕНО - isSubscribedChannel, isChannelChatAndNotSubscribed, subscribeToChannel (каналы удалены)
         isLoading={isLoading}

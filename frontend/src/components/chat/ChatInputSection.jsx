@@ -8,6 +8,8 @@ export default function ChatInputSection({
   isChatSelected,
   isInlineLibraryOpen,
   isChannelChat,
+  canAttachFiles = true,
+  onShowUpgradeModal,
   // УДАЛЕНО - props для удаленных инструментов и каналов
   isLoading,
   activeConversation,
@@ -92,6 +94,8 @@ export default function ChatInputSection({
       }}
       t={t}
       isAIModelChat={isAIModelChat}
+      canAttachFiles={canAttachFiles}
+      onShowUpgradeModal={onShowUpgradeModal}
     />
   );
 

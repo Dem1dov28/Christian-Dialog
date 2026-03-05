@@ -21,6 +21,7 @@ class SubscriptionService:
             "max_chats": 10,
             "max_group_agents": 2,
             "max_files_per_message": 0,
+            "max_files_per_day": 0,
             "api_access": False,
             "price": 0,
             "duration_days": None,
@@ -30,6 +31,7 @@ class SubscriptionService:
             "max_chats": 25,
             "max_group_agents": 5,
             "max_files_per_message": 1,
+            "max_files_per_day": 5,
             "api_access": False,
             "price": 2,
             "duration_days": 30,
@@ -39,6 +41,7 @@ class SubscriptionService:
             "max_chats": 50,
             "max_group_agents": 5,
             "max_files_per_message": 3,
+            "max_files_per_day": 10,
             "api_access": True,
             "price": 5,
             "duration_days": 30,
@@ -48,6 +51,7 @@ class SubscriptionService:
             "max_chats": 50,
             "max_group_agents": 5,
             "max_files_per_message": 3,
+            "max_files_per_day": 10,
             "api_access": True,
             "price": 5,
             "duration_days": 30,
@@ -102,6 +106,44 @@ class SubscriptionService:
         """Максимум файлов к одному сообщению для тарифа"""
         config = cls.get_subscription_config(tier)
         return config.get("max_files_per_message", 0)
+
+    @classmethod
+    def get_max_files_per_day(cls, tier: str) -> int:
+        """Максимум файлов/изображений в сутки для тарифа (сброс как у сообщений)"""
+        config = cls.get_subscription_config(tier)
+        return config.get("max_files_per_day", 0)
+
+    @classmethod
+    def count_files_uploaded_in_current_cycle(cls, db: Session, user: User) -> int:
+        """
+        Подсчитать файлы пользователя за текущий цикл (тот же, что и для сообщений).
+        Цикл сбрасывается в 00:00 UTC.
+        """
+        from models.file_attachment import FileAttachment
+
+        cls.ensure_message_cycle(db, user)
+        cycle_start = getattr(user, "messages_cycle_started_at", None)
+        if not cycle_start:
+            return 0
+
+        return db.exec(
+            select(func.count(FileAttachment.id)).where(
+                FileAttachment.user_id == user.id,
+                FileAttachment.created_at >= cycle_start,
+            )
+        ).first() or 0
+
+    @classmethod
+    def can_upload_files(cls, db: Session, user: User, count_new: int = 1) -> bool:
+        """
+        Проверить, может ли пользователь загрузить count_new файлов в текущем цикле.
+        Лимит сбрасывается каждые сутки, как и лимит сообщений.
+        """
+        max_per_day = cls.get_max_files_per_day(user.subscription_tier or "free")
+        if max_per_day == 0:
+            return False
+        used = cls.count_files_uploaded_in_current_cycle(db, user)
+        return (used + count_new) <= max_per_day
 
     @classmethod
     def count_user_chats(cls, db: Session, user_id: int) -> int:
