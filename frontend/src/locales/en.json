@@ -98,7 +98,8 @@
     "other": "Other",
     "showMore": "Show more",
     "more": "more...",
-    "filters": "Filters"
+    "filters": "Filters",
+    "keywords": "AI chat, historical figures, chat with AI, education, philosophy, great people, dialog with history, personality emulation, artificial intelligence, self-education, history for kids"
   },
   "chat": {
     "newChat": "New chat",
@@ -302,7 +303,6 @@
     "groupsCount": "{{count}} groups",
     "groupsCount_one": "{{count}} group",
     "groupsCount_other": "{{count}} groups",
-
     "participantsCount": "{{count}} participants",
     "participantsCount_one": "{{count}} participant",
     "participantsCount_other": "{{count}} participants",

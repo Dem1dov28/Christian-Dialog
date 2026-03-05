@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/services/api";
+import { SEO } from "@/components/common/SEO";
 
 const STORAGE_KEY_VERIFIER = "telegram_oidc_code_verifier";
 const STORAGE_KEY_STATE = "telegram_oidc_state";
@@ -76,29 +77,35 @@ export default function TelegramCallback() {
 
   if (status === "loading") {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Вход через Telegram...</p>
-        </div>
-      </div>
+      <>
+        <SEO title="Вход через Telegram..." noindex={true} />
+        <main className="fixed inset-0 flex items-center justify-center bg-background">
+          <div className="text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-muted-foreground">Вход через Telegram...</p>
+          </div>
+        </main>
+      </>
     );
   }
 
   if (status === "error") {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background p-4">
-        <div className="text-center max-w-md">
-          <p className="text-destructive mb-4">{errorMessage}</p>
-          <button
-            type="button"
-            onClick={() => navigate("/login", { replace: true })}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-          >
-            Вернуться к входу
-          </button>
-        </div>
-      </div>
+      <>
+        <SEO title="Ошибка входа" noindex={true} />
+        <main className="fixed inset-0 flex items-center justify-center bg-background p-4">
+          <div className="text-center max-w-md">
+            <p className="text-destructive mb-4">{errorMessage}</p>
+            <button
+              type="button"
+              onClick={() => navigate("/login", { replace: true })}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+            >
+              Вернуться к входу
+            </button>
+          </div>
+        </main>
+      </>
     );
   }
 

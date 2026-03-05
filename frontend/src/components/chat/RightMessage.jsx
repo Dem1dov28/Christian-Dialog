@@ -15,12 +15,12 @@ import { useLanguage } from "../../contexts/LanguageContext";
  */
 const escapeHtmlTagsForDisplay = (html) => {
   if (!html || typeof html !== "string") return "";
-  
+
   // Декодируем HTML entities (например &amp; -> &)
   const txt = document.createElement("textarea");
   txt.innerHTML = html;
   let decoded = txt.value;
-  
+
   // ВАЖНО: Экранируем все < и > символы, чтобы они отображались как текст
   // Это позволяет показывать HTML код (например <div>test</div>) как текст
   // React автоматически отобразит &lt; как < и &gt; как >
@@ -40,7 +40,7 @@ const escapeHtmlTagsForDisplay = (html) => {
  */
 const escapeHtmlInText = (text) => {
   if (!text || typeof text !== "string") return "";
-  
+
   // Просто экранируем HTML символы в уже декодированном тексте
   // Порядок важен: сначала &, потом < и >
   return text
@@ -61,7 +61,7 @@ const escapeHtmlInText = (text) => {
  */
 const extractPlainText = (text) => {
   if (!text || typeof text !== "string") return "";
-  
+
   // Декодируем HTML entities в правильном порядке
   // Важно: сначала декодируем &amp;, чтобы не конфликтовало с другими entities
   return text
@@ -178,7 +178,7 @@ export default function RightMessage({
   const { showError } = useNotification();
   const { openImageModal } = useImageModal();
   const [showRetryButton, setShowRetryButton] = useState(false);
-  
+
   // Форматирование размера файла
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + " B";
@@ -213,7 +213,7 @@ export default function RightMessage({
   };
 
   const { t } = useLanguage();
-  
+
   // Обработчик скачивания файла
   const handleDownloadFile = async (filename, originalFilename, e) => {
     e?.stopPropagation(); // Предотвращаем всплытие события
@@ -235,9 +235,9 @@ export default function RightMessage({
     const replyBlockRegex2 = /<div[^>]*class="reply-block[^"]*"[^>]*data-reply-to-id="([^"]+)"[^>]*>([\s\S]*?)<\/div><\/div><\/div>/;
     const replyBlockRegex3 = /<div[^>]*class="mb-1\.5 rounded[^"]*"[^>]*>([\s\S]*?)<\/div><\/div><\/div>/;
     const replyBlockRegex4 = /<div[^>]*data-reply-to-id="([^"]+)"[^>]*>([\s\S]*?)<\/div><\/div><\/div>/;
-    
-    let match = text.match(replyBlockRegex1) || text.match(replyBlockRegex2) || 
-                text.match(replyBlockRegex3) || text.match(replyBlockRegex4);
+
+    let match = text.match(replyBlockRegex1) || text.match(replyBlockRegex2) ||
+      text.match(replyBlockRegex3) || text.match(replyBlockRegex4);
 
     if (!match) {
       return null;
@@ -272,7 +272,7 @@ export default function RightMessage({
       /color: rgba\(255, 255, 255, 0\.55\)[^"]*"[^>]*>([^<]+)</
     );
     let replyText = textMatch ? textMatch[1].trim() : "";
-    
+
     // Извлекаем чистый текст из извлечённого текста (может содержать HTML entities)
     replyText = extractPlainText(replyText);
 
@@ -287,16 +287,16 @@ export default function RightMessage({
   // Очищаем текст от HTML тегов и reply-блоков
   const cleanText = useMemo(() => {
     if (!text || typeof text !== "string") return "";
-    
+
     let processedText = text;
-    
+
     // Убираем reply-блок, если он есть в тексте
     if (actualReply) {
       // Используем DOM-парсер для более надежного удаления reply-блока
       try {
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = processedText;
-        
+
         // Находим reply-блок по data-reply-to-id или классу
         const replyBlock = tempDiv.querySelector('[data-reply-to-id], .reply-block, [class*="reply-block"]');
         if (replyBlock) {
@@ -316,18 +316,18 @@ export default function RightMessage({
           // Старый формат
           /<div[^>]*class="mb-1\.5 rounded[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi,
         ];
-        
+
         patterns.forEach(pattern => {
           processedText = processedText.replace(pattern, "");
         });
       }
-      
+
       // Дополнительная очистка: удаляем любые оставшиеся закрывающие теги в начале
       processedText = processedText.trim().replace(/^<\/div>\s*/i, "");
       processedText = processedText.trim().replace(/^<\/div>\s*<\/div>\s*/i, "");
       processedText = processedText.trim().replace(/^<\/div>\s*<\/div>\s*<\/div>\s*/i, "");
     }
-    
+
     // Экранируем HTML теги, чтобы они отображались как текст
     return escapeHtmlTagsForDisplay(processedText);
   }, [text, actualReply]);
@@ -431,7 +431,7 @@ export default function RightMessage({
   }, [currentMessageState?.state, t]);
 
   return (
-    <animated.div
+    <animated.article
       className={`w-full flex justify-end my-2 message-container ${className}`}
       style={{
         width: "100%",
@@ -605,6 +605,6 @@ export default function RightMessage({
           />
         )}
       </animated.div>
-    </animated.div>
+    </animated.article>
   );
 }

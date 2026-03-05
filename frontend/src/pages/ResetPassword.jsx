@@ -1,80 +1,78 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { useNotification } from '@/contexts/NotificationContext';
-import api from '@/services/api';
-import { AuthBackground } from '@/components/auth/AuthBackground';
-import { SEO } from '@/components/common/SEO';
-
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { AuthBackground } from "@/components/auth/AuthBackground";
+import { ArrowLeft, Lock } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import api from "@/services/api";
+import { useNotification } from "@/contexts/NotificationContext";
+import { SEO } from "@/components/common/SEO";
 const ResetPassword = () => {
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const { showNotification } = useNotification();
-  
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const email = location.state?.email;
-  const token = location.state?.token;
-  
-  // ≈ÒÎË ÌÂÚ email ËÎË ÚÓÍÂÌ‡, ÔÂÂÌ‡Ô‡‚ÎˇÂÏ Ì‡ forgot-password
-  if (!email || !token) {
-    navigate('/forgot-password');
-    return null;
-  }
-  
+  const [error, setError] = useState("");
+
+  const [email, setEmail] = useState("");
+  const [token, setToken] = useState("");
+  useEffect(() => {
+    const stateToken = location.state?.token;
+    const stateEmail = location.state?.email;
+
+    if (!stateToken || !stateEmail) {
+      showNotification(t("errors.invalidToken") || "–ù–µ–≤–µ—Ä–Ω—ã–π —Ç–æ–∫–µ–Ω", "error");
+      navigate("/forgot-password", { replace: true });
+      return;
+    }
+
+    setToken(stateToken);
+    setEmail(stateEmail);
+  }, [location.state, navigate, showNotification, t]);
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
     if (password !== confirmPassword) {
-      setError(t('auth.resetPassword.passwordMismatch'));
+      setError(t("auth.register.passwordMismatch") || "–ü–∞—Ä–æ–ª–∏ –Ω–µ —Å–æ–≤–ø–∞–¥–∞—é—Ç");
       return;
     }
-    
     if (password.length < 6) {
-      setError(t('auth.resetPassword.passwordTooShort'));
+      setError(t("auth.register.passwordLength") || "–ü–∞—Ä–æ–ª—å —Å–ª–∏—à–∫–æ–º –∫–æ—Ä–æ—Ç–∫–∏–π");
       return;
     }
-    
     setIsLoading(true);
-    
     try {
-      await api.resetPassword(email, token, password);
-      // œÓ‚ÂˇÂÏ, ˜ÚÓ showNotification ˇ‚ÎˇÂÚÒˇ ÙÛÌÍˆËÂÈ
-      if (typeof showNotification === 'function') {
-        showNotification(t('auth.resetPassword.success'), 'success');
+      const response = await api.resetPassword({ email, password, token });
+
+      if (response.success || response) {
+        showNotification(t("auth.resetPassword.success") || "–ü–∞—Ä–æ–ª—å —É—Å–ø–µ—à–Ω–æ –∏–∑–º–µ–Ω–µ–Ω", "success");
+        navigate("/login", { replace: true });
+      } else {
+        setError(response.message || t("errors.generic"));
       }
-      navigate('/login');
-    } catch (error) {
-      console.error('Reset password error:', error);
-      // «‡˘ËÚ‡ ÓÚ Ó¯Ë·ÍË "errors.generic"
-      try {
-        setError(t('errors.generic'));
-      } catch (translationError) {
-        setError('An error occurred');
-      }
+    } catch (err) {
+      console.error("Reset password error:", err);
+      setError(err.message || t("errors.generic"));
     } finally {
       setIsLoading(false);
     }
   };
-  
+  if (!token || !email) {
+    return null;
+  }
   return (
     <>
       <SEO
-        title="—·ÓÒ Ô‡ÓÎˇ"
-        description="—ÓÁ‰‡ÈÚÂ ÌÓ‚˚È Ô‡ÓÎ¸ ‰Îˇ ‰ÓÒÚÛÔ‡ Í Epochal Dialog. ¡ÂÁÓÔ‡ÒÌ˚È Ò·ÓÒ Ô‡ÓÎˇ."
-        canonical="/reset-password"
+        title={t("auth.resetPassword.title") || "–°–±—Ä–æ—Å –ø–∞—Ä–æ–ª—è"}
+        description="–°–æ–∑–¥–∞–π—Ç–µ –Ω–æ–≤—ã–π –ø–∞—Ä–æ–ª—å –¥–ª—è –≤–∞—à–µ–π —É—á–µ—Ç–Ω–æ–π –∑–∞–ø–∏—Å–∏ Epochal Dialog."
+        noindex={true}
       />
-      <div
-        className="dark-theme-locked"
+      <main
+        className="dark-theme-locked w-full"
         style={{
           position: 'fixed',
           inset: 0,
@@ -84,81 +82,98 @@ const ResetPassword = () => {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '1rem',
-          paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
-          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+          paddingTop: 'max(1rem, var(--safe-area-inset-top))',
+          paddingBottom: 'max(1rem, var(--safe-area-inset-bottom))',
         }}
       >
-      <AuthBackground />
-      
-      <div className="relative z-10 w-full max-w-[480px] flex items-center justify-center perspective-1000">
-        <Card className="backdrop-blur-2xl bg-card/30 border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5),0_-4px_24px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-700 ease-out ring-1 ring-white/5 before:absolute before:inset-0 before:rounded-[2rem] before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none">
-          <CardHeader className="text-center mb-6 sm:mb-8">
-            <div className="relative inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
-              <img 
-                src="/logo.webp"
-                alt="Epochal Dialog"
-                className="w-20 h-20 object-contain transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
-            <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-b from-foreground via-foreground to-foreground/80 bg-clip-text tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-              {t('auth.resetPassword.title')}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground/90 mt-2 font-medium leading-relaxed">
-              {t('auth.resetPassword.subtitle')}
-            </p>
-          </CardHeader>
-          
-          <CardContent>
+        <AuthBackground />
+        {/* Glass Panel */}
+        <section className="relative z-10 w-full max-w-[480px] flex items-center justify-center perspective-1000">
+          <div className="relative backdrop-blur-2xl bg-card/30 border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5),0_-4px_24px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-700 ease-out ring-1 ring-white/5 before:absolute before:inset-0 before:rounded-[2rem] before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none">
+            {/* Header */}
+            <header className="text-center mb-6 sm:mb-8">
+              <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group">
+                <Lock className="w-8 h-8 text-primary transition-transform duration-500 group-hover:scale-110" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-b from-foreground via-foreground to-foreground/80 bg-clip-text tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+                {t("auth.resetPassword.title") || "–ù–æ–≤—ã–π –ø–∞—Ä–æ–ª—å"}
+              </h1>
+              <p className="text-sm text-muted-foreground/90 mt-2 font-medium leading-relaxed">
+                {t("auth.resetPassword.subtitle") || "–ü—Ä–∏–¥—É–º–∞–π—Ç–µ –Ω–∞–¥–µ–∂–Ω—ã–π –ø–∞—Ä–æ–ª—å"}
+              </p>
+            </header>
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <Label htmlFor="password" className="text-foreground/90 font-medium">
-                  {t('auth.resetPassword.newPassword')}
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="mt-2 h-12 rounded-xl border border-input/50 bg-background/20 backdrop-blur-sm px-4 py-3 text-foreground placeholder:text-muted-foreground/70 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/70 hover:border-input/70"
-                />
+              <div className="space-y-4">
+                <div className="group relative">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-foreground/90 mb-2 transition-colors duration-300 group-hover:text-primary/80"
+                  >
+                    {t("auth.resetPassword.newPassword") || "–ù–æ–≤—ã–π –ø–∞—Ä–æ–ª—å"}
+                  </label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError("");
+                    }}
+                    required
+                    className={`transition-all duration-300 hover:bg-input/70 hover:border-primary/30 focus:bg-input/80 focus:scale-[1.01] focus:shadow-[0_0_0_4px_rgba(var(--primary),0.15),0_2px_12px_rgba(var(--primary),0.2)] focus:border-primary/50 group-hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)] ${error ? "border-red-500/60 focus:border-red-500 focus:ring-red-500/20" : ""
+                      }`}
+                  />
+                </div>
+                <div className="group relative">
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-medium text-foreground/90 mb-2 transition-colors duration-300 group-hover:text-primary/80"
+                  >
+                    {t("auth.resetPassword.confirmPassword") || "–ü–æ–≤—Ç–æ—Ä–∏—Ç–µ –ø–∞—Ä–æ–ª—å"}
+                  </label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setError("");
+                    }}
+                    required
+                    className={`transition-all duration-300 hover:bg-input/70 hover:border-primary/30 focus:bg-input/80 focus:scale-[1.01] focus:shadow-[0_0_0_4px_rgba(var(--primary),0.15),0_2px_12px_rgba(var(--primary),0.2)] focus:border-primary/50 group-hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)] ${error ? "border-red-500/60 focus:border-red-500 focus:ring-red-500/20" : ""
+                      }`}
+                  />
+                  {error && (
+                    <p className="text-red-500 text-sm mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                      {error}
+                    </p>
+                  )}
+                </div>
               </div>
-              
-              <div>
-                <Label htmlFor="confirmPassword" className="text-foreground/90 font-medium">
-                  {t('auth.resetPassword.confirmPassword')}
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="mt-2 h-12 rounded-xl border border-input/50 bg-background/20 backdrop-blur-sm px-4 py-3 text-foreground placeholder:text-muted-foreground/70 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/70 hover:border-input/70"
-                />
-              </div>
-              
-              {error && (
-                <p className="text-red-500 text-sm animate-in fade-in slide-in-from-top-1 duration-300">
-                  {error}
-                </p>
-              )}
-              
-              <Button 
-                type="submit" 
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              <Button
+                type="submit"
+                variant="neomorphic"
+                size="lg"
                 disabled={isLoading}
+                className="w-full transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_-3px_20px_rgba(255,255,255,0.08),0_0_20px_rgba(var(--primary),0.3)] active:scale-[0.98] hover:before:opacity-100 mt-6"
               >
-                {isLoading ? t('auth.resetPassword.resetting') : t('auth.resetPassword.resetButton')}
+                {isLoading ? (t("common.loading") || "–ó–∞–≥—Ä—É–∑–∫–∞...") : (t("auth.resetPassword.submit") || "–°–æ—Ö—Ä–∞–Ω–∏—Ç—å –ø–∞—Ä–æ–ª—å")}
               </Button>
             </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            <footer className="text-center mt-6">
+              <button
+                onClick={() => navigate("/login")}
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-all duration-300 hover:underline decoration-primary/60 underline-offset-4 hover:-translate-x-1 group hover:drop-shadow-[0_1px_4px_rgba(0,0,0,0.2)]"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:-translate-x-1 group-hover:scale-110" />
+                {t("auth.forgotPassword.backToLogin") || "–í–µ—Ä–Ω—É—Ç—å—Å—è –∫–æ –≤—Ö–æ–¥—É"}
+              </button>
+            </footer>
+          </div>
+        </section>
+      </main>
     </>
   );
 };
-
 export default ResetPassword;

@@ -80,8 +80,8 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
 
       // Поиск по русскому или английскому имени
       return displayName.includes(query) ||
-             ruName.includes(query) ||
-             enName.includes(query);
+        ruName.includes(query) ||
+        enName.includes(query);
     });
   }, [allAgents, searchQuery]);
 
@@ -109,7 +109,7 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
+    <section className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
       <section className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100dvh-160px)] flex flex-col">
         {/* Заголовок */}
         <header className="flex items-center justify-between p-4 sm:p-6 border-b border-[var(--border-color)]">
@@ -161,7 +161,7 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <ul className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 list-none p-0 m-0">
               {filteredAgents.map((agent) => {
                 // Нормализуем ID к строке для корректного сравнения
                 const agentIdStr = String(agent.id);
@@ -169,73 +169,74 @@ const AgentsLibrary = ({ onClose, onAddAgent }) => {
                 const IconComponent = getIconComponent(agent.iconName);
 
                 return (
-                  <article
-                    key={agent.id}
-                    className={`group relative bg-[var(--bg-primary)] rounded-xl p-5 border transition-all duration-300 hover:scale-105 hover:shadow-lg ${isAdded
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10"
-                      : "border-[var(--border-color)] hover:border-[var(--accent)]"
-                      }`}
-                  >
-                    {/* Индикатор добавленного агента */}
-                    {isAdded && (
-                      <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
-                        <MdCheck className="text-white text-sm" />
-                      </div>
-                    )}
-
-                    {/* Аватар */}
-                    <div className="flex justify-center mb-4">
-                      {agent.imageSrc ? (
-                        <img
-                          src={agent.imageSrc}
-                          alt={agent.name}
-                          className="w-16 h-16 rounded-full object-cover shadow-lg"
-                        />
-                      ) : (
-                        <div
-                          className={`w-16 h-16 rounded-full ${agent.colorClass || "bg-blue-500"
-                            } flex items-center justify-center text-white shadow-lg`}
-                        >
-                          <IconComponent className="text-2xl" />
+                  <li key={agent.id} className="list-none p-0 m-0">
+                    <article
+                      className={`group relative bg-[var(--bg-primary)] rounded-xl p-5 border transition-all duration-300 hover:scale-105 hover:shadow-lg ${isAdded
+                        ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                        : "border-[var(--border-color)] hover:border-[var(--accent)]"
+                        }`}
+                    >
+                      {/* Индикатор добавленного агента */}
+                      {isAdded && (
+                        <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                          <MdCheck className="text-white text-sm" />
                         </div>
                       )}
-                    </div>
 
-                    {/* Информация */}
-                    <div className="text-center">
-                      <h3 className="font-semibold text-[var(--text-white)] text-base mb-2 line-clamp-1">
-                        {agent.name}
-                      </h3>
-                      {agent.description && (
-                        <p className="text-sm text-[var(--text-gray)] line-clamp-2 mb-4">
-                          {agent.description}
-                        </p>
-                      )}
+                      {/* Аватар */}
+                      <div className="flex justify-center mb-4">
+                        {agent.imageSrc ? (
+                          <img
+                            src={agent.imageSrc}
+                            alt={agent.name}
+                            className="w-16 h-16 rounded-full object-cover shadow-lg"
+                          />
+                        ) : (
+                          <div
+                            className={`w-16 h-16 rounded-full ${agent.colorClass || "bg-blue-500"
+                              } flex items-center justify-center text-white shadow-lg`}
+                          >
+                            <IconComponent className="text-2xl" />
+                          </div>
+                        )}
+                      </div>
 
-                      {/* Кнопка добавления */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAddAgent(agent.id);
-                        }}
-                        disabled={isAdded}
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${isAdded
-                          ? "bg-[var(--accent)]/20 text-[var(--accent)] cursor-default"
-                          : "bg-[var(--accent)] text-white hover:brightness-110 cursor-pointer"
-                          }`}
-                      >
-                        {isAdded ? `✓ ${t("library.added")}` : `+ ${t("library.add")}`}
-                      </button>
-                    </div>
-                  </article>
+                      {/* Информация */}
+                      <div className="text-center">
+                        <h3 className="font-semibold text-[var(--text-white)] text-base mb-2 line-clamp-1">
+                          {agent.name}
+                        </h3>
+                        {agent.description && (
+                          <p className="text-sm text-[var(--text-gray)] line-clamp-2 mb-4">
+                            {agent.description}
+                          </p>
+                        )}
+
+                        {/* Кнопка добавления */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddAgent(agent.id);
+                          }}
+                          disabled={isAdded}
+                          className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${isAdded
+                            ? "bg-[var(--accent)]/20 text-[var(--accent)] cursor-default"
+                            : "bg-[var(--accent)] text-white hover:brightness-110 cursor-pointer"
+                            }`}
+                        >
+                          {isAdded ? `✓ ${t("library.added")}` : `+ ${t("library.add")}`}
+                        </button>
+                      </div>
+                    </article>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
         </main>
       </section>
-    </div>
+    </section>
   );
 };
 

@@ -16,8 +16,8 @@ const PricingCard = ({
 }) => {
   const { t } = useLanguage();
   return (
-    <div className={`${styles.card} ${isActive ? styles.active : ""}`}>
-      <div className={styles.cardHeader}>
+    <article className={`${styles.card} ${isActive ? styles.active : ""}`} aria-label={`Pricing plan: ${title}`}>
+      <header className={styles.cardHeader}>
         <h3 className={styles.title}>{title}</h3>
         <div className={styles.price}>
           <span className={styles.currency}>$</span>
@@ -25,24 +25,23 @@ const PricingCard = ({
           <span className={styles.period}>{t("pricing.perMonth")}</span>
         </div>
         <p className={styles.description}>{description}</p>
-      </div>
+      </header>
 
       <div className={styles.cardBody}>
         <FeatureList features={features} />
       </div>
 
-      <div className={styles.cardFooter}>
+      <footer className={styles.cardFooter}>
         <button
-          className={`${styles.button} ${
-            isCurrentPlan ? styles.currentPlan : styles.upgradePlan
-          } ${isDisabled ? styles.disabled : ""}`}
+          className={`${styles.button} ${isCurrentPlan ? styles.currentPlan : styles.upgradePlan
+            } ${isDisabled ? styles.disabled : ""}`}
           onClick={buttonAction}
           disabled={isCurrentPlan || isDisabled}
         >
           {buttonText}
         </button>
-      </div>
-    </div>
+      </footer>
+    </article>
   );
 };
 

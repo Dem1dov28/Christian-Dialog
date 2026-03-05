@@ -1128,8 +1128,10 @@ export default function Chat({
         />
       )}
 
-      <div
+      <section
         ref={containerRefCallback}
+        role="log"
+        aria-label={t("chat.messagesHistory") || "Chat messages history"}
         className={`flex-1 flex flex-col overflow-y-auto chat-bg relative shadow-inner min-w-0 max-w-full chat-container ${isInlineLibraryOpen ? "" : (
           isJournalChat && isChatSelected ? "" : "px-3 sm:px-6 py-2 sm:py-4"
         )
@@ -1290,7 +1292,7 @@ export default function Chat({
           </div>,
           document.body
         )}
-      </div>
+      </section>
 
       {/* Header Menu - рендерим через Portal для корректного позиционирования */}
       {typeof window !== "undefined" && headerMenuRendered && createPortal(

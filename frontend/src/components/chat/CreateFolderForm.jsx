@@ -55,8 +55,8 @@ import { getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 const CreateFolderForm = ({
   isOpen = false,
-  onClose = () => {},
-  onCreateFolder = () => {},
+  onClose = () => { },
+  onCreateFolder = () => { },
   conversations = [],
   agents = [],
   groups = [],
@@ -168,7 +168,7 @@ const CreateFolderForm = ({
     if (folderName.trim()) {
       // Формируем список ID чатов
       const chatIds = selectedChats.map((chat) => chat.id).filter((id) => id != null);
-      
+
       // Формируем список ID агентов (уникальные, без null/undefined)
       const agentIds = selectedChats
         .map((chat) => chat.agent_id)
@@ -352,7 +352,7 @@ const CreateFolderForm = ({
       if (groupAvatarUrl) {
         return { type: "image", src: groupAvatarUrl };
       }
-      
+
       // Иначе используем иконку
       const allowedIcons = [
         "group",
@@ -396,7 +396,7 @@ const CreateFolderForm = ({
     if (chat.is_group || chat.isGroup) {
       return chat.title || t("common.group");
     }
-    
+
     if (chat.is_channel || chat.isChannel) {
       return chat.title || t("common.channel");
     }
@@ -417,7 +417,7 @@ const CreateFolderForm = ({
           const sortedConversations = agentConversations.sort(
             (a, b) => new Date(a.created_at) - new Date(b.created_at)
           );
-          
+
           // Находим индекс текущего чата
           const conversationIndex = sortedConversations.findIndex(
             (conv) => conv.id === chat.id
@@ -462,7 +462,7 @@ const CreateFolderForm = ({
   const allAvailableChats = [...conversations, ...groups, ...channels];
   const filteredChats = allAvailableChats.filter((chat) => {
     const searchLower = searchQuery.toLowerCase();
-    
+
     // Для обычных чатов
     if (!chat.is_group && !chat.isGroup && !chat.is_channel && !chat.isChannel) {
       const agent = agents.find((a) => a.id === chat.agent_id);
@@ -472,7 +472,7 @@ const CreateFolderForm = ({
         chat.title?.toLowerCase().includes(searchLower)
       );
     }
-    
+
     // Для групп и каналов
     return chat.title?.toLowerCase().includes(searchLower);
   });
@@ -480,173 +480,319 @@ const CreateFolderForm = ({
   if (!isRendered) return null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm ${
-        isShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
-      }`}
-      style={{ paddingTop: '120px', paddingBottom: '20px' }}
-      onClick={(e) => {
-        // Закрываем только если клик был по backdrop, а не по содержимому модального окна
-        if (e.target === e.currentTarget) {
-          handleClose();
-        }
-      }}
-    >
-      <div
-        ref={modalRef}
-        onTransitionEnd={handleTransitionEnd}
-        className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-hidden ${
-          isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
-        }`}
-        onClick={(e) => e.stopPropagation()} // Предотвращаем всплытие события
-        style={{
-          background:
-            "linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%)",
-          border: "1px solid var(--border-color)",
+    <>
+      <section
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm ${isShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
+          }`}
+        aria-label="Create Folder Modal Backdrop"
+        style={{ paddingTop: '120px', paddingBottom: '20px' }}
+        onClick={(e) => {
+          // Закрываем только если клик был по backdrop, а не по содержимому модального окна
+          if (e.target === e.currentTarget) {
+            handleClose();
+          }
         }}
       >
-        {/* Заголовок */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
-          <h2 className="text-xl font-semibold text-[var(--text-black-for-folder)]">
-            {isEditMode ? t("chat.editFolder") : t("chat.newFolder")}
-          </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-white)] transition-colors"
-          >
-            <MdClose className="text-xl" />
-          </button>
-        </div>
+        <section
+          ref={modalRef}
+          onTransitionEnd={handleTransitionEnd}
+          className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-hidden ${isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
+            }`}
+          onClick={(e) => e.stopPropagation()} // Предотвращаем всплытие события
+          style={{
+            background:
+              "linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%)",
+            border: "1px solid var(--border-color)",
+          }}
+        >
+          {/* Заголовок */}
+          <header className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
+            <h2 className="text-xl font-semibold text-[var(--text-black-for-folder)]">
+              {isEditMode ? t("chat.editFolder") : t("chat.newFolder")}
+            </h2>
+            <button
+              onClick={handleClose}
+              className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-white)] transition-colors"
+            >
+              <MdClose className="text-xl" />
+            </button>
+          </header>
 
-        {/* Содержимое */}
-        <div className="p-6 space-y-6">
-          {/* Название папки */}
-          <div className="space-y-2">
-            <label className="text-[var(--text-black-for-folder)] font-medium text-sm">
-              {t("chat.folderName")}
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                placeholder={t("chat.folderNamePlaceholder")}
-                className="w-full px-3 py-2 bg-transparent border-b-2 border-[var(--accent)] text-[var(--text-black-for-folder)] placeholder-[var(--text-dim)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-                autoFocus
-              />
-              <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
-                <div
-                  className="w-9 h-9 rounded flex items-center justify-center cursor-pointer transition-colors"
-                  onClick={handleIconClick}
-                >
-                  {React.createElement(getFolderIcon(selectedIcon), {
-                    className:
-                      "text-[25px] text-[var(--text-black-for-folder)] transition-all duration-300 hover:drop-shadow-[0_0_8px_var(--accent)] hover:brightness-110",
-                  })}
+          {/* Содержимое */}
+          <main className="p-6 space-y-6 overflow-y-auto">
+            {/* Название папки */}
+            <div className="space-y-2">
+              <label className="text-[var(--text-black-for-folder)] font-medium text-sm">
+                {t("chat.folderName")}
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                  placeholder={t("chat.folderNamePlaceholder")}
+                  className="w-full px-3 py-2 bg-transparent border-b-2 border-[var(--accent)] text-[var(--text-black-for-folder)] placeholder-[var(--text-dim)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  autoFocus
+                />
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
+                  <div
+                    className="w-9 h-9 rounded flex items-center justify-center cursor-pointer transition-colors"
+                    onClick={handleIconClick}
+                  >
+                    {React.createElement(getFolderIcon(selectedIcon), {
+                      className:
+                        "text-[25px] text-[var(--text-black-for-folder)] transition-all duration-300 hover:drop-shadow-[0_0_8px_var(--accent)] hover:brightness-110",
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Выбранные чаты */}
-          <div className="space-y-3">
-            <h3 className="text-[var(--text-black-for-folder)] font-medium text-sm">
-              {t("chat.selectedChats")}
-            </h3>
+            {/* Выбранные чаты */}
+            <div className="space-y-3">
+              <h3 className="text-[var(--text-black-for-folder)] font-medium text-sm">
+                {t("chat.selectedChats")}
+              </h3>
 
-            {/* Список выбранных чатов */}
-            {selectedChats.length > 0 && (
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {selectedChats.map((chat) => {
-                  const avatar = getChatAvatar(chat);
+              {/* Список выбранных чатов */}
+              {selectedChats.length > 0 && (
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {selectedChats.map((chat) => {
+                    const avatar = getChatAvatar(chat);
 
-                  return (
-                    <div
-                      key={chat.id}
-                      className="flex items-center justify-between p-2 bg-[var(--bg-tertiary)] rounded-lg"
-                    >
-                      <div className="flex items-center space-x-2">
-                        {avatar.type === "image" ? (
-                          <img
-                            src={avatar.src}
-                            alt={chat.title || "Chat"}
-                            className="w-6 h-6 rounded-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : avatar.type === "group" ? (
-                          <div className="relative w-6 h-6 rounded-full overflow-hidden">
-                            <div
-                              className="absolute inset-0 bg-center bg-cover"
-                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
-                              aria-hidden="true"
+                    return (
+                      <div
+                        key={chat.id}
+                        className="flex items-center justify-between p-2 bg-[var(--bg-tertiary)] rounded-lg"
+                      >
+                        <div className="flex items-center space-x-2">
+                          {avatar.type === "image" ? (
+                            <img
+                              src={avatar.src}
+                              alt={chat.title || "Chat"}
+                              className="w-6 h-6 rounded-full object-cover"
+                              loading="lazy"
                             />
-                            <div className="absolute inset-0 flex items-center justify-center text-white">
-                              {React.createElement(getGroupIcon(avatar.icon), {
-                                className: "text-xs",
-                                style: { transform: "scale(0.6)" },
+                          ) : avatar.type === "group" ? (
+                            <div className="relative w-6 h-6 rounded-full overflow-hidden">
+                              <div
+                                className="absolute inset-0 bg-center bg-cover"
+                                style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
+                                aria-hidden="true"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center text-white">
+                                {React.createElement(getGroupIcon(avatar.icon), {
+                                  className: "text-xs",
+                                  style: { transform: "scale(0.6)" },
+                                })}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={`w-6 h-6 rounded-full ${avatar.colorClass || "bg-[var(--accent)]/20"} flex items-center justify-center`}>
+                              {React.createElement(avatar.icon, {
+                                className: "text-xs text-[var(--text-black-for-folder)]",
                               })}
                             </div>
-                          </div>
-                        ) : (
-                          <div className={`w-6 h-6 rounded-full ${avatar.colorClass || "bg-[var(--accent)]/20"} flex items-center justify-center`}>
-                            {React.createElement(avatar.icon, {
-                              className: "text-xs text-[var(--text-black-for-folder)]",
-                            })}
-                          </div>
-                        )}
-                        <span className="text-[var(--text-black-for-folder)] text-sm">
-                          {getChatDisplayName(chat)}
-                        </span>
+                          )}
+                          <span className="text-[var(--text-black-for-folder)] text-sm">
+                            {getChatDisplayName(chat)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveChat(chat.id)}
+                          className="p-1 rounded text-[var(--text-dim)] hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                        >
+                          <MdClose className="text-sm" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleRemoveChat(chat.id)}
-                        className="p-1 rounded text-[var(--text-dim)] hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                      >
-                        <MdClose className="text-sm" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
 
-            {/* Кнопка добавления чатов */}
-            <button
-              onClick={handleAddChat}
-              className="w-full flex items-center space-x-2 p-3 rounded-lg hover:bg-[var(--hover-bg)] transition-colors text-[var(--text-black-for-folder)] border border-dashed border-[var(--accent)]/30"
+              {/* Кнопка добавления чатов */}
+              <button
+                onClick={handleAddChat}
+                className="w-full flex items-center space-x-2 p-3 rounded-lg hover:bg-[var(--hover-bg)] transition-colors text-[var(--text-black-for-folder)] border border-dashed border-[var(--accent)]/30"
+              >
+                <div className="w-6 h-6 rounded-full bg-[var(--accent)]/20 flex items-center justify-center">
+                  <MdAdd className="text-sm text-[var(--text-black-for-folder)]" />
+                </div>
+                <span className="font-medium">{t("chat.addChats")}</span>
+              </button>
+            </div>
+
+            <div className="text-[var(--text-dim)] text-xs leading-relaxed">
+              {t("chat.selectChatsDescription")}
+            </div>
+          </main>
+
+          {/* Селектор чатов */}
+          {chatSelectorRendered && (
+            <section
+              className={`fixed inset-0 z-[55] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm ${chatSelectorShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
+                }`}
+              aria-label="Chat Selector Backdrop"
+              style={{ paddingTop: '120px', paddingBottom: '20px' }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  handleChatSelectorClose();
+                }
+              }}
             >
-              <div className="w-6 h-6 rounded-full bg-[var(--accent)]/20 flex items-center justify-center">
-                <MdAdd className="text-sm text-[var(--text-black-for-folder)]" />
-              </div>
-              <span className="font-medium">{t("chat.addChats")}</span>
+              <section
+                ref={chatSelectorRef}
+                onTransitionEnd={handleChatSelectorTransitionEnd}
+                className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-hidden ${chatSelectorShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
+                  }`}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%)",
+                  border: "1px solid var(--border-color)",
+                }}
+              >
+                {/* Заголовок */}
+                <header className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
+                  <h3 className="text-lg font-semibold text-[var(--text-black-for-folder)]">
+                    {t("chat.selectChats")}
+                  </h3>
+                  <button
+                    onClick={handleChatSelectorClose}
+                    className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-white)] transition-colors"
+                  >
+                    <MdClose className="text-xl" />
+                  </button>
+                </header>
+
+                {/* Поиск */}
+                <nav className="p-4 border-b border-[var(--border-color)]">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t("chat.searchChatsPlaceholder")}
+                      className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg text-[var(--text-black-for-folder)] placeholder-[var(--text-dim)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    />
+                  </div>
+                </nav>
+
+                {/* Список чатов */}
+                <main className="max-h-96 overflow-y-auto">
+                  <ul className="divide-y divide-[var(--border-color)] list-none p-0 m-0">
+                    {filteredChats.map((chat) => {
+                      const avatar = getChatAvatar(chat);
+                      const isSelected = selectedChats.some(
+                        (selected) => selected.id === chat.id
+                      );
+
+                      return (
+                        <li
+                          key={chat.id}
+                          onClick={() => handleChatSelect(chat)}
+                          className="flex items-center justify-between p-3 hover:bg-[var(--hover-bg)] transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center space-x-3">
+                            {avatar.type === "image" ? (
+                              <img
+                                src={avatar.src}
+                                alt={chat.title || "Chat"}
+                                className="w-8 h-8 rounded-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : avatar.type === "group" ? (
+                              <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                                <div
+                                  className="absolute inset-0 bg-center bg-cover"
+                                  style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
+                                  aria-hidden="true"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center text-white">
+                                  {React.createElement(getGroupIcon(avatar.icon), {
+                                    className: "text-sm",
+                                    style: { transform: "scale(0.7)" },
+                                  })}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className={`w-8 h-8 rounded-full ${avatar.colorClass || "bg-[var(--accent)]/20"} flex items-center justify-center`}>
+                                {React.createElement(avatar.icon, {
+                                  className: "text-lg text-[var(--text-black-for-folder)]",
+                                })}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-[var(--text-black-for-folder)] font-medium">
+                                {getChatDisplayName(chat)}
+                              </p>
+                              <p className="text-[var(--text-dim)] text-xs">
+                                {chat.created_at
+                                  ? new Date(
+                                    chat.created_at
+                                  ).toLocaleDateString(language === "ru" ? "ru-RU" : "en-US")
+                                  : t("chat.newChat")}
+                              </p>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                              <MdCheck className="text-sm text-white" />
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </main>
+
+                {/* Футер */}
+                <footer className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-tertiary)]">
+                  <button
+                    onClick={handleChatSelectorClose}
+                    className="w-full px-4 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent)]/80 transition-colors"
+                  >
+                    {t("chat.done")}
+                  </button>
+                </footer>
+              </section>
+            </section>
+          )}
+
+          {/* Футер с кнопками */}
+          <footer className="flex justify-end space-x-4 p-6 border-t border-[var(--border-color)] bg-[var(--bg-tertiary)]">
+            <button
+              onClick={handleClose}
+              className="px-6 py-2 text-[var(--text-black-for-folder)] font-medium hover:text-[var(--text-white)] transition-colors"
+            >
+              {t("common.cancel")}
             </button>
-          </div>
+            <button
+              onClick={handleCreateFolder}
+              disabled={!folderName.trim()}
+              className="px-6 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent)]/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isEditMode ? t("common.save") : t("common.create")}
+            </button>
+          </footer>
+        </section>
+      </section>
 
-          {/* Инструкция */}
-          <div className="text-[var(--text-dim)] text-xs leading-relaxed">
-            {t("chat.selectChatsDescription")}
-          </div>
-        </div>
-
-        {/* Селектор чатов */}
-        {chatSelectorRendered && (
-          <div
-            className={`fixed inset-0 z-[55] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm ${
-              chatSelectorShown ? "ai-panel-backdrop" : "ai-panel-backdrop-closing"
-            }`}
+      {/* Всплывающее окно выбора иконок */}
+      {
+        showIconSelector && (
+          <section
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+            aria-label="Icon Selector Backdrop"
             style={{ paddingTop: '120px', paddingBottom: '20px' }}
             onClick={(e) => {
               if (e.target === e.currentTarget) {
-                handleChatSelectorClose();
+                setShowIconSelector(false);
               }
             }}
           >
-            <div
-              ref={chatSelectorRef}
-              onTransitionEnd={handleChatSelectorTransitionEnd}
-              className={`bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-hidden ${
-                chatSelectorShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
-              }`}
+            <section
+              className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm mx-4 max-h-[calc(100dvh-160px)] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
               style={{
                 background:
@@ -655,233 +801,88 @@ const CreateFolderForm = ({
               }}
             >
               {/* Заголовок */}
-              <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
+              <header className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
                 <h3 className="text-lg font-semibold text-[var(--text-black-for-folder)]">
-                  {t("chat.selectChats")}
+                  {t("chat.selectFolderIcon")}
                 </h3>
                 <button
-                  onClick={handleChatSelectorClose}
+                  onClick={() => setShowIconSelector(false)}
                   className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-white)] transition-colors"
                 >
                   <MdClose className="text-xl" />
                 </button>
-              </div>
+              </header>
 
-              {/* Поиск */}
-              <div className="p-4 border-b border-[var(--border-color)]">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t("chat.searchChatsPlaceholder")}
-                    className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg text-[var(--text-black-for-folder)] placeholder-[var(--text-dim)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-                  />
-                </div>
-              </div>
+              {/* Сетка иконок */}
+              <main className="p-4">
+                <ul className="grid grid-cols-4 gap-3 list-none p-0 m-0">
+                  {[
+                    "folder",
+                    "home",
+                    "business",
+                    "work",
+                    "school",
+                    "person",
+                    "favorite",
+                    "star",
+                    "psychology",
+                    "calculate",
+                    "translate",
+                    "wb_sunny",
+                    "auto_awesome",
+                    "notifications",
+                    "sports",
+                    "music",
+                    "movie",
+                    "restaurant",
+                    "shopping",
+                    "car",
+                  ].map((iconName) => {
+                    const IconComponent = getFolderIcon(iconName);
+                    const isSelected = selectedIcon === iconName;
 
-              {/* Список чатов */}
-              <div className="max-h-96 overflow-y-auto">
-                {filteredChats.map((chat) => {
-                  const avatar = getChatAvatar(chat);
-                  const isSelected = selectedChats.some(
-                    (selected) => selected.id === chat.id
-                  );
-
-                  return (
-                    <div
-                      key={chat.id}
-                      onClick={() => handleChatSelect(chat)}
-                      className="flex items-center justify-between p-3 hover:bg-[var(--hover-bg)] transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center space-x-3">
-                        {avatar.type === "image" ? (
-                          <img
-                            src={avatar.src}
-                            alt={chat.title || "Chat"}
-                            className="w-8 h-8 rounded-full object-cover"
-                            loading="lazy"
+                    return (
+                      <li
+                        key={iconName}
+                        onClick={() => handleIconSelect(iconName)}
+                        className={`flex items-center justify-center p-3 rounded-lg cursor-pointer transition-all duration-200 ${isSelected
+                          ? "bg-[var(--accent)]/20 border-2 border-[var(--accent)] scale-105"
+                          : "hover:bg-[var(--hover-bg)] hover:scale-105"
+                          }`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${isSelected
+                            ? "bg-[var(--accent)]/30"
+                            : "bg-[var(--bg-primary)]"
+                            }`}
+                        >
+                          <IconComponent
+                            className={`text-xl ${isSelected
+                              ? "text-[var(--text-black-for-folder)]"
+                              : "text-[var(--text-dim)]"
+                              }`}
                           />
-                        ) : avatar.type === "group" ? (
-                          <div className="relative w-8 h-8 rounded-full overflow-hidden">
-                            <div
-                              className="absolute inset-0 bg-center bg-cover"
-                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
-                              aria-hidden="true"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center text-white">
-                              {React.createElement(getGroupIcon(avatar.icon), {
-                                className: "text-sm",
-                                style: { transform: "scale(0.7)" },
-                              })}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className={`w-8 h-8 rounded-full ${avatar.colorClass || "bg-[var(--accent)]/20"} flex items-center justify-center`}>
-                            {React.createElement(avatar.icon, {
-                              className: "text-lg text-[var(--text-black-for-folder)]",
-                            })}
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-[var(--text-black-for-folder)] font-medium">
-                            {getChatDisplayName(chat)}
-                          </p>
-                          <p className="text-[var(--text-dim)] text-xs">
-                            {chat.created_at
-                              ? new Date(
-                                  chat.created_at
-                                ).toLocaleDateString(language === "ru" ? "ru-RU" : "en-US")
-                              : t("chat.newChat")}
-                          </p>
                         </div>
-                      </div>
-                      {isSelected && (
-                        <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
-                          <MdCheck className="text-sm text-white" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </main>
 
               {/* Футер */}
-              <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-tertiary)]">
+              <footer className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-tertiary)]">
                 <button
-                  onClick={handleChatSelectorClose}
+                  onClick={() => setShowIconSelector(false)}
                   className="w-full px-4 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent)]/80 transition-colors"
                 >
                   {t("chat.done")}
                 </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Футер с кнопками */}
-        <div className="flex justify-end space-x-4 p-6 border-t border-[var(--border-color)] bg-[var(--bg-tertiary)]">
-          <button
-            onClick={handleClose}
-            className="px-6 py-2 text-[var(--text-black-for-folder)] font-medium hover:text-[var(--text-white)] transition-colors"
-          >
-            {t("common.cancel")}
-          </button>
-          <button
-            onClick={handleCreateFolder}
-            disabled={!folderName.trim()}
-            className="px-6 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent)]/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isEditMode ? t("common.save") : t("common.create")}
-          </button>
-        </div>
-      </div>
-
-      {/* Всплывающее окно выбора иконок */}
-      {showIconSelector && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-          style={{ paddingTop: '120px', paddingBottom: '20px' }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowIconSelector(false);
-            }
-          }}
-        >
-          <div
-            className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm mx-4 max-h-[calc(100dvh-160px)] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background:
-                "linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%)",
-              border: "1px solid var(--border-color)",
-            }}
-          >
-            {/* Заголовок */}
-            <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
-              <h3 className="text-lg font-semibold text-[var(--text-black-for-folder)]">
-                {t("chat.selectFolderIcon")}
-              </h3>
-              <button
-                onClick={() => setShowIconSelector(false)}
-                className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-white)] transition-colors"
-              >
-                <MdClose className="text-xl" />
-              </button>
-            </div>
-
-            {/* Сетка иконок */}
-            <div className="p-4">
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  "folder",
-                  "home",
-                  "business",
-                  "work",
-                  "school",
-                  "person",
-                  "favorite",
-                  "star",
-                  "psychology",
-                  "calculate",
-                  "translate",
-                  "wb_sunny",
-                  "auto_awesome",
-                  "notifications",
-                  "sports",
-                  "music",
-                  "movie",
-                  "restaurant",
-                  "shopping",
-                  "car",
-                ].map((iconName) => {
-                  const IconComponent = getFolderIcon(iconName);
-                  const isSelected = selectedIcon === iconName;
-
-                  return (
-                    <div
-                      key={iconName}
-                      onClick={() => handleIconSelect(iconName)}
-                      className={`flex items-center justify-center p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                        isSelected
-                          ? "bg-[var(--accent)]/20 border-2 border-[var(--accent)] scale-105"
-                          : "hover:bg-[var(--hover-bg)] hover:scale-105"
-                      }`}
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          isSelected
-                            ? "bg-[var(--accent)]/30"
-                            : "bg-[var(--bg-primary)]"
-                        }`}
-                      >
-                        <IconComponent
-                          className={`text-xl ${
-                            isSelected
-                              ? "text-[var(--text-black-for-folder)]"
-                              : "text-[var(--text-dim)]"
-                          }`}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Футер */}
-            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-tertiary)]">
-              <button
-                onClick={() => setShowIconSelector(false)}
-                className="w-full px-4 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent)]/80 transition-colors"
-              >
-                {t("chat.done")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+              </footer>
+            </section>
+          </section>
+        )
+      }
+    </>
   );
 };
 

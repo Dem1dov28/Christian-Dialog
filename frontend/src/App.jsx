@@ -12,6 +12,8 @@ import DeleteChatModal from "./components/chat/DeleteChatModal.jsx";
 import ConnectionStatus from "./components/common/ConnectionStatus.jsx";
 import { Toaster } from "./components/ui/toaster.jsx";
 import { LazyGoogleOAuthProvider } from "./components/auth/LazyGoogleOAuthProvider.jsx";
+import { SEO } from "./components/common/SEO";
+import { getPersonSchema, getCollectionSchema } from "./utils/seoUtils";
 
 // Lazy loaded page components for better initial load performance
 const Login = lazy(() => import("./pages/Login.jsx"));
@@ -63,7 +65,7 @@ const SupportModalNew = lazy(() => import("./components/modals/SupportModalNew.j
 function MainApp() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Используем кастомные хуки для управления состоянием
   const appState = useAppState();
   const [isInitialLoadComplete, setIsInitialLoadComplete] = React.useState(false);
@@ -445,7 +447,7 @@ function MainApp() {
   React.useEffect(() => {
     // Добавляем класс для фонового изображения темы
     document.body.classList.add('app-with-theme-bg');
-    
+
     // Cleanup при размонтировании
     return () => {
       document.body.classList.remove('app-with-theme-bg');
@@ -472,14 +474,14 @@ function MainApp() {
     // Ждём полной загрузки и загрузки чатов
     // Проверяем, что это первая загрузка (не возврат назад)
     const hasRedirected = sessionStorage.getItem('app_initial_redirect_done');
-    
+
     if (isInitialLoadComplete && hasLoadedConversations && location.pathname === '/' && !hasRedirected) {
       sessionStorage.setItem('app_initial_redirect_done', 'true');
-      
+
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
       const hasChats = conversations && conversations.length > 0;
       const shouldOpenLibrary = !isMobile || !hasChats;
-      
+
       if (shouldOpenLibrary) {
         navigate('/Library', { replace: true });
       }
@@ -489,14 +491,14 @@ function MainApp() {
   // Синхронизация URL с состоянием (обработка кнопки "назад" в браузере)
   // Используем ref для отслеживания предыдущего pathname
   const prevPathnameRef = React.useRef(location.pathname);
-  
+
   React.useEffect(() => {
     const prevPathname = prevPathnameRef.current;
     const currentPathname = location.pathname;
-    
+
     // Обновляем ref для следующего рендера
     prevPathnameRef.current = currentPathname;
-    
+
     // При возврате на главную страницу (/), сбрасываем всё состояние как при нажатии кнопки "назад"
     // Исключение: переход с /Subscription — это просто закрытие overlay планов, не сбрасываем состояние
     if (currentPathname === '/' && prevPathname !== '/' && prevPathname !== '/Subscription') {
@@ -522,7 +524,7 @@ function MainApp() {
         setIsCompactChatOpen(false);
       }
     }
-    
+
     // Открываем PricingPage если URL /Subscription, но страница не видна
     // Не открываем, если пользователь только что закрыл панель (isClosingPricingRef)
     if (currentPathname === '/Subscription' && !isPricingPageVisible && !isClosingPricingRef.current) {
@@ -540,7 +542,7 @@ function MainApp() {
 
   // На главной странице без активного чата всегда показываем sidebar
   const isHomePageWithoutChat = location.pathname === '/' && !activeChatId && !isInlineLibraryOpen;
-  
+
   const shouldRenderSidebar =
     isProfileVisible ||
     isHomePageWithoutChat ||
@@ -556,6 +558,14 @@ function MainApp() {
 
   return (
     <div className="flex h-full overflow-hidden w-full">
+      <SEO
+        title={activeConversation ? `${t("chat.chatWith", { name: activeConversation.title || activeConversation.agent_name })}` : t("library.title")}
+        description={activeConversation?.agent_description || t("library.subtitle")}
+        keywords={`${activeConversation?.agent_name || ""}, ${t("common.keywords")}`}
+        schema={activeConversation
+          ? getPersonSchema(activeConversation)
+          : getCollectionSchema(agents)}
+      />
       <DrawerMenu
         isOpen={isDrawerOpen}
         onClose={closeDrawer}
@@ -796,7 +806,7 @@ function PublicRoute({ children, allowAuthenticated = false }) {
     // На десктопе: всегда открываем библиотеку
     const hasChats = conversations && conversations.length > 0;
     const shouldOpenLibrary = !isMobile || !hasChats;
-    
+
     return <Navigate to={shouldOpenLibrary ? "/Library" : "/"} replace />;
   }
 
@@ -847,95 +857,95 @@ export default function App() {
                                           </PublicRoute>
                                         }
                                       />
-                                  <Route
-                                    path="/register"
-                                    element={
-                                      <PublicRoute>
-                                        <Register />
-                                      </PublicRoute>
-                                    }
-                                  />
-                                  <Route
-                                    path="/forgot-password"
-                                    element={
-                                      <PublicRoute allowAuthenticated={true}>
-                                        <ForgotPassword />
-                                      </PublicRoute>
-                                    }
-                                  />
-                                  <Route
-                                    path="/reset-password"
-                                    element={
-                                      <PublicRoute>
-                                        <ResetPassword />
-                                      </PublicRoute>
-                                    }
-                                  />
-                                  <Route
-                                    path="/auth/telegram-callback"
-                                    element={<TelegramCallback />}
-                                  />
-                                <Route
-                                  path="/subscription-success"
-                                  element={
-                                    <ProtectedRoute>
-                                      <SubscriptionSuccess />
-                                    </ProtectedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/successful-payment"
-                                  element={
-                                    <ProtectedRoute>
-                                      <PaymentSuccess />
-                                    </ProtectedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/failed-payment"
-                                  element={
-                                    <ProtectedRoute>
-                                      <PaymentFailed />
-                                    </ProtectedRoute>
-                                  }
-                                />
+                                      <Route
+                                        path="/register"
+                                        element={
+                                          <PublicRoute>
+                                            <Register />
+                                          </PublicRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/forgot-password"
+                                        element={
+                                          <PublicRoute allowAuthenticated={true}>
+                                            <ForgotPassword />
+                                          </PublicRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/reset-password"
+                                        element={
+                                          <PublicRoute>
+                                            <ResetPassword />
+                                          </PublicRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/auth/telegram-callback"
+                                        element={<TelegramCallback />}
+                                      />
+                                      <Route
+                                        path="/subscription-success"
+                                        element={
+                                          <ProtectedRoute>
+                                            <SubscriptionSuccess />
+                                          </ProtectedRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/successful-payment"
+                                        element={
+                                          <ProtectedRoute>
+                                            <PaymentSuccess />
+                                          </ProtectedRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/failed-payment"
+                                        element={
+                                          <ProtectedRoute>
+                                            <PaymentFailed />
+                                          </ProtectedRoute>
+                                        }
+                                      />
 
-                                  {/* Защищенные маршруты */}
-                                  <Route
-                                    path="/"
-                                    element={
-                                      <ProtectedRoute>
-                                        <MainApp />
-                                      </ProtectedRoute>
-                                    }
-                                  />
-                                  <Route
-                                    path="/Library"
-                                    element={
-                                      <ProtectedRoute>
-                                        <MainApp />
-                                      </ProtectedRoute>
-                                    }
-                                  />
-                                  <Route
-                                    path="/chat"
-                                    element={
-                                      <ProtectedRoute>
-                                        <MainApp />
-                                      </ProtectedRoute>
-                                    }
-                                  />
-                                  <Route
-                                    path="/Subscription"
-                                    element={
-                                      <ProtectedRoute>
-                                        <MainApp />
-                                      </ProtectedRoute>
-                                    }
-                                  />
+                                      {/* Защищенные маршруты */}
+                                      <Route
+                                        path="/"
+                                        element={
+                                          <ProtectedRoute>
+                                            <MainApp />
+                                          </ProtectedRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/Library"
+                                        element={
+                                          <ProtectedRoute>
+                                            <MainApp />
+                                          </ProtectedRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/chat"
+                                        element={
+                                          <ProtectedRoute>
+                                            <MainApp />
+                                          </ProtectedRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/Subscription"
+                                        element={
+                                          <ProtectedRoute>
+                                            <MainApp />
+                                          </ProtectedRoute>
+                                        }
+                                      />
 
-                                  {/* 404 маршрут */}
-                                  <Route path="*" element={<NotFound />} />
+                                      {/* 404 маршрут */}
+                                      <Route path="*" element={<NotFound />} />
                                     </Routes>
                                   </LazyGoogleOAuthProvider>
                                 ) : (

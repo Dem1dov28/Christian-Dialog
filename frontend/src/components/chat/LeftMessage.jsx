@@ -1288,7 +1288,7 @@ export default function LeftMessage({
 
   if (shouldShowThinkingIndicator) {
     return (
-      <animated.div
+      <animated.article
         className={`w-full flex justify-start my-2 message-container ${className}`}
         style={{
           width: "100%",
@@ -1330,12 +1330,12 @@ export default function LeftMessage({
             color="var(--msg-left-time-color)"
           />
         </div>
-      </animated.div>
+      </animated.article>
     );
   }
 
   return (
-    <animated.div
+    <animated.article
       className={`w-full flex justify-start my-2 message-container ${className}`}
       style={{
         width: "100%",
@@ -1600,6 +1600,6 @@ export default function LeftMessage({
         )}
 
       </animated.div>
-    </animated.div>
+    </animated.article>
   );
 }

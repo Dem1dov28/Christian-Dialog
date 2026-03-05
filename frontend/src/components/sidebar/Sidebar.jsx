@@ -859,10 +859,10 @@ const Sidebar = ({
       // Определяем название чата: используем сохраненное название или стандартное с номером
       const translatedAgent = translateAgent(agent);
       let title;
-      
+
       // Проверяем, является ли название стандартным "Чат с ..." или "Chat with ..."
       const isDefaultTitle = conversation.title && (
-        conversation.title.startsWith("Чат с ") || 
+        conversation.title.startsWith("Чат с ") ||
         conversation.title.startsWith("Chat with ")
       );
 
@@ -1467,10 +1467,10 @@ const Sidebar = ({
             );
 
             const translatedAgent = agent ? translateAgent(agent) : null;
-            
+
             // Проверяем, является ли название стандартным "Чат с ..." или "Chat with ..."
             const isDefaultTitle = conversation.title && (
-              conversation.title.startsWith("Чат с ") || 
+              conversation.title.startsWith("Чат с ") ||
               conversation.title.startsWith("Chat with ")
             );
 
@@ -1800,7 +1800,7 @@ const Sidebar = ({
     }`.trim();
 
   return (
-    <div ref={containerRef} className={containerClassName}>
+    <section ref={containerRef} className={containerClassName} aria-label="Sidebar">
       {(
         <aside
           ref={sidebarRef}
@@ -1820,7 +1820,7 @@ const Sidebar = ({
             currentChatId={activeChatId}
           />
           {!isSearchOpen && (
-            <div className="relative flex-1 w-full min-h-0 overflow-hidden">
+            <main className="relative flex-1 w-full min-h-0 overflow-hidden">
               <AnimatePresence mode="sync" initial={false} custom={direction}>
                 <motion.div
                   key={activeFolder}
@@ -1876,7 +1876,7 @@ const Sidebar = ({
                   <MdAdd className="text-white text-2xl" />
                 </button>
               )}
-            </div>
+            </main>
           )}
           {/** Invisible right-edge resizer hit area inside aside */}
           {isMobileViewport || isFullWidth ? null : (
@@ -1948,7 +1948,7 @@ const Sidebar = ({
       )}
 
       <ProfileScreen isOpen={showProfile} {...mergedProfileScreenProps} />
-    </div>
+    </section>
   );
 };
 

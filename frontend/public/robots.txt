@@ -1,5 +1,5 @@
 # robots.txt for epochaldialog.com
-# Last updated: 2026-02-18
+# Last updated: 2026-03-05
 
 User-agent: *
 Allow: /
@@ -12,6 +12,8 @@ Allow: /reset-password
 
 # Private pages - disallow indexing (require authentication)
 Disallow: /subscription-success
+Disallow: /successful-payment
+Disallow: /failed-payment
 
 # API endpoints - disallow crawling
 Disallow: /api/

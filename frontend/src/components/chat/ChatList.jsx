@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import ChatItem from "./ChatItem";
 
 const ChatList = ({
@@ -20,6 +21,7 @@ const ChatList = ({
   onPinInFolder = null,
   onUnpinFromFolder = null,
 }) => {
+  const { t } = useLanguage();
   const containerRef = useRef(null);
 
   const handleChatClick = (chatId) => {
@@ -48,7 +50,7 @@ const ChatList = ({
     if (folderId && pinnedChatsInFolder.length >= 0) {
       // Нормализуем типы: преобразуем все ID в строки для надежного сравнения
       const normalizedPinnedChats = pinnedChatsInFolder.map(id => String(id));
-      
+
       const pinnedInFolder = items.filter((item) => {
         const itemIdStr = String(item.id);
         return normalizedPinnedChats.includes(itemIdStr);
@@ -103,66 +105,70 @@ const ChatList = ({
   }, [items, pinnedChats, folderId, pinnedChatsInFolder]);
 
   return (
-    <div
+    <nav
       ref={containerRef}
       className="flex-1 overflow-y-auto overflow-x-hidden select-none chat-scrollbar"
+      aria-label={t("common.chatList") || "Chat list"}
     >
-      {sortedItems.map((item) => {
-        // Нормализуем сравнение ID для правильной подсветки (поддержка строк и чисел)
-        const itemId = String(item.id);
-        const normalizedActiveChatId = activeChatId ? String(activeChatId) : null;
-        const isSelected = normalizedActiveChatId === itemId;
-        
-        return (
-        <ChatItem
-          key={item.id}
-          id={item.id}
-          title={item.title}
-          time={item.time}
-          preview={item.preview}
-          colorClass={item.colorClass}
-          iconName={item.iconName}
-          imageSrc={item.imageSrc}
-          isSelected={isSelected}
-          unreadCount={item.unreadCount || 0}
-          onClick={() => handleChatClick(item.id)}
-          onDelete={onDeleteChat}
-          hasConversation={item.hasConversation}
-          agentId={item.agentId}
-          conversationId={item.conversationId}
-          // Новые пропсы для групповых чатов
-          isGroup={item.isGroup || false}
-          groupAvatar={item.groupAvatar || null}
-          // Пропс для системного чата
-          isSystemChat={item.isSystemChat || false}
-          onAddToCollection={onAddToCollection}
-          onPinToTop={onPinToTop}
-          onDeleteAgent={onDeleteAgent}
-          onUnsubscribeChannel={onUnsubscribeChannel}
-          onHideChat={onHideChat}
-          isPinned={
-            folderId
-              ? pinnedChatsInFolder.map(id => String(id)).includes(String(item.id))
-              : pinnedChats.includes(item.id.toString())
-          }
-          // Пропсы для закрепления в папках
-          folderId={folderId}
-          onPinInFolder={onPinInFolder}
-          onUnpinFromFolder={onUnpinFromFolder}
-          isPinnedInFolder={
-            folderId ? pinnedChatsInFolder.map(id => String(id)).includes(String(item.id)) : false
-          }
-          isChannel={item.is_channel || false}
-          canWriteChannel={item.can_write || false}
-          channelDescription={
-            item.channel_description ||
-            item.channelDescription ||
-            ""
-          }
-        />
-        );
-      })}
-    </div>
+      <ul className="list-none p-0 m-0">
+        {sortedItems.map((item) => {
+          // Нормализуем сравнение ID для правильной подсветки (поддержка строк и чисел)
+          const itemId = String(item.id);
+          const normalizedActiveChatId = activeChatId ? String(activeChatId) : null;
+          const isSelected = normalizedActiveChatId === itemId;
+
+          return (
+            <li key={item.id} className="list-none p-0 m-0">
+              <ChatItem
+                id={item.id}
+                title={item.title}
+                time={item.time}
+                preview={item.preview}
+                colorClass={item.colorClass}
+                iconName={item.iconName}
+                imageSrc={item.imageSrc}
+                isSelected={isSelected}
+                unreadCount={item.unreadCount || 0}
+                onClick={() => handleChatClick(item.id)}
+                onDelete={onDeleteChat}
+                hasConversation={item.hasConversation}
+                agentId={item.agentId}
+                conversationId={item.conversationId}
+                // Новые пропсы для групповых чатов
+                isGroup={item.isGroup || false}
+                groupAvatar={item.groupAvatar || null}
+                // Пропс для системного чата
+                isSystemChat={item.isSystemChat || false}
+                onAddToCollection={onAddToCollection}
+                onPinToTop={onPinToTop}
+                onDeleteAgent={onDeleteAgent}
+                onUnsubscribeChannel={onUnsubscribeChannel}
+                onHideChat={onHideChat}
+                isPinned={
+                  folderId
+                    ? pinnedChatsInFolder.map(id => String(id)).includes(String(item.id))
+                    : pinnedChats.includes(item.id.toString())
+                }
+                // Пропсы для закрепления в папках
+                folderId={folderId}
+                onPinInFolder={onPinInFolder}
+                onUnpinFromFolder={onUnpinFromFolder}
+                isPinnedInFolder={
+                  folderId ? pinnedChatsInFolder.map(id => String(id)).includes(String(item.id)) : false
+                }
+                isChannel={item.is_channel || false}
+                canWriteChannel={item.can_write || false}
+                channelDescription={
+                  item.channel_description ||
+                  item.channelDescription ||
+                  ""
+                }
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 };
 

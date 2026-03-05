@@ -42,7 +42,7 @@ const ChatItem = ({
   imageSrc,
   isSelected = false,
   unreadCount = 0,
-  onClick = () => {},
+  onClick = () => { },
   onDelete = null,
   id,
   agentId,
@@ -166,11 +166,10 @@ const ChatItem = ({
   }, []);
 
   return (
-    <div className="relative w-full">
+    <article className="relative w-full">
       <div
-        className={`has-ripple relative flex items-center w-full h-16 px-1.5 py-1.5 chat-item select-none ${
-          isPressed ? "chat-item-pressed" : ""
-        } ${isSelected ? "chat-item-selected" : ""}`}
+        className={`has-ripple relative flex items-center w-full h-16 px-1.5 py-1.5 chat-item select-none ${isPressed ? "chat-item-pressed" : ""
+          } ${isSelected ? "chat-item-selected" : ""}`}
         onClick={handleClick}
         onContextMenu={handleRightClick}
         onPointerDown={() => setIsPressed(true)}
@@ -197,9 +196,8 @@ const ChatItem = ({
               />
             ) : (
               <div
-                className={`w-12 h-12 rounded-full ${
-                  colorClass || "bg-[var(--accent)]"
-                } flex items-center justify-center text-white shadow-md select-none`}
+                className={`w-12 h-12 rounded-full ${colorClass || "bg-[var(--accent)]"
+                  } flex items-center justify-center text-white shadow-md select-none`}
               >
                 <MdNotifications style={{ fontSize: "26px" }} />
               </div>
@@ -236,9 +234,8 @@ const ChatItem = ({
             />
           ) : (
             <div
-              className={`w-12 h-12 rounded-full ${
-                colorClass || "bg-[var(--accent)]"
-              } flex items-center justify-center text-white shadow-md select-none`}
+              className={`w-12 h-12 rounded-full ${colorClass || "bg-[var(--accent)]"
+                } flex items-center justify-center text-white shadow-md select-none`}
             >
               <IconComponent
                 style={{ fontSize: "26px", transform: "scale(0.8)" }}
@@ -249,14 +246,13 @@ const ChatItem = ({
         <div className="flex-1 min-w-0 w-full">
           <div className="flex justify-between items-center mb-0.5 w-full">
             <div className="flex-1 min-w-0">
-              <p className="truncate text-base font-semibold text-[var(--text-white)]">
+              <h3 className="truncate text-base font-semibold text-[var(--text-white)] p-0 m-0">
                 {title}
-              </p>
+              </h3>
             </div>
             <p
-              className={`text-[12px] ${
-                isSelected ? "text-[var(--text-white)]" : "text-[var(--text-gray)]"
-              }`}
+              className={`text-[12px] ${isSelected ? "text-[var(--text-white)]" : "text-[var(--text-gray)]"
+                }`}
             >
               {time}
             </p>
@@ -264,9 +260,8 @@ const ChatItem = ({
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center flex-1 min-w-0 w-full">
               <p
-                className={`flex-1 min-w-0 text-[13px] truncate ${
-                  isSelected ? "text-[var(--text-white)]" : "text-[var(--text-gray)]"
-                }`}
+                className={`flex-1 min-w-0 text-[13px] truncate ${isSelected ? "text-[var(--text-white)]" : "text-[var(--text-gray)]"
+                  }`}
               >
                 {isChannel && channelDescription ? channelDescription : preview}
               </p>
@@ -277,13 +272,12 @@ const ChatItem = ({
                 }
                 return shouldShowPin ? (
                   <BsPinFill
-                    className={`ml-1 text-xs ${
-                      isSelected
-                        ? "text-[var(--text-white)]"
-                        : folderId
+                    className={`ml-1 text-xs ${isSelected
+                      ? "text-[var(--text-white)]"
+                      : folderId
                         ? "text-[var(--accent)]"
                         : "text-[var(--text-gray)]"
-                    }`}
+                      }`}
                     style={{ fontSize: "12px" }}
                     title={
                       folderId ? t("chat.pinnedInFolder") : t("chat.pinnedGlobally")
@@ -311,11 +305,11 @@ const ChatItem = ({
         const isModelChat = agent && (() => {
           const category = (agent.category || "").toLowerCase();
           const synonyms = ["models", "модели", "ai модели", "ai models"];
-          
+
           if (synonyms.some(syn => category === syn || category.includes(syn))) {
             return true;
           }
-          
+
           const name = agent.name.toLowerCase();
           const modelNames = ["deepseek", "assistant", "ai", "gpt", "claude", "grok", "gemini"];
           return modelNames.some(modelName => name.includes(modelName));
@@ -366,7 +360,7 @@ const ChatItem = ({
         />,
         document.body
       )}
-    </div>
+    </article>
   );
 };
 

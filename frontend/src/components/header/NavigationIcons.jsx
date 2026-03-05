@@ -4,13 +4,13 @@ import SidebarItem from "../sidebar/SidebarItem";
 import FolderContextMenu from "./FolderContextMenu";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-const NavigationIcons = ({ 
-  items = [], 
-  folders = [], 
-  activeId, 
-  onMenuClick, 
-  onFolderChange, 
-  onSettingsClick, 
+const NavigationIcons = ({
+  items = [],
+  folders = [],
+  activeId,
+  onMenuClick,
+  onFolderChange,
+  onSettingsClick,
   onReorderItems,
   // Новые пропсы для обработчиков действий
   onFolderHide,
@@ -80,23 +80,23 @@ const NavigationIcons = ({
   const handleDrop = useCallback((e, targetItem) => {
     e.preventDefault();
     console.log('Drop event:', { draggedItem, targetItem, onReorderItems });
-    
+
     // Проверяем, что перетаскиваемые элементы существуют
-    if (draggedItem && targetItem && 
-        draggedItem.id !== targetItem.id && 
-        onReorderItems) {
-      
+    if (draggedItem && targetItem &&
+      draggedItem.id !== targetItem.id &&
+      onReorderItems) {
+
       // Находим индексы в общем массиве items
       const draggedIndex = items.findIndex(item => item && item.id === draggedItem.id);
       const targetIndex = items.findIndex(item => item && item.id === targetItem.id);
-      
+
       console.log('Reordering:', { draggedIndex, targetIndex });
-      
+
       if (draggedIndex !== -1 && targetIndex !== -1) {
         onReorderItems(draggedIndex, targetIndex);
       }
     }
-    
+
     setDraggedItem(null);
     setDragOverItem(null);
   }, [draggedItem, items, onReorderItems]);
@@ -173,8 +173,8 @@ const NavigationIcons = ({
   }, [onMarkAsRead]);
 
   return (
-    <div className="w-[80px] bg-[var(--bg-primary)] flex flex-col items-center py-4 space-y-4 border-r border-[var(--border-color)] select-none">
-      <button 
+    <aside className="w-[80px] bg-[var(--bg-primary)] flex flex-col items-center py-4 space-y-4 border-r border-[var(--border-color)] select-none" aria-label="NavigationIcons">
+      <button
         className="p-2 rounded-lg text-[var(--text-gray)] hover:bg-[var(--hover-bg)] transition-colors"
         onClick={onMenuClick}
       >
@@ -188,7 +188,7 @@ const NavigationIcons = ({
           const isActive = currentId === id || String(currentId) === String(id);
           const isDragging = draggedItem?.id === id || (draggedItem?.id && String(draggedItem.id) === String(id));
           const isDragOver = dragOverItem?.id === id || (dragOverItem?.id && String(dragOverItem.id) === String(id));
-          
+
           return (
             <div
               key={id}
@@ -198,13 +198,10 @@ const NavigationIcons = ({
               onDragOver={(e) => handleDragOver(e, item)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, item)}
-              className={`transition-all duration-200 ${
-                isDragging ? 'opacity-50 scale-95 cursor-move' : ''
-              } ${
-                isDragOver ? 'scale-105 ring-2 ring-purple-400' : ''
-              } ${
-                draggable && !disabled ? 'cursor-move' : ''
-              }`}
+              className={`transition-all duration-200 ${isDragging ? 'opacity-50 scale-95 cursor-move' : ''
+                } ${isDragOver ? 'scale-105 ring-2 ring-purple-400' : ''
+                } ${draggable && !disabled ? 'cursor-move' : ''
+                }`}
               style={{
                 cursor: draggable && !disabled ? 'move' : 'default'
               }}
@@ -248,7 +245,7 @@ const NavigationIcons = ({
           onExited={handleMenuExited}
         />
       )}
-    </div>
+    </aside>
   );
 };
 

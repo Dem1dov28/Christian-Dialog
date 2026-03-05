@@ -1,150 +1,155 @@
 <!doctype html>
 <html lang="ru">
-  <head>
-    <!-- Charset MUST be within first 1024 bytes for security -->
-    <meta charset="UTF-8" />
-    
-    <!-- Theme initialization script - MUST be early to prevent FOUC -->
-    <script>
-      (function () {
-        try {
-          const stored =
-            localStorage.getItem("theme") ||
-            sessionStorage.getItem("theme") ||
-            "dark";
 
-          // Нормализуем старое значение "violet" к новой тёмной теме
-          let theme = stored === "violet" ? "dark" : stored;
-          if (!["light", "dark", "blue", "pastel"].includes(theme)) {
-            theme = "dark";
-          }
+<head>
+  <!-- Charset MUST be within first 1024 bytes for security -->
+  <meta charset="UTF-8" />
 
-          if (stored !== theme) {
-            try {
-              localStorage.setItem("theme", theme);
-            } catch (_) {}
-          }
+  <!-- Theme initialization script - MUST be early to prevent FOUC -->
+  <script>
+    (function () {
+      try {
+        const stored =
+          localStorage.getItem("theme") ||
+          sessionStorage.getItem("theme") ||
+          "dark";
 
-          const isDarkLike = theme === "dark" || theme === "blue";
-          if (isDarkLike) {
-            document.documentElement.classList.add("dark");
-          } else {
-            document.documentElement.classList.remove("dark");
-          }
-
-          if (theme === "blue") {
-            document.documentElement.classList.add("theme-blue");
-          } else {
-            document.documentElement.classList.remove("theme-blue");
-          }
-
-          if (theme === "pastel") {
-            document.documentElement.classList.add("theme-pastel");
-          } else {
-            document.documentElement.classList.remove("theme-pastel");
-          }
-        } catch (e) {
-          // Fallback to тёмной теме
-          document.documentElement.classList.add("dark");
+        // Нормализуем старое значение "violet" к новой тёмной теме
+        let theme = stored === "violet" ? "dark" : stored;
+        if (!["light", "dark", "blue", "pastel"].includes(theme)) {
+          theme = "dark";
         }
-      })();
-    </script>
-    
-    <!-- Viewport height fix for mobile browsers.
+
+        if (stored !== theme) {
+          try {
+            localStorage.setItem("theme", theme);
+          } catch (_) { }
+        }
+
+        const isDarkLike = theme === "dark" || theme === "blue";
+        if (isDarkLike) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+
+        if (theme === "blue") {
+          document.documentElement.classList.add("theme-blue");
+        } else {
+          document.documentElement.classList.remove("theme-blue");
+        }
+
+        if (theme === "pastel") {
+          document.documentElement.classList.add("theme-pastel");
+        } else {
+          document.documentElement.classList.remove("theme-pastel");
+        }
+      } catch (e) {
+        // Fallback to тёмной теме
+        document.documentElement.classList.add("dark");
+      }
+    })();
+  </script>
+
+  <!-- Viewport height fix for mobile browsers.
          100svh (CSS) — основной способ, но не поддерживается в Chrome < 108 (Android).
          --app-height через visualViewport.height — JS-фолбек: даёт реальную видимую высоту
          на всех устройствах, применяется последним и переопределяет CSS-значения. -->
-    <script>
-      (function() {
-        function setViewportHeight() {
-          // window.innerHeight стабилен — не меняется при открытии клавиатуры.
-          // visualViewport.height использовать нельзя: он уменьшается при открытии
-          // клавиатуры и вызывает прыжок всего layout вверх.
-          var height = window.innerHeight;
-          document.documentElement.style.setProperty('--app-height', height + 'px');
-          document.documentElement.style.setProperty('--vh', (height * 0.01) + 'px');
+  <script>
+    (function () {
+      function setViewportHeight() {
+        // window.innerHeight стабилен — не меняется при открытии клавиатуры.
+        // visualViewport.height использовать нельзя: он уменьшается при открытии
+        // клавиатуры и вызывает прыжок всего layout вверх.
+        var height = window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', height + 'px');
+        document.documentElement.style.setProperty('--vh', (height * 0.01) + 'px');
+      }
+      setViewportHeight();
+      window.addEventListener('resize', setViewportHeight);
+      window.addEventListener('orientationchange', function () {
+        setTimeout(setViewportHeight, 150);
+      });
+      // Блокируем pinch-to-zoom жестами на iOS (user-scalable=no игнорируется с iOS 10)
+      // Не блокируем в полях ввода — иначе нельзя вводить текст
+      function isEditable(el) {
+        var t = el && el.tagName ? el.tagName.toUpperCase() : '';
+        return t === 'INPUT' || t === 'TEXTAREA' || (el && el.isContentEditable);
+      }
+      function blockGesture(e) {
+        if (isEditable(e.target)) return;
+        e.preventDefault();
+      }
+      document.addEventListener('gesturestart', blockGesture, { passive: false });
+      document.addEventListener('gesturechange', blockGesture, { passive: false });
+      document.addEventListener('gestureend', blockGesture, { passive: false });
+    })();
+  </script>
+
+  <!-- Primary Meta Tags -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#2d283e" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description"
+    content="Epochal Dialog - платформа для общения с AI-персонажами. Общайтесь с историческими личностями, великими мыслителями и героями прошлого с помощью искусственного интеллекта." />
+  <meta name="keywords"
+    content="диалоги с историей, AI персонажи, AI история, чат с историческими личностями, искусственный интеллект, саморазвитие, образование, Epochal Dialog, Эпохальный диалог" />
+  <meta name="author" content="Epochal Dialog" />
+  <meta name="application-name" content="Epochal Dialog" />
+  <meta name="apple-mobile-web-app-title" content="Epochal Dialog" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://epochaldialog.com/" />
+  <meta property="og:title" content="Epochal Dialog - Платформа для общения с AI-персонажами" />
+  <meta property="og:description"
+    content="Epochal Dialog - платформа для общения с AI-персонажами. Откройте для себя диалоги с великими личностями прошлого." />
+  <meta property="og:image" content="https://epochaldialog.com/preview.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Epochal Dialog" />
+  <meta property="og:locale" content="ru_RU" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://epochaldialog.com/" />
+  <meta property="twitter:title" content="Epochal Dialog - AI Платформа для диалогов" />
+  <meta property="twitter:description"
+    content="Epochal Dialog - платформа для общения с AI-персонажами. Общайтесь с историей в реальном времени." />
+  <meta property="twitter:image" content="https://epochaldialog.com/preview.jpg" />
+
+  <!-- Favicon & Manifest -->
+  <link rel="icon" type="image/webp" href="/favicon.webp" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Epochal Dialog — Общайтесь с историческими личностями через AI</title>
+  <!-- Telegram Web App SDK — только при открытии из Telegram (tgWebAppData в hash) -->
+  <script>
+    (function () {
+      try {
+        var h = window.location.hash.slice(1);
+        if (h && new URLSearchParams(h).get('tgWebAppData')) {
+          document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>');
         }
-        setViewportHeight();
-        window.addEventListener('resize', setViewportHeight);
-        window.addEventListener('orientationchange', function() {
-          setTimeout(setViewportHeight, 150);
-        });
-        // Блокируем pinch-to-zoom жестами на iOS (user-scalable=no игнорируется с iOS 10)
-        // Не блокируем в полях ввода — иначе нельзя вводить текст
-        function isEditable(el) {
-          var t = el && el.tagName ? el.tagName.toUpperCase() : '';
-          return t === 'INPUT' || t === 'TEXTAREA' || (el && el.isContentEditable);
-        }
-        function blockGesture(e) {
-          if (isEditable(e.target)) return;
-          e.preventDefault();
-        }
-        document.addEventListener('gesturestart', blockGesture, { passive: false });
-        document.addEventListener('gesturechange', blockGesture, { passive: false });
-        document.addEventListener('gestureend', blockGesture, { passive: false });
-      })();
-    </script>
-    
-    <!-- Primary Meta Tags -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#2d283e" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="description" content="Epochal Dialog - платформа для общения с AI-агентами. Общайтесь с историческими личностями, мыслителями и персонажами с помощью искусственного интеллекта." />
-    <meta name="keywords" content="AI чат, искусственный интеллект, исторические личности, диалоги, Epochal Dialog" />
-    <meta name="author" content="Epochal Dialog" />
-    <meta name="robots" content="index, follow" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://epochaldialog.com" />
-    <meta property="og:title" content="Epochal Dialog - AI платформа для диалогов" />
-    <meta property="og:description" content="Общайтесь с историческими личностями и AI-персонажами. Платформа для увлекательных диалогов с искусственным интеллектом." />
-    <meta property="og:image" content="https://epochaldialog.com/preview.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="Epochal Dialog" />
-    <meta property="og:locale" content="ru_RU" />
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://epochaldialog.com" />
-    <meta property="twitter:title" content="Epochal Dialog - AI платформа для диалогов" />
-    <meta property="twitter:description" content="Общайтесь с историческими личностями и AI-персонажами. Платформа для увлекательных диалогов с искусственным интеллектом." />
-    <meta property="twitter:image" content="https://epochaldialog.com/preview.jpg" />
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/webp" href="/favicon.webp" />
-    <title>Epochal Dialog — Общайтесь с историческими личностями через AI</title>
-    <!-- Telegram Web App SDK — только при открытии из Telegram (tgWebAppData в hash) -->
-    <script>
-      (function(){
-        try {
-          var h = window.location.hash.slice(1);
-          if (h && new URLSearchParams(h).get('tgWebAppData')) {
-            document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>');
-          }
-        } catch(e) {}
-      })();
-    </script>
-    
-    <!-- Schema.org Structured Data -->
-    <script type="application/ld+json">
+      } catch (e) { }
+    })();
+  </script>
+
+  <!-- Schema.org Structured Data -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "Epochal Dialog",
+      "alternateName": ["EpochalDialog", "Эпохальный Диалог"],
       "url": "https://epochaldialog.com/",
       "description": "Платформа для общения с историческими личностями через AI. Общайтесь с великими мыслителями, учеными и философами с помощью искусственного интеллекта.",
-      "inLanguage": "ru",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://epochaldialog.com/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "inLanguage": "ru"
     }
     </script>
-    <script type="application/ld+json">
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -154,128 +159,140 @@
       "sameAs": []
     }
     </script>
-    
-    <!-- Resource hints for faster font loading -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Preload critical font files for Roboto (primary UI font) -->
-    <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOlCnqEu92Fr1MmWUlfBBc4.woff2" as="font" type="font/woff2" crossorigin />
-    
-    <!-- Google Fonts - Loaded asynchronously to prevent render blocking -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap" /></noscript>
-    
-    <!-- Critical CSS - inlined for fast initial render -->
-    <style>
-      /**
+
+  <!-- Resource hints for faster font loading -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Preload critical font files for Roboto (primary UI font) -->
+  <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2" as="font"
+    type="font/woff2" crossorigin />
+  <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v32/KFOlCnqEu92Fr1MmWUlfBBc4.woff2" as="font"
+    type="font/woff2" crossorigin />
+
+  <!-- Google Fonts - Loaded asynchronously to prevent render blocking -->
+  <link rel="preload"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap"
+    as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Roboto:wght@400;500;700&family=Rubik+Mono+One&display=swap" />
+  </noscript>
+
+  <!-- Critical CSS - inlined for fast initial render -->
+  <style>
+    /**
        * Critical CSS - Inline styles for fast initial render
        * These styles are loaded inline in index.html to prevent FOUC
        */
 
-      /* Critical layout styles */
-      html {
-        scroll-behavior: smooth;
-      }
+    /* Critical layout styles */
+    html {
+      scroll-behavior: smooth;
+    }
 
-      /* Prevent FOUC during theme initialization */
-      html.dark {
-        background-color: #2d283e;
-        color: rgba(209, 215, 224, 0.98);
-      }
+    /* Prevent FOUC during theme initialization */
+    html.dark {
+      background-color: #2d283e;
+      color: rgba(209, 215, 224, 0.98);
+    }
 
-      html:not(.dark) {
-        background-color: #ffffff;
-        color: #1f2937;
-      }
+    html:not(.dark) {
+      background-color: #ffffff;
+      color: #1f2937;
+    }
 
-      /* Critical body styles */
-      body {
-        margin: 0;
-        padding: 0;
-        min-height: 100dvh;
-        min-height: var(--app-height, 100dvh);
-        overflow-x: hidden;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
+    /* Critical body styles */
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100dvh;
+      min-height: var(--app-height, 100dvh);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
-      /* Loading state - prevent layout shift */
-      #root {
-        min-height: 100dvh;
-        min-height: var(--app-height, 100dvh);
-      }
+    /* Loading state - prevent layout shift */
+    #root {
+      min-height: 100dvh;
+      min-height: var(--app-height, 100dvh);
+    }
 
-      /* Critical font-family fallback to prevent FOUT */
-      .font-sans {
-        font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      }
+    /* Critical font-family fallback to prevent FOUT */
+    .font-sans {
+      font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
 
-      /* Prevent text selection during load */
-      .loading * {
-        user-select: none;
-      }
+    /* Prevent text selection during load */
+    .loading * {
+      user-select: none;
+    }
 
-      /* Inputs must always be editable (Telegram WebView) */
-      input, textarea, [contenteditable="true"] {
-        -webkit-user-select: text !important;
-        user-select: text !important;
-      }
+    /* Inputs must always be editable (Telegram WebView) */
+    input,
+    textarea,
+    [contenteditable="true"] {
+      -webkit-user-select: text !important;
+      user-select: text !important;
+    }
 
-      /* Critical viewport height fix */
-      :root {
-        --vh: 1vh;
-      }
+    /* Critical viewport height fix */
+    :root {
+      --vh: 1vh;
+    }
 
-      /* App container critical styles */
-      .app-container {
-        display: flex;
-        height: 100dvh;
-        height: var(--app-height, 100dvh);
-        width: 100%;
-        overflow: hidden;
-      }
+    /* App container critical styles */
+    .app-container {
+      display: flex;
+      height: 100dvh;
+      height: var(--app-height, 100dvh);
+      width: 100%;
+      overflow: hidden;
+    }
 
-      /* Critical utility classes */
-      .flex {
-        display: flex;
-      }
+    /* Critical utility classes */
+    .flex {
+      display: flex;
+    }
 
-      .h-full {
-        height: 100%;
-      }
+    .h-full {
+      height: 100%;
+    }
 
-      .w-full {
-        width: 100%;
-      }
+    .w-full {
+      width: 100%;
+    }
 
-      .overflow-hidden {
-        overflow: hidden;
-      }
+    .overflow-hidden {
+      overflow: hidden;
+    }
 
-      /* Auth background fallback */
-      .auth-bg {
-        background-color: #2d283e;
-        background-image: linear-gradient(135deg, #2d283e 0%, #564f6f 50%, #2d283e 100%);
-      }
+    /* Auth background fallback */
+    .auth-bg {
+      background-color: #2d283e;
+      background-image: linear-gradient(135deg, #2d283e 0%, #564f6f 50%, #2d283e 100%);
+    }
 
-      /* Reduced motion preference */
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
+    /* Reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
-    </style>
-  </head>
-  <body style="background-color: var(--bg-primary); color: var(--text-white);" class="font-sans">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-  </html>
+    }
+  </style>
+</head>
+
+<body style="background-color: var(--bg-primary); color: var(--text-white);" class="font-sans">
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

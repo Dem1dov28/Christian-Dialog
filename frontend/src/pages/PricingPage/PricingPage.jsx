@@ -120,7 +120,7 @@ const PricingPage = ({ isVisible, onClose }) => {
             webApp.openTelegramLink(response.invoice_url);
             opened = true;
             setUpgradeSuccess(t("pricing.starsOpenedInTelegram") || "Окно оплаты открыто в Telegram. После оплаты обновите страницу.");
-          } catch (_) {}
+          } catch (_) { }
         }
         if (!opened) {
           window.open(response.invoice_url, "_blank", "noopener,noreferrer");
@@ -163,15 +163,15 @@ const PricingPage = ({ isVisible, onClose }) => {
   const overlay = (
     <div className={`${styles.overlay} ${isClosing ? styles.closing : ""} ${isTelegram ? "tg-safe-area-overlay" : ""}`}>
       <SEO
-        title="Тарифы и подписки"
-        description="Выберите подходящий тариф для Epochal Dialog. Бесплатный план, Plus и Pro подписки с расширенными возможностями общения с AI-историческими личностями."
-        keywords="тарифы Epochal Dialog, подписка, цены, AI чат, планы"
-        canonical="/pricing"
-        noindex={true}
+        title={t("pricing.title") || "Тарифы и подписки"}
+        description="Выберите подходящий тариф для Epochal Dialog. Расширенные возможности общения с AI-персонажами, доступ к эксклюзивным героям и отсутствие лимитов."
+        keywords={`${t("common.keywords")}, подписка, тарифы, pricing`}
+        canonical="/Subscription"
+        noindex={false}
       />
-      <div className={`${styles.container} ${isClosing ? styles.closing : ""}`}>
+      <section className={`${styles.container} ${isClosing ? styles.closing : ""}`}>
         {/* Header with close button */}
-        <div className={styles.header}>
+        <header className={styles.header}>
           <button
             className={styles.closeButton}
             onClick={handleClose}
@@ -179,14 +179,14 @@ const PricingPage = ({ isVisible, onClose }) => {
           >
             ×
           </button>
-        </div>
+        </header>
 
         {/* Main content */}
         <div className={styles.content}>
           <h1 className={styles.title}>{t("pricing.title")}</h1>
 
           {/* Pricing cards container */}
-          <div className={styles.cardsContainer}>
+          <main className={styles.cardsContainer}>
             <PricingCard
               title={pricingData.free.title}
               price={pricingData.free.price}
@@ -259,7 +259,7 @@ const PricingPage = ({ isVisible, onClose }) => {
               isCurrentPlan={isCurrentPlan("pro")}
               isDisabled={isUpgrading}
             />
-          </div>
+          </main>
 
           {/* Success/Error Messages */}
           {upgradeSuccess && (
@@ -288,7 +288,7 @@ const PricingPage = ({ isVisible, onClose }) => {
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 

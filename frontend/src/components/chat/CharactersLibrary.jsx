@@ -58,8 +58,8 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
 
       // Поиск по русскому или английскому имени
       return displayName.includes(query) ||
-             ruName.includes(query) ||
-             enName.includes(query);
+        ruName.includes(query) ||
+        enName.includes(query);
     });
   }, [allCharacters, searchQuery]);
 
@@ -85,10 +85,10 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
-      <div className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100dvh-160px)] flex flex-col">
+    <section className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" aria-label="Characters Library Overlay" style={{ paddingTop: '120px', paddingBottom: '20px' }}>
+      <section className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100dvh-160px)] flex flex-col">
         {/* Заголовок */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[var(--border-color)]">
+        <header className="flex items-center justify-between p-4 sm:p-6 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-[var(--accent)]/10">
               <MdPerson className="text-2xl text-[var(--accent)]" />
@@ -109,10 +109,10 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
           >
             <MdClose className="text-2xl text-[var(--text-white)]" />
           </button>
-        </div>
+        </header>
 
         {/* Поиск */}
-        <div className="p-4 sm:p-6 border-b border-[var(--border-color)]">
+        <section className="p-4 sm:p-6 border-b border-[var(--border-color)]">
           <div className="relative">
             <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xl text-[var(--text-gray)]" />
             <input
@@ -123,10 +123,10 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
               className="w-full pl-10 pr-4 py-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
-        </div>
+        </section>
 
         {/* Список персонажей */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {filteredCharacters.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <MdPerson className="text-6xl text-[var(--text-gray)] mb-4 opacity-50" />
@@ -137,79 +137,80 @@ const CharactersLibrary = ({ onClose, onAddCharacter }) => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <ul className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 list-none p-0 m-0">
               {filteredCharacters.map((character) => {
                 const isAdded = addedCharacterIds.includes(character.id);
                 const IconComponent = getIconComponent(character.iconName);
 
                 return (
-                  <div
-                    key={character.id}
-                    className={`group relative bg-[var(--bg-primary)] rounded-xl p-5 border transition-all duration-300 hover:scale-105 hover:shadow-lg ${isAdded
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10"
-                      : "border-[var(--border-color)] hover:border-[var(--accent)]"
-                      }`}
-                  >
-                    {/* Индикатор добавленного персонажа */}
-                    {isAdded && (
-                      <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
-                        <MdCheck className="text-white text-sm" />
-                      </div>
-                    )}
-
-                    {/* Аватар */}
-                    <div className="flex justify-center mb-4">
-                      {character.imageSrc ? (
-                        <img
-                          src={character.imageSrc}
-                          alt={character.name}
-                          className="w-16 h-16 rounded-full object-cover shadow-lg"
-                        />
-                      ) : (
-                        <div
-                          className={`w-16 h-16 rounded-full ${character.colorClass || "bg-blue-500"
-                            } flex items-center justify-center text-white shadow-lg`}
-                        >
-                          <IconComponent className="text-2xl" />
+                  <li key={character.id} className="list-none p-0 m-0">
+                    <article
+                      className={`group relative bg-[var(--bg-primary)] rounded-xl p-5 border transition-all duration-300 hover:scale-105 hover:shadow-lg ${isAdded
+                        ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                        : "border-[var(--border-color)] hover:border-[var(--accent)]"
+                        }`}
+                    >
+                      {/* Индикатор добавленного персонажа */}
+                      {isAdded && (
+                        <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                          <MdCheck className="text-white text-sm" />
                         </div>
                       )}
-                    </div>
 
-                    {/* Информация */}
-                    <div className="text-center">
-                      <h3 className="font-semibold text-[var(--text-white)] text-base mb-2 line-clamp-1">
-                        {character.name}
-                      </h3>
-                      {character.description && (
-                        <p className="text-sm text-[var(--text-gray)] line-clamp-2 mb-4">
-                          {character.description}
-                        </p>
-                      )}
+                      {/* Аватар */}
+                      <div className="flex justify-center mb-4">
+                        {character.imageSrc ? (
+                          <img
+                            src={character.imageSrc}
+                            alt={character.name}
+                            className="w-16 h-16 rounded-full object-cover shadow-lg"
+                          />
+                        ) : (
+                          <div
+                            className={`w-16 h-16 rounded-full ${character.colorClass || "bg-blue-500"
+                              } flex items-center justify-center text-white shadow-lg`}
+                          >
+                            <IconComponent className="text-2xl" />
+                          </div>
+                        )}
+                      </div>
 
-                      {/* Кнопка добавления */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAddCharacter(character.id);
-                        }}
-                        disabled={isAdded}
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${isAdded
-                          ? "bg-[var(--accent)]/20 text-[var(--accent)] cursor-default"
-                          : "bg-[var(--accent)] text-white hover:brightness-110 cursor-pointer"
-                          }`}
-                      >
-                        {isAdded ? `✓ ${t("library.added")}` : `+ ${t("library.add")}`}
-                      </button>
-                    </div>
-                  </div>
+                      {/* Информация */}
+                      <div className="text-center">
+                        <h3 className="font-semibold text-[var(--text-white)] text-base mb-2 line-clamp-1">
+                          {character.name}
+                        </h3>
+                        {character.description && (
+                          <p className="text-sm text-[var(--text-gray)] line-clamp-2 mb-4">
+                            {character.description}
+                          </p>
+                        )}
+
+                        {/* Кнопка добавления */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddCharacter(character.id);
+                          }}
+                          disabled={isAdded}
+                          className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${isAdded
+                            ? "bg-[var(--accent)]/20 text-[var(--accent)] cursor-default"
+                            : "bg-[var(--accent)] text-white hover:brightness-110 cursor-pointer"
+                            }`}
+                        >
+                          {isAdded ? `✓ ${t("library.added")}` : `+ ${t("library.add")}`}
+                        </button>
+                      </div>
+                    </article>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
-        </div>
-      </div>
-    </div>
+        </main>
+      </section>
+    </section>
   );
 };
 

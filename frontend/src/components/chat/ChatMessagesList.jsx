@@ -122,10 +122,10 @@ const ChatMessagesList = ({
     }
   };
   return (
-    <div className="-mx-3 sm:-mx-6 flex flex-col justify-end flex-1">
+    <section className="-mx-3 sm:-mx-6 flex flex-col justify-end flex-1" aria-label="Messages history list">
       <div className="chat-messages-container">
-        <div
-          className="w-full flex flex-col-reverse"
+        <ol
+          className="w-full flex flex-col-reverse list-none p-0 m-0"
           role="listbox"
           aria-multiselectable={true}
           aria-label="Messages"
@@ -150,7 +150,7 @@ const ChatMessagesList = ({
               }
 
               return (
-                <div
+                <li
                   key={`row-${message.id}`}
                   role="option"
                   aria-selected={isSelected}
@@ -163,7 +163,7 @@ const ChatMessagesList = ({
                       delete messageRefs.current[message.id];
                     }
                   }}
-                  className="w-full"
+                  className="w-full list-none p-0 m-0"
                   onMouseDown={(e) => handleMessageMouseDown(e, message.id)}
                   onMouseEnter={(e) => handleMessageMouseEnter(e, message.id)}
                   onMouseUp={handleMessageMouseUp}
@@ -193,12 +193,12 @@ const ChatMessagesList = ({
                   }}
                 >
                   <div className="px-3 sm:px-6">{renderMessage(message)}</div>
-                </div>
+                </li>
               );
             })}
-        </div>
+        </ol>
       </div>
-    </div>
+    </section>
   );
 };
 

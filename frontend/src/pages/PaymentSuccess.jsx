@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { SEO } from "@/components/common/SEO";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -16,29 +17,32 @@ export default function PaymentSuccess() {
   }, [navigate, refreshUserData]);
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        textAlign: "center",
-        background: "var(--bg-primary, #0f0f0f)",
-        color: "var(--text-white, #fff)",
-      }}
-    >
-      <div style={{ fontSize: 64, marginBottom: 20 }}>✓</div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>
-        {t("pricing.subscriptionSuccess")}
-      </h1>
-      <p style={{ color: "var(--text-dim, #888)", fontSize: 15, maxWidth: 360 }}>
-        {t("pricing.paymentSuccessHint")}
-      </p>
-      <p style={{ color: "var(--text-dim, #888)", marginTop: 24, fontSize: 13 }}>
-        {t("pricing.redirecting")}
-      </p>
-    </div>
+    <>
+      <SEO title="Оплата успешна" noindex={true} />
+      <main
+        style={{
+          minHeight: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          textAlign: "center",
+          background: "var(--bg-primary, #0f0f0f)",
+          color: "var(--text-white, #fff)",
+        }}
+      >
+        <div style={{ fontSize: 64, marginBottom: 20 }}>✓</div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>
+          {t("pricing.subscriptionSuccess")}
+        </h1>
+        <p style={{ color: "var(--text-dim, #888)", fontSize: 15, maxWidth: 360 }}>
+          {t("pricing.paymentSuccessHint")}
+        </p>
+        <p style={{ color: "var(--text-dim, #888)", marginTop: 24, fontSize: 13 }}>
+          {t("pricing.redirecting")}
+        </p>
+      </main>
+    </>
   );
 }

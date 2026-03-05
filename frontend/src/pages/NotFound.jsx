@@ -1,23 +1,32 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { SEO } from "@/components/common/SEO";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-dscreen items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-gray-600">Oops! Page not found</p>
-        <a href="/" className="text-purple-500 underline hover:text-purple-700">
-          Return to Home
-        </a>
-      </div>
-    </div>
+    <>
+      <SEO
+        title="404 - Страница не найдена"
+        noindex={true}
+      />
+      <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
+        <section className="text-center">
+          <h1 className="text-4xl font-bold text-primary mb-4">404</h1>
+          <p className="text-xl text-muted-foreground mb-8">Страница не найдена</p>
+          <Button onClick={() => navigate("/")}>
+            Вернуться на главную
+          </Button>
+        </section>
+      </main>
+    </>
   );
 };
 

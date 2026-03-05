@@ -98,7 +98,8 @@
     "other": "Другое",
     "showMore": "Показать ещё",
     "more": "ещё...",
-    "filters": "Фильтры"
+    "filters": "Фильтры",
+    "keywords": "AI чат, исторические личности, чат с ИИ, обучение, философия, великие люди, диалог с историей, эмуляция личности, искусственный интеллект, самообразование, история для детей"
   },
   "chat": {
     "newChat": "Новый чат",
@@ -304,7 +305,6 @@
     "groupsCount_one": "{{count}} группа",
     "groupsCount_few": "{{count}} группы",
     "groupsCount_many": "{{count}} групп",
-
     "participantsCount": "{{count}} участников",
     "participantsCount_one": "{{count}} участник",
     "participantsCount_few": "{{count}} участника",
