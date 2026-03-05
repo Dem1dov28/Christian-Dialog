@@ -495,8 +495,9 @@ function MainApp() {
     // Обновляем ref для следующего рендера
     prevPathnameRef.current = currentPathname;
     
-    // При возврате на главную страницу (/), сбрасываем всё состояние как при нажатии кнопки "назад" в приложении
-    if (currentPathname === '/' && prevPathname !== '/') {
+    // При возврате на главную страницу (/), сбрасываем всё состояние как при нажатии кнопки "назад"
+    // Исключение: переход с /Subscription — это просто закрытие overlay планов, не сбрасываем состояние
+    if (currentPathname === '/' && prevPathname !== '/' && prevPathname !== '/Subscription') {
       // Сбрасываем активный чат
       if (activeChatId) {
         setActiveChatId(null);

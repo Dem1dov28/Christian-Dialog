@@ -26,7 +26,7 @@ export function useGlobalLongPress() {
         time: Date.now(),
       });
 
-      // Запускаем таймер на 1000ms (1 секунда)
+      // Запускаем таймер на 500ms (0.5 сек — как в iOS/Android для контекстного меню)
       const timer = setTimeout(() => {
         const startData = touchStarts.get(element);
         if (!startData) return;
@@ -54,7 +54,7 @@ export function useGlobalLongPress() {
         // Очищаем
         longPressTimers.delete(element);
         touchStarts.delete(element);
-      }, 1000);
+      }, 500);
 
       longPressTimers.set(element, timer);
     };

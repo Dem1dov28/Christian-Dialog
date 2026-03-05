@@ -1,37 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import {
-  MdClose,
-  MdStar,
-  MdNotifications,
-  MdWork,
-  MdCalculate,
-  MdTranslate,
-  MdWbSunny,
-  MdPsychology,
-  MdAutoAwesome,
-  MdSmartToy,
-  MdGroup,
-  MdGroups,
-  MdDiversity3,
-  MdPeopleAlt,
-  MdEmojiPeople,
-  MdConnectWithoutContact,
-  MdInterpreterMode,
-  MdChat,
-  MdTheaterComedy,
-  MdStarBorder,
-  MdLocalFireDepartment,
-  MdDiamond,
-  MdBookmark,
-} from "react-icons/md";
-import { FaPeopleGroup } from "react-icons/fa6";
-import { RiTeamFill } from "react-icons/ri";
-import { PiHandsClappingDuotone } from "react-icons/pi";
-import { TbUserCog } from "react-icons/tb";
-import { useAgents } from "../../contexts/AgentsContext";
+import React, { useEffect, useRef, useState } from "react";
+import { MdClose } from "react-icons/md";
 import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 import PinnedMessagesSection from "./PinnedMessagesSection";
 import InformationSection from "./InformationSection";
 import ExportChatSection from "./ExportChatSection";
@@ -39,65 +9,7 @@ import ClearChatSection from "./ClearChatSection";
 import RemoveAgentSection from "./RemoveAgentSection";
 import HideChatSection from "./HideChatSection";
 import AgentSettingsSection from "./AgentSettingsSection";
-import ImageModal from "../chat/ImageModal";
 import { usePanelWidth } from "../../contexts/PanelWidthContext";
-
-const ExpandableDescription = ({ text }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  const textRef = useRef(null);
-  const { t } = useLanguage();
-
-  useEffect(() => {
-    setIsExpanded(false);
-  }, [text]);
-
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (textRef.current) {
-        const hasOverflow = textRef.current.scrollHeight > textRef.current.clientHeight + 1;
-        setIsOverflowing(hasOverflow);
-      }
-    };
-
-    checkOverflow();
-    const timer = setTimeout(checkOverflow, 100);
-
-    window.addEventListener('resize', checkOverflow);
-    return () => {
-      window.removeEventListener('resize', checkOverflow);
-      clearTimeout(timer);
-    };
-  }, [text]);
-
-  return (
-    <div className="flex flex-col items-center w-full px-2">
-      <p
-        ref={textRef}
-        className="text-[var(--text-gray)] text-sm text-center transition-all duration-200"
-        style={!isExpanded ? {
-          display: '-webkit-box',
-          WebkitLineClamp: 4,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden'
-        } : {}}
-      >
-        {text}
-      </p>
-      {!isExpanded && isOverflowing && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(true);
-          }}
-          className="text-blue-400 hover:text-blue-500 text-sm mt-0.5 hover:underline focus:outline-none cursor-pointer"
-        >
-          {t("common.more")}
-        </button>
-      )}
-    </div>
-  );
-};
 
 export default function AIPanel({
   onClose,
@@ -107,10 +19,8 @@ export default function AIPanel({
   isModal = false,
   isClosing = false,
 }) {
-  const { getAgent, agents } = useAgents();
-  const { activeConversation, messages, conversations } = useChats();
-  const { translateAgent, t } = useLanguage();
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const { activeConversation } = useChats();
+  const { t } = useLanguage();
   const {
     sidebarWidth,
     updateRightPanelWidth,
@@ -135,325 +45,9 @@ export default function AIPanel({
   // Состояние для анимации появления панели - начинаем с 0
   const [displayWidth, setDisplayWidth] = useState(0);
 
-  // Получаем данные текущего агента из активного разговора
-  const currentAgentId = activeConversation?.agent_id ?? null;
-  const currentAgent = currentAgentId ? getAgent(currentAgentId) : null;
-
-  // Проверяем, является ли активный чат групповым
+  // Проверяем, является ли активный чат групповым или каналом
   const isGroupChat = activeConversation?.is_group ?? false;
   const isChannelChat = activeConversation?.is_channel ?? false;
-
-  // Мемоизированная функция для получения имен агентов группы
-  const groupAgentNames = useMemo(() => {
-    if (!isGroupChat || !activeConversation?.group_agent_ids) {
-      return "";
-    }
-
-    const agentNames = activeConversation.group_agent_ids
-      .map((agentId) => {
-        const agent = agents.find((a) => a.id === agentId);
-        if (agent) {
-          const translatedAgent = translateAgent(agent);
-          return translatedAgent.name;
-        }
-        return `${t("chat.agent")} ${agentId}`;
-      })
-      .join(", ");
-
-    return agentNames;
-  }, [isGroupChat, activeConversation?.group_agent_ids, agents, translateAgent, t]);
-
-  // Функция для определения категории агента
-  const getAgentCategory = useCallback((agent) => {
-    if (!agent) return null;
-
-    // Используем категорию из базы данных, если она есть
-    if (agent.category && agent.category !== 'general') {
-      return agent.category;
-    }
-
-    // Определяем категорию на основе имени или описания агента
-    const name = agent.name.toLowerCase();
-    const description = (agent.description || '').toLowerCase();
-
-    if (name.includes('deepseek') || name.includes('assistant') || name.includes('ai') ||
-      description.includes('ai') || description.includes('модель') || description.includes('ассистент')) {
-      return 'models';
-    }
-
-    if (name.includes('калькулятор') || name.includes('перевод') || name.includes('погода') ||
-      description.includes('инструмент') || description.includes('утилита') || description.includes('математический')) {
-      return 'tools';
-    }
-
-    return 'chats';
-  }, []);
-
-  // Мемоизированная категория текущего агента
-  const agentCategory = useMemo(() => {
-    if (
-      !currentAgent ||
-      isGroupChat ||
-      isChannelChat ||
-      activeConversation?.is_system_chat
-    ) {
-      return null;
-    }
-    return getAgentCategory(currentAgent);
-  }, [
-    currentAgent,
-    isGroupChat,
-    isChannelChat,
-    activeConversation?.is_system_chat,
-    getAgentCategory,
-  ]);
-
-  // Мемоизированный динамический заголовок чата, как в левой панели
-  const chatTitle = useMemo(() => {
-    if (!activeConversation) {
-      return t("chat.aiAssistant");
-    }
-
-    // Проверяем, является ли это системным чатом
-    if (activeConversation.is_system_chat) {
-      return activeConversation.title || t("chat.savedMessages");
-    }
-
-    if (isChannelChat) {
-      return (
-        activeConversation.title ||
-        t("chat.channelTitleFallback", { defaultValue: "Канал" })
-      );
-    }
-
-    if (isGroupChat) {
-      return activeConversation.title || t("chat.groupChat");
-    }
-
-    if (!currentAgent) {
-      return t("chat.aiAssistant");
-    }
-
-    // Если у разговора есть сохраненное название, используем его
-    if (activeConversation.title && activeConversation.title.trim()) {
-      return activeConversation.title;
-    }
-
-    // Находим все разговоры с этим агентом
-    const agentConversations = conversations.filter(
-      (conv) => conv.agent_id === currentAgentId
-    );
-
-    const translatedAgent = translateAgent(currentAgent);
-    if (agentConversations.length <= 1) {
-      return translatedAgent.name;
-    }
-
-    // Находим индекс текущего разговора среди всех разговоров с агентом
-    // Номера чатов определяются по времени создания (фиксированные номера)
-    // Используем ту же логику, что и в Sidebar и Chat.jsx: сортировка по возрастанию времени создания
-    const sortedConversations = agentConversations.sort(
-      (a, b) => new Date(a.created_at) - new Date(b.created_at)
-    );
-    const conversationIndex = sortedConversations.findIndex(
-      (conv) => conv.id === activeConversation.id
-    );
-
-    const title = `${translatedAgent.name} (${conversationIndex + 1})`;
-    console.log(`AIPanel title for ${currentAgent.name}:`, {
-      conversationId: activeConversation.id,
-      conversationIndex,
-      title,
-      sortedConversations: sortedConversations.map((c) => ({
-        id: c.id,
-        created_at: c.created_at,
-      })),
-    });
-
-    return title;
-  }, [
-    activeConversation,
-    isChannelChat,
-    isGroupChat,
-    currentAgent,
-    currentAgentId,
-    conversations,
-    translateAgent,
-    t,
-  ]);
-
-  // Получаем данные чата
-  const currentChat = useMemo(() => {
-    if (!activeConversation) {
-      return { info: { name: t("chat.aiAssistant"), colorClass: "bg-purple-500" } };
-    }
-
-    // КРИТИЧНО: Проверяем канал ПЕРЕД системным чатом, чтобы каналы не показывали иконку Saved Messages
-    // Проверяем как is_channel, так и наличие channel_owner_id для надежности
-    const isChannel = isChannelChat ||
-      activeConversation.is_channel === true ||
-      (activeConversation.channel_owner_id != null && !activeConversation.is_group);
-
-    if (isChannel) {
-      return {
-        info: {
-          name:
-            activeConversation.title ||
-            t("chat.channelTitleFallback", { defaultValue: "Канал" }),
-          colorClass:
-            activeConversation.colorClass || "bg-blue-500 dark:bg-blue-600",
-          iconName: activeConversation.iconName || "notifications",
-          imageSrc:
-            activeConversation.imageSrc ||
-            activeConversation.channel_avatar_url ||
-            getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url, "medium"),
-          originalImageSrc:
-            activeConversation.imageSrc ||
-            activeConversation.channel_avatar_url ||
-            getAgentAvatarUrl(currentAgent?.image_url, currentAgent?.avatar_url, "high"),
-          ChatInfo:
-            activeConversation.channel_description ||
-            activeConversation.preview ||
-            t("chat.channelReadOnly", { defaultValue: "Только чтение" }),
-          model: null,
-          temperature: null,
-          maxTokens: null,
-          isActive: true,
-        },
-      };
-    }
-
-    if (isGroupChat) {
-      return {
-        info: {
-          name: activeConversation.title || t("chat.groupChat"),
-          colorClass: "bg-purple-500",
-          iconName: activeConversation.group_avatar || "group",
-          imageSrc: getGroupChatAvatarUrl(activeConversation.group_avatar_url), // Используем загруженный аватар, если есть
-          ChatInfo:
-            groupAgentNames ||
-            t("chat.groupChatWith", {
-              count: activeConversation.group_agent_ids?.length || 0,
-            }),
-          model: null,
-          temperature: null,
-          maxTokens: null,
-          isActive: true,
-        },
-      };
-    }
-
-    if (isGroupChat) {
-      return {
-        info: {
-          name: activeConversation.title || t("chat.groupChat"),
-          colorClass: "bg-purple-500",
-          iconName: activeConversation.group_avatar || "group",
-          imageSrc: getGroupChatAvatarUrl(activeConversation.group_avatar_url), // Используем загруженный аватар, если есть
-          ChatInfo:
-            groupAgentNames ||
-            t("chat.groupChatWith", {
-              count: activeConversation.group_agent_ids?.length || 0,
-            }),
-          model: null,
-          temperature: null,
-          maxTokens: null,
-          isActive: true,
-        },
-      };
-    }
-
-    // КРИТИЧНО: Проверяем системный чат, но исключаем каналы (даже если у них is_system_chat: true)
-    if (activeConversation.is_system_chat && !isChannelChat && !activeConversation.is_channel) {
-      return {
-        info: {
-          name: activeConversation.title || t("chat.savedMessages"),
-          colorClass: "bg-gray-500",
-          iconName: "bookmark",
-          imageSrc: savedMessagesImage,
-          ChatInfo: t("chat.savedMessages"),
-          model: null,
-          temperature: null,
-          maxTokens: null,
-          isActive: true,
-        },
-      };
-    }
-
-    if (currentAgent) {
-      const translatedAgent = translateAgent(currentAgent);
-      return {
-        info: {
-          name: translatedAgent.name,
-          colorClass: translatedAgent.color_class || "bg-purple-500",
-          iconName: translatedAgent.icon_name || "psychology",
-          imageSrc: getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "medium"),
-          originalImageSrc: getAgentAvatarUrl(translatedAgent.image_url, translatedAgent.avatar_url, "high"),
-          ChatInfo:
-            translatedAgent.description || t("chat.startNewChat"),
-          model: translatedAgent.model,
-          temperature: translatedAgent.temperature,
-          maxTokens: translatedAgent.max_tokens,
-          isActive: translatedAgent.is_active,
-        },
-      };
-    }
-
-    return {
-      info: {
-        name: t("chat.aiAssistant"),
-        colorClass: "bg-purple-500",
-        iconName: "psychology",
-        ChatInfo: t("chat.aiAssistant"),
-        imageSrc: null
-      }
-    };
-  }, [
-    activeConversation,
-    isChannelChat,
-    isGroupChat,
-    currentAgent,
-    groupAgentNames,
-    translateAgent,
-    t,
-  ]);
-
-  const { name, colorClass, iconName, ChatInfo, imageSrc, originalImageSrc } = currentChat.info;
-
-  // Функция для получения React Icon компонента по имени
-  const getIconComponent = (iconName) => {
-    const iconMap = {
-      star: MdStar,
-      notifications: MdNotifications,
-      work: MdWork,
-      calculate: MdCalculate,
-      translate: MdTranslate,
-      wb_sunny: MdWbSunny,
-      psychology: MdPsychology,
-      auto_awesome: MdAutoAwesome,
-      // Иконки для групповых чатов
-      group: MdGroup,
-      groups: MdGroups,
-      group_add: PiHandsClappingDuotone,
-      group_work: TbUserCog,
-      diversity: MdDiversity3,
-      people_alt: MdPeopleAlt,
-      emoji_people: MdEmojiPeople,
-      connect: MdConnectWithoutContact,
-      interpreter: MdInterpreterMode,
-      chat: MdChat,
-      comedy: MdTheaterComedy,
-      star_border: MdStarBorder,
-      fire: MdLocalFireDepartment,
-      diamond: MdDiamond,
-      // Иконка для системного чата
-      bookmark: MdBookmark,
-      fa_people_group: FaPeopleGroup,
-      team_fill: RiTeamFill,
-    };
-    const IconComponent = iconMap[iconName] || MdSmartToy;
-    return <IconComponent className="text-2xl" />;
-  };
 
   const asideRef = useRef(null);
   const isResizingRef = useRef(false);
@@ -622,119 +216,8 @@ export default function AIPanel({
         </button>
       </div>
 
-      {/* Скроллируемый контейнер с Chat Info и Navigation */}
+      {/* Скроллируемый контейнер с Navigation */}
       <div className="flex-1 overflow-y-auto chat-scrollbar min-h-0">
-        {/* Chat Info */}
-        <div className="p-4 border-b border-[var(--border-color)]">
-          <div className="flex flex-col items-center">
-            {isGroupChat ? (
-              // Отображение аватарки для группового чата
-              (() => {
-                // Проверяем, есть ли загруженный аватар
-                const groupAvatarUrl = getGroupChatAvatarUrl(activeConversation?.group_avatar_url);
-
-                if (groupAvatarUrl) {
-                  // Отображаем загруженное изображение
-                  return (
-                    <img
-                      src={groupAvatarUrl}
-                      alt={name}
-                      className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
-                      onError={(e) => {
-                        console.warn("Failed to load group chat avatar in AI Panel:", groupAvatarUrl);
-                        e.target.style.display = "none";
-                        const fallback = e.target.nextElementSibling;
-                        if (fallback) {
-                          fallback.style.display = "flex";
-                        }
-                      }}
-                    />
-                  );
-                }
-
-                // Иначе показываем иконку
-                return (
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-md select-none mb-3">
-                    <div
-                      className="absolute inset-0 bg-center bg-cover"
-                      style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
-                      aria-hidden="true"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-white">
-                      {getIconComponent(iconName)}
-                    </div>
-                  </div>
-                );
-              })()
-            ) : isChannelChat ? (
-              imageSrc ? (
-                <img
-                  src={imageSrc}
-                  alt={name}
-                  className="w-16 h-16 rounded-full object-cover shadow-md select-none mb-3"
-                  onError={(e) => {
-                    // Если изображение не загрузилось, скрываем его и показываем fallback
-                    console.warn("Failed to load agent avatar in AI Panel:", imageSrc);
-                    e.target.style.display = "none";
-                    const fallback = e.target.nextElementSibling;
-                    if (fallback) {
-                      fallback.style.display = "flex";
-                    }
-                  }}
-                />
-              ) : (
-                <div
-                  className={`w-16 h-16 rounded-full ${colorClass || "bg-blue-500 dark:bg-blue-600"
-                    } flex items-center justify-center text-white shadow-md select-none mb-3`}
-                >
-                  {getIconComponent(iconName)}
-                </div>
-              )
-            ) : imageSrc ? (
-              <img
-                src={imageSrc}
-                alt={name}
-                className={`w-16 h-16 rounded-full object-cover shadow-md select-none mb-3 ${!activeConversation?.is_system_chat && !isGroupChat && currentAgent
-                  ? "cursor-pointer hover:opacity-80 transition-opacity"
-                  : ""
-                  }`}
-                onClick={() => {
-                  // Открываем модальное окно только для чатов с агентами (не групп и не системных)
-                  if (!activeConversation?.is_system_chat && !isGroupChat && currentAgent && imageSrc) {
-                    setIsImageModalOpen(true);
-                  }
-                }}
-                onError={(e) => {
-                  // Если изображение не загрузилось, скрываем его и показываем fallback
-                  console.warn("Failed to load agent avatar in AI Panel:", imageSrc);
-                  e.target.style.display = "none";
-                  const fallback = e.target.parentElement?.querySelector(".avatar-fallback");
-                  if (fallback) {
-                    fallback.style.display = "flex";
-                  }
-                }}
-              />
-            ) : (
-              <div
-                className={`w-16 h-16 rounded-full ${colorClass || "bg-purple-500 dark:bg-purple-600"
-                  } flex items-center justify-center text-white shadow-md select-none mb-3`}
-              >
-                {getIconComponent(iconName)}
-              </div>
-            )}
-            <h3 className="font-medium text-xl mb-1 text-[var(--text-white)]">
-              {chatTitle}
-            </h3>
-            <ExpandableDescription text={ChatInfo} key={activeConversation?.id || ChatInfo} />
-            {/* Описание для персонажей */}
-            {agentCategory === "chats" && currentAgent && (
-              <p className="text-[var(--text-gray)] text-xs text-center mt-2 select-none">
-                {t("chat.characterInspired", { name: currentAgent.name })}
-              </p>
-            )}
-          </div>
-        </div>
-
         {/* Navigation */}
         <div className="space-y-0">
           {/* Закрепленные сообщения */}
@@ -778,20 +261,6 @@ export default function AIPanel({
     </>
   );
 
-  const shouldShowImageModal =
-    !activeConversation?.is_system_chat && !isGroupChat && currentAgent && imageSrc;
-
-  const imageModal = shouldShowImageModal ? (
-    <ImageModal
-      isOpen={isImageModalOpen}
-      image={{
-        imageUrl: originalImageSrc || imageSrc,
-        displayName: currentAgent.name,
-      }}
-      onClose={() => setIsImageModalOpen(false)}
-    />
-  ) : null;
-
   if (isModal) {
     return (
       <>
@@ -801,7 +270,6 @@ export default function AIPanel({
         >
           {panelContent}
         </div>
-        {imageModal}
       </>
     );
   }
@@ -835,7 +303,6 @@ export default function AIPanel({
           {panelContent}
         </aside>
       </div>
-      {imageModal}
     </>
   );
 }

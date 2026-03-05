@@ -15,6 +15,7 @@ export function useChatActions({
   deleteMessage,
   showError,
   showSuccess,
+  showCopySuccess,
   t,
   isAuthenticated,
 }) {
@@ -211,6 +212,7 @@ export function useChatActions({
           showError(t("chat.copyError"));
           return;
         }
+        (showCopySuccess || showSuccess)(t("chat.messageCopied", { defaultValue: "Сообщение скопировано" }));
       } catch (error) {
         console.error("Failed to copy message:", error);
         showError(
@@ -218,7 +220,7 @@ export function useChatActions({
         );
       }
     },
-    [messages, copyToClipboard, showError, showSuccess, t]
+    [messages, copyToClipboard, showError, showCopySuccess, showSuccess, t]
   );
 
   // Массовое копирование сообщений
@@ -271,12 +273,16 @@ export function useChatActions({
           showError(t("chat.copyError"));
           return;
         }
+        const msg = selectedMessages.length === 1
+          ? t("chat.messageCopied", { defaultValue: "Сообщение скопировано" })
+          : t("chat.messagesCopied", { count: selectedMessages.length, defaultValue: `Скопировано ${selectedMessages.length} сообщений` });
+        (showCopySuccess || showSuccess)(msg);
       } catch (error) {
         console.error("Failed to copy messages:", error);
         showError(t("chat.copyError"));
       }
     },
-    [messages, copyToClipboard, showError, showSuccess, t]
+    [messages, copyToClipboard, showError, showCopySuccess, showSuccess, t]
   );
 
   // Массовое удаление сообщений

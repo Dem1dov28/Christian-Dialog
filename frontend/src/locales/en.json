@@ -561,6 +561,8 @@
       "description": "You have used all available messages. Upgrade your subscription to continue chatting with AI agents.",
       "titleFeature": "Feature unavailable",
       "descriptionFeature": "This feature is available on the Plus or Pro plan. Upgrade your subscription to continue.",
+      "titleChatsLimit": "Chat limit exceeded",
+      "descriptionChatsLimit": "Your plan has reached the maximum number of chats. Delete unnecessary chats or upgrade your plan to create new ones.",
       "goToPricing": "Go to pricing"
     }
   },

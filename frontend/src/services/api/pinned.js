@@ -147,10 +147,10 @@ export class PinnedAPI {
     }
   }
 
-  // Открепить конкретное сообщение
+  // Открепить конкретное сообщение (обычный чат)
   async unpinSpecificMessage(conversationId, messageId) {
     try {
-      const result = await this.client.delete(`/pinned/conversations/${conversationId}/messages/${messageId}`);
+      const result = await this.client.delete(`/conversations/${conversationId}/messages/${messageId}/pin`);
       return result;
     } catch (error) {
       console.error("[API] unpinSpecificMessage error:", error);
@@ -161,7 +161,7 @@ export class PinnedAPI {
   // Открепить конкретное сообщение из группового чата
   async unpinSpecificGroupMessage(conversationId, messageId) {
     try {
-      const result = await this.client.delete(`/pinned/group-conversations/${conversationId}/messages/${messageId}`);
+      const result = await this.client.delete(`/multi-agent-chat/${conversationId}/messages/${messageId}/pin`);
       return result;
     } catch (error) {
       console.error("[API] unpinSpecificGroupMessage error:", error);

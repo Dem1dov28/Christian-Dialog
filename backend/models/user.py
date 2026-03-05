@@ -229,8 +229,9 @@ class UsageStatsResponse(SQLModel):
     messages_this_month: int = 0  # Сообщения за текущий месяц/день (в зависимости от тарифа)
     messages_total: int = 0  # Всего сообщений за все время
     messages_limit: int = 50
-    agents_used: int = 0  # Количество уникальных агентов
-    conversations_count: int = 0  # Общее количество бесед
+    agents_used: int = 0  # Количество уникальных агентов (deprecated, для обратной совместимости)
+    conversations_count: int = 0  # Общее количество чатов (включая групповые)
+    max_chats: int = 10  # Лимит чатов по тарифу
 
 
 class ChatExportRequest(SQLModel):

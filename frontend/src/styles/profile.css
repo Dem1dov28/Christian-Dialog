@@ -16,35 +16,16 @@
   box-shadow: 0 8px 32px hsla(var(--accent-hsl) / 0.3);
   transition: all 0.3s ease;
 }
-
-.profile-avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 40px hsla(var(--accent-hsl) / 0.4);
-}
-
 .profile-edit-button {
   background: var(--bg-primary);
   border: 2px solid var(--bg-secondary);
   transition: all 0.2s ease;
 }
-
-.profile-edit-button:hover {
-  background: var(--hover-bg);
-  border-color: var(--accent);
-  transform: scale(1.1);
-}
-
 .profile-bio-area {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
-
-.profile-bio-area:hover {
-  border-color: var(--accent);
-  background: var(--hover-bg);
-}
-
 .profile-menu-item {
   transition: all 0.2s ease;
   position: relative;
@@ -76,15 +57,6 @@
     transparent
   );
   transition: left 0.5s ease;
-}
-
-.profile-menu-item:hover::before {
-  left: 100%;
-}
-
-.profile-menu-item:hover {
-  transform: translateX(4px);
-  background: var(--hover-bg);
 }
 
 .profile-section {
@@ -131,7 +103,6 @@
   position: relative;
   overflow: hidden;
 }
-
 .profile-logout::before {
   content: "";
   position: absolute;
@@ -148,22 +119,48 @@
   transition: left 0.5s ease;
 }
 
-.profile-logout:hover::before {
-  left: 100%;
-}
-
-.profile-logout:hover {
-  background: rgba(255, 59, 48, 0.1);
-  transform: translateX(4px);
-}
-
 .copy-button {
   transition: all 0.2s ease;
 }
+/* Ховер-анимации только для устройств с мышью (ПК/ноутбуки) */
+@media (hover: hover) and (pointer: fine) {
+  .profile-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 40px hsla(var(--accent-hsl) / 0.4);
+  }
 
-.copy-button:hover {
-  background: var(--hover-bg);
-  transform: scale(1.1);
+  .profile-edit-button:hover {
+    background: var(--hover-bg);
+    border-color: var(--accent);
+    transform: scale(1.1);
+  }
+
+  .profile-bio-area:hover {
+    border-color: var(--accent);
+    background: var(--hover-bg);
+  }
+
+  .profile-menu-item:hover::before {
+    left: 100%;
+  }
+
+  .profile-menu-item:hover {
+    transform: translateX(4px);
+    background: var(--hover-bg);
+  }
+
+  .profile-logout:hover::before {
+    left: 100%;
+  }
+
+  .profile-logout:hover {
+    background: rgba(255, 59, 48, 0.1);
+    transform: translateX(4px);
+  }
+
+  .copy-button:hover {
+    background: var(--hover-bg);
+    transform: scale(1.1);
+  }
 }
-
 

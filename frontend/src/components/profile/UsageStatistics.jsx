@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiMessageSquare, FiUsers, FiFolder } from "react-icons/fi";
+import { FiMessageSquare, FiFolder } from "react-icons/fi";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const UsageStatistics = ({ usageStats, user }) => {
@@ -117,27 +117,15 @@ const UsageStatistics = ({ usageStats, user }) => {
         </div>
       </div>
 
-      {/* Дополнительная статистика */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="usage-stat-card">
-          <div className="flex items-center gap-2 mb-1">
-            <FiUsers className="usage-stat-icon" />
-            <span className="usage-stat-label">{t("profile.usage.agents")}</span>
-          </div>
-          <span className="usage-stat-number">
-            {usageStats?.agents_used ?? 0}
-          </span>
+      {/* Количество чатов (включая групповые) */}
+      <div className="usage-stat-card">
+        <div className="flex items-center gap-2 mb-1">
+          <FiFolder className="usage-stat-icon" />
+          <span className="usage-stat-label">{t("profile.usage.chats")}</span>
         </div>
-
-        <div className="usage-stat-card">
-          <div className="flex items-center gap-2 mb-1">
-            <FiFolder className="usage-stat-icon" />
-            <span className="usage-stat-label">{t("profile.usage.chats")}</span>
-          </div>
-          <span className="usage-stat-number">
-            {usageStats?.conversations_count ?? 0}
-          </span>
-        </div>
+        <span className="usage-stat-number">
+          {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
+        </span>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import Notification from '../components/ui/notification';
+import CopySuccessModal from '../components/modals/CopySuccessModal';
 import { useLanguage } from './LanguageContext';
 
 const NotificationContext = createContext();
@@ -14,7 +15,19 @@ export const useNotification = () => {
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
+  const [copySuccessModal, setCopySuccessModal] = useState({ open: false, message: '' });
   const { t } = useLanguage();
+
+  const showCopySuccess = useCallback((message = null) => {
+    setCopySuccessModal({
+      open: true,
+      message: message || t("chat.messageCopied", { defaultValue: "Сообщение скопировано" }),
+    });
+  }, [t]);
+
+  const closeCopySuccessModal = useCallback(() => {
+    setCopySuccessModal((prev) => ({ ...prev, open: false }));
+  }, []);
 
   const addNotification = (notification) => {
     const id = Date.now() + Math.random();
@@ -63,11 +76,17 @@ export const NotificationProvider = ({ children }) => {
     showSuccess,
     showError,
     showInfo,
+    showCopySuccess,
   };
 
   return (
     <NotificationContext.Provider value={value}>
       {children}
+      <CopySuccessModal
+        isOpen={copySuccessModal.open}
+        onClose={closeCopySuccessModal}
+        message={copySuccessModal.message}
+      />
       {/* Рендерим уведомления */}
       <div className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none" style={{ maxWidth: 'calc(100vw - 2rem)' }}>
         {notifications.map(notification => (

@@ -9,8 +9,17 @@ const UpgradeModal = ({ isOpen, onClose, onUpgrade, currentTier = "free", reason
   if (!isOpen) return null;
 
   const isFeature = reason === "feature";
-  const titleKey = isFeature ? "modals.upgrade.titleFeature" : "modals.upgrade.title";
-  const descKey = isFeature ? "modals.upgrade.descriptionFeature" : "modals.upgrade.description";
+  const isChatsLimit = reason === "chats_limit";
+  const titleKey = isChatsLimit
+    ? "modals.upgrade.titleChatsLimit"
+    : isFeature
+      ? "modals.upgrade.titleFeature"
+      : "modals.upgrade.title";
+  const descKey = isChatsLimit
+    ? "modals.upgrade.descriptionChatsLimit"
+    : isFeature
+      ? "modals.upgrade.descriptionFeature"
+      : "modals.upgrade.description";
 
   const handleUpgrade = () => {
     const targetTier = currentTier === "free" ? "plus" : "pro";

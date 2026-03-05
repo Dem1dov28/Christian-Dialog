@@ -1477,11 +1477,23 @@ export const ChatsProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to create chat:", error);
 
+      // Обработка превышения лимита чатов (403)
+      const is403 = error.status === 403 || error.response?.status === 403;
+      const isChatLimit = is403 && (
+        (error.message && (error.message.includes('лимит') || error.message.includes('чат'))) ||
+        (error.response?.detail && typeof error.response.detail === 'string' && (error.response.detail.includes('лимит') || error.response.detail.includes('чат')))
+      );
+      if (isChatLimit) {
+        setShowUpgradeModal(true, "chats_limit");
+        throw error;
+      }
+
       // Специальная обработка ошибки 429 (Too Many Requests)
-      if (error.status === 429 || error.response?.status === 429 || error.message?.includes('лимит') || error.message?.includes('429')) {
+      if (error.status === 429 || error.response?.status === 429 || error.message?.includes('429')) {
         // Пытаемся извлечь retry_after из разных мест ответа
         const retryAfter =
           error.response?.data?.retry_after ||
+          error.response?.retry_after ||
           error.response?.headers?.['retry-after'] ||
           error.retryAfter ||
           60;
@@ -3759,6 +3771,15 @@ export const ChatsProvider = ({ children }) => {
       return chatData;
     } catch (error) {
       console.error("Failed to create group chat:", error);
+      // Обработка превышения лимита чатов (403)
+      const is403 = error.status === 403 || error.response?.status === 403;
+      const isChatLimit = is403 && (
+        (error.message && (error.message.includes('лимит') || error.message.includes('чат'))) ||
+        (error.response?.detail && typeof error.response.detail === 'string' && (error.response.detail.includes('лимит') || error.response.detail.includes('чат')))
+      );
+      if (isChatLimit) {
+        setShowUpgradeModal(true, "chats_limit");
+      }
       throw error;
     } finally {
       setIsLoading(false);

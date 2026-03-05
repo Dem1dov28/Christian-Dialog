@@ -297,7 +297,7 @@ export default function Chat({
     updateMessagesForConversation,
   } = useChats();
   const { isAuthenticated, user } = useAuth();
-  const { showSuccess, showError } = useNotification();
+  const { showSuccess, showError, showCopySuccess } = useNotification();
   const { theme } = useTheme();
 
 
@@ -708,6 +708,7 @@ export default function Chat({
     deleteMessage,
     showError,
     showSuccess,
+    showCopySuccess,
     t,
     isAuthenticated,
   });

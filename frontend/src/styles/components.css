@@ -207,11 +207,6 @@ button[data-id]:hover .badge {
   cursor: pointer !important;
 }
 
-.reply-block:hover {
-  background-color: var(--msg-reply-hover-bg) !important;
-  border-color: var(--msg-reply-hover-border) !important;
-}
-
 /* Ripple effect */
 .has-ripple {
   position: relative;
@@ -281,10 +276,17 @@ main.tools-bar-main-transparent > *:not(.tools-bar-container) {
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
 }
+/* Ховер-анимации только для устройств с мышью (ПК/ноутбуки) */
+@media (hover: hover) and (pointer: fine) {
+  .reply-block:hover {
+    background-color: var(--msg-reply-hover-bg) !important;
+    border-color: var(--msg-reply-hover-border) !important;
+  }
 
-.scroll-button:hover {
-  transform: scale(1.1);
-  background-color: rgba(168, 85, 247, 0.9);
+  .scroll-button:hover {
+    transform: scale(1.1);
+    background-color: rgba(168, 85, 247, 0.9);
+  }
 }
 
 /* Контейнер панели инструментов должен быть полностью прозрачным */
