@@ -166,8 +166,10 @@ class ConversationService(BaseService):
                                 logger.warning(f"Не удалось добавить чат {conversation.id} в папку 'Персонажи' для пользователя {user_id}")
                     except Exception as e:
                         logger.error(f"Ошибка при добавлении чата в папку 'Персонажи': {e}", exc_info=True)
-                    # Перемещаем новый чат на первое место во всех папках пользователя
-                    folder_service.move_chat_to_top_in_all_folders(conversation.id, user_id, session)
+                    try:
+                        folder_service.move_chat_to_top_in_all_folders(conversation.id, user_id, session)
+                    except Exception as e:
+                        logger.error(f"Ошибка при move_chat_to_top_in_all_folders для чата {conversation.id}: {e}", exc_info=True)
                     session.commit()  # Коммитим все изменения вместе
                 else:
                     session.commit()

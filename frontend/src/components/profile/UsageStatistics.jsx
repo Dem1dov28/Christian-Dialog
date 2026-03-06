@@ -86,27 +86,27 @@ const UsageStatistics = ({ usageStats, user }) => {
 
   return (
     <div className="usage-stats-grid">
-      {/* Отдельная ячейка: чаты слева */}
+      {/* ЧАТЫ: иконка + подпись слева, число справа — в одну строку (как на мобильной) */}
       <div className="usage-stat-cell usage-stat-cell-chats">
-        <div className="flex items-center gap-2 mb-1">
-          <FiFolder className="usage-stat-icon" />
-          <span className="usage-stat-label">{t("profile.usage.chats")}</span>
+        <div className="usage-stat-row">
+          <div className="flex items-center gap-2">
+            <FiFolder className="usage-stat-icon" />
+            <span className="usage-stat-label">{t("profile.usage.chats")}</span>
+          </div>
+          <span className="usage-stat-number">
+            {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
+          </span>
         </div>
-        <span className="usage-stat-number">
-          {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
-        </span>
       </div>
 
-      {/* Отдельная ячейка: сообщения справа */}
+      {/* Сообщения: иконка + подпись слева, число справа — в одну строку */}
       <div className="usage-stat-cell usage-stat-cell-messages">
-        <div className="flex items-center justify-between mb-2">
+        <div className="usage-stat-row usage-stat-row-messages">
           <div className="flex items-center gap-2">
             <FiMessageSquare className="usage-stat-icon" />
-            <span className="text-sm font-medium text-[var(--text-white)]">
-              {t("profile.usage.messages")}
-            </span>
+            <span className="usage-stat-label">{t("profile.usage.messages")}</span>
           </div>
-          <span className="text-sm text-[var(--text-dim)]">
+          <span className="usage-stat-number">
             {used} / {limit}
           </span>
         </div>
@@ -116,7 +116,7 @@ const UsageStatistics = ({ usageStats, user }) => {
             style={{ width: `${Math.min(usagePercentage, 100)}%` }}
           ></div>
         </div>
-        <div className="flex justify-between mt-1">
+        <div className="usage-stat-row usage-stat-row-footer">
           <span className="text-xs text-[var(--text-dim)]">
             {usagePercentage}% {t("profile.usage.used")}
           </span>

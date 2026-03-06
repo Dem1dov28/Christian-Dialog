@@ -5,6 +5,17 @@ import App from "./App.jsx";
 import { setViewportHeight } from "./utils/viewportHeight.js";
 import "./index.css";
 
+// Mixed Content: при открытии из Telegram (web.telegram.org) по HTTP — сразу редирект на HTTPS
+(function () {
+  try {
+    if (typeof window === "undefined") return;
+    const loc = window.location;
+    if (loc.protocol !== "https:" && loc.hostname === "epochaldialog.com" && document.referrer?.includes("telegram.org")) {
+      loc.replace("https:" + loc.href.slice(loc.protocol.length));
+    }
+  } catch (_) {}
+})();
+
 // Инициализация Telegram Web App — только при открытии ВНУТРИ Telegram.
 // tg существует всегда (скрипт загружен), но initData — только когда открыто из Telegram.
 const tg = window.Telegram?.WebApp;
@@ -19,16 +30,22 @@ if (tg && isInTelegram) {
   if (tg.isVersionAtLeast?.("6.2")) { try { tg.enableClosingConfirmation(); } catch (_) {} }
   if (tg.isVersionAtLeast?.("7.7")) { try { tg.disableVerticalSwipes(); } catch (_) {} }
 
-  // Safe area: iOS — Dynamic Island + хедер; desktop (tdesktop/macos) — панель окна; Android — отступ не нужен.
+  // Safe area: iOS — Dynamic Island + хедер; desktop — отступ только в fullscreen.
   const isIOS = /^ios$/i.test(tg.platform || "");
   const isDesktop = /^(tdesktop|macos|weba|webk|win)$/i.test(tg.platform || "");
   const TG_HEADER_BUFFER = 56;
   function applyTelegramSafeArea() {
     const root = document.documentElement.style;
     if (isDesktop) {
-      // ПК-версия: кнопки окна Telegram перекрывают верх — добавляем отступ
-      root.setProperty("--tg-top-offset", `${TG_HEADER_BUFFER}px`);
-      root.setProperty("--tg-safe-area-inset-top", `${TG_HEADER_BUFFER}px`);
+      // ПК: отступ сверху ТОЛЬКО в fullscreen (кнопки окна перекрывают контент)
+      const isFullscreen = Boolean(tg?.isFullscreen);
+      if (isFullscreen) {
+        root.setProperty("--tg-top-offset", `${TG_HEADER_BUFFER}px`);
+        root.setProperty("--tg-safe-area-inset-top", `${TG_HEADER_BUFFER}px`);
+      } else {
+        root.setProperty("--tg-top-offset", "0px");
+        root.setProperty("--tg-safe-area-inset-top", "0px");
+      }
       if (tg.isVersionAtLeast?.("8.0") && tg.safeAreaInset?.bottom != null) {
         root.setProperty("--tg-safe-area-inset-bottom", `${tg.safeAreaInset.bottom}px`);
       }
@@ -62,6 +79,7 @@ if (tg && isInTelegram) {
   try {
     tg.onEvent("safeAreaChanged", applyTelegramSafeArea);
     tg.onEvent("contentSafeAreaChanged", applyTelegramSafeArea);
+    tg.onEvent("fullscreenChanged", applyTelegramSafeArea);
   } catch (_) {}
   // viewportStableHeight обновляется после expand — повторяем через ~300 ms
   setTimeout(setViewportHeight, 300);

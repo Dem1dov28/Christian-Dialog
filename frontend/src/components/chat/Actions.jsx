@@ -53,32 +53,45 @@ const Actions = ({
   if (!isRendered) return null;
 
   const tgPc = isTelegramPc();
+  const lastActionAtRef = useRef(0);
 
   const handleAction = (callback) => (event) => {
     event.preventDefault();
     event.stopPropagation();
-    // Touch guard: только на touch, НЕ на ПК (weba/webk/tdesktop — мышь)
+    event.stopImmediatePropagation?.();
+    // Защита от двойного срабатывания (onClick + onMouseDown + onPointerDown в weba)
+    const now = Date.now();
+    if (tgPc && now - lastActionAtRef.current < 250) return;
+    lastActionAtRef.current = now;
+
+    // Touch guard: только на touch, НЕ на ПК
     if (!tgPc) {
       const isTouchDevice = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
       if (isTouchDevice && Date.now() - openedAtRef.current < TOUCH_GUARD_MS) return;
     }
     const msgId = messageId;
     const cb = callback;
-    // На ПК (weba/webk/tdesktop): закрываем меню и выполняем в setTimeout — обходим event propagation
+    // На ПК weba: сначала выполняем callback (чтобы не терять при закрытии меню), потом закрываем
     if (tgPc) {
-      closeMenu();
-      setTimeout(() => { if (typeof cb === "function") cb(msgId); }, 0);
+      if (typeof cb === "function") cb(msgId);
+      requestAnimationFrame(() => closeMenu());
     } else {
       if (typeof cb === "function") cb(msgId);
       closeMenu();
     }
   };
 
-  // На ПК (weba/webk/tdesktop) onMouseDown срабатывает надёжнее, чем onClick
-  const actionProps = (callback) =>
-    tgPc
-      ? { onMouseDown: handleAction(callback) }
-      : { onClick: handleAction(callback) };
+  // На ПК weba: pointerdown + mousedown + click — хотя бы один дойдёт (Telegram WebView глотает события)
+  const actionProps = (callback) => {
+    const handler = handleAction(callback);
+    return tgPc
+      ? {
+          onPointerDown: handler,
+          onMouseDown: handler,
+          onClick: handler,
+        }
+      : { onClick: handler };
+  };
 
   return (
     <div

@@ -2,6 +2,10 @@
 <html lang="ru">
 
 <head>
+  <!-- Mixed Content: при открытии из Telegram по HTTP — сразу HTTPS (до любых скриптов) -->
+  <script>
+    (function(){try{var l=window.location;if(l.protocol!=="https:"&&l.hostname==="epochaldialog.com"&&document.referrer&&document.referrer.indexOf("telegram.org")>=0){l.replace("https:"+l.href.slice(l.protocol.length));}}catch(_){}})();
+  </script>
   <!-- Charset MUST be within first 1024 bytes for security -->
   <meta charset="UTF-8" />
 

@@ -639,7 +639,7 @@ input:checked + .toggle-slider:before {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 12px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .usage-stat-cell {
@@ -653,6 +653,22 @@ input:checked + .toggle-slider:before {
 .usage-stat-cell:hover {
   border-color: var(--accent-color, #8b5cf6);
   transform: translateY(-1px);
+}
+
+/* Одна строка: иконка+подпись слева, число справа — одинаково для мобильной и ПК */
+.usage-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.usage-stat-row-messages {
+  margin-bottom: 8px;
+}
+
+.usage-stat-row-footer {
+  margin-top: 6px;
 }
 
 .usage-stat-cell-chats {
@@ -706,13 +722,14 @@ input:checked + .toggle-slider:before {
   width: 16px;
   height: 16px;
   color: var(--text-dim);
+  flex-shrink: 0;
 }
 
 .usage-stat-number {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-white);
-  margin-top: 4px;
+  flex-shrink: 0;
 }
 
 .usage-stat-label {
