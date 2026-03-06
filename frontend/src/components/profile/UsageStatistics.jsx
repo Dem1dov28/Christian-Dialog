@@ -86,20 +86,7 @@ const UsageStatistics = ({ usageStats, user }) => {
 
   return (
     <div className="usage-stats-grid">
-      {/* ЧАТЫ: иконка + подпись слева, число справа — в одну строку (как на мобильной) */}
-      <div className="usage-stat-cell usage-stat-cell-chats">
-        <div className="usage-stat-row">
-          <div className="flex items-center gap-2">
-            <FiFolder className="usage-stat-icon" />
-            <span className="usage-stat-label">{t("profile.usage.chats")}</span>
-          </div>
-          <span className="usage-stat-number">
-            {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
-          </span>
-        </div>
-      </div>
-
-      {/* Сообщения: иконка + подпись слева, число справа — в одну строку */}
+      {/* Сообщения — слева, чаты — справа, на одном уровне и высоте на всех устройствах */}
       <div className="usage-stat-cell usage-stat-cell-messages">
         <div className="usage-stat-row usage-stat-row-messages">
           <div className="flex items-center gap-2">
@@ -122,6 +109,18 @@ const UsageStatistics = ({ usageStats, user }) => {
           </span>
           <span className="text-xs text-[var(--text-dim)]">
             {timeUntilReset || t("common.loading")}
+          </span>
+        </div>
+      </div>
+
+      <div className="usage-stat-cell usage-stat-cell-chats">
+        <div className="usage-stat-row">
+          <div className="flex items-center gap-2">
+            <FiFolder className="usage-stat-icon" />
+            <span className="usage-stat-label">{t("profile.usage.chats")}</span>
+          </div>
+          <span className="usage-stat-number">
+            {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
           </span>
         </div>
       </div>

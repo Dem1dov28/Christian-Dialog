@@ -85,7 +85,14 @@ const SubscriptionStatus = ({ user, onUpgrade }) => {
   }, [user?.subscription_tier, user?.expires_at]);
 
   return (
-    <div className="subscription-status-card">
+    <div
+      className="subscription-status-card"
+      role="button"
+      tabIndex={0}
+      onClick={onUpgrade}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onUpgrade?.()}
+      style={{ cursor: "pointer" }}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
@@ -113,7 +120,7 @@ const SubscriptionStatus = ({ user, onUpgrade }) => {
         </div>
 
         {user?.subscription_tier === "free" && (
-          <button onClick={onUpgrade} className="upgrade-button">
+          <button onClick={(e) => { e.stopPropagation(); onUpgrade?.(); }} className="upgrade-button">
             {t("pricing.upgrade")}
           </button>
         )}

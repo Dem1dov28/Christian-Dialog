@@ -236,27 +236,35 @@ const EditGroupChatModal = ({
 
   if (!isRendered) return null;
 
+  // Участники для отображения (выбранные)
+  const selectedAgents = charactersAgents.filter((a) => selectedAgentIds.includes(a.id));
+  // Агенты, доступные для добавления (ещё не в чате)
+  const availableToAdd = filteredAgents.filter((a) => !selectedAgentIds.includes(a.id));
+
   return (
-    <>
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+        isShown ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+      style={{
+        padding: "max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))",
+      }}
+    >
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
           isShown ? "opacity-100" : "opacity-0"
         }`}
         onClick={handleClose}
       />
 
-      {/* Modal */}
+      {/* Modal - центрируется через flex */}
       <div
-        className={`fixed left-1/2 transform -translate-x-1/2 w-full max-w-2xl max-h-[80vh] bg-[var(--bg-secondary)]/70 backdrop-blur-2xl backdrop-saturate-150 border border-[var(--border-color)]/50 rounded-3xl shadow-2xl shadow-black/20 z-50 transition-all duration-300 flex flex-col overflow-hidden ${
+        className={`relative w-full max-w-2xl max-h-[85vh] bg-[var(--bg-secondary)]/70 backdrop-blur-2xl backdrop-saturate-150 border border-[var(--border-color)]/50 rounded-3xl shadow-2xl shadow-black/20 transition-all duration-300 flex flex-col overflow-hidden ${
           isShown
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4 pointer-events-none"
         }`}
-        style={{
-          margin: "0 1rem",
-          bottom: 'calc(6rem + var(--safe-area-inset-bottom))'
-        }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyPress}
         tabIndex={-1}
@@ -412,35 +420,15 @@ const EditGroupChatModal = ({
             <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
               {t("library.participantsCount", { count: selectedAgentIds.length, defaultValue: `Участники (${selectedAgentIds.length})` })}
             </label>
-            
-            {/* Поиск */}
-            <div className="relative mb-3">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t("library.searchParticipants", { defaultValue: "Поиск участников..." })}
-                className="w-full px-4 py-2.5 pl-10 rounded-xl bg-[var(--bg-primary)]/80 backdrop-blur-sm border border-[var(--border-color)]/60 text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20 transition-all"
-              />
-              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-gray)] text-lg" />
-            </div>
 
-            {/* Список участников */}
-            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
-              {filteredAgents.map((agent) => {
-                const isSelected = selectedAgentIds.includes(agent.id);
+            {/* Список текущих участников */}
+            <div className="space-y-2 mb-3">
+              {selectedAgents.map((agent) => {
                 const translatedAgent = translateAgent(agent);
                 return (
-                  <button
+                  <div
                     key={agent.id}
-                    type="button"
-                    onClick={() => toggleAgentSelection(agent.id)}
-                    disabled={isSaving}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-                      isSelected
-                        ? "bg-[var(--accent)]/15 border-2 border-[var(--accent)]/60 shadow-sm"
-                        : "bg-[var(--bg-primary)]/60 backdrop-blur-sm border-2 border-transparent hover:border-[var(--border-color)]/60"
-                    }`}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[var(--accent)]/15 border-2 border-[var(--accent)]/60"
                   >
                     {agent.image_url || agent.avatar_url ? (
                       <img
@@ -453,17 +441,86 @@ const EditGroupChatModal = ({
                         {translatedAgent.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="flex-1 text-left text-[var(--text-white)] font-medium">
+                    <span className="flex-1 text-[var(--text-white)] font-medium">
                       {translatedAgent.name}
                     </span>
-                    {isSelected && (
-                      <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
-                        <MdCheck className="text-white text-sm" />
-                      </div>
-                    )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleAgentSelection(agent.id)}
+                      disabled={isSaving || selectedAgentIds.length <= 2}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-gray)] hover:text-red-500 hover:bg-[var(--bg-primary)]/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={t("library.remove", { defaultValue: "Удалить" })}
+                    >
+                      <MdDelete className="w-5 h-5" />
+                    </button>
+                  </div>
                 );
               })}
+            </div>
+
+            {/* Кнопка добавить участника */}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                document.getElementById("edit-group-search-participants")?.focus();
+              }}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[var(--accent)]/50 text-[var(--accent)] hover:bg-[var(--accent)]/10 hover:border-[var(--accent)]/80 transition-all mb-3 disabled:opacity-50"
+            >
+              <MdAdd className="w-5 h-5" />
+              <span className="font-medium">{t("library.addParticipant")}</span>
+            </button>
+
+            {/* Поиск и список для добавления */}
+            <div className="relative mb-2">
+              <input
+                id="edit-group-search-participants"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("library.searchParticipants", { defaultValue: "Поиск участников..." })}
+                className="w-full px-4 py-2.5 pl-10 rounded-xl bg-[var(--bg-primary)]/80 backdrop-blur-sm border border-[var(--border-color)]/60 text-[var(--text-white)] placeholder-[var(--text-gray)] focus:outline-none focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20 transition-all"
+              />
+              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-gray)] text-lg" />
+            </div>
+
+            {/* Список для добавления (только ещё не выбранные) */}
+            <div className="max-h-48 overflow-y-auto space-y-2 pr-1" style={{ WebkitOverflowScrolling: "touch" }}>
+              {availableToAdd.length === 0 ? (
+                <p className="text-sm text-[var(--text-gray)] py-4 text-center">
+                  {searchQuery ? t("common.tryChangingQuery", { defaultValue: "Попробуйте изменить запрос" }) : t("library.allParticipantsAdded", { defaultValue: "Все доступные персонажи уже в чате" })}
+                </p>
+              ) : (
+                availableToAdd.map((agent) => {
+                  const translatedAgent = translateAgent(agent);
+                  return (
+                    <button
+                      key={agent.id}
+                      type="button"
+                      onClick={() => toggleAgentSelection(agent.id)}
+                      disabled={isSaving}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)]/60 backdrop-blur-sm border-2 border-transparent hover:border-[var(--accent)]/50 transition-all text-left"
+                    >
+                      {agent.image_url || agent.avatar_url ? (
+                        <img
+                          src={agent.image_url || agent.avatar_url}
+                          alt={translatedAgent.name}
+                          className="w-10 h-10 rounded-full object-cover ring-2 ring-[var(--border-color)]"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center text-white font-semibold ring-2 ring-[var(--border-color)]">
+                          {translatedAgent.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="flex-1 text-[var(--text-white)] font-medium">
+                        {translatedAgent.name}
+                      </span>
+                      <MdAdd className="w-5 h-5 text-[var(--accent)] flex-shrink-0" />
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -496,7 +553,7 @@ const EditGroupChatModal = ({
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

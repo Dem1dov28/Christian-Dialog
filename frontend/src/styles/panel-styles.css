@@ -637,9 +637,9 @@ input:checked + .toggle-slider:before {
 
 .usage-stats-grid {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .usage-stat-cell {
@@ -671,12 +671,15 @@ input:checked + .toggle-slider:before {
   margin-top: 6px;
 }
 
-.usage-stat-cell-chats {
-  min-width: 120px;
+.usage-stat-cell-chats,
+.usage-stat-cell-messages {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .usage-stat-cell-messages {
-  min-width: 0;
+  flex: 1;
 }
 
 .usage-stats-bar {
@@ -846,11 +849,7 @@ input:checked + .toggle-slider:before {
   }
 
   .usage-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .usage-stat-cell-chats {
-    min-width: 0;
+    grid-template-columns: 1fr 1fr;
   }
 
   .subscription-icon {

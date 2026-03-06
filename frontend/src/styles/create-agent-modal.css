@@ -13,6 +13,7 @@
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .create-agent-modal {
@@ -20,10 +21,13 @@
   border-radius: 16px;
   width: 100%;
   max-width: 480px;
-  max-height: 90vh;
+  max-height: min(90vh, calc(100vh - 40px));
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border-color, #333);
+  box-sizing: border-box;
 }
 
 .create-agent-modal-header {
@@ -293,19 +297,42 @@
   transform: none;
 }
 
-/* Мобильная адаптация */
+/* Мобильная адаптация (в т.ч. Telegram Web App на iOS) */
 @media (max-width: 480px) {
-  .create-agent-modal {
-    max-height: 100dvh;
-    border-radius: 0;
-  }
-
   .create-agent-modal-overlay {
     padding: 0;
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+    align-items: stretch;
+    justify-content: flex-end;
+  }
+
+  .create-agent-modal {
+    max-height: calc(100vh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+    max-height: calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+    min-height: 0;
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 1;
+  }
+
+  .create-agent-form {
+    padding: 16px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+    gap: 16px;
+  }
+
+  .create-agent-modal-header {
+    padding: 16px 20px;
   }
 
   .create-agent-avatar-preview {
     width: 100px;
     height: 100px;
+  }
+
+  .create-agent-field textarea {
+    min-height: 100px;
   }
 }

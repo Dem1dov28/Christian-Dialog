@@ -361,6 +361,8 @@
     "participants": "Участники",
     "participantsCount": "Участники ({{count}})",
     "searchParticipants": "Поиск участников...",
+    "addParticipant": "Добавить участника",
+    "allParticipantsAdded": "Все доступные персонажи уже в чате",
     "minParticipantsError": "В групповом чате должно быть минимум 2 участника",
     "chatNameRequired": "Название чата не может быть пустым",
     "minParticipantsRequired": "Выберите минимум 2 участника",

@@ -358,6 +358,8 @@
     "participants": "Participants",
     "participantsCount": "Participants ({{count}})",
     "searchParticipants": "Search participants...",
+    "addParticipant": "Add participant",
+    "allParticipantsAdded": "All available characters are already in the chat",
     "minParticipantsError": "Group chat must have at least 2 participants",
     "chatNameRequired": "Chat name cannot be empty",
     "minParticipantsRequired": "Select at least 2 participants",
