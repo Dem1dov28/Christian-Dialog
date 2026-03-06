@@ -16,7 +16,7 @@ from typing import Iterable
 from fastapi import Request, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from config import ENVIRONMENT
+from config import ENVIRONMENT, ALLOWED_ORIGINS
 
 
 SAFE_METHODS: Iterable[str] = ("GET", "HEAD", "OPTIONS", "TRACE")
@@ -48,15 +48,19 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     method = request.method.upper()
     path = request.url.path or ""
     referer = request.headers.get("referer") or ""
+    origin = request.headers.get("origin") or ""
 
-    # Telegram Web App (iframe в web.telegram.org): cookies с SameSite=Lax не отправляются.
-    # Exempt CSRF — Referer задаётся браузером, подделать с другого домена нельзя.
+    # Exempt CSRF когда запрос от нашего фронтенда:
+    # 1) Referer содержит telegram.org — Mini App в iframe (cookies не уходят)
+    # 2) Origin в ALLOWED_ORIGINS — SPA на epochaldialog.com (Origin нельзя подделать из другого домена)
     from_telegram = "telegram.org" in referer
+    from_allowed_origin = origin in ALLOWED_ORIGINS if ALLOWED_ORIGINS else False
 
     # CSRF проверка — до call_next, чтобы не выполнять endpoint при невалидном запросе
     if (
         method not in SAFE_METHODS
         and not from_telegram
+        and not from_allowed_origin
         and not any(path.startswith(p) for p in CSRF_EXEMPT_PATHS)
     ):
       header_token = request.headers.get(CSRF_HEADER_NAME)
