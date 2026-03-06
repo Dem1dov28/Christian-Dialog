@@ -1403,8 +1403,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         {currentStage === "setup" ? (
           /* Этап настройки чата */
           <div className="max-w-lg mx-auto">
-            {/* Glassmorphism Card Container */}
-            <div className="relative overflow-hidden rounded-3xl border border-[var(--border-color)]/50 bg-[var(--bg-secondary)]/60 backdrop-blur-2xl backdrop-saturate-150 shadow-2xl shadow-black/10">
+            {/* Матовая карточка настройки */}
+            <div className="relative overflow-hidden rounded-3xl chat-input-frosted border border-[var(--border-color)]/50 shadow-2xl shadow-black/10">
               {/* Gradient Overlay for depth */}
               <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/5 via-transparent to-[var(--accent)]/10 pointer-events-none" />
               
@@ -1420,9 +1420,6 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
               <div className="relative p-6 sm:p-8">
                 {/* Header */}
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--accent)]/10 backdrop-blur-sm mb-4 ring-1 ring-[var(--accent)]/20">
-                    <HiMiniUserGroup className="w-8 h-8 text-[var(--accent)]" />
-                  </div>
                   <h3 className="text-2xl font-bold text-[var(--text-white)] mb-2">
                     {t("library.setupGroupChatTitle")}
                   </h3>
@@ -1505,7 +1502,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                       <motion.div
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute left-0 top-full mt-2 z-20 w-56 rounded-xl border border-[var(--border-color)]/60 bg-[var(--bg-primary)]/95 backdrop-blur-xl shadow-xl overflow-hidden"
+                        className="absolute left-0 top-full mt-2 z-20 w-56 rounded-xl chat-input-frosted border border-[var(--border-color)]/60 shadow-xl overflow-hidden"
                       >
                         {avatarMenuView === "choices" ? (
                           <div className="p-2 space-y-1">
@@ -1789,7 +1786,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Кнопки редактирования и удаления для созданных агентов */}
                                     {!isGroupCreationMode && persona.user_id && (
-                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
                                         {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
                                         <button
                                           onClick={(e) => handleEditAgent(e, persona)}
@@ -2349,7 +2346,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Кнопки редактирования и удаления для созданных агентов */}
                                     {!isGroupCreationMode && persona.user_id && (
-                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
                                         {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
                                         <button
                                           onClick={(e) => handleEditAgent(e, persona)}

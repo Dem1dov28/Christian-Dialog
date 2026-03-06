@@ -196,7 +196,10 @@ const MessageSearch = ({ isOpen, onClose }) => {
   const modalContent = (
     <div
       className="fixed inset-0 z-[120] flex items-start justify-center bg-black/50"
-      style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)", paddingBottom: "env(safe-area-inset-bottom)" }}
+      style={{
+        paddingTop: "calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 1.5rem)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
     >
       <div
         className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl shadow-xl w-full max-w-3xl mx-4 flex flex-col"

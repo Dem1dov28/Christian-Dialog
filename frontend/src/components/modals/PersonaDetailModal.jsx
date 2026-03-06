@@ -29,9 +29,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
   const biography = (() => {
     const desc = persona.description ?? persona.instructions;
     if (!desc || typeof desc !== "string" || !desc.trim()) {
-      return t("library.noDescription", {
-        defaultValue: "Информация о персонаже будет добавлена позже."
-      });
+      return "";
     }
     // If years were already extracted upstream, description is already clean
     if (persona.years !== undefined) return desc;
@@ -136,12 +134,14 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
                     )}
                   </div>
 
-                  {/* Biography */}
-                  <div className="px-6 pb-6">
-                    <p className="text-[var(--text-white)] text-sm leading-relaxed whitespace-pre-line">
-                      {biography}
-                    </p>
-                  </div>
+                  {/* Biography — не показываем блок, если описания нет */}
+                  {biography && (
+                    <div className="px-6 pb-6">
+                      <p className="text-[var(--text-white)] text-sm leading-relaxed whitespace-pre-line">
+                        {biography}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

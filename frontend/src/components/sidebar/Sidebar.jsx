@@ -1862,15 +1862,15 @@ const Sidebar = ({
                   />
                 </motion.div>
               </AnimatePresence>
-              {/* Кнопка добавления нового чата в правом нижнем углу */}
+              {/* Кнопка добавления нового чата в центре внизу */}
               {(
                 <button
-                  className={`absolute right-4 flex items-center justify-center gap-2 shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl shine-effect ${
+                  className={`absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl shine-effect ${
                     isMobileViewport ? "h-12 px-4 rounded-2xl" : "w-12 h-12 rounded-full"
                   }`}
                   style={{
                     backgroundColor: "var(--accent)",
-                    bottom: 'calc(1rem + var(--safe-area-inset-bottom))'
+                    bottom: "calc(1rem + var(--safe-area-inset-bottom))",
                   }}
                   onClick={() => {
                     // Открываем библиотеку персонажей для всех категорий персонажей
