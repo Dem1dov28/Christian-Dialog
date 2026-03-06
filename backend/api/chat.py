@@ -12,6 +12,7 @@ from models.conversation import Conversation, ConversationPublic
 from models.multi_agent_conversation import MultiAgentConversation
 from models.user import User, UserResponse
 from models.file_attachment import FileAttachment
+from config import DEBUG
 from core.dependencies import get_current_active_user, get_session
 from core.validators import validate_message_content, validate_agent_id, validate_pagination_params
 from core.user_utils import create_user_response
@@ -1354,7 +1355,7 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             logger.error(f"Error pinning message {message_id} in conversation {conversation_id}: {e}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error pinning message"
+                detail=f"Error pinning message: {e}" if DEBUG else "Error pinning message"
             )
     
     @app.delete("/conversations/{conversation_id}/messages/pin")
@@ -1620,9 +1621,18 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
         current_user: User = Depends(get_current_active_user)
     ):
         """Пометить чат как прочитанный"""
-        verify_conversation_access(conversation_id, current_user)
-        conversation_service.reset_unread_count(conversation_id)
-        return {"ok": True, "message": "Conversation marked as read", "unread_count": 0}
+        try:
+            verify_conversation_access(conversation_id, current_user)
+            conversation_service.reset_unread_count(conversation_id)
+            return {"ok": True, "message": "Conversation marked as read", "unread_count": 0}
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error marking conversation {conversation_id} as read: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error marking conversation as read"
+            )
     
     @app.post("/conversations/{conversation_id}/clear")
     def clear_conversation_messages(

@@ -7,10 +7,10 @@ export class FoldersAPI {
     this.client = client;
   }
 
-  // Получить все папки
+  // Получить все папки (trailing slash — чтобы избежать 307 редиректа от FastAPI, который вызывал Mixed Content)
   async getFolders(folderType = null) {
-    const params = folderType ? `?folder_type=${folderType}` : "";
-    return this.client.get(`/folders${params}`);
+    const query = folderType ? `?folder_type=${folderType}` : "";
+    return this.client.get(`/folders/${query}`);
   }
 
   // Создать папку
