@@ -57,11 +57,43 @@ class LangChainService:
     # Макс. длина ответа для персонажей (символы) — обрезка, если модель проигнорировала max_tokens
     MAX_AGENT_RESPONSE_CHARS = 550
 
-    def _truncate_response_for_brevity(self, text: str) -> str:
-        """Обрезает ответ до допустимой длины только по границе предложения или слова. Не трогает HTML."""
+    # Символы, которыми может заканчиваться корректный ответ
+    _VALID_ENDINGS = (".", "!", "?", "…", '"', "'", ")", "]", "}", "»", "—")
+
+    def _fix_abrupt_truncation(self, text: str) -> str:
+        """Исправляет обрыв ответа посередине (API обрезал по max_tokens). Убирает «висящие» буквы, ставит многоточие."""
         if not text or not isinstance(text, str):
             return text
         text = text.strip()
+        if not text:
+            return text
+        if text.strip().startswith("<"):
+            return text
+        last = text[-1]
+        # Ответ заканчивается корректно
+        if last in self._VALID_ENDINGS or last.isspace():
+            return text
+        # Короткие реплики ("Привет", "Да") — не трогаем
+        if len(text) < 40:
+            return text
+        # Длинный текст обрывается на букве/знаке — обрыв. Ищем последнее полное предложение
+        for sep in (". ", "! ", "? ", ".\n", "!\n", "?\n", ".", "!", "?"):
+            pos = text.rfind(sep)
+            if pos >= len(text) // 3:
+                return text[: pos + len(sep)].rstrip() + "…"
+        # Нет подходящей границы — обрезаем до последнего пробела, ставим многоточие
+        last_space = text.rfind(" ")
+        if last_space >= len(text) // 4:
+            return text[:last_space].rstrip() + "…"
+        return text + "…"
+
+    def _truncate_response_for_brevity(self, text: str) -> str:
+        """Обрезает ответ до допустимой длины только по границе предложения или слова. Не трогает HTML.
+        Сначала исправляет обрыв посередине (если API обрезал по max_tokens)."""
+        if not text or not isinstance(text, str):
+            return text
+        text = text.strip()
+        text = self._fix_abrupt_truncation(text)
         if len(text) <= self.MAX_AGENT_RESPONSE_CHARS:
             return text
         # Не обрезаем HTML (результаты инструментов)
@@ -125,12 +157,15 @@ class LangChainService:
         elif is_multi_agent:
             format_instruction = (
                 "⚠️ ДЛИНА: 2–3 предложения, до 50 слов. Пиши одним абзацем, без переносов строк. "
-                "Короткие реплики. Реагируй на других, не повторяй."
+                "Короткие реплики. Реагируй на других, не повторяй.\n"
+                "КРИТИЧНО: Заканчивай предложение точкой, восклицанием или вопросительным знаком. "
+                "Никогда не обрывай на середине слова — если лимит близок, закончи мысль раньше или многоточием."
             )
         else:
             format_instruction = (
-                "⚠️ ДЛИНА: 2–3 предложения, до 50 слов. Пиши одним абзацем, без разбиения на абзацы. "
-                "Без эссе и списков."
+                "⚠️ ДЛИНА: 2–3 предложения, до 50 слов. Пиши одним абзацем, без разбиения на абзацы.\n"
+                "КРИТИЧНО: Заканчивай предложение точкой, восклицанием или вопросительным знаком. "
+                "Никогда не обрывай на середине слова — если лимит близок, закончи мысль раньше или многоточием."
             )
 
         # --- Сборка системного сообщения ---

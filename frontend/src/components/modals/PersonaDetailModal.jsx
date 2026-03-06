@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MdArrowBack } from "react-icons/md";
+import { MdClose } from "react-icons/md";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
@@ -84,15 +84,15 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
             >
               {/* Scrollable content: Image + Text */}
               <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {/* Header with back button */}
+                {/* Header with close button */}
                 <div className="relative overflow-hidden bg-gradient-to-b from-gray-800 to-gray-900">
-                  {/* Back button */}
+                  {/* Close button — справа вверху */}
                   <button
                     onClick={onClose}
-                    className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200"
-                    aria-label={t("common.back", { defaultValue: "Назад" })}
+                    className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200"
+                    aria-label={t("common.close", { defaultValue: "Закрыть" })}
                   >
-                    <MdArrowBack className="text-xl" />
+                    <MdClose className="text-xl" />
                   </button>
 
                   {/* Portrait Image - full height */}

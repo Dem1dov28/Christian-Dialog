@@ -39,7 +39,6 @@ import {
   MdDiamond,
   MdExpandMore,
   MdExpandLess,
-  MdArrowBack,
   MdClose,
   MdAdd,
   MdEdit,
@@ -1268,31 +1267,10 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           }`}
       >
         <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6">
-          {/* Верхняя строка: Назад/Отмена + Заголовок */}
+          {/* Верхняя строка: Заголовок + Крестик закрытия справа */}
           <div className="relative flex items-center justify-between mb-2">
-            {/* ЛЕВАЯ ЧАСТЬ: Кнопка Назад */}
-            <div className="flex-shrink-0 w-10">
-              {typeof onCloseInlineLibrary === "function" && !isGroupCreationMode && !isLibraryWithSidebar && (
-                <button
-                  type="button"
-                  onClick={onLibraryBackButton || onCloseInlineLibrary}
-                  aria-label={t("common.back") || "Back"}
-                  className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                >
-                  <MdArrowBack className="text-2xl" />
-                </button>
-              )}
-              {isGroupCreationMode && (
-                <button
-                  type="button"
-                  onClick={handleCancelGroupCreation}
-                  aria-label={t("common.cancel") || "Cancel"}
-                  className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                >
-                  <MdArrowBack className="text-2xl" />
-                </button>
-              )}
-            </div>
+            {/* ЛЕВАЯ ЧАСТЬ: Заглушка для центрирования */}
+            <div className="flex-shrink-0 w-10"></div>
 
             {/* ЦЕНТР: Заголовок */}
             <h1
@@ -1302,8 +1280,19 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
               {isGroupCreationMode ? t("library.createGroupChat") : t("library.title")}
             </h1>
 
-            {/* ПРАВАЯ ЧАСТЬ: Заглушка для центрирования */}
-            <div className="flex-shrink-0 w-10"></div>
+            {/* ПРАВАЯ ЧАСТЬ: Кнопка закрытия (крестик) */}
+            <div className="flex-shrink-0 w-10">
+              {((typeof onCloseInlineLibrary === "function" && !isLibraryWithSidebar) || isGroupCreationMode) && (
+                <button
+                  type="button"
+                  onClick={isGroupCreationMode ? handleCancelGroupCreation : (onLibraryBackButton || onCloseInlineLibrary)}
+                  aria-label={t("common.close", { defaultValue: "Закрыть" })}
+                  className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  <MdClose className="text-2xl" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
