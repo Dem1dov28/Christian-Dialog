@@ -276,6 +276,7 @@ export default function Chat({
     checkMessageLimit,
     clearConversationMessages,
     selectConversation,
+    updateGroupChatMeta,
     createChat,
     sendMessage,
     sendGroupMessage,
@@ -790,6 +791,7 @@ export default function Chat({
     systemChat,
     selectConversation,
     onChatSelect,
+    showBackButton,
     showError,
     showSuccess,
     t,
@@ -1403,11 +1405,13 @@ export default function Chat({
           currentAgentIds={activeConversation.group_agent_ids || []}
           currentGroupAvatar={activeConversation.group_avatar || "group"}
           currentGroupAvatarUrl={activeConversation.group_avatar_url || null}
-          onUpdate={async (updatedData) => {
-            // Перезагружаем список чатов для обновления данных
-            if (selectConversation) {
-              await selectConversation(activeConversation.id);
-            }
+          onUpdate={(updatedData) => {
+            updateGroupChatMeta(activeConversation.id, {
+              title: updatedData.title,
+              agent_ids: updatedData.agent_ids,
+              group_avatar: updatedData.group_avatar,
+              group_avatar_url: updatedData.group_avatar_url,
+            });
             setIsEditGroupChatModalOpen(false);
           }}
         />

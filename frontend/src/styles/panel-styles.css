@@ -637,7 +637,7 @@ input:checked + .toggle-slider:before {
 
 .usage-stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 1fr; /* Сообщения 3/4, чаты 1/4 */
   gap: 12px;
   align-items: stretch;
 }
@@ -849,7 +849,7 @@ input:checked + .toggle-slider:before {
   }
 
   .usage-stats-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 3fr 1fr;
   }
 
   .subscription-icon {

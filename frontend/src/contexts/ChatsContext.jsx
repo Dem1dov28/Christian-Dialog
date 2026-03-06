@@ -2972,6 +2972,38 @@ export const ChatsProvider = ({ children }) => {
     }
   };
 
+  // Обновить метаданные группового чата (title, участники, аватар) — без API (API уже вызван в EditGroupChatModal)
+  const updateGroupChatMeta = useCallback((conversationId, { title, agent_ids, group_avatar, group_avatar_url }) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        String(conv.id) === String(conversationId) && conv.is_group
+          ? {
+              ...conv,
+              ...(title != null && { title }),
+              ...(agent_ids != null && { group_agent_ids: agent_ids }),
+              ...(group_avatar != null && { group_avatar }),
+              ...(group_avatar_url != null && { group_avatar_url }),
+              updated_at: new Date().toISOString(),
+            }
+          : conv
+      )
+    );
+    if (activeConversation && String(activeConversation.id) === String(conversationId)) {
+      setActiveConversation((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...(title != null && { title }),
+              ...(agent_ids != null && { group_agent_ids: agent_ids }),
+              ...(group_avatar != null && { group_avatar }),
+              ...(group_avatar_url != null && { group_avatar_url }),
+            }
+          : null
+      );
+    }
+    triggerUpdate();
+  }, [activeConversation, triggerUpdate]);
+
   // Переименовать разговор
   const renameConversation = async (conversationId, newTitle) => {
     try {
@@ -4649,6 +4681,7 @@ export const ChatsProvider = ({ children }) => {
     continueGroupDialogue,
     selectConversation,
     deleteConversation,
+    updateGroupChatMeta,
     renameConversation,
     clearConversationMessages,
     clearAllConversations,

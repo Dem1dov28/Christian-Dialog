@@ -154,6 +154,7 @@ const EditGroupChatModal = ({
           title: trimmedTitle,
           agent_ids: selectedAgentIds,
           group_avatar: groupAvatarPreview ? "group" : groupAvatar,
+          group_avatar_url: groupAvatarPreview || null,
         });
       }
 

@@ -54,6 +54,25 @@ class LangChainService:
     и инструментами. Поддерживает асинхронные вызовы через OpenRouter API.
     """
     
+    # Макс. длина ответа для персонажей (символы) — обрезка, если модель проигнорировала max_tokens
+    MAX_AGENT_RESPONSE_CHARS = 550
+
+    def _truncate_response_for_brevity(self, text: str) -> str:
+        """Обрезает ответ до допустимой длины по границе предложения. Не трогает HTML."""
+        if not text or not isinstance(text, str):
+            return text
+        text = text.strip()
+        if len(text) <= self.MAX_AGENT_RESPONSE_CHARS:
+            return text
+        # Не обрезаем HTML (результаты инструментов)
+        if text.strip().startswith("<"):
+            return text
+        cut = text[: self.MAX_AGENT_RESPONSE_CHARS + 1]
+        last_sent = max(cut.rfind(". "), cut.rfind("! "), cut.rfind("? "))
+        if last_sent > self.MAX_AGENT_RESPONSE_CHARS // 2:
+            return cut[: last_sent + 1].strip()
+        return cut.rstrip() + "…"
+
     def _build_system_message(
         self,
         agent_name: str,
@@ -95,13 +114,13 @@ class LangChainService:
             )
         elif is_multi_agent:
             format_instruction = (
-                "ДЛИНА — КРИТИЧНО: максимум 2–4 предложения. Групповой диалог — короткие реплики. "
-                "Реагируй на других, не повторяй, вноси свой взгляд. Никаких длинных абзацев и эссе."
+                "⚠️ КРИТИЧНО — ДЛИНА: НЕ БОЛЕЕ 2–3 ПРЕДЛОЖЕНИЙ. Групповой диалог = короткие реплики. "
+                "Реагируй на других, не повторяй. Никаких абзацев, эссе, списков. Строго до 50 слов."
             )
         else:
             format_instruction = (
-                "ДЛИНА ОТВЕТА — КРИТИЧНО: максимум 2–4 предложения, один короткий абзац. "
-                "Не пиши эссе, списки, длинные рассуждения. Даже на сложные вопросы — сжато. Краткость и живость."
+                "⚠️ КРИТИЧНО — ДЛИНА: НЕ БОЛЕЕ 2–3 ПРЕДЛОЖЕНИЙ, один короткий абзац. "
+                "Не пиши эссе, списки, длинные рассуждения. Строго до 50 слов. Краткость."
             )
 
         # --- Сборка системного сообщения ---
@@ -735,6 +754,9 @@ class LangChainService:
 
             logger.debug(f"Получен ответ через LangChain для агента {agent_name}")
             
+            # Обрезка длинных ответов (модель может игнорировать max_tokens)
+            response_text = self._truncate_response_for_brevity(response_text)
+            
             # Сохраняем сообщения в Memory
             # ВАЖНО: Мы НЕ сохраняем здесь user_message повторно, так как оно уже есть в БД
             # и будет загружено при следующем вызове _load_history_from_db.
@@ -953,6 +975,7 @@ class LangChainService:
             memory.chat_memory.add_user_message(user_message_text)
             memory.chat_memory.add_ai_message(response_text)
         
+        response_text = self._truncate_response_for_brevity(response_text)
         logger.info(f"Успешно использована fallback модель {fallback_model}")
         return response_text
     
@@ -1432,6 +1455,9 @@ class LangChainService:
             if not response_text or (isinstance(response_text, str) and not response_text.strip()):
                 logger.error(f"❌ КРИТИЧЕСКАЯ ОШИБКА: Финальный ответ пустой для агента {agent_name}!")
                 response_text = "Извините, произошла ошибка при генерации ответа. Попробуйте переформулировать запрос."
+            
+            # Обрезка длинных ответов (модель может игнорировать max_tokens)
+            response_text = self._truncate_response_for_brevity(response_text)
             
             # Сохраняем сообщения в Memory
             if conversation_id:

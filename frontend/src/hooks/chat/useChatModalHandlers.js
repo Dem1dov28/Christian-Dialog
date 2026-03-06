@@ -18,6 +18,7 @@ export function useChatModalHandlers({
   systemChat,
   selectConversation,
   onChatSelect,
+  showBackButton = false,
   showError,
   showSuccess,
   t,
@@ -77,6 +78,10 @@ export function useChatModalHandlers({
       await clearConversationMessages(activeConversation.id);
       /* История очищена — результат виден в UI */
       setIsClearChatModalOpen(false);
+      // На мобильной версии перекидываем к списку чатов
+      if (onChatSelect && showBackButton) {
+        onChatSelect(null);
+      }
     } catch (error) {
       console.error("Clear chat error:", error);
       const errorDetail =
@@ -95,6 +100,8 @@ export function useChatModalHandlers({
     activeConversation?.id,
     clearConversationMessages,
     setIsClearChatModalOpen,
+    onChatSelect,
+    showBackButton,
     showError,
     t,
   ]);
