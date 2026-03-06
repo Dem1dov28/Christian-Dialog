@@ -30,6 +30,7 @@ export function useAppState() {
   const isMediumScreen = useMaxWidth(750);
   const [isMediumScreenSidebarVisible, setIsMediumScreenSidebarVisible] = useState(false);
   const [isLibraryWithSidebar, setIsLibraryWithSidebar] = useState(false);
+  const [forceShowSidebarForSearch, setForceShowSidebarForSearch] = useState(false);
 
   // Refs
   const searchRef = useRef(null);
@@ -138,6 +139,8 @@ export function useAppState() {
     setIsMediumScreenSidebarVisible,
     isLibraryWithSidebar,
     setIsLibraryWithSidebar,
+    forceShowSidebarForSearch,
+    setForceShowSidebarForSearch,
 
     // Refs
     searchRef,

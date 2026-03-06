@@ -79,6 +79,7 @@ const Sidebar = ({
   onUnsubscribeChannel,
   onHideChat,
   searchRef, // Ref для SearchWithAvatar
+  onSearchClose,
   isFullWidth = false,
   showProfile = false,
   profileScreenProps,
@@ -96,6 +97,7 @@ const Sidebar = ({
 
   const handleSearchToggle = (isOpen) => {
     setIsSearchOpen(isOpen);
+    if (!isOpen) onSearchClose?.();
   };
 
   // Состояние для хранения предыдущей папки (для возврата назад)

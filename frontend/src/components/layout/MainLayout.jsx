@@ -55,6 +55,7 @@ function MainLayout({
   isMediumScreen,
   activeChatId: activeChatIdForChat,
   onShowUpgradeModal,
+  onSearchClose,
 }) {
   return (
     <div className="flex flex-1 overflow-hidden relative">
@@ -62,6 +63,7 @@ function MainLayout({
       {isLibraryWithSidebar && shouldRenderSidebar ? (
         <Sidebar
           searchRef={searchRef}
+          onSearchClose={onSearchClose}
           onMenuClick={onMenuClick}
           onChatSelect={onChatSelect}
           onExplicitChatSwitch={onExplicitChatSwitch}
@@ -202,6 +204,7 @@ MainLayout.propTypes = {
   isCompactChatOpen: PropTypes.bool.isRequired,
   isMediumScreen: PropTypes.bool.isRequired,
   activeChatIdForChat: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onSearchClose: PropTypes.func,
 };
 
 export default MainLayout;

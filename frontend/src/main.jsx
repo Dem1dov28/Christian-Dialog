@@ -17,11 +17,21 @@ if (tg && isInTelegram) {
   if (tg.isVersionAtLeast?.("6.2")) { try { tg.enableClosingConfirmation(); } catch (_) {} }
   if (tg.isVersionAtLeast?.("7.7")) { try { tg.disableVerticalSwipes(); } catch (_) {} }
 
-  // Safe area: только на iOS — Dynamic Island + хедер (кнопка «Закрыть»). На Android отступ не нужен.
+  // Safe area: iOS — Dynamic Island + хедер; desktop (tdesktop/macos) — панель окна; Android — отступ не нужен.
   const isIOS = /^ios$/i.test(tg.platform || "");
+  const isDesktop = /^(tdesktop|macos)$/i.test(tg.platform || "");
   const TG_HEADER_BUFFER = 48;
   function applyTelegramSafeArea() {
     const root = document.documentElement.style;
+    if (isDesktop) {
+      // ПК-версия: кнопки окна Telegram перекрывают верх — добавляем отступ
+      root.setProperty("--tg-top-offset", `${TG_HEADER_BUFFER}px`);
+      root.setProperty("--tg-safe-area-inset-top", `${TG_HEADER_BUFFER}px`);
+      if (tg.isVersionAtLeast?.("8.0") && tg.safeAreaInset?.bottom != null) {
+        root.setProperty("--tg-safe-area-inset-bottom", `${tg.safeAreaInset.bottom}px`);
+      }
+      return;
+    }
     if (!isIOS) {
       root.setProperty("--tg-top-offset", "0px");
       root.setProperty("--tg-safe-area-inset-top", "0px");

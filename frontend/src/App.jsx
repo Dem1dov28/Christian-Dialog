@@ -105,6 +105,8 @@ function MainApp() {
     setIsMediumScreenSidebarVisible,
     isLibraryWithSidebar,
     setIsLibraryWithSidebar,
+    forceShowSidebarForSearch,
+    setForceShowSidebarForSearch,
     searchRef,
     rightPanelRef,
   } = appState;
@@ -216,8 +218,16 @@ function MainApp() {
   const openChatSearch = useCallback(() => {
     if (searchRef.current) {
       searchRef.current.openSearch("messages");
+    } else {
+      // На мобильном при открытом чате Sidebar не смонтирован — показываем его для поиска
+      setForceShowSidebarForSearch(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          searchRef.current?.openSearch("messages");
+        });
+      });
     }
-  }, [searchRef]);
+  }, [searchRef, setForceShowSidebarForSearch]);
 
   const openDrawer = useCallback(() => setIsDrawerOpen(true), [setIsDrawerOpen]);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), [setIsDrawerOpen]);
@@ -623,6 +633,7 @@ function MainApp() {
         onCloseRightPanel={closeRightPanel}
         isRightPanelModal={isRightPanelModal}
         shouldRenderSidebar={shouldRenderSidebar}
+        onSearchClose={() => setForceShowSidebarForSearch(false)}
         sidebarShouldBeFullWidth={sidebarShouldBeFullWidth}
         isMediumScreenChatFullWidth={isMediumScreenChatFullWidth}
         isUltraCompact={isUltraCompact}

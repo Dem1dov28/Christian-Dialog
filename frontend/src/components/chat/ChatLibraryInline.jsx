@@ -3018,16 +3018,19 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         agentImage={deleteAgentModal.agent?.avatar_url || deleteAgentModal.agent?.image_url}
       />
 
-      {/* Модальное окно с деталями персонажа */}
-      <PersonaDetailModal
-        isOpen={isPersonaDetailModalOpen}
-        onClose={() => {
-          setIsPersonaDetailModalOpen(false);
-          setSelectedPersonaForDetail(null);
-        }}
-        persona={selectedPersonaForDetail}
-        onStartChat={handleStartChatFromModal}
-      />
+      {/* Модальное окно с деталями персонажа — портал в body для корректного position:fixed на iOS */}
+      {createPortal(
+        <PersonaDetailModal
+          isOpen={isPersonaDetailModalOpen}
+          onClose={() => {
+            setIsPersonaDetailModalOpen(false);
+            setSelectedPersonaForDetail(null);
+          }}
+          persona={selectedPersonaForDetail}
+          onStartChat={handleStartChatFromModal}
+        />,
+        document.body
+      )}
     </div>
   );
 };

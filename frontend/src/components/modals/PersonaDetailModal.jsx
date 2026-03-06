@@ -68,8 +68,8 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
             style={{
-              paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
-              paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+              paddingTop: 'max(1.5rem, calc(var(--safe-area-inset-top, 0px) + 1.5rem))',
+              paddingBottom: 'max(1.5rem, calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 1rem))',
               paddingLeft: 'max(1rem, env(safe-area-inset-left, 0px))',
               paddingRight: 'max(1rem, env(safe-area-inset-right, 0px))',
             }}
@@ -78,7 +78,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
             <div
               className="bg-[var(--bg-primary)] rounded-2xl max-w-md w-full overflow-hidden flex flex-col shadow-2xl border border-[var(--border-color)]"
               style={{
-                maxHeight: 'min(90vh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem))',
+                maxHeight: 'min(85dvh, calc(100dvh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px) - 3rem))',
               }}
               onClick={(e) => e.stopPropagation()}
             >
