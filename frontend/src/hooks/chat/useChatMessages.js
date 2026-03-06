@@ -186,9 +186,9 @@ export function useChatMessages({
   );
 
   // Инициализация окна для активного чата
+  // НЕ сбрасываем isScrollReady при смене чата — избегаем мерцания (opacity 0 -> 1)
   useEffect(() => {
     if (!activeConversation?.id) return;
-    setIsScrollReady(false);
     setChatWindowSizes((prev) => {
       if (prev[activeConversation.id]) return prev;
       const defaultSize = isChannelChat ? 10 : 75;

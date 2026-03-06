@@ -85,48 +85,43 @@ const UsageStatistics = ({ usageStats, user }) => {
   }, []);
 
   return (
-    <div className="subscription-status-card">
-      <div className="usage-stats-separated">
-        {/* Блок сообщений */}
-        <div className="usage-stat-block usage-stat-block-messages">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <FiMessageSquare className="usage-stat-icon" />
-              <span className="text-sm font-medium text-[var(--text-white)]">
-                {t("profile.usage.messages")}
-              </span>
-            </div>
-            <span className="text-sm text-[var(--text-dim)]">
-              {used} / {limit}
-            </span>
-          </div>
-          <div className="usage-stats-bar">
-            <div
-              className={`usage-progress-fill ${getUsageColor(usagePercentage)}`}
-              style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-xs text-[var(--text-dim)]">
-              {usagePercentage}% {t("profile.usage.used")}
-            </span>
-            <span className="text-xs text-[var(--text-dim)]">
-              {timeUntilReset || t("common.loading")}
-            </span>
-          </div>
+    <div className="usage-stats-grid">
+      {/* Отдельная ячейка: чаты слева */}
+      <div className="usage-stat-cell usage-stat-cell-chats">
+        <div className="flex items-center gap-2 mb-1">
+          <FiFolder className="usage-stat-icon" />
+          <span className="usage-stat-label">{t("profile.usage.chats")}</span>
         </div>
+        <span className="usage-stat-number">
+          {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
+        </span>
+      </div>
 
-        {/* Разделитель */}
-        <div className="usage-stats-divider" aria-hidden="true" />
-
-        {/* Блок чатов */}
-        <div className="usage-stat-block usage-stat-block-chats">
-          <div className="flex items-center gap-2 mb-1">
-            <FiFolder className="usage-stat-icon" />
-            <span className="usage-stat-label">{t("profile.usage.chats")}</span>
+      {/* Отдельная ячейка: сообщения справа */}
+      <div className="usage-stat-cell usage-stat-cell-messages">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <FiMessageSquare className="usage-stat-icon" />
+            <span className="text-sm font-medium text-[var(--text-white)]">
+              {t("profile.usage.messages")}
+            </span>
           </div>
-          <span className="usage-stat-number">
-            {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
+          <span className="text-sm text-[var(--text-dim)]">
+            {used} / {limit}
+          </span>
+        </div>
+        <div className="usage-stats-bar">
+          <div
+            className={`usage-progress-fill ${getUsageColor(usagePercentage)}`}
+            style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-[var(--text-dim)]">
+            {usagePercentage}% {t("profile.usage.used")}
+          </span>
+          <span className="text-xs text-[var(--text-dim)]">
+            {timeUntilReset || t("common.loading")}
           </span>
         </div>
       </div>

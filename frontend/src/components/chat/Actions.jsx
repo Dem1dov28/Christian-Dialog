@@ -55,7 +55,10 @@ const Actions = ({
   const handleAction = (callback) => (event) => {
     event.preventDefault();
     event.stopPropagation();
-    if (Date.now() - openedAtRef.current < TOUCH_GUARD_MS) return;
+    // Touch guard только на touch-устройствах. В Telegram Desktop (ПК) — мышь: guard блокировал
+    // быстрые клики и вызывал «ошибку при удалении» (действие молча не срабатывало)
+    const isTouchDevice = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+    if (isTouchDevice && Date.now() - openedAtRef.current < TOUCH_GUARD_MS) return;
     if (typeof callback === "function") {
       callback(messageId);
     }

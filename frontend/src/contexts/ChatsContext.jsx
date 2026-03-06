@@ -1445,6 +1445,9 @@ export const ChatsProvider = ({ children }) => {
           setIsChatLoading(false);
         }
 
+        if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
+          await new Promise((resolve) => queueMicrotask(resolve));
+        }
         return existingDuplicate;
       }
 
@@ -1470,6 +1473,12 @@ export const ChatsProvider = ({ children }) => {
       // Отслеживаем новый пустой чат для автоматического удаления при переключении
       newlyCreatedEmptyChatsRef.current.add(formattedChatData.id);
       console.log(`[createChat] Добавлен новый пустой чат ${formattedChatData.id} в список для отслеживания`);
+
+      // В Telegram Desktop (tdesktop/macos) WebView React batch может обрабатываться иначе —
+      // небольшой yield даёт время применить setConversations/setActiveConversation до return
+      if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
+        await new Promise((resolve) => queueMicrotask(resolve));
+      }
 
       return formattedChatData;
     } catch (error) {
@@ -3767,6 +3776,9 @@ export const ChatsProvider = ({ children }) => {
         console.log("[createGroupChat] Group chat set as active with agents:", groupAgents.length);
       }
 
+      if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
+        await new Promise((resolve) => queueMicrotask(resolve));
+      }
       return chatData;
     } catch (error) {
       console.error("Failed to create group chat:", error);

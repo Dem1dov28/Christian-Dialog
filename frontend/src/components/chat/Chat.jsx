@@ -1138,8 +1138,8 @@ export default function Chat({
           } ${selectionActive ? "select-none" : ""}`}
         style={{
           minHeight: "0", // Важно для flex-контейнеров — без этого flex-1 не сжимается
-          opacity: isScrollReady || isInlineLibraryOpen ? 1 : 0,
-          transition: isScrollReady ? "opacity 0.08s ease-out" : "none",
+          opacity: 1,
+          transition: "opacity 0.15s ease-out",
         }}
         data-scroll-to-bottom="true"
         onContextMenu={(e) => {

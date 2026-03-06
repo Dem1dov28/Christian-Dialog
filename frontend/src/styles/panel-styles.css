@@ -635,35 +635,32 @@ input:checked + .toggle-slider:before {
   transform: translateY(0);
 }
 
-.usage-stats-separated {
-  display: flex;
-  gap: 0;
+.usage-stats-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
   align-items: stretch;
 }
 
-.usage-stat-block {
-  flex: 1;
+.usage-stat-cell {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.usage-stat-cell:hover {
+  border-color: var(--accent-color, #8b5cf6);
+  transform: translateY(-1px);
+}
+
+.usage-stat-cell-chats {
+  min-width: 120px;
+}
+
+.usage-stat-cell-messages {
   min-width: 0;
-}
-
-.usage-stat-block-messages {
-  flex: 2 1 0;
-  padding-right: 16px;
-}
-
-.usage-stat-block-chats {
-  flex: 1 1 0;
-  padding-left: 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.usage-stats-divider {
-  width: 1px;
-  flex-shrink: 0;
-  background: var(--border-color);
-  margin: 0 4px;
 }
 
 .usage-stats-bar {
@@ -831,24 +828,12 @@ input:checked + .toggle-slider:before {
     padding: 12px;
   }
 
-  .usage-stats-separated {
-    flex-direction: column;
+  .usage-stats-grid {
+    grid-template-columns: 1fr;
   }
 
-  .usage-stat-block-messages {
-    padding-right: 0;
-    padding-bottom: 12px;
-  }
-
-  .usage-stat-block-chats {
-    padding-left: 0;
-    padding-top: 12px;
-  }
-
-  .usage-stats-divider {
-    width: 100%;
-    height: 1px;
-    margin: 0;
+  .usage-stat-cell-chats {
+    min-width: 0;
   }
 
   .subscription-icon {
