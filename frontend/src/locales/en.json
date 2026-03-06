@@ -465,6 +465,7 @@
   },
   "profile": {
     "title": "Profile",
+    "editProfile": "Edit Profile",
     "avatar": {
       "edit": "Edit Avatar"
     },

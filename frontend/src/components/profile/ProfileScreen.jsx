@@ -23,6 +23,7 @@ import { useNotification } from "../../contexts/NotificationContext";
 import apiClient from "../../services/api";
 import SubscriptionStatus from "./SubscriptionStatus";
 import UsageStatistics from "./UsageStatistics";
+import EditProfileModal from "./EditProfileModal";
 import { useMaxWidth } from "../../hooks/common/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useTelegramWebApp } from "../../hooks/useTelegramWebApp";
@@ -39,7 +40,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [isPrivacyMenuOpen, setIsPrivacyMenuOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
   const [isShown, setIsShown] = useState(false);
@@ -144,13 +145,13 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   };
 
   const handleResetPassword = () => {
-    // Navigate to forgot password page with user's email pre-filled
     navigate("/forgot-password", {
       state: {
         email: user?.email || "",
         fromProfile: true
       }
     });
+    setIsEditProfileModalOpen(false);
     onClose();
   };
 
@@ -315,12 +316,19 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
-        <h1 className="text-xl font-semibold text-[var(--text-white)]">
+        <button
+          onClick={() => setIsEditProfileModalOpen(true)}
+          className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] transition-colors shrink-0"
+          title={t("profile.editProfile")}
+        >
+          <FiEdit3 className="w-5 h-5" />
+        </button>
+        <h1 className="text-xl font-semibold text-[var(--text-white)] flex-1 text-center">
           {t("profile.title")}
         </h1>
         <button
           onClick={onClose}
-          className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] transition-colors"
+          className="p-2 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] transition-colors shrink-0"
         >
           <FiX className="w-5 h-5" />
         </button>
@@ -372,19 +380,10 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
             </button>
           </div>
 
-          {/* User Name + Edit Button */}
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <h2 className="text-2xl font-bold text-[var(--text-white)]">
-              {user?.full_name || user?.username || "User"}
-            </h2>
-            <button
-              onClick={() => setIsPrivacyMenuOpen(!isPrivacyMenuOpen)}
-              className="p-1.5 rounded-lg text-[var(--text-dim)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-white)] transition-colors"
-              title={t("common.edit")}
-            >
-              <FiEdit3 className="w-4 h-4" />
-            </button>
-          </div>
+          {/* User Name */}
+          <h2 className="text-2xl font-bold text-[var(--text-white)] mb-2">
+            {user?.full_name || user?.username || "User"}
+          </h2>
 
           {/* Email */}
           <p className="text-[var(--text-dim)] text-sm mb-4">
@@ -556,116 +555,6 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
             </div>
           )}
 
-          {/* Панель редактирования (username, пароль, удаление) — открывается по кнопке Изменить */}
-          <div
-            className={`overflow-hidden border-t transition-all duration-300 ease-out ${isPrivacyMenuOpen
-              ? "max-h-[600px] opacity-100 border-[var(--border-color)]"
-              : "max-h-0 opacity-0 border-transparent pointer-events-none"
-              }`}
-            style={{ transitionProperty: "max-height, opacity, border-color" }}
-          >
-            {isPrivacyMenuOpen && (
-              <div className="divide-y divide-[var(--border-color)] pt-4">
-                        {/* Update Username */}
-                        <div className="p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <FiUser className="w-5 h-5 text-[var(--text-dim)]" />
-                            <span className="text-[var(--text-white)] font-medium">
-                              {t("profile.privacy.updateUsername")}
-                            </span>
-                          </div>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={newUsername}
-                              onChange={(e) => setNewUsername(e.target.value)}
-                              placeholder={t("profile.privacy.usernamePlaceholder")}
-                              className="flex-1 px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateUsername();
-                              }}
-                              disabled={isLoading || !newUsername.trim()}
-                              className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {isLoading ? t("profile.privacy.saving") : t("profile.privacy.save")}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Reset Password */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleResetPassword();
-                          }}
-                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <FiLock className="w-5 h-5 text-[var(--text-dim)]" />
-                            <span className="text-[var(--text-white)] font-medium">
-                              {t("profile.privacy.resetPassword")}
-                            </span>
-                          </div>
-                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
-                        </button>
-
-                        {/* Delete Data */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteDataModal(true);
-                          }}
-                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <FiTrash2 className="w-5 h-5 text-orange-500" />
-                            <span className="text-[var(--text-white)] font-medium block">
-                              {t("profile.privacy.deleteData")}
-                            </span>
-                          </div>
-                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
-                        </button>
-
-                        {/* Delete Account */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteAccountModal(true);
-                          }}
-                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <FiAlertTriangle className="w-5 h-5 text-red-500" />
-                            <span className="text-red-500 font-medium block">
-                              {t("profile.privacy.deleteAccount")}
-                            </span>
-                          </div>
-                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
-                        </button>
-
-                        {/* Logout All Devices */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleLogoutAllDevices();
-                          }}
-                          disabled={isLoading}
-                          className="w-full flex items-center justify-between p-4 hover:bg-[var(--hover-bg)] transition-colors disabled:opacity-50"
-                        >
-                          <div className="flex items-center gap-3">
-                            <FiLogOut className="w-5 h-5 text-[var(--text-dim)]" />
-                            <span className="text-[var(--text-white)] font-medium">
-                              {t("profile.privacy.logoutAllDevices")}
-                            </span>
-                          </div>
-                          <FiChevronRight className="w-4 h-4 text-[var(--text-dim)]" />
-                        </button>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Section B: Single continuous menu (no headers) */}
@@ -702,6 +591,21 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        newUsername={newUsername}
+        setNewUsername={setNewUsername}
+        onUpdateUsername={handleUpdateUsername}
+        onResetPassword={handleResetPassword}
+        onOpenDeleteDataModal={() => setShowDeleteDataModal(true)}
+        onOpenDeleteAccountModal={() => setShowDeleteAccountModal(true)}
+        onLogoutAllDevices={handleLogoutAllDevices}
+        isLoading={isLoading}
+        user={user}
+      />
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
