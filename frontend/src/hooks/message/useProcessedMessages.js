@@ -10,6 +10,7 @@ export function useProcessedMessages({
   activeConversation,
   formatTime,
   t,
+  currentAgentName = null, // Имя персонажа для одиночного чата (для копирования и отображения)
 }) {
   const visibleMessages = useMemo(() => {
     if (!messages || messages.length === 0) return [];
@@ -20,8 +21,10 @@ export function useProcessedMessages({
       text: msg.content,
       time: formatTime(msg.created_at),
       read: true, // Пока все сообщения считаем прочитанными
-      // Для групповых чатов добавляем информацию об агенте
-      agentName: isGroupChat && !msg.is_from_user ? msg.agent_name : null,
+      // Для групповых чатов — agent_name из сообщения; для одиночного — имя текущего персонажа
+      agentName: !msg.is_from_user
+        ? (isGroupChat ? msg.agent_name : currentAgentName)
+        : null,
       agentId: isGroupChat && !msg.is_from_user ? msg.agent_id : null,
       // Для системного чата добавляем информацию об оригинальном чате
       originalChatName: activeConversation?.is_system_chat
@@ -86,6 +89,7 @@ export function useProcessedMessages({
     activeConversation?.id,
     formatTime,
     t,
+    currentAgentName,
   ]);
 
   return { visibleMessages };

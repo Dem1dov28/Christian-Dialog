@@ -25,11 +25,19 @@ class LangChainConfig:
         }
     
     def get_model_config(self) -> dict:
-        """Возвращает конфигурацию для используемой модели"""
+        """Основная модель (для запросов с инструментами, fallback)"""
         return {
             "model": "tngtech/deepseek-r1t2-chimera:free",
             "temperature": 0.9,
-            "max_tokens": 150  # Жёсткий лимит (~50–80 слов, 2–3 предложения) — персонажи отвечают кратко
+            "max_tokens": 400
+        }
+
+    def get_simple_chat_model_config(self) -> dict:
+        """Лёгкая модель для простых диалогов без веб-поиска и картинок/файлов. Экономия токенов."""
+        return {
+            "model": os.getenv("SIMPLE_CHAT_MODEL", "deepseek/deepseek-v3.2"),
+            "temperature": 0.9,
+            "max_tokens": 400
         }
     
     def get_vision_model_config(self) -> dict:

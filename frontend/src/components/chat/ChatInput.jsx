@@ -37,11 +37,8 @@ function ChatInput({
   isChannelChat,
   isReadOnlyChannel,
   messagePlaceholder,
-  // Model selection
   activeConversation,
   currentAgentId,
-  currentModel,
-  onModelChange,
   // Translations
   t,
   // AI model check
@@ -298,11 +295,8 @@ ChatInput.propTypes = {
   isChannelChat: PropTypes.bool.isRequired,
   isReadOnlyChannel: PropTypes.bool.isRequired,
   messagePlaceholder: PropTypes.string,
-  // Model selection
   activeConversation: PropTypes.object,
   currentAgentId: PropTypes.number,
-  currentModel: PropTypes.string,
-  onModelChange: PropTypes.func,
   // Translations
   t: PropTypes.func.isRequired,
   // AI model check

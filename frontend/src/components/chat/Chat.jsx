@@ -549,6 +549,7 @@ export default function Chat({
     activeConversation: effectiveActiveConversation,
     formatTime,
     t,
+    currentAgentName: currentAgent ? translateAgent(currentAgent).name : null,
   });
 
   // Интеграция хука useChatMessages для управления скроллом и сообщениями

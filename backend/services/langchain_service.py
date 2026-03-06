@@ -55,7 +55,7 @@ class LangChainService:
     """
     
     # Макс. длина ответа для персонажей (символы) — обрезка, если модель проигнорировала max_tokens
-    MAX_AGENT_RESPONSE_CHARS = 550
+    MAX_AGENT_RESPONSE_CHARS = 1200
 
     # Символы, которыми может заканчиваться корректный ответ
     _VALID_ENDINGS = (".", "!", "?", "…", '"', "'", ")", "]", "}", "»", "—")
@@ -87,12 +87,29 @@ class LangChainService:
             return text[:last_space].rstrip() + "…"
         return text + "…"
 
-    def _truncate_response_for_brevity(self, text: str) -> str:
-        """Обрезает ответ до допустимой длины только по границе предложения или слова. Не трогает HTML.
-        Сначала исправляет обрыв посередине (если API обрезал по max_tokens)."""
+    def _strip_unwanted_markdown(self, text: str) -> str:
+        """Убирает лишние символы markdown (```, ** и т.п.) из plain text ответов."""
         if not text or not isinstance(text, str):
             return text
         text = text.strip()
+        if not text:
+            return text
+        # Не трогаем HTML
+        if text.startswith("<"):
+            return text
+        # Убираем обёртку ``` в начале и конце (модель иногда оборачивает текст в code block)
+        import re
+        text = re.sub(r"^\s*```[a-z]*\s*\n?", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\n?\s*```\s*$", "", text)
+        return text.strip()
+
+    def _truncate_response_for_brevity(self, text: str) -> str:
+        """Обрезает ответ до допустимой длины только по границе предложения или слова. Не трогает HTML.
+        Сначала убирает markdown-артефакты, затем исправляет обрыв посередине (если API обрезал по max_tokens)."""
+        if not text or not isinstance(text, str):
+            return text
+        text = text.strip()
+        text = self._strip_unwanted_markdown(text)
         text = self._fix_abrupt_truncation(text)
         if len(text) <= self.MAX_AGENT_RESPONSE_CHARS:
             return text
@@ -163,9 +180,10 @@ class LangChainService:
             )
         else:
             format_instruction = (
-                "⚠️ ДЛИНА: 2–3 предложения, до 50 слов. Пиши одним абзацем, без разбиения на абзацы.\n"
+                "⚠️ ДЛИНА: 4–6 предложений, до 120 слов. Один абзац, без разбиения на абзацы.\n"
                 "КРИТИЧНО: Заканчивай предложение точкой, восклицанием или вопросительным знаком. "
-                "Никогда не обрывай на середине слова — если лимит близок, закончи мысль раньше или многоточием."
+                "Никогда не обрывай на середине слова — если лимит близок, закончи мысль раньше или многоточием. "
+                "НЕ используй markdown (**, *, ```, #) и лишние символы — только чистый текст."
             )
 
         # --- Сборка системного сообщения ---
@@ -1040,6 +1058,8 @@ class LangChainService:
             "tngtech/deepseek-r1t-chimera:free": "deepseek/deepseek-r1-0528:free",
             "deepseek/deepseek-r1-0528:free": "tngtech/tng-r1t-chimera:free",
             "tngtech/tng-r1t-chimera:free": "tngtech/deepseek-r1t2-chimera:free",
+            # Лёгкая модель для простых чатов
+            "deepseek/deepseek-v3.2": "tngtech/deepseek-r1t2-chimera:free",
         }
         return fallback_map.get(current_model)
     

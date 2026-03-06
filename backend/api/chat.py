@@ -34,10 +34,6 @@ class SystemChatVisibilityRequest(BaseModel):
 class UserRulesRequest(BaseModel):
     rules: List[str]
 
-# Модель для обновления выбранной модели чата
-class SelectedModelRequest(BaseModel):
-    model: str
-
 # Модель для обновления названия чата
 class ConversationTitleRequest(BaseModel):
     title: str
@@ -148,7 +144,7 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                 "agent_name": agent.name,
                 "agent_id": agent_id,
                 "created_at": conversation.created_at.isoformat() if conversation.created_at else None,
-                "selected_model": conversation.selected_model  # Возвращаем выбранную модель
+                "selected_model": conversation.selected_model
             }
             
         except HTTPException:
@@ -1482,66 +1478,6 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error updating user rules: {str(e)}"
-            )
-    
-    @app.put("/conversations/{conversation_id}/selected-model")
-    def update_selected_model(
-        conversation_id: int,
-        request: SelectedModelRequest,
-        current_user: User = Depends(get_current_active_user)
-    ):
-        """Обновить выбранную модель для разговора"""
-        try:
-            verify_conversation_access(conversation_id, current_user)
-            
-            # Валидация модели
-            if not request.model or not request.model.strip():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Модель не может быть пустой"
-                )
-            
-            # Сохраняем модель в БД
-            logger.info(f"💾 Сохранение модели {request.model} для беседы {conversation_id}")
-            success = conversation_service.set_selected_model(conversation_id, request.model.strip())
-            if not success:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Conversation not found"
-                )
-            
-            # Получаем сохраненную модель для подтверждения
-            saved_model = conversation_service.get_selected_model(conversation_id)
-            logger.info(f"✅ Модель сохранена в БД для беседы {conversation_id}: {saved_model}")
-            
-            return {"ok": True, "model": saved_model}
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error updating selected model for conversation {conversation_id}: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error updating selected model: {str(e)}"
-            )
-    
-    @app.get("/conversations/{conversation_id}/selected-model")
-    def get_selected_model(
-        conversation_id: int,
-        current_user: User = Depends(get_current_active_user)
-    ):
-        """Получить выбранную модель для разговора"""
-        try:
-            verify_conversation_access(conversation_id, current_user)
-            
-            model = conversation_service.get_selected_model(conversation_id)
-            return {"model": model}
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error getting selected model for conversation {conversation_id}: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error getting selected model: {str(e)}"
             )
     
     @app.delete("/conversations/{conversation_id}/messages/{message_id}/pin")

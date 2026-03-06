@@ -126,29 +126,15 @@ class ConversationService(BaseService):
                 if agent_id is None:
                     raise ValueError("agent_id required for conversation")
                 
-                # Определяем самую слабую модель по умолчанию для категории агента
-                default_model = None
-                if agent_id:
-                    # Получаем информацию об агенте
-                    agent = session.get(Agent, agent_id)
-                    if agent:
-                        agent_name = (agent.name or "").lower()
-                        agent_category = (agent.category or "").lower()
-                        
-                        # Все агенты используют одну модель
-                        default_model = "tngtech/deepseek-r1t2-chimera:free"
-                
-                # Если не удалось определить модель для категории, используем общую самую слабую
-                if not default_model:
-                    default_model = "arcee-ai/trinity-large-preview:free"  # Общая самая слабая модель по умолчанию
-                
-                # Всегда создаем новый разговор - каждый чат должен быть независимым
+                # Получаем информацию об агенте для привязки к папкам
+                agent = session.get(Agent, agent_id) if agent_id else None
+                # Модель выбирается автоматически по контексту (простой чат / поиск / картинки)
                 conversation = Conversation(
                     agent_id=agent_id,
                     title=title,
                     user_id=user_id,
                     conversation_type=conversation_type,
-                    selected_model=default_model  # Устанавливаем самую слабую модель для категории агента
+                    selected_model=None  # Не используется — модель выбирается по контексту в agent_service
                 )
                 session.add(conversation)
                 session.flush()  # Используем flush вместо commit
@@ -907,55 +893,6 @@ class ConversationService(BaseService):
         except Exception as e:
             logger.error(f"❌ Ошибка при сохранении правил для беседы {conversation_id}: {e}", exc_info=True)
             return False
-    
-    def set_selected_model(self, conversation_id: int, model: str) -> bool:
-        """Установить выбранную модель для разговора
-        
-        Args:
-            conversation_id: ID разговора
-            model: Название модели
-            
-        Returns:
-            True, если успешно, False в противном случае
-        """
-        try:
-            with self.get_session() as session:
-                conversation = session.get(Conversation, conversation_id)
-                if not conversation:
-                    logger.warning(f"Беседа {conversation_id} не найдена при сохранении модели")
-                    return False
-                
-                old_model = conversation.selected_model
-                conversation.selected_model = model
-                conversation.updated_at = datetime.utcnow()
-                
-                session.commit()
-                session.refresh(conversation)
-                
-                logger.info(f"✅ Модель сохранена для беседы {conversation_id}: {old_model} -> {model}")
-                return True
-        except Exception as e:
-            logger.error(f"❌ Ошибка при сохранении модели для беседы {conversation_id}: {e}", exc_info=True)
-            return False
-    
-    def get_selected_model(self, conversation_id: int) -> Optional[str]:
-        """Получить выбранную модель для разговора
-        
-        Args:
-            conversation_id: ID разговора
-            
-        Returns:
-            Название модели или None, если не установлена
-        """
-        try:
-            with self.get_session() as session:
-                conversation = session.get(Conversation, conversation_id)
-                if not conversation:
-                    return None
-                return conversation.selected_model
-        except Exception as e:
-            logger.error(f"❌ Ошибка при получении модели для беседы {conversation_id}: {e}", exc_info=True)
-            return None
     
     def set_title(self, conversation_id: int, title: str) -> bool:
         """Установить название для разговора

@@ -538,11 +538,9 @@ class AgentService(BaseService):
                     )
                     detected_language = None
 
-            # Получаем правила пользователя и модель из беседы ДО изменения conversation_id для мульти-агентных чатов
-            # Важно: правила и модель связаны с оригинальной беседой, а не с уникальным conversation_id для агента
-            # ВАЖНО: всегда загружаем правила и модель заново из БД при каждом запросе, чтобы гарантировать актуальность
+            # Получаем правила пользователя из беседы ДО изменения conversation_id для мульти-агентных чатов
+            # ВАЖНО: всегда загружаем правила заново из БД при каждом запросе
             user_rules: Optional[List[str]] = None
-            conversation_model: Optional[str] = None  # Модель из чата
             original_conv_id = None
             if conversation_id:
                 try:
@@ -560,9 +558,7 @@ class AgentService(BaseService):
                             conversation = session.get(MultiAgentConversation, original_conv_id)
                             if conversation:
                                 logger.debug(f"✅ Найдена групповая беседа {original_conv_id}")
-                                # У MultiAgentConversation пока нет своих правил пользователя или выбора модели
                                 user_rules = []
-                                conversation_model = None
                             else:
                                 logger.debug(f"⚠️ Групповая беседа {original_conv_id} не найдена в таблице MultiAgentConversation")
                                 user_rules = []
@@ -576,13 +572,6 @@ class AgentService(BaseService):
                                     logger.debug(f"✅ Загружено {len(user_rules)} правил пользователя для беседы {original_conv_id}: {user_rules}")
                                 else:
                                     logger.debug(f"📋 Правил пользователя нет для беседы {original_conv_id} (пустой список)")
-                                
-                                # Получаем модель из чата (если установлена)
-                                conversation_model = conversation.selected_model
-                                if conversation_model:
-                                    logger.debug(f"🎯 Используется модель из чата для беседы {original_conv_id}: {conversation_model}")
-                                else:
-                                    logger.debug(f"📋 Модель из чата не установлена для беседы {original_conv_id}, будет использована модель агента")
                             else:
                                 logger.debug(f"⚠️ Беседа {original_conv_id} не найдена в БД")
                                 user_rules = []  # Передаем пустой список, чтобы обновить системное сообщение
@@ -620,13 +609,9 @@ class AgentService(BaseService):
                 except Exception as e:
                     logger.warning(f"⚠️ [TOOLS DEBUG] Ошибка при загрузке категории из БД для агента {agent_id}: {e}")
             
-            # Инструмент поиска в интернете для фактологических вопросов (биография, тексты, даты)
+            # Инструмент поиска — только когда нужны факты (тексты песен/стихов).
+            # Для простых диалогов не передаём tools — лёгкая модель, экономим токены.
             tools = None
-            try:
-                from tools.web_search import web_search
-                tools = [web_search]
-            except ImportError as e:
-                logger.debug(f"Web search tool not available: {e}")
 
             # Инициализируем enhanced_message с исходным сообщением
             enhanced_message = message
@@ -669,20 +654,40 @@ class AgentService(BaseService):
             except Exception as e:
                 logger.warning(f"Forced lyrics search failed: {e}", exc_info=True)
 
+            # Инструменты и модель: только когда нужны (веб-поиск, картинки). Иначе — лёгкая модель.
+            if used_forced_search:
+                needs_tools = False  # Результаты уже в сообщении
+                try:
+                    from tools.web_search import web_search
+                    tools = [web_search]  # Модель может доискать при необходимости
+                except ImportError:
+                    tools = None
+            elif image_attachments:
+                tools = None  # Vision обрабатывается отдельно в LangChain
+            else:
+                # Простой диалог — без tools, лёгкая модель DeepSeek V3.2, экономим токены
+                tools = None
+                needs_tools = False
+
             # Используем LangChain сервис для генерации ответа
             # ВАЖНО: передаём enhanced_message, чтобы RAG-контекст (журнал задач, покупки и т.п.)
             # действительно участвовал в генерации ответа даже без инструментов
             # Всегда передаем user_rules (может быть пустым списком), чтобы принудительно обновить системное сообщение
             logger.debug(f"📝 [GENERATE RESPONSE] Вызываем LangChain для генерации обычного ответа")
-            # При использовании веб-поиска (forced search или tools) — более сильная модель для точной работы с фактами
-            if used_forced_search or (tools and len(tools) > 0):
-                from langchain_config import config
+            # Выбор модели по контексту: поиск → картинки → простой чат
+            from langchain_config import config
+            if used_forced_search:
                 search_cfg = config.get_search_model_config()
                 model_to_use = search_cfg["model"]
-                logger.debug(f"🤖 [GENERATE RESPONSE] Режим поиска — используем модель: {model_to_use}")
+                logger.debug(f"🤖 [GENERATE RESPONSE] Режим поиска (текст песни/стиха) — модель: {model_to_use}")
+            elif image_attachments:
+                vision_cfg = config.get_vision_model_config()
+                model_to_use = vision_cfg["model"]
+                logger.debug(f"🤖 [GENERATE RESPONSE] Режим картинок — модель: {model_to_use}")
             else:
-                model_to_use = conversation_model if conversation_model else agent.get("model")
-                logger.debug(f"🤖 [GENERATE RESPONSE] Используемая модель: {model_to_use}")
+                simple_cfg = config.get_simple_chat_model_config()
+                model_to_use = simple_cfg["model"]
+                logger.info(f"💰 [GENERATE RESPONSE] Простой чат — лёгкая модель DeepSeek V3.2: {model_to_use}")
             
             # Получаем инструкции агента, гарантируя, что они не None
             agent_instructions = agent.get("instructions") or ""

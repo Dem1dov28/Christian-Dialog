@@ -46,8 +46,6 @@ export default function ChatInputSection({
   // Используем переданный currentAgentIdProp, если он есть, иначе из activeConversation
   const agentIdToUse = currentAgentIdProp || activeConversation?.agent_id;
   const currentAgent = agentIdToUse ? getAgent(agentIdToUse) : null;
-  // Используем модель из чата, если она установлена, иначе модель агента
-  const currentModel = activeConversation?.selected_model || currentAgent?.model || null;
 
   // В проекте удалены model-агенты; этот флаг всегда false
   const isAIModelChat = false;
@@ -86,12 +84,6 @@ export default function ChatInputSection({
       messagePlaceholder={messagePlaceholder}
       activeConversation={activeConversation}
       currentAgentId={currentAgentIdProp || activeConversation?.agent_id}
-      currentModel={currentModel}
-      onModelChange={(newModel) => {
-        // Обновление модели будет обработано через API в ModelSelectPanel
-        // Здесь можно добавить дополнительную логику обновления UI
-        // Например, обновление кэша агентов
-      }}
       t={t}
       isAIModelChat={isAIModelChat}
       canAttachFiles={canAttachFiles}
