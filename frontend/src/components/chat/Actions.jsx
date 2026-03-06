@@ -2,15 +2,10 @@ import React, { useRef, useEffect } from "react";
 import { getActionIcon } from "../../utils/actionIcons";
 import { useContextMenuAnimation } from "../../hooks/modal/useContextMenuAnimation";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { isTelegramPc } from "../../utils/telegramPlatform";
 
 // Блокируем ghost click: на мобильных click возникает ~300ms после touchend.
 const TOUCH_GUARD_MS = 500;
-
-const isTelegramDesktop = () => {
-  if (typeof window === "undefined") return false;
-  const platform = window.Telegram?.WebApp?.platform || "";
-  return /^(tdesktop|macos)$/i.test(platform);
-};
 
 const Actions = ({
   isOpen = true,
@@ -57,20 +52,20 @@ const Actions = ({
 
   if (!isRendered) return null;
 
-  const tgDesktop = isTelegramDesktop();
+  const tgPc = isTelegramPc();
 
   const handleAction = (callback) => (event) => {
     event.preventDefault();
     event.stopPropagation();
-    // Touch guard: только на touch, НЕ в tg-desktop (там мышь)
-    if (!tgDesktop) {
+    // Touch guard: только на touch, НЕ на ПК (weba/webk/tdesktop — мышь)
+    if (!tgPc) {
       const isTouchDevice = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
       if (isTouchDevice && Date.now() - openedAtRef.current < TOUCH_GUARD_MS) return;
     }
     const msgId = messageId;
     const cb = callback;
-    // В tg-desktop WebView: закрываем меню и выполняем в setTimeout — обходим проблемы с event propagation
-    if (tgDesktop) {
+    // На ПК (weba/webk/tdesktop): закрываем меню и выполняем в setTimeout — обходим event propagation
+    if (tgPc) {
       closeMenu();
       setTimeout(() => { if (typeof cb === "function") cb(msgId); }, 0);
     } else {
@@ -79,9 +74,9 @@ const Actions = ({
     }
   };
 
-  // В tg-desktop onMouseDown срабатывает надёжнее, чем onClick
+  // На ПК (weba/webk/tdesktop) onMouseDown срабатывает надёжнее, чем onClick
   const actionProps = (callback) =>
-    tgDesktop
+    tgPc
       ? { onMouseDown: handleAction(callback) }
       : { onClick: handleAction(callback) };
 
@@ -118,7 +113,7 @@ const Actions = ({
               <button
                 type="button"
                 className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                onClick={handleAction(onUnselect)}
+                {...actionProps(onUnselect)}
               >
                 {React.createElement(getActionIcon("close"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
                 <span className="text-base">Unselect</span>

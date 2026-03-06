@@ -7,12 +7,12 @@ let _base = import.meta.env.VITE_API_BASE_URL ||
 // Убираем trailing slash
 _base = (_base || "").replace(/\/+$/, "");
 
-// Mixed Content: страница по HTTPS не может запрашивать HTTP. Принудительно HTTPS.
-if (typeof window !== "undefined" && window.location.protocol === "https:" && _base.startsWith("http://")) {
+// Mixed Content: epochaldialog.com всегда HTTPS (Mini App в web.telegram.org требует HTTPS)
+if (_base.includes("epochaldialog.com") && _base.startsWith("http://")) {
   _base = "https://" + _base.slice(7);
 }
-// В production (epochaldialog.com) всегда https
-if (_base.includes("epochaldialog.com") && _base.startsWith("http://")) {
+// В браузере на HTTPS — принудительно переводим API на HTTPS
+if (typeof window !== "undefined" && window.location?.protocol === "https:" && _base.startsWith("http://")) {
   _base = "https://" + _base.slice(7);
 }
 

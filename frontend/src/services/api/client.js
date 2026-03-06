@@ -6,6 +6,11 @@ import { API_BASE_URL, API_TIMEOUT } from "../../config/api";
 import { getCsrfToken } from "../../utils/csrf";
 
 function ensureHttpsOnSecurePage(url) {
+  if (!url || typeof url !== "string") return url;
+  // epochaldialog.com всегда HTTPS (Mini App в Telegram Web)
+  if (url.includes("epochaldialog.com") && url.startsWith("http://")) {
+    return "https://" + url.slice(7);
+  }
   if (typeof window !== "undefined" && window.location?.protocol === "https:" && url.startsWith("http://")) {
     return "https://" + url.slice(7);
   }

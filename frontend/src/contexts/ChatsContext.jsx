@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import { flushSync } from "react-dom";
 import { useAuth } from "./AuthContext";
 import { useSidebarUpdate } from "./SidebarUpdateContext";
 import apiClient from "../services/api";
@@ -1446,7 +1447,8 @@ export const ChatsProvider = ({ children }) => {
         }
 
         if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
-          await new Promise((resolve) => setTimeout(resolve, 120));
+          flushSync(() => {});
+          await new Promise((resolve) => setTimeout(resolve, 80));
         }
         return existingDuplicate;
       }
@@ -1474,10 +1476,11 @@ export const ChatsProvider = ({ children }) => {
       newlyCreatedEmptyChatsRef.current.add(formattedChatData.id);
       console.log(`[createChat] Добавлен новый пустой чат ${formattedChatData.id} в список для отслеживания`);
 
-      // В Telegram Desktop WebView React batch обрабатывается иначе — задержка
-      // даёт время применить setConversations/setActiveConversation до return
+      // ПК Telegram (weba/webk/tdesktop): принудительно флашим React state до return,
+      // чтобы Sidebar и selectConversation видели новый чат в списке
       if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
-        await new Promise((resolve) => setTimeout(resolve, 120));
+        flushSync(() => {});
+        await new Promise((resolve) => setTimeout(resolve, 80));
       }
 
       return formattedChatData;
@@ -3777,7 +3780,8 @@ export const ChatsProvider = ({ children }) => {
       }
 
       if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
-        await new Promise((resolve) => setTimeout(resolve, 120));
+        flushSync(() => {});
+        await new Promise((resolve) => setTimeout(resolve, 80));
       }
       return chatData;
     } catch (error) {

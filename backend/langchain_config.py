@@ -29,7 +29,7 @@ class LangChainConfig:
         return {
             "model": "tngtech/deepseek-r1t2-chimera:free",
             "temperature": 0.9,
-            "max_tokens": 768  # Ограничение длины ответа (~400–500 слов) — персонажи не отвечают огромными сообщениями
+            "max_tokens": 420  # Жёсткий лимит (~150–200 слов, 4–7 предложений) — персонажи отвечают кратко
         }
     
     def get_vision_model_config(self) -> dict:
