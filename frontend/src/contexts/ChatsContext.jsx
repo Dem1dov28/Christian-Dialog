@@ -1446,7 +1446,7 @@ export const ChatsProvider = ({ children }) => {
         }
 
         if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
-          await new Promise((resolve) => queueMicrotask(resolve));
+          await new Promise((resolve) => setTimeout(resolve, 120));
         }
         return existingDuplicate;
       }
@@ -1474,10 +1474,10 @@ export const ChatsProvider = ({ children }) => {
       newlyCreatedEmptyChatsRef.current.add(formattedChatData.id);
       console.log(`[createChat] Добавлен новый пустой чат ${formattedChatData.id} в список для отслеживания`);
 
-      // В Telegram Desktop (tdesktop/macos) WebView React batch может обрабатываться иначе —
-      // небольшой yield даёт время применить setConversations/setActiveConversation до return
+      // В Telegram Desktop WebView React batch обрабатывается иначе — задержка
+      // даёт время применить setConversations/setActiveConversation до return
       if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise((resolve) => setTimeout(resolve, 120));
       }
 
       return formattedChatData;
@@ -3777,7 +3777,7 @@ export const ChatsProvider = ({ children }) => {
       }
 
       if (typeof document !== "undefined" && document.documentElement?.classList?.contains("tg-desktop")) {
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise((resolve) => setTimeout(resolve, 120));
       }
       return chatData;
     } catch (error) {

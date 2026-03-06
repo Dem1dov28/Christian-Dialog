@@ -4,8 +4,13 @@ import { useContextMenuAnimation } from "../../hooks/modal/useContextMenuAnimati
 import { useLanguage } from "../../contexts/LanguageContext";
 
 // Блокируем ghost click: на мобильных click возникает ~300ms после touchend.
-// При long-press палец может оказаться над кнопкой — guard предотвращает случайное срабатывание.
 const TOUCH_GUARD_MS = 500;
+
+const isTelegramDesktop = () => {
+  if (typeof window === "undefined") return false;
+  const platform = window.Telegram?.WebApp?.platform || "";
+  return /^(tdesktop|macos)$/i.test(platform);
+};
 
 const Actions = ({
   isOpen = true,
@@ -52,18 +57,33 @@ const Actions = ({
 
   if (!isRendered) return null;
 
+  const tgDesktop = isTelegramDesktop();
+
   const handleAction = (callback) => (event) => {
     event.preventDefault();
     event.stopPropagation();
-    // Touch guard только на touch-устройствах. В Telegram Desktop (ПК) — мышь: guard блокировал
-    // быстрые клики и вызывал «ошибку при удалении» (действие молча не срабатывало)
-    const isTouchDevice = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
-    if (isTouchDevice && Date.now() - openedAtRef.current < TOUCH_GUARD_MS) return;
-    if (typeof callback === "function") {
-      callback(messageId);
+    // Touch guard: только на touch, НЕ в tg-desktop (там мышь)
+    if (!tgDesktop) {
+      const isTouchDevice = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+      if (isTouchDevice && Date.now() - openedAtRef.current < TOUCH_GUARD_MS) return;
     }
-    closeMenu();
+    const msgId = messageId;
+    const cb = callback;
+    // В tg-desktop WebView: закрываем меню и выполняем в setTimeout — обходим проблемы с event propagation
+    if (tgDesktop) {
+      closeMenu();
+      setTimeout(() => { if (typeof cb === "function") cb(msgId); }, 0);
+    } else {
+      if (typeof cb === "function") cb(msgId);
+      closeMenu();
+    }
   };
+
+  // В tg-desktop onMouseDown срабатывает надёжнее, чем onClick
+  const actionProps = (callback) =>
+    tgDesktop
+      ? { onMouseDown: handleAction(callback) }
+      : { onClick: handleAction(callback) };
 
   return (
     <div
@@ -88,7 +108,7 @@ const Actions = ({
               <button
                 type="button"
                 className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                onClick={handleAction(onCopy)}
+                {...actionProps(onCopy)}
               >
                 {React.createElement(getActionIcon("copy"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
                 <span className="text-base">Copy Text</span>
@@ -108,7 +128,7 @@ const Actions = ({
               <button
                 type="button"
                 className="w-full text-left flex items-center px-4 py-3 text-[var(--primary)] hover:bg-[var(--hover-red-light)] dark:hover:bg-[var(--hover-red-dark)] transition-colors duration-150"
-                onClick={handleAction(onDelete)}
+                {...actionProps(onDelete)}
               >
                 {React.createElement(getActionIcon("delete"), { className: "text-[var(--primary)] mr-3 text-xl" })}
                 <span className="text-base font-medium">Delete</span>
@@ -122,7 +142,7 @@ const Actions = ({
                 <button
                   type="button"
                   className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                  onClick={handleAction(onSelect)}
+                  {...actionProps(onSelect)}
                 >
                   {React.createElement(getActionIcon("select"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
                   <span className="text-base">{t("chat.selectMessage")}</span>
@@ -133,7 +153,7 @@ const Actions = ({
               <button
                 type="button"
                 className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                onClick={handleAction(onReply)}
+                {...actionProps(onReply)}
               >
                 {React.createElement(getActionIcon("reply"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
                 <span className="text-base">{t("chat.reply")}</span>
@@ -143,7 +163,7 @@ const Actions = ({
               <button
                 type="button"
                 className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                onClick={handleAction(onCopy)}
+                {...actionProps(onCopy)}
               >
                 {React.createElement(getActionIcon("copy"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
                 <span className="text-base">Copy Text</span>
@@ -153,7 +173,7 @@ const Actions = ({
               <button
                 type="button"
                 className="w-full text-left flex items-center px-4 py-3 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-                onClick={handleAction(onPin)}
+                {...actionProps(onPin)}
               >
                 {React.createElement(getActionIcon("pin"), { className: "text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-3 text-xl" })}
                 <span className="text-base">Pin</span>
@@ -163,7 +183,7 @@ const Actions = ({
               <button
                 type="button"
                 className="w-full text-left flex items-center px-4 py-3 text-[var(--primary)] hover:bg-[var(--hover-red-light)] dark:hover:bg-[var(--hover-red-dark)] transition-colors duration-150"
-                onClick={handleAction(onDelete)}
+                {...actionProps(onDelete)}
               >
                 {React.createElement(getActionIcon("delete"), { className: "text-[var(--primary)] mr-3 text-xl" })}
                 <span className="text-base font-medium">Delete</span>
