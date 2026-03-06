@@ -29,7 +29,7 @@ class LangChainConfig:
         return {
             "model": "tngtech/deepseek-r1t2-chimera:free",
             "temperature": 0.9,
-            "max_tokens": 2048
+            "max_tokens": 768  # Ограничение длины ответа (~400–500 слов) — персонажи не отвечают огромными сообщениями
         }
     
     def get_vision_model_config(self) -> dict:
@@ -46,7 +46,7 @@ class LangChainConfig:
         return {
             "model": os.getenv("SEARCH_MODEL", "openai/gpt-4o"),
             "temperature": 0.7,
-            "max_tokens": 2048
+            "max_tokens": 1024  # Для поисковых ответов — немного больше, но не эссе
         }
 
 config = LangChainConfig()

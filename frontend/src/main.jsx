@@ -12,6 +12,7 @@ const isInTelegram = Boolean(tg?.initData);
 if (tg && isInTelegram) {
   document.documentElement.classList.add("tg-webapp");
   if (/^ios$/i.test(tg.platform || "")) document.documentElement.classList.add("tg-ios");
+  if (/^(tdesktop|macos)$/i.test(tg.platform || "")) document.documentElement.classList.add("tg-desktop");
   tg.ready();
   tg.expand();
   if (tg.isVersionAtLeast?.("6.2")) { try { tg.enableClosingConfirmation(); } catch (_) {} }
@@ -20,7 +21,7 @@ if (tg && isInTelegram) {
   // Safe area: iOS — Dynamic Island + хедер; desktop (tdesktop/macos) — панель окна; Android — отступ не нужен.
   const isIOS = /^ios$/i.test(tg.platform || "");
   const isDesktop = /^(tdesktop|macos)$/i.test(tg.platform || "");
-  const TG_HEADER_BUFFER = 48;
+  const TG_HEADER_BUFFER = 56;
   function applyTelegramSafeArea() {
     const root = document.documentElement.style;
     if (isDesktop) {

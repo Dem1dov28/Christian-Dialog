@@ -85,6 +85,12 @@ html.tg-webapp .drawer-sheet {
   height: calc(100% - var(--safe-area-inset-top));
 }
 
+/* ПК-версия Telegram: верхний отступ в цвет темы, чтобы хедер чата не перекрывался кнопками окна */
+html.tg-webapp.tg-desktop #root {
+  padding-top: var(--safe-area-inset-top);
+  background-color: var(--bg-primary);
+}
+
 /* Класс для применения фонового изображения темы — используется только в авторизованной части приложения */
 body.app-with-theme-bg {
   background-image: var(--bg-image);

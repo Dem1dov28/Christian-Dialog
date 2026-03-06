@@ -178,7 +178,8 @@ const Sidebar = ({
           // Если чата нет, создаем новый чат с агентом
           const newConversation = await createChat(agentId, true);
           if (newConversation?.id) {
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            // createChat уже установил activeConversation и activeConversationRef
+            // selectConversation пропустится (чат уже активен), вызываем onChatSelect для синхронизации activeChatId
             await selectConversation(newConversation.id);
             if (onChatSelect) {
               onChatSelect(newConversation.id);

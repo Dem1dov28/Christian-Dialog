@@ -1427,12 +1427,11 @@ export const ChatsProvider = ({ children }) => {
         }
 
         // Триггерим обновление UI
-        setTimeout(() => {
-          triggerUpdate();
-        }, 100);
+        triggerUpdate();
 
         // Устанавливаем как активный чат только если явно запрошено
         if (setAsActive) {
+          activeConversationRef.current = existingDuplicate.id;
           setActiveConversation(existingDuplicate);
           // Принудительно подготавливаем состояние, чтобы UI был готов сразу
           updateMessagesForConversation(existingDuplicate.id, []);
@@ -1449,13 +1448,12 @@ export const ChatsProvider = ({ children }) => {
         return existingDuplicate;
       }
 
-      // Триггерим обновление UI с небольшой задержкой, чтобы избежать конфликтов
-      setTimeout(() => {
-        triggerUpdate();
-      }, 100);
+      // Триггерим обновление UI сразу, чтобы новый чат сразу отображался в списке
+      triggerUpdate();
 
       // Устанавливаем как активный чат только если явно запрошено
       if (setAsActive) {
+        activeConversationRef.current = formattedChatData.id;
         setActiveConversation(formattedChatData);
         // Принудительно подготавливаем состояние, чтобы UI был готов сразу
         updateMessagesForConversation(formattedChatData.id, []);
@@ -2362,37 +2360,38 @@ export const ChatsProvider = ({ children }) => {
     console.log("[ChatsContext] activeConversationRef.current:", activeConversationRef.current);
     console.log("[ChatsContext] Current conversations:", conversations.map(c => ({ id: c.id, title: c.title })));
 
+    const conversationIdStr = String(conversationId);
     // КРИТИЧНО: Проверяем ref ПЕРВЫМ, так как он обновляется синхронно
     // (в отличие от state, который обновляется асинхронно)
-    // Это особенно важно для createGroupChat, который устанавливает ref перед вызовом onChatSelect
-    if (activeConversationRef.current === conversationId) {
+    // Это особенно важно для createChat/createGroupChat, которые устанавливают ref перед вызовом onChatSelect
+    if (String(activeConversationRef.current) === conversationIdStr) {
       console.log(`✅ Чат ${conversationId} уже активен (проверка ref), пропускаем перерендер`);
       return;
     }
 
     // Проверяем, не выбран ли уже этот чат через state (предотвращаем перерендер)
-    if (activeConversation && activeConversation.id === conversationId) {
+    if (activeConversation && String(activeConversation.id) === conversationIdStr) {
       console.log(`✅ Чат ${conversationId} уже активен (проверка state), пропускаем перерендер`);
       return;
     }
 
     // Защита от множественных одновременных вызовов для одного чата
-    if (selectingConversationRef.current.has(conversationId)) {
+    if (selectingConversationRef.current.has(conversationIdStr)) {
       console.log(`[selectConversation] Чат ${conversationId} уже выбирается, пропускаем дублирующий запрос`);
       return;
     }
 
-    // Защита от слишком частых запросов для одного чата (минимум 500ms между запросами)
+    // Защита от слишком частых запросов для одного чата (минимум 150ms — баланс между плавностью и защитой от спама)
     const now = Date.now();
-    const lastSelectTime = lastSelectTimeRef.current[conversationId] || 0;
-    if (now - lastSelectTime < 500) {
+    const lastSelectTime = lastSelectTimeRef.current[conversationIdStr] || 0;
+    if (now - lastSelectTime < 150) {
       console.log(`[selectConversation] Слишком частый запрос для чата ${conversationId}, пропускаем`);
       return;
     }
 
     // Отмечаем, что начинаем выбор этого чата
-    selectingConversationRef.current.add(conversationId);
-    lastSelectTimeRef.current[conversationId] = now;
+    selectingConversationRef.current.add(conversationIdStr);
+    lastSelectTimeRef.current[conversationIdStr] = now;
 
     // 🗑️ АВТОМАТИЧЕСКОЕ УДАЛЕНИЕ ПУСТЫХ ЧАТОВ:
     // Если переключаемся с пустого нового чата на другой - удаляем предыдущий пустой чат
@@ -2430,8 +2429,8 @@ export const ChatsProvider = ({ children }) => {
 
     // КРИТИЧНО: Обновляем activeConversationRef.current СРАЗУ при переключении,
     // чтобы при следующей загрузке списка чатов использовался правильный активный чат
-    activeConversationRef.current = conversationId;
-    prevActiveConversationIdRef.current = conversationId;
+    activeConversationRef.current = conversationIdStr;
+    prevActiveConversationIdRef.current = conversationIdStr;
 
     // 📬 Сохраняем текущий активный чат в localStorage для корректной работы при перезагрузке
     try {
@@ -2445,11 +2444,11 @@ export const ChatsProvider = ({ children }) => {
     const cachedMessagesCount = messagesByConversation[conversationId]?.length ?? 0;
     const cachedPinnedCount = pinnedMessages[conversationId]?.length ?? 0;
     const isNewEmptyChat = cachedMessagesCount === 0 && cachedPinnedCount === 0;
+    const hasCachedData = cachedMessagesCount > 0 && pinnedMessages[conversationId] !== undefined;
 
-    // Устанавливаем состояние загрузки
-    setIsChatLoading(true);
-    // Сбрасываем готовность только если чат НЕ новый пустой (для нового пустого chatReady уже установлен)
-    if (!isNewEmptyChat) {
+    // Устанавливаем состояние загрузки только если нужна загрузка (избегаем мигания при переключении между кэшированными чатами)
+    if (!hasCachedData && !isNewEmptyChat) {
+      setIsChatLoading(true);
       setChatReady(false);
     }
 
@@ -2957,7 +2956,7 @@ export const ChatsProvider = ({ children }) => {
       throw error;
     } finally {
       // Всегда удаляем из множества активных запросов при выходе (успех или ошибка)
-      selectingConversationRef.current.delete(conversationId);
+      selectingConversationRef.current.delete(conversationIdStr);
     }
   };
 

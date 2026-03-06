@@ -419,10 +419,12 @@ export function useChatInput({
       resetTextareaHeight();
       if (activeConversation?.id) {
         clearDraftMessage(activeConversation.id);
+        // Явно сохраняем пустой черновик, чтобы эффект автосохранения не восстановил старый текст
+        saveDraftMessage(activeConversation.id, "");
       }
     }
     setReplyToMessage(null);
-  }, [resetTextareaHeight, activeConversation?.id, clearDraftMessage]);
+  }, [resetTextareaHeight, activeConversation?.id, clearDraftMessage, saveDraftMessage]);
 
   // Обработка изменения поля ввода
   const handleInputChange = useCallback((e) => {
