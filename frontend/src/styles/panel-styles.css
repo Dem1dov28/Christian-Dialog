@@ -678,6 +678,16 @@ input:checked + .toggle-slider:before {
   flex-direction: column;
 }
 
+.usage-stat-cell-chats {
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.usage-stat-number-chats {
+  margin-top: auto;
+  font-size: 13px;
+}
+
 .usage-stat-cell-messages {
   flex: 1;
 }

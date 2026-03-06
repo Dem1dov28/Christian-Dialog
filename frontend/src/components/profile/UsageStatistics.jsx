@@ -114,15 +114,13 @@ const UsageStatistics = ({ usageStats, user }) => {
       </div>
 
       <div className="usage-stat-cell usage-stat-cell-chats">
-        <div className="usage-stat-row">
-          <div className="flex items-center gap-2">
-            <FiFolder className="usage-stat-icon" />
-            <span className="usage-stat-label">{t("profile.usage.chats")}</span>
-          </div>
-          <span className="usage-stat-number">
-            {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
-          </span>
+        <div className="flex items-center gap-2">
+          <FiFolder className="usage-stat-icon" />
+          <span className="usage-stat-label">{t("profile.usage.chats")}</span>
         </div>
+        <span className="usage-stat-number usage-stat-number-chats">
+          {usageStats?.conversations_count ?? 0} / {usageStats?.max_chats ?? 10}
+        </span>
       </div>
     </div>
   );
