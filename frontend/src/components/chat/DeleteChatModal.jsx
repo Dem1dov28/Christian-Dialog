@@ -167,12 +167,9 @@ const DeleteChatModal = ({
       <div
         ref={modalRef}
         onTransitionEnd={handleTransitionEnd}
-        className={`frosted-glass rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-y-auto ${
+        className={`chat-input-frosted rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[calc(100dvh-160px)] overflow-y-auto ${
           isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
         }`}
-        style={{
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-        }}
       >
         {/* Содержимое модального окна */}
         <div className="p-6">
