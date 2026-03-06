@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   MdSearch,
   MdClose,
@@ -53,6 +54,8 @@ const MessageSearch = ({ isOpen, onClose }) => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const { messages, activeConversation, scrollToMessage } = useChats();
+  const { getAgent } = useAgents();
+  const { t, translateAgent } = useLanguage();
   const searchInputRef = useRef(null);
 
   // Фильтрация сообщений по поисковому запросу
@@ -163,14 +166,14 @@ const MessageSearch = ({ isOpen, onClose }) => {
   const highlightText = (text, query) => {
     if (!query.trim()) return text;
 
-    const regex = new RegExp(`(${query})`, "gi");
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
 
     return parts.map((part, index) =>
-      regex.test(part) ? (
+      part.toLowerCase() === query.trim().toLowerCase() ? (
         <mark
           key={index}
-          className="bg-yellow-200 text-yellow-900 px-1 rounded"
+          className="bg-yellow-200/80 dark:bg-yellow-500/30 text-yellow-900 dark:text-yellow-200 px-1 rounded"
         >
           {part}
         </mark>
@@ -190,104 +193,109 @@ const MessageSearch = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-20">
-      <div className="bg-tg-bg border border-tg-border rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[80vh] flex flex-col">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[120] flex items-start justify-center bg-black/50"
+      style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)", paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div
+        className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl shadow-xl w-full max-w-3xl mx-4 flex flex-col"
+        style={{ maxHeight: "80vh" }}
+      >
         {/* Заголовок */}
-        <div className="flex items-center justify-between p-4 border-b border-tg-border">
-          <h2 className="text-lg font-semibold text-[var(--text-white)]">
-            Поиск в чате
+        <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)] shrink-0">
+          <h2 className="text-lg font-semibold text-[var(--text-white)] truncate pr-2">
+            {t("chat.searchInChat")}
             {activeConversation && (
-              <span className="text-sm text-[var(--text-white)]-secondary ml-2">
-                - {activeConversation.title}
+              <span className="text-sm text-[var(--text-dim)] ml-2 font-normal">
+                — {activeConversation.title}
               </span>
             )}
           </h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-tg-bg-secondary rounded-lg transition-colors"
+            className="p-2 hover:bg-[var(--hover-bg)] rounded-lg transition-colors shrink-0"
+            aria-label={t("common.close")}
           >
-            <MdClose className="text-[var(--text-white)]-secondary text-xl" />
+            <MdClose className="text-[var(--text-dim)] text-xl" />
           </button>
         </div>
 
         {/* Поле поиска */}
-        <div className="p-4 border-b border-tg-border">
+        <div className="p-4 border-b border-[var(--border-color)] shrink-0">
           <div className="relative">
-            <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-white)]-secondary text-xl" />
+            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-dim)] text-xl" />
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Поиск по сообщениям..."
-              className="w-full pl-10 pr-4 py-3 bg-tg-bg-secondary border border-tg-border rounded-lg text-[var(--text-white)] placeholder-tg-text-secondary focus:outline-none focus:border-tg-accent focus:ring-2 focus:ring-tg-accent/20 transition-all duration-200"
+              placeholder={t("chat.searchMessagesPlaceholder")}
+              className="w-full pl-10 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] placeholder-[var(--text-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 transition-all"
             />
             {isSearching && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-tg-accent border-t-transparent"></div>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
               </div>
             )}
           </div>
 
           {/* Навигация по результатам */}
           {searchResults.length > 0 && (
-            <div className="flex items-center justify-between mt-3">
-              <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={goToPreviousResult}
-                  className="p-2 hover:bg-tg-bg-secondary rounded-lg transition-colors"
-                  title="Предыдущий результат"
+                  className="p-2 hover:bg-[var(--hover-bg)] rounded-lg transition-colors"
+                  title={t("chat.prevResult")}
                 >
-                  <MdArrowUpward className="text-[var(--text-white)]-secondary" />
+                  <MdArrowUpward className="text-[var(--text-dim)]" />
                 </button>
                 <button
                   onClick={goToNextResult}
-                  className="p-2 hover:bg-tg-bg-secondary rounded-lg transition-colors"
-                  title="Следующий результат"
+                  className="p-2 hover:bg-[var(--hover-bg)] rounded-lg transition-colors"
+                  title={t("chat.nextResult")}
                 >
-                  <MdArrowDownward className="text-[var(--text-white)]-secondary" />
+                  <MdArrowDownward className="text-[var(--text-dim)]" />
                 </button>
-                <span className="text-sm text-[var(--text-white)]-secondary">
-                  {currentResultIndex + 1} из {searchResults.length}
+                <span className="text-sm text-[var(--text-dim)]">
+                  {t("chat.resultOfTotal", { current: currentResultIndex + 1, total: searchResults.length })}
                 </span>
               </div>
-              <div className="text-sm text-[var(--text-white)]-secondary">
-                Используйте ↑↓ для навигации, Enter для перехода
+              <div className="text-xs sm:text-sm text-[var(--text-dim)]">
+                {t("chat.useArrowsEnterHint")}
               </div>
             </div>
           )}
         </div>
 
         {/* Результаты поиска */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {searchQuery.trim() && (
             <div className="p-4">
               {isSearching ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-tg-accent border-t-transparent"></div>
-                  <span className="ml-3 text-[var(--text-white)]-secondary">Поиск...</span>
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent" />
+                  <span className="ml-3 text-[var(--text-dim)]">{t("common.searchingMessages")}</span>
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-white)]-secondary mb-3">
-                    Найдено сообщений: {searchResults.length}
+                  <p className="text-sm text-[var(--text-dim)] mb-3">
+                    {t("chat.searchResultsCount", { count: searchResults.length })}
                   </p>
                   {searchResults.map((message, index) => (
                     <div
                       key={message.id}
                       onClick={() => handleResultClick(message)}
-                      className={`p-3 bg-tg-bg-secondary hover:bg-tg-bg-tertiary rounded-lg cursor-pointer transition-colors group ${
-                        index === currentResultIndex
-                          ? "ring-2 ring-tg-accent"
-                          : ""
+                      className={`p-3 bg-[var(--bg-secondary)] hover:bg-[var(--hover-bg)] rounded-lg cursor-pointer transition-colors ${
+                        index === currentResultIndex ? "ring-2 ring-[var(--accent)]" : ""
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <MdHighlight className="text-tg-accent text-sm" />
-                          <span className="text-sm font-medium text-[var(--text-white)]">
+                      <div className="flex items-start justify-between mb-2 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <MdHighlight className="text-[var(--accent)] text-sm shrink-0" />
+                          <span className="text-sm font-medium text-[var(--text-white)] truncate">
                             {message.is_from_user
                               ? t("chat.you")
                               : (() => {
@@ -299,11 +307,11 @@ const MessageSearch = ({ isOpen, onClose }) => {
                                 })()}
                           </span>
                         </div>
-                        <span className="text-xs text-[var(--text-white)]-secondary">
+                        <span className="text-xs text-[var(--text-dim)] shrink-0">
                           {formatTime(message.created_at)}
                         </span>
                       </div>
-                      <div className="text-[var(--text-white)]">
+                      <div className="text-[var(--text-white)] text-sm line-clamp-2">
                         {highlightText(
                           cleanMessageContent(message.content || ""),
                           searchQuery
@@ -314,10 +322,10 @@ const MessageSearch = ({ isOpen, onClose }) => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <MdSearch className="mx-auto text-[var(--text-white)]-secondary text-4xl mb-3" />
-                  <p className="text-[var(--text-white)]-secondary">Сообщения не найдены</p>
-                  <p className="text-sm text-[var(--text-white)]-secondary mt-1">
-                    Попробуйте изменить поисковый запрос
+                  <MdSearch className="mx-auto text-[var(--text-dim)] text-4xl mb-3" />
+                  <p className="text-[var(--text-dim)]">{t("chat.messagesNotFound")}</p>
+                  <p className="text-sm text-[var(--text-dim)] mt-1">
+                    {t("chat.tryChangeQuery")}
                   </p>
                 </div>
               )}
@@ -327,16 +335,18 @@ const MessageSearch = ({ isOpen, onClose }) => {
 
         {/* Подсказки */}
         {!searchQuery.trim() && (
-          <div className="p-4 text-center text-[var(--text-white)]-secondary">
-            <p>Введите текст для поиска по сообщениям</p>
-            <p className="text-sm mt-1">
-              Используйте клавиши ↑↓ для навигации по результатам
-            </p>
+          <div className="p-4 text-center text-[var(--text-dim)] shrink-0">
+            <p>{t("chat.enterSearchText")}</p>
+            <p className="text-sm mt-1">{t("chat.useArrowsForNavigation")}</p>
           </div>
         )}
       </div>
     </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 };
 
 export default MessageSearch;

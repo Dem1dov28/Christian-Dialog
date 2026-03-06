@@ -107,6 +107,8 @@ function MainApp() {
     setIsLibraryWithSidebar,
     forceShowSidebarForSearch,
     setForceShowSidebarForSearch,
+    isChatSearchModalOpen,
+    setIsChatSearchModalOpen,
     searchRef,
     rightPanelRef,
   } = appState;
@@ -219,15 +221,14 @@ function MainApp() {
     if (searchRef.current) {
       searchRef.current.openSearch("messages");
     } else {
-      // На мобильном при открытом чате Sidebar не смонтирован — показываем его для поиска
-      setForceShowSidebarForSearch(true);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          searchRef.current?.openSearch("messages");
-        });
-      });
+      // На мобильном при открытом чате Sidebar не смонтирован — показываем модалку поиска прямо в чате
+      setIsChatSearchModalOpen(true);
     }
-  }, [searchRef, setForceShowSidebarForSearch]);
+  }, [searchRef, setIsChatSearchModalOpen]);
+
+  const closeChatSearchModal = useCallback(() => {
+    setIsChatSearchModalOpen(false);
+  }, [setIsChatSearchModalOpen]);
 
   const openDrawer = useCallback(() => setIsDrawerOpen(true), [setIsDrawerOpen]);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), [setIsDrawerOpen]);
@@ -610,6 +611,8 @@ function MainApp() {
         onTargetMessageScrolled={() => setTargetMessageId(null)}
         onToggleRightPanel={toggleRightPanel}
         onOpenChatSearch={openChatSearch}
+        isChatSearchModalOpen={isChatSearchModalOpen}
+        onCloseChatSearchModal={closeChatSearchModal}
         isRightPanelOpen={isRightPanelVisible}
         isLeftPanelOpen={isDrawerOpen}
         onMessageSent={handleMessageSent}

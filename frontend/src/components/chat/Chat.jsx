@@ -16,6 +16,7 @@ import HeaderMenu from "./HeaderMenu";
 import ReportModal from "./ReportModal";
 import ClearChatModal from "./ClearChatModal";
 import EditGroupChatModal from "./EditGroupChatModal";
+import MessageSearch from "../search/MessageSearch";
 import ChatHeader from "./ChatHeader";
 import ChatSelectionHeader from "./ChatSelectionHeader";
 import ChatInput from "./ChatInput";
@@ -152,6 +153,8 @@ export default function Chat({
   onTargetMessageScrolled,
   onToggleRightPanel,
   onOpenChatSearch,
+  isChatSearchModalOpen = false,
+  onCloseChatSearchModal,
   isRightPanelOpen = false,
   onMessageSent,
   onChatSelect,
@@ -1418,8 +1421,14 @@ export default function Chat({
         />
       )}
 
-      {/* УДАЛЕНО - модальные окна для удаленных инструментов */}
-
+      {/* Модалка поиска по сообщениям (в чате на мобильных) */}
+      {isChatSearchModalOpen && onCloseChatSearchModal && typeof document !== "undefined" && createPortal(
+        <MessageSearch
+          isOpen={isChatSearchModalOpen}
+          onClose={onCloseChatSearchModal}
+        />,
+        document.body
+      )}
 
     </main>
   );

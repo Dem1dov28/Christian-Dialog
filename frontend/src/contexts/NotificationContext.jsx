@@ -87,8 +87,14 @@ export const NotificationProvider = ({ children }) => {
         onClose={closeCopySuccessModal}
         message={copySuccessModal.message}
       />
-      {/* Рендерим уведомления */}
-      <div className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none" style={{ maxWidth: 'calc(100vw - 2rem)' }}>
+      {/* Рендерим уведомления — ниже заголовка чата, с учётом safe-area */}
+      <div
+        className="fixed right-4 z-50 space-y-2 pointer-events-none"
+        style={{
+          top: 'calc(var(--safe-area-inset-top, 0px) + 5rem)',
+          maxWidth: 'calc(100vw - 2rem)',
+        }}
+      >
         {notifications.map(notification => (
           <div key={notification.id} className="pointer-events-auto" style={{ maxWidth: '24rem', width: '100%' }}>
             <Notification

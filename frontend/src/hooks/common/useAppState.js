@@ -31,6 +31,7 @@ export function useAppState() {
   const [isMediumScreenSidebarVisible, setIsMediumScreenSidebarVisible] = useState(false);
   const [isLibraryWithSidebar, setIsLibraryWithSidebar] = useState(false);
   const [forceShowSidebarForSearch, setForceShowSidebarForSearch] = useState(false);
+  const [isChatSearchModalOpen, setIsChatSearchModalOpen] = useState(false);
 
   // Refs
   const searchRef = useRef(null);
@@ -141,6 +142,8 @@ export function useAppState() {
     setIsLibraryWithSidebar,
     forceShowSidebarForSearch,
     setForceShowSidebarForSearch,
+    isChatSearchModalOpen,
+    setIsChatSearchModalOpen,
 
     // Refs
     searchRef,

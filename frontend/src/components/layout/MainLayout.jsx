@@ -32,6 +32,8 @@ function MainLayout({
   onTargetMessageScrolled,
   onToggleRightPanel,
   onOpenChatSearch,
+  isChatSearchModalOpen,
+  onCloseChatSearchModal,
   isRightPanelOpen,
   isLeftPanelOpen,
   onMessageSent,
@@ -129,6 +131,8 @@ function MainLayout({
                 onTargetMessageScrolled={onTargetMessageScrolled}
                 onToggleRightPanel={onToggleRightPanel}
                 onOpenChatSearch={onOpenChatSearch}
+                isChatSearchModalOpen={isChatSearchModalOpen}
+                onCloseChatSearchModal={onCloseChatSearchModal}
                 isRightPanelOpen={isRightPanelOpen}
                 isLeftPanelOpen={isLeftPanelOpen}
                 onMessageSent={onMessageSent}
@@ -183,6 +187,8 @@ MainLayout.propTypes = {
   onTargetMessageScrolled: PropTypes.func.isRequired,
   onToggleRightPanel: PropTypes.func.isRequired,
   onOpenChatSearch: PropTypes.func.isRequired,
+  isChatSearchModalOpen: PropTypes.bool,
+  onCloseChatSearchModal: PropTypes.func,
   isRightPanelOpen: PropTypes.bool.isRequired,
   isLeftPanelOpen: PropTypes.bool.isRequired,
   onMessageSent: PropTypes.func.isRequired,

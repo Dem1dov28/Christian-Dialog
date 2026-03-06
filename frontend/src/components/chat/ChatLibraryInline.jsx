@@ -1136,8 +1136,10 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   const [chatAvatar, setChatAvatar] = useState("group");
   const [chatAvatarFile, setChatAvatarFile] = useState(null);
   const [chatAvatarPreview, setChatAvatarPreview] = useState(null);
-  const [showAllAvatars, setShowAllAvatars] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [avatarMenuView, setAvatarMenuView] = useState("choices"); // "choices" | "icons"
   const groupAvatarFileInputRef = useRef(null);
+  const avatarMenuRef = useRef(null);
   const avatarOptions = useMemo(
     () => [
       { icon: MdGroup, name: "group" },
@@ -1160,40 +1162,18 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     []
   );
 
-  // Рассчитываем высоту контейнера иконок динамически на основе ширины
-  const [iconsPerRow, setIconsPerRow] = useState(5);
-  const avatarContainerRef = useRef(null);
-  
+  // Закрытие меню аватара при клике снаружи
   useEffect(() => {
-    const calculateIconsPerRow = () => {
-      if (avatarContainerRef.current) {
-        const containerWidth = avatarContainerRef.current.offsetWidth;
-        // w-11 = 44px, gap-2 = 8px
-        const iconWidth = 44;
-        const gapWidth = 8;
-        const availableWidth = containerWidth;
-        const count = Math.floor((availableWidth + gapWidth) / (iconWidth + gapWidth));
-        setIconsPerRow(Math.max(3, count)); // Минимум 3 иконки в ряду
+    if (!avatarMenuOpen) return;
+    const handleClickOutside = (e) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target)) {
+        setAvatarMenuOpen(false);
+        setAvatarMenuView("choices");
       }
     };
-    
-    calculateIconsPerRow();
-    window.addEventListener('resize', calculateIconsPerRow);
-    return () => window.removeEventListener('resize', calculateIconsPerRow);
-  }, []);
-  
-  const avatarContainerHeights = useMemo(
-    () => {
-      const rowHeight = 52; // 44px + 8px gap
-      const collapsedRows = 2; // Показываем 2 ряда в свернутом виде
-      return {
-        collapsed: collapsedRows * rowHeight,
-        expanded: Math.ceil(avatarOptions.length / iconsPerRow) * rowHeight,
-      };
-    },
-    [avatarOptions.length, iconsPerRow]
-  );
-
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [avatarMenuOpen]);
 
   // Создание группового чата
   const handleCreateGroupChat = async () => {
@@ -1321,7 +1301,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   ? handleCancelGroupCreation
                   : handleCreateGroup
               }
-              className="flex-shrink-0 flex items-center justify-center w-11 h-11 min-[950px]:w-auto min-[950px]:px-4 rounded-2xl bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-all shadow-lg shadow-[var(--accent)]/20"
+              className="flex-shrink-0 flex items-center justify-center gap-2 px-4 h-11 rounded-2xl bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-all shadow-lg shadow-[var(--accent)]/20"
               title={
                 isGroupCreationMode
                   ? t("common.cancel")
@@ -1329,7 +1309,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
               }
             >
               {/* Иконки накладываются и плавно меняют прозрачность */}
-              <span className="relative flex items-center justify-center w-5 h-5">
+              <span className="relative flex items-center justify-center w-5 h-5 shrink-0">
                 <HiMiniUserGroup
                   className={`absolute inset-0 text-xl transition-opacity duration-200 ${isGroupCreationMode ? "opacity-0" : "opacity-100"
                     }`}
@@ -1341,7 +1321,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
               </span>
 
               {/* Текст: плавный переход между "Создать группу" и "Отмена" */}
-              <span className="hidden min-[950px]:inline-block ml-2 font-medium relative overflow-hidden">
+              <span className="inline-block font-medium relative overflow-hidden">
                 <span
                   className={`absolute left-0 top-0 whitespace-nowrap transition-opacity duration-200 ${isGroupCreationMode ? "opacity-0" : "opacity-100"
                     }`}
@@ -1488,190 +1468,154 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                   </div>
                 </div>
 
-                {/* Настройка аватара */}
-                <div className="mb-6">
+                {/* Настройка аватара — компактный выбор через + */}
+                <div className="mb-6 relative" ref={avatarMenuRef}>
                   <label className="block text-xs font-semibold text-[var(--text-gray)] uppercase tracking-wider mb-3">
                     {t("library.chatAvatar")}
                   </label>
-
-                  {/* Загрузка своего аватара (только для Plus/Pro) */}
-                  {isPlusOrProUser && (
-                    <div className="mb-5">
-                      <label className="block text-xs text-[var(--text-gray)] mb-2">
-                        {t("library.uploadImagePlusPro", { defaultValue: "Upload image (Plus/Pro)" })}
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => groupAvatarFileInputRef.current?.click()}
-                          className="w-16 h-16 rounded-xl border-2 border-dashed border-[var(--border-color)]/60 hover:border-[var(--accent)] cursor-pointer flex items-center justify-center transition-all relative overflow-hidden bg-[var(--bg-primary)]/50 backdrop-blur-sm"
-                        >
-                          {chatAvatarPreview ? (
-                            <img
-                              src={chatAvatarPreview}
-                              alt="Avatar preview"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <MdAddAPhoto className="text-2xl text-[var(--text-gray)]" />
-                          )}
-                        </motion.div>
-                        <div className="flex-1">
-                          <button
-                            type="button"
-                            onClick={() => groupAvatarFileInputRef.current?.click()}
-                            className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                          >
-                            {chatAvatarPreview ? t("library.change") : t("library.uploadImage")}
-                          </button>
-                          {chatAvatarPreview && (
+                  <div className="flex items-center gap-4">
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setAvatarMenuOpen((o) => !o)}
+                      className="relative w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center border-2 border-[var(--border-color)]/60 hover:border-[var(--accent)]/50 bg-[var(--bg-primary)]/50 backdrop-blur-sm shrink-0"
+                    >
+                      {chatAvatarPreview ? (
+                        <img src={chatAvatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          <div
+                            className="absolute inset-0 bg-center bg-cover opacity-40"
+                            style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center text-white">
+                            {(() => {
+                              const SelectedIcon = avatarOptions.find((opt) => opt.name === chatAvatar)?.icon || MdGroup;
+                              return <SelectedIcon className="text-2xl drop-shadow-lg" style={{ transform: "scale(0.9)" }} />;
+                            })()}
+                          </div>
+                        </>
+                      )}
+                      <span className="absolute bottom-0 right-0 w-6 h-6 rounded-tl-lg bg-[var(--accent)] flex items-center justify-center">
+                        <MdAdd className="text-white text-sm" />
+                      </span>
+                    </motion.button>
+                    {avatarMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute left-0 top-full mt-2 z-20 w-56 rounded-xl border border-[var(--border-color)]/60 bg-[var(--bg-primary)]/95 backdrop-blur-xl shadow-xl overflow-hidden"
+                      >
+                        {avatarMenuView === "choices" ? (
+                          <div className="p-2 space-y-1">
+                            <button
+                              type="button"
+                              onClick={() => setAvatarMenuView("icons")}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-[var(--text-white)] hover:bg-[var(--hover-bg)] transition-colors"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center">
+                                <MdGroup className="text-lg" />
+                              </div>
+                              <span className="text-sm font-medium">{t("library.systemAvatar")}</span>
+                            </button>
                             <button
                               type="button"
                               onClick={() => {
-                                setChatAvatarFile(null);
-                                setChatAvatarPreview(null);
-                                setChatAvatar("group");
+                                if (isPlusOrProUser) {
+                                  setAvatarMenuOpen(false);
+                                  groupAvatarFileInputRef.current?.click();
+                                } else {
+                                  setAvatarMenuOpen(false);
+                                  onShowUpgradeModal?.();
+                                }
                               }}
-                              className="ml-2 text-sm text-red-500 hover:text-red-400 transition-colors"
-                            >
-                              {t("library.remove")}
-                            </button>
-                          )}
-                          <p className="text-xs text-[var(--text-gray)] mt-1">
-                            {t("library.imageFormatHint", { defaultValue: "JPG, PNG, GIF or WebP, up to 5MB" })}
-                          </p>
-                        </div>
-                      </div>
-                      <input
-                        ref={groupAvatarFileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) {
-                            if (file.size > 5 * 1024 * 1024) {
-                              showError(t("library.fileTooLarge"));
-                              return;
-                            }
-                            if (!file.type.startsWith("image/")) {
-                              showError(t("library.pleaseSelectImage"));
-                              return;
-                            }
-                            setChatAvatarFile(file);
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setChatAvatarPreview(reader.result);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        style={{ display: "none" }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Превью выбранной иконки (если не загружено изображение) */}
-                  {!chatAvatarPreview && chatAvatar && (
-                    <div className="mb-6 flex justify-center">
-                      <motion.div 
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="relative w-24 h-24 rounded-full overflow-hidden shadow-2xl ring-4 ring-[var(--accent)]/20 ring-offset-2 ring-offset-[var(--bg-secondary)]"
-                      >
-                        <div
-                          className="absolute inset-0 bg-center bg-cover"
-                          style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                        <div className="absolute inset-0 flex items-center justify-center text-white">
-                          {(() => {
-                            const SelectedIcon = avatarOptions.find(opt => opt.name === chatAvatar)?.icon || MdGroup;
-                            return <SelectedIcon className="text-4xl drop-shadow-lg" style={{ transform: "scale(0.9)" }} />;
-                          })()}
-                        </div>
-                      </motion.div>
-                    </div>
-                  )}
-
-                  {/* Иконки аватаров (используются, если не загружено изображение) */}
-                  {!chatAvatarPreview && (
-                    <>
-                      <div
-                        ref={avatarContainerRef}
-                        className={`flex gap-2 flex-wrap overflow-hidden transition-all duration-300 ease-in-out ${showAllAvatars ? "pt-2" : ""
-                          }`}
-                        style={{
-                          maxHeight: showAllAvatars
-                            ? `${avatarContainerHeights.expanded}px`
-                            : `${avatarContainerHeights.collapsed}px`,
-                          opacity: showAllAvatars ? 1 : 0.95,
-                        }}
-                      >
-                        {(showAllAvatars
-                          ? avatarOptions
-                          : avatarOptions.slice(0, iconsPerRow * 2 - 1)
-                        ).map(({ icon: Icon, name }) => (
-                          <motion.button
-                            key={name}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setChatAvatar(name)}
-                            className={`w-11 h-11 rounded-xl border-2 flex items-center justify-center transition-all relative overflow-hidden ${chatAvatar === name
-                              ? "border-[var(--accent)] bg-[var(--accent)]/10 shadow-lg shadow-[var(--accent)]/20"
-                              : "border-[var(--border-color)]/60 hover:border-[var(--accent)]/50 bg-[var(--bg-primary)]/50 backdrop-blur-sm"
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                                isPlusOrProUser
+                                  ? "text-[var(--text-white)] hover:bg-[var(--hover-bg)]"
+                                  : "text-[var(--text-gray)] opacity-75 hover:bg-[var(--hover-bg)]"
                               }`}
-                          >
-                            <div
-                              className="absolute inset-0 bg-center bg-cover opacity-40"
-                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
-                            />
-                            <Icon className={`text-lg relative z-10 transition-colors ${chatAvatar === name ? "text-[var(--accent)]" : "text-[var(--text-white)]"}`} />
-                          </motion.button>
-                        ))}
-                        {/* Показываем счетчик оставшихся иконок */}
-                        {!showAllAvatars && avatarOptions.length > (iconsPerRow * 2 - 1) && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setShowAllAvatars(true)}
-                            className="w-11 h-11 rounded-xl border-2 border-[var(--border-color)]/60 bg-[var(--bg-primary)]/50 backdrop-blur-sm flex items-center justify-center transition-all relative overflow-hidden"
-                          >
-                            <div
-                              className="absolute inset-0 bg-center bg-cover opacity-40"
-                              style={{ backgroundImage: "url('/images/agents/_low/Under_Icon_Groups.webp')" }}
-                            />
-                            <span className="text-sm font-semibold text-[var(--text-white)] relative z-10">
-                              +{avatarOptions.length - (iconsPerRow * 2 - 1)}
-                            </span>
-                          </motion.button>
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center">
+                                <MdAddAPhoto className="text-lg" />
+                              </div>
+                              <span className="text-sm font-medium">
+                                {isPlusOrProUser ? t("library.uploadImage") : t("library.uploadImagePlusProUnavailable")}
+                              </span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-3">
+                            <button
+                              type="button"
+                              onClick={() => setAvatarMenuView("choices")}
+                              className="text-xs text-[var(--text-gray)] hover:text-[var(--text-white)] mb-2 flex items-center gap-1"
+                            >
+                              ← {t("library.back")}
+                            </button>
+                            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                              {avatarOptions.map(({ icon: Icon, name }) => (
+                                <motion.button
+                                  key={name}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => {
+                                    setChatAvatar(name);
+                                    setChatAvatarFile(null);
+                                    setChatAvatarPreview(null);
+                                    setAvatarMenuOpen(false);
+                                    setAvatarMenuView("choices");
+                                  }}
+                                  className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
+                                    chatAvatar === name
+                                      ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                                      : "border-[var(--border-color)]/60 hover:border-[var(--accent)]/50"
+                                  }`}
+                                >
+                                  <Icon className={`text-lg ${chatAvatar === name ? "text-[var(--accent)]" : "text-[var(--text-white)]"}`} />
+                                </motion.button>
+                              ))}
+                            </div>
+                          </div>
                         )}
-                      </div>
-                    </>
-                  )}
-                  {!chatAvatarPreview && avatarOptions.length > 6 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllAvatars((prev) => !prev)}
-                      className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border-color)]/60 bg-[var(--bg-primary)]/50 hover:bg-[var(--bg-tertiary)]/70 text-xs font-medium text-[var(--text-gray)] hover:text-[var(--text-white)] transition-all backdrop-blur-sm"
-                    >
-                      {showAllAvatars ? (
-                        <>
-                          <MdExpandLess className="text-base" />
-                          <span>
-                            {t("library.hideAvatars")}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <MdExpandMore className="text-base" />
-                          <span>
-                            {t("library.showAllAvatars")}
-                          </span>
-                        </>
-                      )}
-                    </button>
-                  )}
+                      </motion.div>
+                    )}
+                    {chatAvatarPreview && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setChatAvatarFile(null);
+                          setChatAvatarPreview(null);
+                          setChatAvatar("group");
+                        }}
+                        className="text-sm text-red-500 hover:text-red-400"
+                      >
+                        {t("library.remove")}
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    ref={groupAvatarFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          showError(t("library.fileTooLarge"));
+                          return;
+                        }
+                        if (!file.type.startsWith("image/")) {
+                          showError(t("library.pleaseSelectImage"));
+                          return;
+                        }
+                        setChatAvatarFile(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () => setChatAvatarPreview(reader.result);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ display: "none" }}
+                  />
                 </div>
 
                 {/* Настройка имени */}

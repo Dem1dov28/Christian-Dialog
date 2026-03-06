@@ -1865,7 +1865,9 @@ const Sidebar = ({
               {/* Кнопка добавления нового чата в правом нижнем углу */}
               {(
                 <button
-                  className="absolute right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl shine-effect"
+                  className={`absolute right-4 flex items-center justify-center gap-2 shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl shine-effect ${
+                    isMobileViewport ? "h-12 px-4 rounded-2xl" : "w-12 h-12 rounded-full"
+                  }`}
                   style={{
                     backgroundColor: "var(--accent)",
                     bottom: 'calc(1rem + var(--safe-area-inset-bottom))'
@@ -1876,7 +1878,12 @@ const Sidebar = ({
                   }}
                   title={t("common.openLibrary")}
                 >
-                  <MdAdd className="text-white text-2xl" />
+                  <MdAdd className="text-white text-2xl shrink-0" />
+                  {isMobileViewport && (
+                    <span className="text-white font-medium text-sm whitespace-nowrap">
+                      {t("chat.newChat")}
+                    </span>
+                  )}
                 </button>
               )}
             </main>
