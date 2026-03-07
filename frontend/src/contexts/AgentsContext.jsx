@@ -139,9 +139,6 @@ export const AgentsProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Проверяем, изменяется ли промпт или аватар (это вызовет удаление чатов на бэкенде)
-      const isPromptOrAvatarChanged = !!instructions || !!avatar;
-      
       const formData = new FormData();
       if (name) formData.append("name", name);
       if (instructions) formData.append("instructions", instructions);
@@ -153,9 +150,9 @@ export const AgentsProvider = ({ children }) => {
         agent.id === agentId ? updatedAgent : agent
       ));
       
-      // Если изменился промпт или аватар, вызываем callback для обновления UI
-      if (isPromptOrAvatarChanged && onAgentUpdatedCallback) {
-        console.log("[AgentsContext] Agent prompt/avatar changed, triggering UI update callback");
+      // При любом изменении созданного персонажа вызываем callback (удаление чата)
+      if (onAgentUpdatedCallback) {
+        console.log("[AgentsContext] User agent updated, triggering callback to delete chat");
         await onAgentUpdatedCallback(agentId, { promptChanged: !!instructions, avatarChanged: !!avatar });
       }
       

@@ -9,7 +9,6 @@ import {
   FiX,
   FiInfo,
   FiCpu,
-  FiLogOut,
   FiDroplet,
   FiLayers,
   FiGlobe,
@@ -75,7 +74,7 @@ export function DrawerMenu({
   onOpenPricing = () => { },
   logoScale = 2,
 }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { t, language, setLanguage } = useLanguage();
   const { openSupportModal, openReportModal } = useModal(); // Добавлено
@@ -83,15 +82,6 @@ export function DrawerMenu({
   const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
 
 
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      onClose();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
 
   // Функция для создания ripple эффекта
   const handleRipple = useCallback((event) => {
@@ -125,8 +115,7 @@ export function DrawerMenu({
 
 
   const bottomItems = [
-    { id: "support", label: t("profile.menu.help"), icon: FiAlertTriangle, onClick: openSupportModal }, // Изменено
-    { id: "logout", label: t("profile.menu.logout"), icon: FiLogOut, onClick: handleLogout },
+    { id: "support", label: t("profile.menu.help"), icon: FiAlertTriangle, onClick: openSupportModal },
   ];
 
   const handleMenuItemClick = useCallback(

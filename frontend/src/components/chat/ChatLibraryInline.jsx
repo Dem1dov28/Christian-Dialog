@@ -1366,7 +1366,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           </div>
 
           {/* Строка 2: Кнопки Создать группу и Создать персонажа */}
-          <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex gap-2 items-center flex-wrap justify-center">
             <button
               onClick={
                 isGroupCreationMode

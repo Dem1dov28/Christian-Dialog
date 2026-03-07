@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { flushSync } from "react-dom";
 import { useAuth } from "./AuthContext";
+import { useAgents } from "./AgentsContext";
 import { useSidebarUpdate } from "./SidebarUpdateContext";
 import apiClient from "../services/api";
 import { useMessageState } from "../hooks/message/useMessageState";
@@ -39,6 +40,7 @@ export const useChats = () => {
 
 export const ChatsProvider = ({ children }) => {
   const { isAuthenticated, forceLogout, user, refreshUserData } = useAuth();
+  const { registerAgentUpdateCallback, unregisterAgentUpdateCallback } = useAgents();
   const { triggerUpdate } = useSidebarUpdate();
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -48,6 +50,9 @@ export const ChatsProvider = ({ children }) => {
 
   // Ref для отслеживания новых пустых чатов (для автоматического удаления при переключении)
   const newlyCreatedEmptyChatsRef = useRef(new Set());
+
+  // Ref для доступа к текущему списку conversations в callback (при обновлении агента)
+  const conversationsRef = useRef(conversations);
 
   // НОВАЯ СТРУКТУРА: Хранение сообщений по conversation_id
   // { [conversationId]: [...messages] }
@@ -3197,6 +3202,33 @@ export const ChatsProvider = ({ children }) => {
   useEffect(() => {
     deleteConversationRef.current = deleteConversation;
   }, [deleteConversation]);
+
+  // Обновляем ref для доступа к текущим conversations
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  // При редактировании созданного персонажа удаляем чат с ним
+  useEffect(() => {
+    const handleAgentUpdated = async (agentId) => {
+      const convs = conversationsRef.current || [];
+      const toDelete = convs.filter(
+        (c) => c?.agent_id === agentId && !c?.is_group && !c?.is_channel
+      );
+      for (const conv of toDelete) {
+        if (deleteConversationRef.current && conv?.id != null) {
+          try {
+            await deleteConversationRef.current(String(conv.id));
+            console.log(`[ChatsContext] Удалён чат ${conv.id} после редактирования персонажа ${agentId}`);
+          } catch (err) {
+            console.error(`[ChatsContext] Ошибка при удалении чата после редактирования персонажа:`, err);
+          }
+        }
+      }
+    };
+    registerAgentUpdateCallback(handleAgentUpdated);
+    return () => unregisterAgentUpdateCallback();
+  }, [registerAgentUpdateCallback, unregisterAgentUpdateCallback]);
 
   // Отслеживаем закрытие чата (когда activeConversation становится null) для удаления пустых чатов
   useEffect(() => {

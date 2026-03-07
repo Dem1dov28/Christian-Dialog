@@ -703,6 +703,7 @@
     "redirecting": "Перенаправление на главную...",
     "payWithCrypto": "Оплатить криптой",
     "payWithStars": "Оплатить Stars",
+    "payInTelegram": "Оплатить в Telegram",
     "starsOpenedInNewTab": "Ссылка открыта. После оплаты в Telegram обновите страницу.",
     "starsOpenedInTelegram": "Окно оплаты открыто в Telegram. После оплаты обновите страницу.",
     "paymentSuccessHint": "Оплата прошла успешно. Подписка активирована. Спасибо!",

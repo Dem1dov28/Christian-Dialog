@@ -156,7 +156,8 @@ const PricingPage = ({ isVisible, onClose }) => {
 
   const isCurrentPlan = (tier) => user?.subscription_tier === tier;
 
-  const hasPaymentMethod = cryptocloudEnabled || bepaidEnabled || (isTelegram && telegramStarsEnabled);
+  // Telegram Stars работает и в вебе: ссылка на инвойс откроется в Telegram
+  const hasPaymentMethod = cryptocloudEnabled || bepaidEnabled || telegramStarsEnabled;
 
   // Pro — выше Plus и Free. Переход на них не показываем (бессмысленно).
   const isProUser = user?.subscription_tier === "pro";
@@ -219,12 +220,12 @@ const PricingPage = ({ isVisible, onClose }) => {
                   : isProUser
                     ? t("pricing.yourPlanHigher")
                     : hasPaymentMethod
-                      ? (isTelegram && telegramStarsEnabled ? t("pricing.payWithStars") : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
+                      ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
                       : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus") && !isProUser && hasPaymentMethod) {
-                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("plus");
+                  if (telegramStarsEnabled) handlePayWithStars("plus");
                   else if (cryptocloudEnabled) handlePayWithCrypto("plus");
                   else if (bepaidEnabled) handlePayWithCard("plus");
                 }
@@ -241,12 +242,12 @@ const PricingPage = ({ isVisible, onClose }) => {
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
                   : hasPaymentMethod
-                    ? (isTelegram && telegramStarsEnabled ? t("pricing.payWithStars") : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
+                    ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
                     : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro") && hasPaymentMethod) {
-                  if (isTelegram && telegramStarsEnabled) handlePayWithStars("pro");
+                  if (telegramStarsEnabled) handlePayWithStars("pro");
                   else if (cryptocloudEnabled) handlePayWithCrypto("pro");
                   else if (bepaidEnabled) handlePayWithCard("pro");
                 }

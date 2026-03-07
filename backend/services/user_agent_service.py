@@ -227,6 +227,39 @@ class UserAgentService(BaseService):
                     }
                 
                 session.add(agent)
+                
+                # Удаляем чаты с этим персонажем из БД (при редактировании — чат сбрасывается)
+                conversations = session.exec(
+                    select(Conversation).where(
+                        Conversation.agent_id == agent_id,
+                        Conversation.user_id == user_id,
+                        Conversation.is_channel == False
+                    )
+                ).all()
+                conv_ids = [c.id for c in conversations]
+                if conv_ids:
+                    messages = session.exec(
+                        select(Message).where(Message.conversation_id.in_(conv_ids))
+                    ).all()
+                    msg_ids = [m.id for m in messages]
+                    if msg_ids:
+                        attachments = session.exec(
+                            select(FileAttachment).where(FileAttachment.message_id.in_(msg_ids))
+                        ).all()
+                        for att in attachments:
+                            try:
+                                import os
+                                if att.file_path and os.path.exists(att.file_path):
+                                    os.remove(att.file_path)
+                            except Exception as e:
+                                logger.warning(f"Ошибка при удалении файла {att.file_path}: {e}")
+                            session.delete(att)
+                    for msg in messages:
+                        session.delete(msg)
+                    for conv in conversations:
+                        session.delete(conv)
+                    logger.info(f"Удалено {len(conversations)} чат(ов) с персонажем {agent_id} при редактировании")
+                
                 session.commit()
                 session.refresh(agent)
                 
