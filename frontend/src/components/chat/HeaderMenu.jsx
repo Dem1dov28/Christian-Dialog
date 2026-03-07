@@ -120,16 +120,18 @@ export default function HeaderMenu({
       }
     >
       <ul className="select-none divide-y divide-[var(--border-light)] dark:divide-[var(--border-dark)]">
-        <li>
-          <button
-            type="button"
-            className="w-full text-left flex items-center px-3 py-2 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
-            onClick={handleAction(onShowProfile)}
-          >
-            <MdPerson className="text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" />
-            <span className="text-sm">{t("chat.profile")}</span>
-          </button>
-        </li>
+        {!isGroupChat && (
+          <li>
+            <button
+              type="button"
+              className="w-full text-left flex items-center px-3 py-2 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
+              onClick={handleAction(onShowProfile)}
+            >
+              <MdPerson className="text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" />
+              <span className="text-sm">{t("chat.profile")}</span>
+            </button>
+          </li>
+        )}
         {onOpenSettings && (
           <li>
             <button

@@ -76,7 +76,7 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat, hasExisting
             <div
               className="relative bg-[var(--bg-primary)] rounded-2xl max-w-md w-full overflow-hidden flex flex-col shadow-2xl border border-[var(--border-color)]"
               style={{
-                maxHeight: 'min(85dvh, calc(100dvh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px) - 3rem))',
+                maxHeight: 'min(95dvh, calc(100dvh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px) - 1.5rem))',
               }}
               onClick={(e) => e.stopPropagation()}
             >
