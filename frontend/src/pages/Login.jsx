@@ -229,13 +229,18 @@ const Login = () => {
   };
 
   const handleGoogleRedirectLogin = () => {
-    if (!googleOAuthConfig?.enabled || !googleOAuthConfig?.client_id || !googleOAuthConfig?.redirect_uri) return;
-    const redirectUri = googleOAuthConfig.redirect_uri;
+    const clientId = googleOAuthConfig?.client_id || googleClientId;
+    const redirectUri = googleOAuthConfig?.redirect_uri || `${window.location.origin}/auth/google-callback`;
+    if (!clientId) return;
     const scope = encodeURIComponent("openid email profile");
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleOAuthConfig.client_id)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
-    if (webApp?.openLink) {
-      webApp.openLink(url);
-    } else {
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
+    try {
+      if (webApp?.openLink) {
+        webApp.openLink(url, { try_instant_view: false });
+      } else {
+        window.location.href = url;
+      }
+    } catch (_) {
       window.location.href = url;
     }
   };
@@ -291,26 +296,26 @@ const Login = () => {
       >
         <AuthBackground />
 
-        {/* Glass Panel */}
-        <section className="relative z-10 w-full max-w-[480px] flex items-center justify-center perspective-1000">
-          <div className="relative backdrop-blur-2xl bg-card/30 border border-white/10 rounded-[2rem] p-6 sm:p-8 [@media(max-height:629px)]:p-3 [@media(max-height:629px)]:sm:p-4 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5),0_-4px_24px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-700 ease-out ring-1 ring-white/5 before:absolute before:inset-0 before:rounded-[2rem] before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none">
+        {/* Glass Panel — компактнее на веб (max-w 400px) */}
+        <section className="relative z-10 w-full max-w-[400px] flex items-center justify-center perspective-1000">
+          <div className="relative backdrop-blur-2xl bg-card/30 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 [@media(max-height:629px)]:p-3 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5),0_-4px_24px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-700 ease-out ring-1 ring-white/5 before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none">
             {/* Logo */}
-            <header className="text-center mb-6 sm:mb-8 [@media(max-height:629px)]:mb-3 [@media(max-height:629px)]:sm:mb-4">
-              <div className="relative inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-4 [@media(max-height:629px)]:mb-2 [@media(max-height:629px)]:hidden shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-[0_12px_32px_-6px_rgba(var(--primary),0.6),0_0_0_1px_rgba(255,255,255,0.1)_inset] group before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
+            <header className="text-center mb-4 sm:mb-5 [@media(max-height:629px)]:mb-3">
+              <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-xl border border-primary/30 mb-3 [@media(max-height:629px)]:mb-2 [@media(max-height:629px)]:hidden shadow-[0_8px_24px_-4px_rgba(var(--primary),0.4)] transition-all duration-500 group">
                 <img
                   src="/logo.webp"
                   alt="Epochal Dialog"
-                  className="w-20 h-20 object-contain transition-transform duration-500 group-hover:scale-110"
+                  className="w-10 h-10 sm:w-12 sm:h-12 object-contain transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-b from-foreground via-foreground to-foreground/80 bg-clip-text tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground bg-gradient-to-b from-foreground via-foreground to-foreground/80 bg-clip-text tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
                 {t("auth.login.title")}
               </h1>
             </header>
 
             {/* Error message */}
             {error && (
-              <div className="mb-4 [@media(max-height:629px)]:mb-2 p-4 [@media(max-height:629px)]:p-2 bg-destructive/10 backdrop-blur-sm border border-destructive/30 rounded-xl shadow-[0_4px_12px_-2px_rgba(239,68,68,0.2)] animate-in slide-in-from-top-2 duration-300 ring-1 ring-destructive/20">
+              <div className="mb-3 [@media(max-height:629px)]:mb-2 p-3 [@media(max-height:629px)]:p-2 bg-destructive/10 backdrop-blur-sm border border-destructive/30 rounded-xl shadow-[0_4px_12px_-2px_rgba(239,68,68,0.2)] animate-in slide-in-from-top-2 duration-300 ring-1 ring-destructive/20">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-destructive animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
                   <p className="text-sm font-medium text-destructive flex-1">{error}</p>
@@ -378,7 +383,7 @@ const Login = () => {
                   </p>
                   {googleClientId && (
                     <div className="w-full flex justify-center">
-                      {isTelegram && isIOS && googleOAuthConfig?.enabled ? (
+                      {isTelegram && googleOAuthConfig?.enabled ? (
                         <Button
                           type="button"
                           variant="outline"
@@ -433,7 +438,7 @@ const Login = () => {
               </div>
             )}
 
-            {/* После выхода в Mini App: кнопка "Войти через Telegram" */}
+            {/* В Mini App после выхода: "Продолжить через Telegram" (не "Вход" — мы уже в приложении) */}
             {!showTelegramLinkForm && isTelegram && skipAutoTelegram && initData && (
               <div className="mb-5 space-y-3">
                 <Button
@@ -456,7 +461,7 @@ const Login = () => {
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
                   </svg>
-                  {language === "ru" ? "Войти через Telegram" : "Log in with Telegram"}
+                  {language === "ru" ? "Продолжить через Telegram" : "Continue with Telegram"}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
                   {language === "ru" ? "или войдите по email и паролю ниже" : "or log in with email below"}
@@ -466,8 +471,8 @@ const Login = () => {
 
             {/* Form (скрыт при привязке Telegram) */}
             {!showTelegramLinkForm && (
-              <form onSubmit={handleSubmit} className="space-y-5 [@media(max-height:629px)]:space-y-2.5">
-                <div className="space-y-4 [@media(max-height:629px)]:space-y-2">
+              <form onSubmit={handleSubmit} className="space-y-4 [@media(max-height:629px)]:space-y-2.5">
+                <div className="space-y-3 [@media(max-height:629px)]:space-y-2">
                   <div className="group relative">
                     <Input
                       id="email"
@@ -565,7 +570,7 @@ const Login = () => {
             {/* Divider (скрыт при привязке Telegram) */}
             {!showTelegramLinkForm && (
               <>
-                <div className="relative my-6 [@media(max-height:629px)]:my-3">
+                <div className="relative my-4 [@media(max-height:629px)]:my-3">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-white/10 bg-gradient-to-r from-transparent via-white/20 to-transparent h-px"></div>
                   </div>
@@ -584,7 +589,7 @@ const Login = () => {
                       type="button"
                       variant="outline"
                       size="lg"
-                      className="w-full max-w-[360px] rounded-full border-white/10 bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] dark:text-[#54a9eb] hover:text-[#0088cc] dark:hover:text-[#54a9eb] border hover:border-[#0088cc]/40 transition-all duration-300"
+                      className="w-full max-w-[320px] rounded-full border-white/10 bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] dark:text-[#54a9eb] hover:text-[#0088cc] dark:hover:text-[#54a9eb] border hover:border-[#0088cc]/40 transition-all duration-300"
                       onClick={handleTelegramOIDCLogin}
                       disabled={isLoading}
                     >
@@ -598,13 +603,13 @@ const Login = () => {
 
                 {/* Google Login Button — в Telegram iOS используем redirect flow (popup не работает) */}
                 {googleClientId && (
-                  <div className="w-full flex justify-center mb-4 [@media(max-height:629px)]:mb-2">
-                    {isTelegram && isIOS && googleOAuthConfig?.enabled ? (
+                  <div className="w-full flex justify-center mb-3 [@media(max-height:629px)]:mb-2">
+                    {isTelegram && googleOAuthConfig?.enabled ? (
                       <Button
                         type="button"
                         variant="outline"
                         size="lg"
-                        className="w-full max-w-[360px] rounded-full border-white/10 bg-white/90 hover:bg-white hover:border-primary/20 text-foreground"
+                        className="w-full max-w-[320px] rounded-full border-white/10 bg-white/90 hover:bg-white hover:border-primary/20 text-foreground"
                         onClick={handleGoogleRedirectLogin}
                         disabled={isLoading}
                       >
@@ -617,7 +622,7 @@ const Login = () => {
                         {t("auth.login.googleCta") || "Продолжить через Google"}
                       </Button>
                     ) : (
-                      <div className="google-login-override w-full max-w-[360px] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 bg-white/90 backdrop-blur-sm hover:bg-white hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.35),0_0_0_1px_rgba(var(--primary),0.1)] active:scale-[0.98] px-2 py-1 before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-r before:from-white/20 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 relative">
+                      <div className="google-login-override w-full max-w-[320px] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 bg-white/90 backdrop-blur-sm hover:bg-white hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.35),0_0_0_1px_rgba(var(--primary),0.1)] active:scale-[0.98] px-2 py-1 before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-r before:from-white/20 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 relative">
                         <GoogleLogin
                           onSuccess={handleGoogleSuccess}
                           onError={() => {

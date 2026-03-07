@@ -804,11 +804,15 @@ function PublicRoute({ children, allowAuthenticated = false }) {
   }
 
   if (isAuthenticated && !allowAuthenticated) {
-    // На мобильных устройствах: открываем библиотеку только если нет чатов
-    // На десктопе: всегда открываем библиотеку
+    // Возврат на страницу, с которой перешли на логин (если есть и это наш путь)
+    const from = location.state?.from?.pathname;
+    const isOurPath = from && typeof from === "string" && from.startsWith("/") && !from.startsWith("//");
+    if (isOurPath && from !== "/login" && from !== "/register") {
+      return <Navigate to={from} state={{}} replace />;
+    }
+    // На мобильных: библиотека, если нет чатов; на десктопе: библиотека
     const hasChats = conversations && conversations.length > 0;
     const shouldOpenLibrary = !isMobile || !hasChats;
-
     return <Navigate to={shouldOpenLibrary ? "/Library" : "/"} replace />;
   }
 

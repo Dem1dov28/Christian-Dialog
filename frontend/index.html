@@ -129,14 +129,16 @@
   <link rel="icon" type="image/webp" href="/favicon.webp" />
   <link rel="manifest" href="/manifest.json" />
   <title>Epochal Dialog — Общайтесь с историческими личностями через AI</title>
-  <!-- Telegram Web App SDK — только при открытии из Telegram (tgWebAppData в hash) -->
+  <!-- Telegram Web App SDK: при tgWebAppData в URL или при refresh в Mini App (sessionStorage) -->
   <script>
     (function () {
       try {
-        var h = window.location.hash.slice(1);
-        if (h && new URLSearchParams(h).get('tgWebAppData')) {
-          document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>');
-        }
+        var load = false;
+        var h = (window.location.hash || "").slice(1);
+        var q = (window.location.search || "").slice(1);
+        if ((h && new URLSearchParams(h).get("tgWebAppData")) || (q && new URLSearchParams(q).get("tgWebAppData"))) load = true;
+        if (!load && typeof sessionStorage !== "undefined" && sessionStorage.getItem("tg_miniapp")) load = true;
+        if (load) document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>');
       } catch (e) { }
     })();
   </script>

@@ -351,6 +351,9 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error("Failed to load usage stats:", error);
       }
+      if (typeof window !== "undefined") {
+        window.focus();
+      }
       return response;
     } catch (error) {
       throw error;

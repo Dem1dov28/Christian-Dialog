@@ -64,12 +64,18 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const handleGoogleRedirectLink = () => {
-    if (!googleOAuthConfig?.enabled || !googleOAuthConfig?.client_id || !googleOAuthConfig?.redirect_uri) return;
+    const clientId = googleOAuthConfig?.client_id || googleClientId;
+    const redirectUri = googleOAuthConfig?.redirect_uri || `${window.location.origin}/auth/google-callback`;
+    if (!clientId) return;
     const scope = encodeURIComponent("openid email profile");
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleOAuthConfig.client_id)}&redirect_uri=${encodeURIComponent(googleOAuthConfig.redirect_uri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
-    if (webApp?.openLink) {
-      webApp.openLink(url);
-    } else {
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
+    try {
+      if (webApp?.openLink) {
+        webApp.openLink(url, { try_instant_view: false });
+      } else {
+        window.location.href = url;
+      }
+    } catch (_) {
       window.location.href = url;
     }
   };
@@ -485,7 +491,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                     <div className="min-w-0 flex-1">
                       <span className="text-[var(--text-white)] font-medium block mb-1">{language === "ru" ? "Привязать Google" : "Link Google"}</span>
                       <p className="text-sm text-[var(--text-dim)] mb-3">{language === "ru" ? "Войдите через Google, чтобы привязать аккаунт и использовать его для входа." : "Sign in with Google to link your account and use it for login."}</p>
-                      {isTelegram && isIOS && googleOAuthConfig?.enabled ? (
+                      {isTelegram && googleOAuthConfig?.enabled ? (
                         <button
                           type="button"
                           onClick={handleGoogleRedirectLink}

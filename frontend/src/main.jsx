@@ -20,6 +20,9 @@ import "./index.css";
 // tg существует всегда (скрипт загружен), но initData — только когда открыто из Telegram.
 const tg = window.Telegram?.WebApp;
 const isInTelegram = Boolean(tg?.initData);
+if (isInTelegram) {
+  try { sessionStorage.setItem("tg_miniapp", "1"); } catch (_) {}
+}
 if (tg && isInTelegram) {
   document.documentElement.classList.add("tg-webapp");
   if (/^ios$/i.test(tg.platform || "")) document.documentElement.classList.add("tg-ios");
