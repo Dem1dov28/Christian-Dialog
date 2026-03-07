@@ -17,22 +17,22 @@ export default function AgentRulesModal({ isOpen, onClose, activeConversationId 
       aria-label={t("chat.agentSettings")}
     >
       <div
-        className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[85dvh] overflow-hidden flex flex-col border border-[var(--border-color)]"
+        className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[85dvh] overflow-hidden flex flex-col border-2 border-[var(--border-color)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)] flex-shrink-0">
-          <h3 className="text-lg font-medium text-[var(--text-white)]">
+        <div className="flex items-center justify-between p-4 border-b-2 border-[var(--border-color)] flex-shrink-0 bg-[var(--bg-primary)]/30">
+          <h3 className="text-xl font-semibold text-[var(--text-white)]">
             {t("chat.settings")}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 text-[var(--text-gray)] hover:bg-[var(--hover-bg)] rounded-lg transition-colors"
+            className="p-2 text-[var(--text-white)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-colors"
             aria-label={t("common.close", { defaultValue: "Закрыть" })}
           >
             <MdClose className="text-xl" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto min-h-0 p-4">
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-[var(--bg-primary)]/20">
           <AgentSettingsSection
             activeConversationId={activeConversationId}
             embedded

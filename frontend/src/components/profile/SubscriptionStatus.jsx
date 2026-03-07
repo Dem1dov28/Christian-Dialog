@@ -31,7 +31,7 @@ const SubscriptionStatus = ({ user, onUpgrade }) => {
           icon: FiStar,
           color: "text-purple-600",
           bgColor: "bg-purple-100",
-          description: t("pricing.messagesPerDay", { count: 500 }),
+          description: t("pricing.messagesPerDay", { count: 250 }),
         };
       case "api":
         return {

@@ -227,7 +227,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
         <div className="px-3 pb-3 space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="text-sm font-semibold text-[var(--text-white)]">
+              <h4 className="text-base font-bold text-[var(--text-white)]">
                 {t("chat.agentRules")}
               </h4>
               {!isAddingRule && (
@@ -236,7 +236,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
                     e.stopPropagation();
                     setIsAddingRule(true);
                   }}
-                  className="flex-shrink-0 px-3 py-2 bg-[var(--accent)]/15 border border-[var(--accent)]/40 rounded-xl text-[var(--accent)] text-sm font-medium hover:bg-[var(--accent)]/25 hover:border-[var(--accent)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm"
+                  className="flex-shrink-0 px-3 py-2 bg-[var(--accent)]/20 border-2 border-[var(--accent)]/50 rounded-xl text-[var(--accent)] text-sm font-semibold hover:bg-[var(--accent)]/30 hover:border-[var(--accent)] transition-all duration-200 flex items-center gap-2 shadow-md"
                 >
                   <MdAdd className="w-4 h-4" />
                   {t("chat.addRule")}
@@ -248,7 +248,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
             <div className="space-y-2">
               {/* Форма добавления нового правила */}
               {isAddingRule && (
-                <div className="bg-[var(--bg-secondary)]/60 border border-[var(--accent)]/30 rounded-xl p-4 shadow-sm">
+                <div className="bg-[var(--bg-secondary)]/90 border-2 border-[var(--accent)]/40 rounded-xl p-4 shadow-md">
                   <div className="space-y-3">
                     <textarea
                       value={newRuleText}
@@ -304,7 +304,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
               {rules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="group bg-[var(--bg-secondary)]/60 border border-[var(--border-color)]/50 rounded-xl p-4 hover:border-[var(--border-color)]/80 hover:bg-[var(--bg-secondary)]/70 transition-all duration-200 shadow-sm"
+                  className="group bg-[var(--bg-secondary)]/90 border border-[var(--border-color)] rounded-xl p-4 hover:border-[var(--accent)]/30 hover:bg-[var(--bg-tertiary)]/50 transition-all duration-200 shadow-md"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {editingRule && editingRule.id === rule.id ? (
@@ -358,7 +358,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0 pr-2">
                         <p
-                          className="text-[var(--text-white)] text-sm leading-relaxed break-words"
+                          className="text-[var(--text-white)] text-sm leading-relaxed break-words font-medium"
                           style={{
                             display: "-webkit-box",
                             WebkitLineClamp: 4,
@@ -374,15 +374,15 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <button
                           onClick={() => handleEditRule(rule)}
-                          className="p-2 text-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/15 rounded-lg transition-all duration-200 flex items-center gap-1.5"
-                          title={t("chat.edit")}
+                          className="p-2 text-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/20 rounded-lg transition-all duration-200 flex items-center gap-1.5 font-medium"
+                          title={t("common.edit")}
                         >
                           <MdEdit className="w-4 h-4" />
-                          <span className="text-xs font-medium hidden sm:inline">{t("chat.edit")}</span>
+                          <span className="text-xs font-medium hidden sm:inline">{t("common.edit")}</span>
                         </button>
                         <button
                           onClick={() => handleDeleteRule(rule.id)}
-                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/15 rounded-lg transition-all duration-200 flex items-center gap-1.5"
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center gap-1.5 font-medium"
                           title={t("common.delete")}
                         >
                           <MdDelete className="w-4 h-4" />
@@ -396,7 +396,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
 
               {/* Placeholder для пустого состояния */}
               {rules.length === 0 && !isAddingRule && (
-                <div className="border border-[var(--border-color)]/50 rounded-lg p-6 text-center" style={{ backgroundColor: 'var(--panel-settings-bg)' }}>
+                <div className="border-2 border-[var(--border-color)] rounded-xl p-6 text-center bg-[var(--bg-secondary)]/80">
                   <div className="text-[var(--text-white)] text-sm font-medium mb-2">
                     {t("chat.noAgentRules")}
                   </div>
@@ -408,7 +408,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
                       e.stopPropagation();
                       setIsAddingRule(true);
                     }}
-                    className="px-4 py-2 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg text-[var(--accent)] text-xs font-medium hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50 transition-all duration-200"
+                    className="px-4 py-2.5 bg-[var(--accent)]/20 border-2 border-[var(--accent)]/50 rounded-xl text-[var(--accent)] text-sm font-semibold hover:bg-[var(--accent)]/30 hover:border-[var(--accent)] transition-all duration-200"
                   >
                     {t("chat.addFirstRule")}
                   </button>
