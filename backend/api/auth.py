@@ -727,15 +727,14 @@ def get_google_oauth_config():
 
 
 @router.get("/google-callback", response_class=HTMLResponse)
-def google_callback_fallback(request: Request):
+def google_callback_fallback(request: Request, db: Session = Depends(get_session)):
     """
     Fallback: если nginx направил /auth/google-callback на бэкенд вместо SPA,
-    возвращаем HTML-страницу, которая обменивает code и редиректит в Telegram.
+    обмениваем code на сервере и возвращаем HTML с кнопкой «Открыть в Telegram».
     """
     code = request.query_params.get("code")
     error = request.query_params.get("error")
-    base = str(request.base_url).rstrip("/")
-    redirect_uri_clean = GOOGLE_OAUTH_REDIRECT_URI or f"{base}/auth/google-callback"
+    redirect_uri_clean = GOOGLE_OAUTH_REDIRECT_URI or ""
 
     if error:
         return _google_callback_html_error(error, request.query_params.get("error_description", ""))
@@ -743,48 +742,106 @@ def google_callback_fallback(request: Request):
     if not code:
         return _google_callback_html_error("missing_code", "Отсутствует код авторизации")
 
+    if not redirect_uri_clean:
+        return _google_callback_html_error("config", "GOOGLE_OAUTH_REDIRECT_URI не настроен")
+
+    return_token = None
+    bot_username = (TELEGRAM_BOT_USERNAME or "").strip().replace("@", "")
+    try:
+        from google_auth_oauthlib.flow import Flow
+        client_config = {
+            "web": {
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uris": [redirect_uri_clean],
+            }
+        }
+        flow = Flow.from_client_config(client_config, scopes=["openid", "email", "profile"], redirect_uri=redirect_uri_clean)
+        flow.fetch_token(code=code)
+        creds = flow.credentials
+        id_token_raw = getattr(creds, "id_token", None)
+        if not id_token_raw and hasattr(flow, "oauth2session") and flow.oauth2session:
+            tok = getattr(flow.oauth2session, "token", None)
+            id_token_raw = tok.get("id_token") if isinstance(tok, dict) else None
+        if not id_token_raw:
+            return _google_callback_html_error("token", "Google не вернул id_token")
+        id_info = id_token.verify_oauth2_token(id_token_raw, google_request_adapter, audience=GOOGLE_CLIENT_ID, clock_skew_in_seconds=60)
+        google_sub = id_info.get("sub")
+        email = id_info.get("email")
+        email_verified = id_info.get("email_verified", False)
+        full_name = id_info.get("name")
+        avatar_url = id_info.get("picture") or id_info.get("image") or id_info.get("avatar")
+        if isinstance(avatar_url, str):
+            avatar_url = avatar_url.strip() or None
+        if not google_sub or not email or not email_verified:
+            return _google_callback_html_error("profile", "Google не вернул нужные данные")
+        user = db.exec(select(User).where(User.google_id == google_sub)).first()
+        if not user:
+            user = get_user_by_email(db, email)
+        if user:
+            if getattr(user, "google_id", None) != google_sub:
+                user.google_id = google_sub
+            if getattr(user, "auth_provider", "local") != "google":
+                user.auth_provider = "google"
+            if avatar_url and not _is_local_avatar(getattr(user, "avatar_url", None)) and user.avatar_url != avatar_url:
+                user.avatar_url = avatar_url
+            if full_name and not user.full_name:
+                user.full_name = full_name
+            if not user.email_verified:
+                user.email_verified = True
+            user.updated_at = datetime.utcnow()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            user_create = UserCreate(email=email, password=token_urlsafe(16), full_name=full_name, avatar_url=avatar_url)
+            user = create_user(db, user_create)
+            user.google_id = google_sub
+            user.email_verified = True
+            user.auth_provider = "google"
+            if avatar_url:
+                user.avatar_url = avatar_url
+            user.updated_at = datetime.utcnow()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        update_user_last_login(db, user)
+        try:
+            from services.folder_service import FolderService
+            FolderService().ensure_system_folders_exist(user.id)
+        except Exception:
+            pass
+        return_token = token_urlsafe(32)
+        redis_client = _get_google_oauth_redis()
+        if redis_client:
+            redis_client.setex(f"google:return:{return_token}", 300, str(user.id))
+        else:
+            _google_return_tokens[return_token] = str(user.id)
+    except Exception as e:
+        logger.exception("Google callback exchange failed")
+        return _google_callback_html_error("exchange", str(e)[:200])
+
+    if not return_token or not bot_username:
+        return _google_callback_html_error("config", "Бот не настроен")
+
+    deep_link = f"https://t.me/{bot_username}/app?startapp=google_{return_token}"
     html = f"""<!DOCTYPE html>
 <html lang="ru">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Вход через Google...</title>
-<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2d283e;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:20px}}a{{color:#54a9eb;text-decoration:none}}.btn{{display:inline-flex;align-items:center;gap:8px;padding:16px 24px;background:#0088cc;color:#fff!important;border-radius:16px;font-weight:600;font-size:18px;margin-top:20px}}</style>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Открыть в Telegram</title>
+<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2d283e;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:24px}}a{{color:#54a9eb}}.btn{{display:inline-flex;align-items:center;gap:10px;padding:18px 28px;background:#0088cc;color:#fff!important;border-radius:20px;font-weight:600;font-size:20px;text-decoration:none;margin-top:24px;box-shadow:0 4px 20px rgba(0,136,204,0.4)}}</style>
 </head>
 <body>
 <div>
-<p style="margin-bottom:16px;opacity:.9">Обмениваем код и возвращаемся в Telegram...</p>
-<div id="msg"></div>
-<a id="openBtn" href="#" class="btn" style="display:none">Открыть в Telegram</a>
+<p style="margin-bottom:8px;font-size:18px;opacity:.95">Вход выполнен.</p>
+<p style="opacity:.8;font-size:15px">Нажмите кнопку, чтобы вернуться в приложение:</p>
+<a href="{deep_link}" class="btn">Открыть в Telegram</a>
+<p style="margin-top:20px;opacity:.5;font-size:13px">Откроется приложение Telegram</p>
 </div>
 <script>
 (function(){{
-  var code = {json.dumps(code)};
-  var redirectUri = {json.dumps(redirect_uri_clean)};
-  var base = {json.dumps(str(request.base_url).rstrip("/"))};
-  fetch(base + "/auth/google/exchange-code", {{
-    method: "POST",
-    headers: {{ "Content-Type": "application/json" }},
-    body: JSON.stringify({{ code: code, redirect_uri: redirectUri }})
-  }})
-  .then(function(r) {{ return r.json().then(function(d) {{ return {{ ok: r.ok, data: d }}; }}); }})
-  .then(function(res) {{
-    if (!res.ok) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Ошибка: " + (res.data.detail || "Не удалось обменять код") + "</p>"; return; }}
-    var tok = res.data.return_token;
-    if (!tok) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Нет return_token</p>"; return; }}
-    fetch(base + "/auth/google-oauth/config")
-      .then(function(r) {{ return r.json(); }})
-      .then(function(cfg) {{
-        var bot = (cfg.bot_username || "").replace(/^@/, "");
-        if (!bot) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Бот не настроен</p>"; return; }}
-        var link = "https://t.me/" + bot + "/app?startapp=google_" + tok;
-        document.getElementById("msg").innerHTML = "<p>Вход выполнен. Нажмите кнопку, чтобы вернуться в приложение.</p>";
-        var btn = document.getElementById("openBtn");
-        btn.href = link;
-        btn.style.display = "inline-flex";
-        btn.textContent = "Открыть в Telegram";
-        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-        if (!isIOS) {{ window.location.replace(link); }}
-      }});
-  }})
-  .catch(function(e) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Ошибка: " + e.message + "</p>"; }});
+  var link = {json.dumps(deep_link)};
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (!isIOS) {{ window.location.replace(link); }}
 }})();
 </script>
 </body>
