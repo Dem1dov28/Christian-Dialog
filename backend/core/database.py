@@ -8,6 +8,7 @@ from sqlalchemy import text
 from models.agent import Agent
 from models.conversation import Conversation
 from models.message import Message
+from models.user_memory import UserMemory
 from models.multi_agent_conversation import MultiAgentConversation, ConversationAgent
 from models.user import User
 from models.user_channel_subscription import UserChannelSubscription
@@ -156,6 +157,9 @@ def create_db_and_tables():
             ensure_agent_user_id_column(conn)
             # Колонка description для подробного описания агента (показ в карточке)
             ensure_agent_description_column(conn)
+
+            # Таблица памяти агента о пользователе (умная персонализация)
+            ensure_user_memory_table(conn)
             
             conn.commit()
     except Exception as e:
@@ -524,6 +528,44 @@ def ensure_agent_description_column(connection=None):
                 conn.close()
     except Exception as e:
         logger.error(f"Ошибка при проверке колонки description в agent: {e}", exc_info=True)
+
+
+def ensure_user_memory_table(connection=None):
+    """Создать таблицу user_memory для хранения фактов о пользователе."""
+    try:
+        if connection is not None:
+            conn = connection
+            should_close = False
+        else:
+            conn = engine.connect()
+            should_close = True
+
+        try:
+            if not table_exists(conn, "user_memory"):
+                conn.execute(text("""
+                    CREATE TABLE user_memory (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                        agent_id INTEGER NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
+                        memory_type VARCHAR(32) DEFAULT 'other',
+                        content TEXT NOT NULL,
+                        importance FLOAT DEFAULT 0.5 CHECK (importance >= 0 AND importance <= 1),
+                        source_message_id INTEGER REFERENCES message(id) ON DELETE SET NULL,
+                        created_at TIMESTAMP DEFAULT NOW(),
+                        updated_at TIMESTAMP DEFAULT NOW()
+                    )
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_memory_user_id ON user_memory(user_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_memory_agent_id ON user_memory(agent_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_memory_user_agent ON user_memory(user_id, agent_id)"))
+                logger.info("Создана таблица user_memory для умной памяти агента")
+            if should_close:
+                conn.commit()
+        finally:
+            if should_close:
+                conn.close()
+    except Exception as e:
+        logger.error(f"Ошибка при создании таблицы usermemory: {e}", exc_info=True)
 
 
 def ensure_agent_user_id_column(connection=None):

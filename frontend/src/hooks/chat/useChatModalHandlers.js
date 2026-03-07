@@ -7,7 +7,9 @@ import { useAgents } from "../../contexts/AgentsContext";
  */
 export function useChatModalHandlers({
   onToggleRightPanel,
+  onShowAgentProfile,
   setIsReportModalOpen,
+  setIsAgentRulesModalOpen,
   setIsClearChatModalOpen,
   activeConversation,
   messages,
@@ -26,13 +28,24 @@ export function useChatModalHandlers({
   const { getAgent } = useAgents();
 
   /**
-   * Обработчик показа профиля (открывает правую панель)
+   * Обработчик показа профиля: открывает карточку агента (если передан onShowAgentProfile) или правую панель
    */
   const handleShowProfile = useCallback(() => {
-    if (onToggleRightPanel) {
+    if (onShowAgentProfile) {
+      onShowAgentProfile();
+    } else if (onToggleRightPanel) {
       onToggleRightPanel();
     }
-  }, [onToggleRightPanel]);
+  }, [onShowAgentProfile, onToggleRightPanel]);
+
+  /**
+   * Обработчик открытия модалки правил агента
+   */
+  const handleOpenAgentRulesModal = useCallback(() => {
+    if (setIsAgentRulesModalOpen) {
+      setIsAgentRulesModalOpen(true);
+    }
+  }, [setIsAgentRulesModalOpen]);
 
   /**
    * Обработчик открытия модального окна жалобы
@@ -233,6 +246,7 @@ export function useChatModalHandlers({
 
   return {
     handleShowProfile,
+    handleOpenAgentRulesModal,
     handleOpenReportModal,
     handleClearHistory,
     handleConfirmClearHistory,

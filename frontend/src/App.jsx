@@ -567,10 +567,17 @@ function MainApp() {
   // Chat на всю ширину, когда: есть активный чат ИЛИ открыта библиотека (без sidebar)
   const isMediumScreenChatFullWidth = isMediumScreen && !isUltraCompact && (activeChatId || isInlineLibraryOpen) && !isMediumScreenSidebarVisible && !isLibraryWithSidebar;
 
+  const seoTitle = React.useMemo(() => {
+    if (!activeConversation) return t("library.title");
+    const raw = activeConversation.title || activeConversation.agent_name || t("library.title");
+    const isDefaultPrefix = raw.startsWith("Чат с ") || raw.startsWith("Chat with ");
+    return isDefaultPrefix ? (activeConversation.agent_name || raw) : raw;
+  }, [activeConversation, t]);
+
   return (
     <div className="flex h-full overflow-hidden w-full">
       <SEO
-        title={activeConversation ? `${t("chat.chatWith", { name: activeConversation.title || activeConversation.agent_name })}` : t("library.title")}
+        title={seoTitle}
         description={activeConversation?.agent_description || t("library.subtitle")}
         keywords={`${activeConversation?.agent_name || ""}, ${t("common.keywords")}`}
         schema={activeConversation

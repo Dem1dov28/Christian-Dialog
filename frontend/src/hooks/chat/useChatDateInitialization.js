@@ -28,8 +28,9 @@ export function useChatDateInitialization({
     if (isUserScrollingUpRef.current) {
       // Инициализируем дату при загрузке сообщений (только если дата еще не установлена)
       if (windowedMessages.length > 0 && !topVisibleDate && messages?.length > 0) {
-        // Берем первое сообщение из windowedMessages (самое старое в окне)
-        const firstMessage = windowedMessages[0];
+        // Берем первое реальное сообщение (пропускаем разделители дат)
+        const firstMessage = windowedMessages.find((m) => m.type !== "day-separator");
+        if (!firstMessage) return;
         const originalMessage = messages.find((msg) => msg.id === firstMessage.id);
         if (originalMessage?.created_at) {
           const formattedDate = formatDateHeader(originalMessage.created_at, language);
@@ -47,8 +48,9 @@ export function useChatDateInitialization({
 
     // Инициализируем дату при загрузке сообщений (только если дата еще не установлена)
     if (windowedMessages.length > 0 && !topVisibleDate && messages?.length > 0) {
-      // Берем первое сообщение из windowedMessages (самое старое в окне)
-      const firstMessage = windowedMessages[0];
+      // Берем первое реальное сообщение (пропускаем разделители дат)
+      const firstMessage = windowedMessages.find((m) => m.type !== "day-separator");
+      if (!firstMessage) return;
       const originalMessage = messages.find((msg) => msg.id === firstMessage.id);
       if (originalMessage?.created_at) {
         const formattedDate = formatDateHeader(originalMessage.created_at, language);

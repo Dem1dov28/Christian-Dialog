@@ -71,7 +71,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
   const { t, translateAgent } = useLanguage();
 
   const { agents, getUserAgents, deleteAgent, updateUserAgent } = useAgents();
-  const { createGroupChat, channels, loadChannels, isChannelsLoading, channelsError } = useChats();
+  const { conversations, createGroupChat, channels, loadChannels, isChannelsLoading, channelsError } = useChats();
   const { showSuccess, showError } = useNotification();
   const { user } = useAuth();
 
@@ -1073,12 +1073,27 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
     }
   };
 
-  // Обработчик создания чата из модального окна
+  // Обработчик создания чата из модального окна — с одним персонажем только 1 чат
   const handleStartChatFromModal = () => {
-    if (selectedPersonaForDetail) {
-      handleChatSelect(`agent-${selectedPersonaForDetail.id}`);
+    if (!selectedPersonaForDetail) return;
+    const agentId = selectedPersonaForDetail.id;
+    const existingConv = conversations.find(
+      (c) => c.agent_id === agentId && !c.is_group && !c.isGroup
+    );
+    if (existingConv) {
+      handleChatSelect(String(existingConv.id));
+    } else {
+      handleChatSelect(`agent-${agentId}`);
     }
   };
+
+  // Есть ли уже чат с выбранным персонажем (для кнопки «Перейти к чату» vs «Создать чат»)
+  const hasExistingChatWithSelectedPersona = useMemo(() => {
+    if (!selectedPersonaForDetail) return false;
+    return conversations.some(
+      (c) => c.agent_id === selectedPersonaForDetail.id && !c.is_group && !c.isGroup
+    );
+  }, [selectedPersonaForDetail, conversations]);
 
   // Обработка выбора персонажа для группы
   const handlePersonaSelect = (personaId) => {
@@ -1786,8 +1801,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Кнопки редактирования и удаления для созданных агентов */}
                                     {!isGroupCreationMode && persona.user_id && (
-                                      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-                                        {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
+                                      <div className="absolute top-2 left-2 right-2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                        {/* Кнопка редактирования — слева */}
                                         <button
                                           onClick={(e) => handleEditAgent(e, persona)}
                                           className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
@@ -1795,6 +1810,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         >
                                           <MdEdit size={16} />
                                         </button>
+                                        {/* Кнопка удаления — справа */}
                                         <button
                                           onClick={(e) => handleDeleteAgent(e, persona)}
                                           className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
@@ -2346,8 +2362,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Кнопки редактирования и удаления для созданных агентов */}
                                     {!isGroupCreationMode && persona.user_id && (
-                                      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-                                        {/* Кнопка редактирования показывается всем, но для не-про пользователей открывает модалку обновления */}
+                                      <div className="absolute top-2 left-2 right-2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                        {/* Кнопка редактирования — слева */}
                                         <button
                                           onClick={(e) => handleEditAgent(e, persona)}
                                           className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-[var(--accent)]/20 text-tg-text hover:text-[var(--accent)] transition-all duration-200 backdrop-blur-sm"
@@ -2355,6 +2371,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         >
                                           <MdEdit size={16} />
                                         </button>
+                                        {/* Кнопка удаления — справа */}
                                         <button
                                           onClick={(e) => handleDeleteAgent(e, persona)}
                                           className="p-1.5 rounded-full bg-tg-bg/90 hover:bg-red-500/20 text-tg-text hover:text-red-500 transition-all duration-200 backdrop-blur-sm"
@@ -2958,6 +2975,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
           }}
           persona={selectedPersonaForDetail}
           onStartChat={handleStartChatFromModal}
+          hasExistingChat={hasExistingChatWithSelectedPersona}
         />,
         document.body
       )}

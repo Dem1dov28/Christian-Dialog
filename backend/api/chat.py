@@ -987,6 +987,25 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                 agent_id=agent_id,
                 folder_service=folder_service
             )
+
+            # Фоновая задача: извлечь и сохранить факты о пользователе для умной памяти
+            if not conversation.is_system_chat and conversation.agent_id:
+                try:
+                    import asyncio
+                    from services.user_memory_service import UserMemoryService
+                    um_service = UserMemoryService()
+                    user_msg_text = message_content if isinstance(message_content, str) else str(message_content)
+                    asyncio.create_task(
+                        um_service.extract_and_save_memories_async(
+                            user_id=current_user.id,
+                            agent_id=agent_id,
+                            user_message=user_msg_text,
+                            agent_response=agent_response_text,
+                            message_id=user_message.id if user_message else None,
+                        )
+                    )
+                except Exception as um_err:
+                    logger.debug(f"Ошибка запуска извлечения памяти: {um_err}")
             
             # Если есть изображение, сохраняем его как файл
             if agent_image_data and agent_message:

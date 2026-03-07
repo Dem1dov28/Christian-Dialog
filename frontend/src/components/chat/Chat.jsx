@@ -15,6 +15,8 @@ import ChatLibraryInline from "./ChatLibraryInline";
 import HeaderMenu from "./HeaderMenu";
 import ReportModal from "./ReportModal";
 import ClearChatModal from "./ClearChatModal";
+import PersonaDetailModal from "../modals/PersonaDetailModal";
+import AgentRulesModal from "../modals/AgentRulesModal";
 import EditGroupChatModal from "./EditGroupChatModal";
 import MessageSearch from "../search/MessageSearch";
 import ChatHeader from "./ChatHeader";
@@ -52,6 +54,7 @@ import { useChatDateInitialization } from "../../hooks/chat/useChatDateInitializ
 import { useChatInputLayout } from "../../hooks/chat/useChatInputLayout";
 // УДАЛЕНО - импорты удаленных компонентов для инструментов
 import { formatTime, formatDateHeader, getCleanText } from "../../utils/formatters";
+import { getAgentAvatarUrl } from "../../utils/agentAvatarUtils";
 import { formatFileSize, getFileIcon, uploadFileWithProgress } from "../../utils/fileUtils";
 import { getIconComponent } from "../../utils/iconUtils";
 import PinnedMessageBar from "./PinnedMessageBar";
@@ -192,6 +195,8 @@ export default function Chat({
   const {
     isReportModalOpen,
     setIsReportModalOpen,
+    isAgentRulesModalOpen,
+    setIsAgentRulesModalOpen,
     isClearChatModalOpen,
     setIsClearChatModalOpen,
     openReportModal,
@@ -199,6 +204,10 @@ export default function Chat({
     openClearChatModal,
     closeClearChatModal,
   } = chatModalsHook;
+
+  // Карточка агента из меню (Профиль)
+  const [personaForDetail, setPersonaForDetail] = useState(null);
+  const [isPersonaDetailModalOpen, setIsPersonaDetailModalOpen] = useState(false);
 
   // Интеграция хука useContextMenu для управления контекстным меню
   const contextMenuHook = useContextMenu();
@@ -551,6 +560,8 @@ export default function Chat({
     isGroupChat,
     activeConversation: effectiveActiveConversation,
     formatTime,
+    formatDateHeader,
+    language,
     t,
     currentAgentName: currentAgent ? translateAgent(currentAgent).name : null,
   });
@@ -781,10 +792,45 @@ export default function Chat({
     handlePinnedMessageClick,
   } = messageHandlersHook;
 
+  // Преобразование агента в persona для карточки
+  const agentToPersona = useCallback((agent) => {
+    if (!agent) return null;
+    const translated = translateAgent(agent);
+    const rawDesc = translated.description ?? agent.description ?? "";
+    const yearsMatch = rawDesc.trim().match(/^\(([^)]+)\)/);
+    const years = yearsMatch ? yearsMatch[1] : null;
+    let description = rawDesc.trim().replace(/^\([^)]+\)\s*/, "").trim();
+    if (description.length > 0) description = description.charAt(0).toUpperCase() + description.slice(1);
+    return {
+      id: translated.id,
+      name: translated.name,
+      description: description || rawDesc,
+      instructions: translated.instructions,
+      imageSrc: getAgentAvatarUrl(translated.image_url, translated.avatar_url, "medium"),
+      colorClass: translated.color_class,
+      iconName: translated.icon_name,
+      years,
+    };
+  }, [translateAgent]);
+
+  const handleShowAgentProfile = useCallback(() => {
+    if (isGroupChat || isChannelChat || !currentAgent) {
+      onToggleRightPanel?.();
+      return;
+    }
+    const persona = agentToPersona(currentAgent);
+    if (persona) {
+      setPersonaForDetail(persona);
+      setIsPersonaDetailModalOpen(true);
+    }
+  }, [currentAgent, isGroupChat, isChannelChat, agentToPersona, onToggleRightPanel]);
+
   // Интеграция хука useChatModalHandlers для обработчиков модальных окон
   const chatModalHandlersHook = useChatModalHandlers({
     onToggleRightPanel,
+    onShowAgentProfile: handleShowAgentProfile,
     setIsReportModalOpen,
+    setIsAgentRulesModalOpen,
     setIsClearChatModalOpen,
     activeConversation,
     messages,
@@ -804,6 +850,7 @@ export default function Chat({
   // Извлекаем значения из хука
   const {
     handleShowProfile,
+    handleOpenAgentRulesModal,
     handleOpenReportModal,
     handleClearHistory,
     handleConfirmClearHistory,
@@ -862,6 +909,7 @@ export default function Chat({
     checkMessageLimit,
     setShowUpgradeModal,
     onToggleRightPanel,
+    onShowAgentProfile: handleShowAgentProfile,
     onOpenChatSearch,
     showError,
     showSuccess,
@@ -1322,6 +1370,7 @@ export default function Chat({
               buttonWidth: headerMenu.buttonWidth,
             }}
             onShowProfile={handleShowProfile}
+            onOpenSettings={!isGroupChat && !isChannelChat && currentAgent ? handleOpenAgentRulesModal : undefined}
             onReport={handleReport}
             onOpenReportModal={openReportModal}
             onClearHistory={handleClearHistory}
@@ -1397,7 +1446,23 @@ export default function Chat({
         onSubmit={handleSubmitReport}
       />
 
+      {/* Карточка агента из меню Профиль (без кнопки создать чат) */}
+      <PersonaDetailModal
+        isOpen={isPersonaDetailModalOpen}
+        onClose={() => {
+          setIsPersonaDetailModalOpen(false);
+          setPersonaForDetail(null);
+        }}
+        persona={personaForDetail}
+        hideCreateChatButton
+      />
 
+      {/* Модалка настроек: добавление правил агенту */}
+      <AgentRulesModal
+        isOpen={isAgentRulesModalOpen}
+        onClose={() => setIsAgentRulesModalOpen(false)}
+        activeConversationId={activeConversation?.id}
+      />
 
       {/* Модальное окно редактирования группового чата */}
       {activeConversation?.is_group && (

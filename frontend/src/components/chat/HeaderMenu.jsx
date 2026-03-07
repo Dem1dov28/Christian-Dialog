@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MdPerson, MdReport, MdDelete, MdClear, MdBookmark, MdExitToApp, MdNotifications, MdEdit } from "react-icons/md";
+import { MdPerson, MdReport, MdDelete, MdClear, MdBookmark, MdExitToApp, MdNotifications, MdEdit, MdSettings } from "react-icons/md";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useChats } from "../../contexts/ChatsContext";
 import { useNotification } from "../../contexts/NotificationContext";
@@ -9,8 +9,9 @@ export default function HeaderMenu({
   closeOnOutside,
   mousePosition,
   onShowProfile,
+  onOpenSettings,
   onReport,
-  onOpenReportModal, // Новый проп для открытия модалки
+  onOpenReportModal,
   onClearHistory,
   onDeleteChat,
   onUnsubscribeChannel,
@@ -127,9 +128,21 @@ export default function HeaderMenu({
             onClick={handleAction(onShowProfile)}
           >
             <MdPerson className="text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" />
-            <span className="text-sm">{t("profile.title")}</span>
+            <span className="text-sm">{t("chat.profile")}</span>
           </button>
         </li>
+        {onOpenSettings && (
+          <li>
+            <button
+              type="button"
+              className="w-full text-left flex items-center px-3 py-2 text-[var(--text-light)] dark:text-[var(--text-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] transition-colors duration-150"
+              onClick={handleAction(onOpenSettings)}
+            >
+              <MdSettings className="text-[var(--icon-light)] dark:text-[var(--icon-dark)] mr-2 text-lg" />
+              <span className="text-sm">{t("chat.settings")}</span>
+            </button>
+          </li>
+        )}
         <li>
           <button
             type="button"

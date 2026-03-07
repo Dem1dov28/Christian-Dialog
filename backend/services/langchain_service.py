@@ -547,6 +547,7 @@ class LangChainService:
         conversation_id: Optional[str] = None,
         model: Optional[str] = None,
         user_rules: Optional[List[str]] = None,
+        user_memory_context: Optional[str] = None,
         image_attachments: Optional[List[Dict]] = None,
         language: Optional[str] = None,
         tools: Optional[List[Any]] = None
@@ -625,6 +626,11 @@ class LangChainService:
                     logger.debug(f"📋 Правил пользователя нет для беседы {conversation_id} (пустой список)")
                 else:
                     logger.debug(f"📋 Правила пользователя не проверялись для беседы {conversation_id}")
+
+            # Добавляем память о пользователе (факты для персонализации)
+            if user_memory_context and user_memory_context.strip():
+                logger.debug(f"📝 Добавление контекста памяти о пользователе ({len(user_memory_context)} символов)")
+                system_message += "\n\n" + user_memory_context.strip()
             
             # Получаем Memory для беседы
             memory = self._get_memory(conversation_id)
@@ -1155,6 +1161,7 @@ class LangChainService:
         conversation_id: Optional[str] = None,
         model: Optional[str] = None,
         user_rules: Optional[List[str]] = None,
+        user_memory_context: Optional[str] = None,
         language: Optional[str] = None  # поддержка аргумента language для совместимости с вызовом
     ) -> str:
         """Генерировать ответ агента с использованием LangChain инструментов
@@ -1213,6 +1220,11 @@ class LangChainService:
                     logger.debug(f"📋 Правил пользователя нет для беседы {conversation_id} (пустой список)")
                 else:
                     logger.debug(f"📋 Правила пользователя не проверялись для беседы {conversation_id}")
+
+            # Добавляем память о пользователе (факты для персонализации)
+            if user_memory_context and user_memory_context.strip():
+                logger.debug(f"📝 Добавление контекста памяти о пользователе ({len(user_memory_context)} символов)")
+                system_message += "\n\n" + user_memory_context.strip()
             
             # Получаем Memory для беседы
             memory = self._get_memory(conversation_id)

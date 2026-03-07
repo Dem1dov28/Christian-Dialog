@@ -217,7 +217,7 @@ export function useChatComputedValues({
     }
 
     if (agentConversations.length <= 1) {
-      return t("chat.chatWith", { name: translatedAgent.name });
+      return translatedAgent.name;
     }
 
     // Находим индекс текущего разговора среди всех разговоров с агентом

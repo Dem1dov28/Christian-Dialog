@@ -156,7 +156,7 @@ export default function AIPanel({
     if (activeConversation.title?.trim()) return activeConversation.title;
     const agentConversations = conversations?.filter((c) => c.agent_id === currentAgentId) ?? [];
     const translatedAgent = translateAgent(currentAgent);
-    if (agentConversations.length <= 1) return t("chat.chatWith", { name: translatedAgent.name });
+    if (agentConversations.length <= 1) return translatedAgent.name;
     const sorted = [...agentConversations].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const idx = sorted.findIndex((c) => c.id === activeConversation.id);
     return idx >= 0 ? `${translatedAgent.name} (${idx + 1})` : translatedAgent.name;
@@ -448,8 +448,10 @@ export default function AIPanel({
     return (
       <>
         <div
-          className={`bg-[var(--bg-secondary)] flex flex-col border border-[var(--border-color)] relative rounded-2xl shadow-2xl overflow-hidden h-full ${isClosing ? 'ai-panel-modal-fade-out' : 'ai-panel-modal-fade-in'}`}
-          style={{ maxHeight: "calc(100dvh - 96px)" }}
+          className={`bg-[var(--bg-secondary)] flex flex-col border border-[var(--border-color)] relative rounded-2xl shadow-2xl overflow-hidden h-full min-h-0 ${isClosing ? 'ai-panel-modal-fade-out' : 'ai-panel-modal-fade-in'}`}
+          style={{
+            maxHeight: "calc(100dvh - var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) - 2rem)",
+          }}
         >
           {panelContent}
         </div>

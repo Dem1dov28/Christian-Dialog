@@ -1,14 +1,26 @@
 import { useMemo } from "react";
 
 /**
+ * Возвращает ключ даты (YYYY-MM-DD) для группировки сообщений по дням
+ */
+function getDateKey(dateString) {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  return isNaN(d.getTime()) ? "" : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
  * Хук для обработки и преобразования сообщений в формат для отображения
  * Преобразует сырые сообщения из API в формат, понятный компонентам сообщений
+ * Добавляет разделители дат (Сегодня, Вчера, 6 марта и т.д.)
  */
 export function useProcessedMessages({
   messages,
   isGroupChat,
   activeConversation,
   formatTime,
+  formatDateHeader,
+  language = "ru",
   t,
   currentAgentName = null, // Имя персонажа для одиночного чата (для копирования и отображения)
 }) {
@@ -20,6 +32,7 @@ export function useProcessedMessages({
       type: msg.is_from_user ? "right" : "left",
       text: msg.content,
       time: formatTime(msg.created_at),
+      created_at: msg.created_at,
       read: true, // Пока все сообщения считаем прочитанными
       // Для групповых чатов — agent_name из сообщения; для одиночного — имя текущего персонажа
       agentName: !msg.is_from_user
@@ -64,7 +77,27 @@ export function useProcessedMessages({
       file_attachments: msg.file_attachments || [],
     }));
 
-    return processedMessages;
+    // Вставляем разделители дат между сообщениями разных дней
+    const result = [];
+    let lastDateKey = "";
+
+    for (const msg of processedMessages) {
+      const dateKey = getDateKey(msg.created_at);
+      if (dateKey && dateKey !== lastDateKey) {
+        const dateLabel = formatDateHeader ? formatDateHeader(msg.created_at, language) : "";
+        if (dateLabel) {
+          result.push({
+            id: `day-${msg.id}`,
+            type: "day-separator",
+            text: dateLabel,
+          });
+        }
+        lastDateKey = dateKey;
+      }
+      result.push(msg);
+    }
+
+    return result;
 
     // Логируем для отладки
     if (activeConversation?.is_system_chat && messages.length > 0) {
@@ -88,6 +121,8 @@ export function useProcessedMessages({
     activeConversation?.is_system_chat,
     activeConversation?.id,
     formatTime,
+    formatDateHeader,
+    language,
     t,
     currentAgentName,
   ]);

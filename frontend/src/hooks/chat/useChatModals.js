@@ -7,6 +7,7 @@ import { useState, useCallback } from "react";
 export function useChatModals() {
   // Состояние модальных окон
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isAgentRulesModalOpen, setIsAgentRulesModalOpen] = useState(false);
   const [isClearChatModalOpen, setIsClearChatModalOpen] = useState(false);
 
   // Обработчики открытия модальных окон
@@ -30,6 +31,8 @@ export function useChatModals() {
     // State
     isReportModalOpen,
     setIsReportModalOpen,
+    isAgentRulesModalOpen,
+    setIsAgentRulesModalOpen,
     isClearChatModalOpen,
     setIsClearChatModalOpen,
 

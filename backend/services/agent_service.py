@@ -538,9 +538,9 @@ class AgentService(BaseService):
                     )
                     detected_language = None
 
-            # Получаем правила пользователя из беседы ДО изменения conversation_id для мульти-агентных чатов
-            # ВАЖНО: всегда загружаем правила заново из БД при каждом запросе
+            # Получаем правила пользователя и user_id для памяти из беседы
             user_rules: Optional[List[str]] = None
+            user_id_for_memory: Optional[int] = None
             original_conv_id = None
             if conversation_id:
                 try:
@@ -559,6 +559,7 @@ class AgentService(BaseService):
                             if conversation:
                                 logger.debug(f"✅ Найдена групповая беседа {original_conv_id}")
                                 user_rules = []
+                                user_id_for_memory = conversation.user_id
                             else:
                                 logger.debug(f"⚠️ Групповая беседа {original_conv_id} не найдена в таблице MultiAgentConversation")
                                 user_rules = []
@@ -568,6 +569,7 @@ class AgentService(BaseService):
                             if conversation:
                                 rules = conversation.get_user_rules()
                                 user_rules = rules if rules else []  # Всегда передаем список, даже пустой
+                                user_id_for_memory = conversation.user_id
                                 if user_rules:
                                     logger.debug(f"✅ Загружено {len(user_rules)} правил пользователя для беседы {original_conv_id}: {user_rules}")
                                 else:
@@ -695,6 +697,16 @@ class AgentService(BaseService):
                 logger.warning(f"⚠️ [GENERATE RESPONSE] Агент {agent_id} ({agent.get('name')}) не имеет инструкций! Используем пустую строку.")
             
             logger.debug(f"📋 [GENERATE RESPONSE] Инструкции агента {agent_id} ({agent.get('name')}): длина {len(agent_instructions)} символов")
+
+            # Память о пользователе для персонализации
+            user_memory_context = ""
+            if user_id_for_memory:
+                try:
+                    from services.user_memory_service import UserMemoryService
+                    um_service = UserMemoryService()
+                    user_memory_context = um_service.get_memories_for_context(user_id_for_memory, agent_id)
+                except Exception as um_err:
+                    logger.debug(f"Ошибка загрузки памяти пользователя: {um_err}")
             
             llm_response = await self.langchain_service.generate_response(
                 agent_name=agent["name"],
@@ -703,6 +715,7 @@ class AgentService(BaseService):
                 conversation_id=unique_conversation_id,
                 model=model_to_use,  # Используем модель из чата или модель агента
                 user_rules=user_rules,  # Передаем правила пользователя (None или список)
+                user_memory_context=user_memory_context or None,  # Память о пользователе
                 image_attachments=image_attachments,  # Передаем изображения для моделей с vision
                 language=detected_language,  # Передаем язык для ответа
                 tools=tools,  # Веб-поиск для фактов (биография, тексты, даты)
@@ -804,22 +817,36 @@ class AgentService(BaseService):
                 unique_conversation_id = f"{conversation_id}_agent_{agent_id}"
                 logger.debug(f"Используется уникальный conversation_id для агента {agent_id} в групповом чате: {unique_conversation_id}")
             
-            # Получаем правила пользователя из беседы, если conversation_id указан
+            # Получаем правила и память пользователя из беседы
             user_rules: List[str] = []
+            user_memory_context = ""
             if conversation_id:
                 try:
-                    conv_id = int(conversation_id)
+                    conv_id_str = str(conversation_id).split("_agent_")[0]
+                    conv_id = int(conv_id_str)
+                    user_id_for_mem = None
                     with self.get_session() as session:
-                        conversation = session.get(Conversation, conv_id)
-                        if conversation:
-                            user_rules = conversation.get_user_rules()
-                            if user_rules:
-                                logger.debug(f"Загружено {len(user_rules)} правил пользователя для беседы {conv_id}")
+                        conv = session.get(Conversation, conv_id)
+                        if conv:
+                            user_rules = conv.get_user_rules() or []
+                            user_id_for_mem = conv.user_id
+                        else:
+                            mac = session.get(MultiAgentConversation, conv_id)
+                            if mac:
+                                user_id_for_mem = mac.user_id
+                            user_rules = []
+                        if user_rules:
+                            logger.debug(f"Загружено {len(user_rules)} правил для беседы {conv_id}")
+                        if user_id_for_mem:
+                            try:
+                                from services.user_memory_service import UserMemoryService
+                                user_memory_context = UserMemoryService().get_memories_for_context(user_id_for_mem, agent_id)
+                            except Exception:
+                                pass
                 except (ValueError, TypeError):
-                    # conversation_id не число или ошибка парсинга - пропускаем правила
                     pass
                 except Exception as e:
-                    logger.warning(f"Ошибка при получении правил пользователя для беседы {conversation_id}: {e}")
+                    logger.warning(f"Ошибка при получении правил для беседы {conversation_id}: {e}")
             
             llm_response = await self.langchain_service.generate_response_with_tools(
                 agent_name=agent["name"],
@@ -827,8 +854,9 @@ class AgentService(BaseService):
                 user_message=message,
                 tools=tools,
                 conversation_id=unique_conversation_id,
-                model=agent.get("model"),  # Передаем модель агента
-                user_rules=user_rules  # Передаем правила пользователя
+                model=agent.get("model"),
+                user_rules=user_rules,
+                user_memory_context=user_memory_context or None,
             )
 
             # Словарь сообщений об ошибках, которые мы хотим перехватить для повторной попытки
@@ -861,7 +889,8 @@ class AgentService(BaseService):
                             user_message=message,
                             conversation_id=unique_conversation_id,
                             model=ultimate_model,
-                            user_rules=user_rules
+                            user_rules=user_rules,
+                            user_memory_context=user_memory_context or None,
                         )
                         logger.info(f"✅ [TOOLS FALLBACK] 'Второй шанс' для {agent.get('name')} успешен!")
                     except Exception as fallback_err:

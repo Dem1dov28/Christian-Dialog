@@ -12,20 +12,20 @@ export function useChatHeaderHandlers({
   checkMessageLimit,
   setShowUpgradeModal,
   onToggleRightPanel,
+  onShowAgentProfile,
   onOpenChatSearch,
   showError,
   showSuccess,
   t,
 }) {
-  // Обработчик клика по заголовку чата
+  // Обработчик клика по заголовку чата (при клике на аватар/имя — открывает карточку агента или правую панель)
   const handleHeaderClick = useCallback(
     (e) => {
-      // Проверяем, что клик не по кнопке
       if (!e.target.closest("button")) {
-        onToggleRightPanel?.();
+        (onShowAgentProfile || onToggleRightPanel)?.();
       }
     },
-    [onToggleRightPanel]
+    [onShowAgentProfile, onToggleRightPanel]
   );
 
   // Обработчик клика по кнопке меню (книга)

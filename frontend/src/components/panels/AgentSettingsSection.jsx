@@ -15,8 +15,8 @@ import { useChats } from "../../contexts/ChatsContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import apiClient from "../../services/api";
 
-export default function AgentSettingsSection({ activeConversationId }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export default function AgentSettingsSection({ activeConversationId, embedded = false }) {
+  const [isExpanded, setIsExpanded] = useState(embedded);
   const { activeConversation } = useChats();
   const { getAgent } = useAgents();
   const { t } = useLanguage();
@@ -252,24 +252,7 @@ export default function AgentSettingsSection({ activeConversationId }) {
     return null;
   }
 
-  return (
-    <div className="border-b border-[var(--border-color)]">
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--hover-bg)] transition-colors duration-200"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center space-x-2">
-          <MdSettings className="text-[var(--accent)] text-lg" />
-          <span className="font-medium text-[var(--text-white)] select-none">{t("chat.agentSettings")}</span>
-        </div>
-        {isExpanded ? (
-          <MdExpandLess className="text-[var(--text-gray)]" />
-        ) : (
-          <MdExpandMore className="text-[var(--text-gray)]" />
-        )}
-      </div>
-
-      {isExpanded && (
+  const rulesContent = (
         <div className="px-3 pb-3 space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -479,7 +462,30 @@ export default function AgentSettingsSection({ activeConversationId }) {
             </div>
           </div>
         </div>
-      )}
+  );
+
+  if (embedded) {
+    return rulesContent;
+  }
+
+  return (
+    <div className="border-b border-[var(--border-color)]">
+      <div
+        className="flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--hover-bg)] transition-colors duration-200"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center space-x-2">
+          <MdSettings className="text-[var(--accent)] text-lg" />
+          <span className="font-medium text-[var(--text-white)] select-none">{t("chat.agentSettings")}</span>
+        </div>
+        {isExpanded ? (
+          <MdExpandLess className="text-[var(--text-gray)]" />
+        ) : (
+          <MdExpandMore className="text-[var(--text-gray)]" />
+        )}
+      </div>
+
+      {isExpanded && rulesContent}
     </div>
   );
 }

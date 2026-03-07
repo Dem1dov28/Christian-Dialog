@@ -278,9 +278,9 @@ export function useChatScrollInitialization({
 
     // Проверяем, добавилось ли новое сообщение
     if (currentCount > prevCount && prevCount > 0) {
-      // Проверяем, было ли последнее сообщение от агента (не от пользователя)
-      const lastMessage = windowedMessages[currentCount - 1];
-      const isAgentMessage = lastMessage && !lastMessage.is_from_user;
+      // Проверяем, было ли последнее сообщение от агента (type "left"; пропускаем разделители дат)
+      const lastMessage = [...windowedMessages].reverse().find((m) => m.type !== "day-separator");
+      const isAgentMessage = lastMessage && lastMessage.type === "left";
 
       if (isAgentMessage) {
         // НЕ скроллим автоматически, если пользователь скроллит вверх

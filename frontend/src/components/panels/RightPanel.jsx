@@ -74,13 +74,20 @@ const RightPanel = forwardRef(function RightPanel({
   if (isModal) {
     return (
       <div
-        className={`fixed inset-0 z-[110] flex items-center justify-center px-4 py-6 bg-black/50 backdrop-blur-sm ${isClosing ? 'ai-panel-backdrop-closing' : 'ai-panel-backdrop'}`}
+        className={`fixed inset-0 z-[110] flex items-center justify-center px-4 py-4 bg-black/50 backdrop-blur-sm ${isClosing ? 'ai-panel-backdrop-closing' : 'ai-panel-backdrop'}`}
+        style={{
+          paddingTop: "max(1rem, calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + 1rem))",
+          paddingBottom: "max(1rem, calc(var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 1rem))",
+        }}
         onClick={handleClose}
         role="dialog"
         aria-modal="true"
       >
         <div
-          className="w-full max-w-xl pointer-events-auto"
+          className="w-full max-w-xl pointer-events-auto max-h-full overflow-hidden flex flex-col"
+          style={{
+            maxHeight: "calc(100dvh - var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) - 2rem)",
+          }}
           onClick={(event) => event.stopPropagation()}
         >
           <AIPanel

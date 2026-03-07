@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MdClose } from "react-icons/md";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
+const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat, hasExistingChat = false, hideCreateChatButton = false }) => {
   const { t } = useLanguage();
 
   if (!isOpen || !persona) return null;
@@ -145,15 +145,17 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat }) => {
                 </div>
               </div>
 
-              {/* Start Chat Button */}
-              <div className="p-6 pt-4 bg-[var(--bg-primary)]">
-                <button
-                  onClick={handleStartChat}
-                  className="w-full py-4 rounded-xl bg-[#6B7F5A] text-white font-semibold text-base hover:bg-[#5A6B4A] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
-                >
-                  {t("library.createChat", { defaultValue: "Создать чат" })}
-                </button>
-              </div>
+              {/* Start Chat Button — скрываем, если hideCreateChatButton */}
+              {!hideCreateChatButton && (
+                <div className="p-6 pt-4 bg-[var(--bg-primary)]">
+                  <button
+                    onClick={handleStartChat}
+                    className="w-full py-4 rounded-xl bg-[#6B7F5A] text-white font-semibold text-base hover:bg-[#5A6B4A] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                  >
+                    {hasExistingChat ? t("library.goToChat", { defaultValue: "Перейти к чату" }) : t("library.createChat", { defaultValue: "Создать чат" })}
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         </>

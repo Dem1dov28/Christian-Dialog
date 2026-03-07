@@ -887,7 +887,7 @@ const Sidebar = ({
         title =
           allAgentConversations.length > 1
             ? `${translatedAgent.name} (${conversationIndex + 1})`
-            : t("chat.chatWith", { name: translatedAgent.name });
+            : translatedAgent.name;
       }
 
       // Декодируем HTML entities в last_message перед обрезкой
@@ -904,7 +904,7 @@ const Sidebar = ({
         preview: decodedMessage
           ? decodedMessage.substring(0, 50) +
           (decodedMessage.length > 50 ? "..." : "")
-          : t("chat.chatWith", { name: translatedAgent.name }),
+          : translatedAgent.name,
         colorClass: agent.color_class || "bg-purple-500",
         iconName: agent.icon_name || "psychology",
         imageSrc: getAgentAvatarUrl(agent.image_url, agent.avatar_url, "low"),
@@ -1486,7 +1486,7 @@ const Sidebar = ({
               title =
                 allAgentConversations.length > 1
                   ? `${translatedAgent?.name} (${conversationIndex + 1})`
-                  : t("chat.chatWith", { name: translatedAgent?.name || t("chat.unknownAgent") });
+                  : (translatedAgent?.name || t("chat.unknownAgent"));
             }
 
             // Формируем данные в том же формате, что и buildListItems
@@ -1502,9 +1502,7 @@ const Sidebar = ({
                   : null;
                 return decoded
                   ? decoded.substring(0, 50) + (decoded.length > 50 ? "..." : "")
-                  : t("chat.chatWith", {
-                    name: translatedAgent?.name || t("chat.unknownAgent"),
-                  });
+                  : (translatedAgent?.name || t("chat.unknownAgent"));
               })(),
               colorClass:
                 agent?.color_class || "bg-purple-500 dark:bg-purple-600",

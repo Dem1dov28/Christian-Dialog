@@ -221,29 +221,34 @@ export function useChatScrollHandlers({
 
             // Если нашли видимое сообщение, обновляем дату
             if (topVisibleMessage) {
-              // Находим оригинальное сообщение с датой
-              const originalMessage = messages.find(
-                (msg) => msg.id === topVisibleMessage.id
-              );
-              if (originalMessage?.created_at) {
-                const formattedDate = formatDateHeader(
-                  originalMessage.created_at,
-                  language
+              if (topVisibleMessage.type === "day-separator") {
+                setTopVisibleDate(topVisibleMessage.text);
+              } else {
+                const originalMessage = messages.find(
+                  (msg) => msg.id === topVisibleMessage.id
                 );
-                setTopVisibleDate(formattedDate);
+                if (originalMessage?.created_at) {
+                  const formattedDate = formatDateHeader(
+                    originalMessage.created_at,
+                    language
+                  );
+                  setTopVisibleDate(formattedDate);
+                }
               }
             } else if (windowedMessages.length > 0) {
-              // Если не нашли видимое сообщение (например, при первой загрузке), берем первое из списка
-              const firstMessage = windowedMessages[0];
-              const originalMessage = messages.find(
-                (msg) => msg.id === firstMessage.id
-              );
-              if (originalMessage?.created_at) {
-                const formattedDate = formatDateHeader(
-                  originalMessage.created_at,
-                  language
+              // Если не нашли видимое сообщение (например, при первой загрузке), берем первое реальное
+              const firstMessage = windowedMessages.find((m) => m.type !== "day-separator");
+              if (firstMessage) {
+                const originalMessage = messages.find(
+                  (msg) => msg.id === firstMessage.id
                 );
-                setTopVisibleDate(formattedDate);
+                if (originalMessage?.created_at) {
+                  const formattedDate = formatDateHeader(
+                    originalMessage.created_at,
+                    language
+                  );
+                  setTopVisibleDate(formattedDate);
+                }
               }
             }
           });
