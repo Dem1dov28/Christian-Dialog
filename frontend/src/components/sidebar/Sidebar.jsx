@@ -1863,9 +1863,7 @@ const Sidebar = ({
               {/* Кнопка добавления нового чата в центре внизу */}
               {(
                 <button
-                  className={`absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl shine-effect ${
-                    isMobileViewport ? "h-12 px-4 rounded-2xl" : "w-12 h-12 rounded-full"
-                  }`}
+                  className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 h-12 px-4 rounded-2xl shadow-lg z-[1] transform transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-xl shine-effect"
                   style={{
                     backgroundColor: "var(--accent)",
                     bottom: "calc(1rem + var(--safe-area-inset-bottom))",
@@ -1877,11 +1875,9 @@ const Sidebar = ({
                   title={t("common.openLibrary")}
                 >
                   <MdAdd className="text-white text-2xl shrink-0" />
-                  {isMobileViewport && (
-                    <span className="text-white font-medium text-sm whitespace-nowrap">
-                      {t("chat.newChat")}
-                    </span>
-                  )}
+                  <span className="text-white font-medium text-sm whitespace-nowrap">
+                    {t("chat.newChat")}
+                  </span>
                 </button>
               )}
             </main>

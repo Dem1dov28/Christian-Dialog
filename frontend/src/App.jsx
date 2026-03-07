@@ -76,9 +76,6 @@ function MainApp() {
     setActiveChatId,
     activeFolder,
     setActiveFolder,
-    isRightPanelVisible,
-    setIsRightPanelVisible,
-    isRightPanelModal,
     isProfileVisible,
     setIsProfileVisible,
     isInlineLibraryOpen,
@@ -110,7 +107,6 @@ function MainApp() {
     isChatSearchModalOpen,
     setIsChatSearchModalOpen,
     searchRef,
-    rightPanelRef,
   } = appState;
 
   const {
@@ -185,10 +181,7 @@ function MainApp() {
 
   // Используем хуки для обработчиков
   const panelHandlers = usePanelHandlers({
-    isRightPanelVisible,
-    setIsRightPanelVisible,
     setIsProfileVisible,
-    rightPanelRef,
   });
 
   const libraryHandlers = useLibraryHandlers({
@@ -203,9 +196,6 @@ function MainApp() {
   });
 
   const {
-    toggleRightPanel,
-    closeRightPanel,
-    closeRightPanelWithAnimation,
     openProfile,
     closeProfile,
   } = panelHandlers;
@@ -267,8 +257,6 @@ function MainApp() {
     setIsMediumScreenSidebarVisible,
     setIsInlineLibraryOpen,
     setIsLibraryWithSidebar,
-    isRightPanelModal,
-    setIsRightPanelVisible,
     systemChat,
     navigate,
     location,
@@ -617,11 +605,9 @@ function MainApp() {
         }}
         targetMessageId={targetMessageId}
         onTargetMessageScrolled={() => setTargetMessageId(null)}
-        onToggleRightPanel={toggleRightPanel}
         onOpenChatSearch={openChatSearch}
         isChatSearchModalOpen={isChatSearchModalOpen}
         onCloseChatSearchModal={closeChatSearchModal}
-        isRightPanelOpen={isRightPanelVisible}
         isLeftPanelOpen={isDrawerOpen}
         onMessageSent={handleMessageSent}
         isInlineLibraryOpen={isInlineLibraryOpen}
@@ -640,9 +626,6 @@ function MainApp() {
             }
             : undefined
         }
-        rightPanelRef={rightPanelRef}
-        onCloseRightPanel={closeRightPanel}
-        isRightPanelModal={isRightPanelModal}
         shouldRenderSidebar={shouldRenderSidebar}
         onSearchClose={() => setForceShowSidebarForSearch(false)}
         sidebarShouldBeFullWidth={sidebarShouldBeFullWidth}

@@ -8,7 +8,6 @@ import {
   MdDelete,
   MdCheck,
   MdCancel,
-  MdMoreVert,
 } from "react-icons/md";
 import { useAgents } from "../../contexts/AgentsContext";
 import { useChats } from "../../contexts/ChatsContext";
@@ -30,7 +29,6 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
   const [isAddingRule, setIsAddingRule] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [newRuleText, setNewRuleText] = useState("");
-  const [openMenuId, setOpenMenuId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Функция для автоматической установки высоты textarea
@@ -52,23 +50,6 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
       }, 100);
     }
   }, [editingRule]);
-
-  // Закрытие меню при клике вне его
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        openMenuId &&
-        !event.target.closest(".agent-settings-menu-container")
-      ) {
-        setOpenMenuId(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [openMenuId]);
 
   // Функции для работы с правилами
   const handleAddRule = () => {
@@ -112,7 +93,6 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
   const handleDeleteRule = (ruleId) => {
     const updatedRules = rules.filter((rule) => rule.id !== ruleId);
     setRules(updatedRules);
-    setOpenMenuId(null);
     saveRules(updatedRules);
   };
 
@@ -232,15 +212,6 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
     }
   };
 
-  // Функции для управления меню
-  const toggleMenu = (ruleId) => {
-    setOpenMenuId(openMenuId === ruleId ? null : ruleId);
-  };
-
-  const closeMenu = () => {
-    setOpenMenuId(null);
-  };
-
   if (
     !activeConversationId ||
     !activeConversation ||
@@ -255,8 +226,8 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
   const rulesContent = (
         <div className="px-3 pb-3 space-y-4">
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-[var(--text-white)]">
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-sm font-semibold text-[var(--text-white)]">
                 {t("chat.agentRules")}
               </h4>
               {!isAddingRule && (
@@ -265,9 +236,9 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
                     e.stopPropagation();
                     setIsAddingRule(true);
                   }}
-                  className="px-3 py-1.5 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg text-[var(--accent)] text-xs font-medium hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50 transition-all duration-200 flex items-center gap-1.5"
+                  className="flex-shrink-0 px-3 py-2 bg-[var(--accent)]/15 border border-[var(--accent)]/40 rounded-xl text-[var(--accent)] text-sm font-medium hover:bg-[var(--accent)]/25 hover:border-[var(--accent)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm"
                 >
-                  <MdAdd className="w-3.5 h-3.5" />
+                  <MdAdd className="w-4 h-4" />
                   {t("chat.addRule")}
                 </button>
               )}
@@ -277,7 +248,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
             <div className="space-y-2">
               {/* Форма добавления нового правила */}
               {isAddingRule && (
-                <div className="bg-[var(--bg-secondary)]/50 border border-[var(--accent)]/30 rounded-lg p-3">
+                <div className="bg-[var(--bg-secondary)]/60 border border-[var(--accent)]/30 rounded-xl p-4 shadow-sm">
                   <div className="space-y-3">
                     <textarea
                       value={newRuleText}
@@ -333,7 +304,7 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
               {rules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="bg-[var(--bg-secondary)]/50 border border-[var(--border-color)]/50 rounded-lg p-3"
+                  className="group bg-[var(--bg-secondary)]/60 border border-[var(--border-color)]/50 rounded-xl p-4 hover:border-[var(--border-color)]/80 hover:bg-[var(--bg-secondary)]/70 transition-all duration-200 shadow-sm"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {editingRule && editingRule.id === rule.id ? (
@@ -383,11 +354,11 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
                       </div>
                     </div>
                   ) : (
-                    // Обычный режим отображения
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
+                    // Обычный режим отображения с кнопками Редактировать и Удалить
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 pr-2">
                         <p
-                          className="text-[var(--text-white)] text-sm break-words"
+                          className="text-[var(--text-white)] text-sm leading-relaxed break-words"
                           style={{
                             display: "-webkit-box",
                             WebkitLineClamp: 4,
@@ -400,40 +371,24 @@ export default function AgentSettingsSection({ activeConversationId, embedded = 
                           {rule.description || rule.title}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 ml-4 relative agent-settings-menu-container">
-                          <button
-                            onClick={() => toggleMenu(rule.id)}
-                            className="p-1.5 text-[var(--accent)] hover:text-[var(--accent)]/80 hover:bg-[var(--accent)]/10 rounded transition-colors"
-                          >
-                            <MdMoreVert className="w-4 h-4" />
-                          </button>
-
-                          {/* Выпадающее меню */}
-                          {openMenuId === rule.id && (
-                            <div className="absolute right-0 top-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg z-10 min-w-[120px]">
-                              <button
-                                onClick={() => {
-                                  handleEditRule(rule);
-                                  closeMenu();
-                                }}
-                                className="w-full px-4 py-2 text-left text-[var(--text-white)] hover:bg-[var(--hover-bg)] transition-colors text-sm flex items-center gap-2"
-                              >
-                                <MdEdit className="w-4 h-4" />
-                                {t("chat.edit")}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleDeleteRule(rule.id);
-                                  closeMenu();
-                                }}
-                                className="w-full px-4 py-2 text-left text-red-400 hover:bg-red-500/10 transition-colors text-sm flex items-center gap-2"
-                              >
-                                <MdDelete className="w-4 h-4" />
-                                {t("common.delete")}
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                          onClick={() => handleEditRule(rule)}
+                          className="p-2 text-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/15 rounded-lg transition-all duration-200 flex items-center gap-1.5"
+                          title={t("chat.edit")}
+                        >
+                          <MdEdit className="w-4 h-4" />
+                          <span className="text-xs font-medium hidden sm:inline">{t("chat.edit")}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRule(rule.id)}
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/15 rounded-lg transition-all duration-200 flex items-center gap-1.5"
+                          title={t("common.delete")}
+                        >
+                          <MdDelete className="w-4 h-4" />
+                          <span className="text-xs font-medium hidden sm:inline">{t("common.delete")}</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

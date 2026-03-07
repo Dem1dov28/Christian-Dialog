@@ -16,7 +16,6 @@ export default function HeaderMenu({
   onDeleteChat,
   onUnsubscribeChannel,
   onEditGroupChat,
-  isRightPanelOpen,
   onExited,
 }) {
   const { activeConversation, subscribeToChannel } = useChats();

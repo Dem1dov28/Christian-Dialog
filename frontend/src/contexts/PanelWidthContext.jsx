@@ -66,12 +66,6 @@ export const PanelWidthProvider = ({ children }) => {
   const [isAutoAdjusted, setIsAutoAdjusted] = useState(false);
   const previousSidebarWidthRef = useRef(null);
 
-  // Состояние правой панели
-  const [rightPanelState, setRightPanelState] = useState({
-    width: 320,
-    isOpen: false,
-  });
-
   // Константы для адаптивности
   const MIN_WIDTH = 260;
   const BASE_MAX_WIDTH = 640;
@@ -88,11 +82,10 @@ export const PanelWidthProvider = ({ children }) => {
       return Math.max(MIN_WIDTH, available);
     }
     const AVAILABLE_MIN_MAIN = 480;
-    const rightPanelReserve = rightPanelState.isOpen ? rightPanelState.width : 0;
     const available =
-      window.innerWidth - NAV_ICONS_WIDTH - rightPanelReserve - AVAILABLE_MIN_MAIN;
+      window.innerWidth - NAV_ICONS_WIDTH - AVAILABLE_MIN_MAIN;
     return Math.max(MIN_WIDTH, Math.min(BASE_MAX_WIDTH, available));
-  }, [mainWidth, rightPanelState]);
+  }, [mainWidth]);
 
   const MAX_WIDTH = dynamicMaxWidth;
 
@@ -275,27 +268,6 @@ export const PanelWidthProvider = ({ children }) => {
     });
   }, [userPreferredWidth, MIN_WIDTH, MAX_WIDTH]);
 
-  const setRightPanelOpen = useCallback((isOpen) => {
-    setRightPanelState((prev) => {
-      if (prev.isOpen === isOpen) {
-        return prev;
-      }
-      return { ...prev, isOpen };
-    });
-  }, []);
-
-  const updateRightPanelWidth = useCallback((width) => {
-    if (!Number.isFinite(width)) {
-      return;
-    }
-    setRightPanelState((prev) => {
-      if (Math.abs(prev.width - width) < 0.5) {
-        return prev;
-      }
-      return { ...prev, width };
-    });
-  }, []);
-
   // Ref для отслеживания предыдущей ширины viewport, чтобы избежать лишних обновлений
   const previousViewportWidthRef = useRef(null);
 
@@ -436,10 +408,6 @@ export const PanelWidthProvider = ({ children }) => {
     resetToPreferred,
     MIN_WIDTH,
     MAX_WIDTH,
-    rightPanelWidth: rightPanelState.width,
-    isRightPanelOpen: rightPanelState.isOpen,
-    setRightPanelOpen,
-    updateRightPanelWidth,
   };
 
   return (

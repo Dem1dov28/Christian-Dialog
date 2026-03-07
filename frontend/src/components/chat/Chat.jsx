@@ -74,7 +74,6 @@ import { usePanelWidth } from "../../contexts/PanelWidthContext";
 import apiClient from "../../services/api";
 import { useMaxWidth } from "../../hooks/common/use-mobile.jsx";
 import {
-  MdMenuBook,
   MdSearch,
   MdMoreVert,
   MdAttachFile,
@@ -154,11 +153,9 @@ export default function Chat({
   activeChatId = null,
   targetMessageId = null,
   onTargetMessageScrolled,
-  onToggleRightPanel,
   onOpenChatSearch,
   isChatSearchModalOpen = false,
   onCloseChatSearchModal,
-  isRightPanelOpen = false,
   onMessageSent,
   onChatSelect,
   isInlineLibraryOpen = false,
@@ -815,7 +812,6 @@ export default function Chat({
 
   const handleShowAgentProfile = useCallback(() => {
     if (isGroupChat || isChannelChat || !currentAgent) {
-      onToggleRightPanel?.();
       return;
     }
     const persona = agentToPersona(currentAgent);
@@ -823,11 +819,10 @@ export default function Chat({
       setPersonaForDetail(persona);
       setIsPersonaDetailModalOpen(true);
     }
-  }, [currentAgent, isGroupChat, isChannelChat, agentToPersona, onToggleRightPanel]);
+  }, [currentAgent, isGroupChat, isChannelChat, agentToPersona]);
 
   // Интеграция хука useChatModalHandlers для обработчиков модальных окон
   const chatModalHandlersHook = useChatModalHandlers({
-    onToggleRightPanel,
     onShowAgentProfile: handleShowAgentProfile,
     setIsReportModalOpen,
     setIsAgentRulesModalOpen,
@@ -898,7 +893,6 @@ export default function Chat({
   // Интеграция хука useChatHeaderHandlers для обработчиков заголовка
   const {
     handleHeaderClick,
-    handleMenuBookClick,
     handleSearchClick,
     handlePlayClick,
   } = useChatHeaderHandlers({
@@ -908,7 +902,6 @@ export default function Chat({
     continueGroupDialogue,
     checkMessageLimit,
     setShowUpgradeModal,
-    onToggleRightPanel,
     onShowAgentProfile: handleShowAgentProfile,
     onOpenChatSearch,
     showError,
@@ -1147,13 +1140,11 @@ export default function Chat({
           translateAgent={translateAgent}
           showBackButton={showBackButton}
           isShowBackButton={isShowBackButton}
-          isRightPanelOpen={isRightPanelOpen}
           isDialogueLoading={isDialogueLoading}
           isLoading={isLoading}
           onBack={onBack}
           onHeaderClick={handleHeaderClick}
           onSearchClick={handleSearchClick}
-          onMenuBookClick={handleMenuBookClick}
           onMoreClick={openHeaderMenuAtEvent}
           onPlayClick={handlePlayClick}
           t={t}
@@ -1377,7 +1368,6 @@ export default function Chat({
             onDeleteChat={handleDeleteChat}
             onSavedMessages={handleSavedMessages}
             onEditGroupChat={() => setIsEditGroupChatModalOpen(true)}
-            isRightPanelOpen={isRightPanelOpen}
             onExited={() => {
               setHeaderMenuRendered(false);
               setHeaderMenu((prev) => ({ ...prev, visible: false }));

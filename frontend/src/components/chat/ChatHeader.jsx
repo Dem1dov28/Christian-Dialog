@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { MdArrowBack, MdSearch, MdMenuBook, MdMoreVert, MdPlayArrow, MdGroup, MdNotifications } from "react-icons/md";
+import { MdArrowBack, MdSearch, MdMoreVert, MdPlayArrow, MdGroup, MdNotifications } from "react-icons/md";
 import { getAgentAvatarUrl, getGroupChatAvatarUrl } from "../../utils/agentAvatarUtils";
 
 /**
@@ -24,14 +24,12 @@ function ChatHeader({
   // UI state
   showBackButton,
   isShowBackButton,
-  isRightPanelOpen,
   isDialogueLoading,
   isLoading,
   // Handlers
   onBack,
   onHeaderClick,
   onSearchClick,
-  onMenuBookClick,
   onMoreClick,
   onPlayClick,
   // Translations
@@ -218,21 +216,6 @@ function ChatHeader({
         </button>
         <button
           onClick={(e) => {
-            e.stopPropagation();
-            onMenuBookClick?.(e);
-          }}
-          className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[var(--button-hover-bg)] transition-colors duration-200 pointer-events-auto group"
-        >
-          <MdMenuBook
-            className={`text-xl transition-colors duration-200 ${
-              isRightPanelOpen
-                ? "text-[var(--accent)]"
-                : "group-hover:text-[var(--accent)]"
-            }`}
-          />
-        </button>
-        <button
-          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             onMoreClick?.(e);
@@ -261,13 +244,11 @@ ChatHeader.propTypes = {
   translateAgent: PropTypes.func.isRequired,
   showBackButton: PropTypes.bool.isRequired,
   isShowBackButton: PropTypes.bool.isRequired,
-  isRightPanelOpen: PropTypes.bool.isRequired,
   isDialogueLoading: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool.isRequired,
   onBack: PropTypes.func,
   onHeaderClick: PropTypes.func.isRequired,
   onSearchClick: PropTypes.func.isRequired,
-  onMenuBookClick: PropTypes.func.isRequired,
   onMoreClick: PropTypes.func.isRequired,
   onPlayClick: PropTypes.func,
   t: PropTypes.func.isRequired,

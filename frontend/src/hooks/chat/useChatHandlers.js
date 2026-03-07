@@ -20,8 +20,6 @@ export function useChatHandlers({
   setIsMediumScreenSidebarVisible,
   setIsInlineLibraryOpen,
   setIsLibraryWithSidebar,
-  isRightPanelModal,
-  setIsRightPanelVisible,
   systemChat,
   navigate,
   location,
@@ -82,10 +80,6 @@ export function useChatHandlers({
         // Навигируем на /chat при открытии чата
         if (navigate && location?.pathname !== '/chat') {
           navigate('/chat');
-        }
-
-        if (isRightPanelModal) {
-          setIsRightPanelVisible(false);
         }
 
         console.log("handleChatSelect called with:", chatIdStr, "messageId:", messageId);
@@ -179,13 +173,11 @@ export function useChatHandlers({
       selectConversation,
       channels,
       isMediumScreen,
-      isRightPanelModal,
       openCompactChatView,
       setActiveChatId,
       setTargetMessageId,
       setIsInlineLibraryOpen,
       setIsLibraryWithSidebar,
-      setIsRightPanelVisible,
       isUltraCompact,
       setIsCompactChatOpen,
       setIsMediumScreenSidebarVisible,

@@ -1,8 +1,7 @@
-  import React from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import Sidebar from "../sidebar/Sidebar.jsx";
 import Chat from "../chat/Chat.jsx";
-import RightPanel from "../panels/RightPanel.jsx";
 
 /**
  * Основной компонент Layout для структуры приложения
@@ -30,11 +29,9 @@ function MainLayout({
   // Chat props
   targetMessageId,
   onTargetMessageScrolled,
-  onToggleRightPanel,
   onOpenChatSearch,
   isChatSearchModalOpen,
   onCloseChatSearchModal,
-  isRightPanelOpen,
   isLeftPanelOpen,
   onMessageSent,
   isInlineLibraryOpen,
@@ -43,11 +40,6 @@ function MainLayout({
   isLibraryWithSidebar,
   showBackButton,
   onBack,
-  // Panel props
-  rightPanelRef,
-  onCloseRightPanel,
-  isRightPanelModal,
-
   // Layout state
   shouldRenderSidebar,
   sidebarShouldBeFullWidth,
@@ -129,11 +121,9 @@ function MainLayout({
                 activeChatId={activeChatIdForChat}
                 targetMessageId={targetMessageId}
                 onTargetMessageScrolled={onTargetMessageScrolled}
-                onToggleRightPanel={onToggleRightPanel}
                 onOpenChatSearch={onOpenChatSearch}
                 isChatSearchModalOpen={isChatSearchModalOpen}
                 onCloseChatSearchModal={onCloseChatSearchModal}
-                isRightPanelOpen={isRightPanelOpen}
                 isLeftPanelOpen={isLeftPanelOpen}
                 onMessageSent={onMessageSent}
                 onChatSelect={onChatSelect}
@@ -148,15 +138,6 @@ function MainLayout({
                 onShowUpgradeModal={onShowUpgradeModal}
                 // УДАЛЕНО - selectedToolId (инструменты были удалены)
               />
-              {isRightPanelOpen && activeChatIdForChat && !isInlineLibraryOpen && (
-                <RightPanel
-                  ref={rightPanelRef}
-                  onClose={onCloseRightPanel}
-                  activeChatId={activeChatIdForChat}
-                  onDeleteChat={onDeleteAgent}
-                  isModal={isRightPanelModal}
-                />
-              )}
             </div>
           ) : null}
     </div>
@@ -185,11 +166,9 @@ MainLayout.propTypes = {
   // Chat props
   targetMessageId: PropTypes.number,
   onTargetMessageScrolled: PropTypes.func.isRequired,
-  onToggleRightPanel: PropTypes.func.isRequired,
   onOpenChatSearch: PropTypes.func.isRequired,
   isChatSearchModalOpen: PropTypes.bool,
   onCloseChatSearchModal: PropTypes.func,
-  isRightPanelOpen: PropTypes.bool.isRequired,
   isLeftPanelOpen: PropTypes.bool.isRequired,
   onMessageSent: PropTypes.func.isRequired,
   isInlineLibraryOpen: PropTypes.bool.isRequired,
@@ -198,10 +177,6 @@ MainLayout.propTypes = {
   isLibraryWithSidebar: PropTypes.bool.isRequired,
   showBackButton: PropTypes.bool.isRequired,
   onBack: PropTypes.func,
-  // Panel props
-  rightPanelRef: PropTypes.object.isRequired,
-  onCloseRightPanel: PropTypes.func.isRequired,
-  isRightPanelModal: PropTypes.bool.isRequired,
   // Layout state
   shouldRenderSidebar: PropTypes.bool.isRequired,
   sidebarShouldBeFullWidth: PropTypes.bool.isRequired,

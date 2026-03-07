@@ -10,8 +10,6 @@ export function useAppState() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null);
   const [activeFolder, setActiveFolder] = useState("chats");
-  const [isRightPanelVisible, setIsRightPanelVisible] = useState(false);
-  const [isRightPanelModal, setIsRightPanelModal] = useState(false);
   const [isProfileVisible, setIsProfileVisible] = useState(false);
   const [isInlineLibraryOpen, setIsInlineLibraryOpen] = useState(false);
   const [isPricingPageVisible, setIsPricingPageVisible] = useState(false);
@@ -35,7 +33,6 @@ export function useAppState() {
 
   // Refs
   const searchRef = useRef(null);
-  const rightPanelRef = useRef(null);
   const prevActiveFolderRef = useRef(activeFolder);
 
   // Эффекты для управления адаптивным поведением
@@ -51,41 +48,6 @@ export function useAppState() {
       setIsLibraryWithSidebar(false);
     }
   }, [isMediumScreen, isUltraCompact]);
-
-  // Эффект для определения модального режима правой панели
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const updateIsModal = () => {
-      const shouldBeModal = window.innerWidth < 1220;
-
-      setIsRightPanelModal((prevIsModal) => {
-        if (prevIsModal !== shouldBeModal) {
-          setIsRightPanelVisible(false);
-        }
-        return shouldBeModal;
-      });
-    };
-
-    const mediaQuery = window.matchMedia("(max-width: 1219px)");
-    updateIsModal();
-
-    mediaQuery.addEventListener("change", updateIsModal);
-    window.addEventListener("resize", updateIsModal);
-
-    return () => {
-      mediaQuery.removeEventListener("change", updateIsModal);
-      window.removeEventListener("resize", updateIsModal);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isRightPanelModal) {
-      setIsRightPanelVisible(false);
-    }
-  }, [isRightPanelModal]);
 
   // Закрываем библиотеку при переключении между вкладками
   useEffect(() => {
@@ -107,9 +69,6 @@ export function useAppState() {
     setActiveChatId,
     activeFolder,
     setActiveFolder,
-    isRightPanelVisible,
-    setIsRightPanelVisible,
-    isRightPanelModal,
     isProfileVisible,
     setIsProfileVisible,
     isInlineLibraryOpen,
@@ -147,7 +106,6 @@ export function useAppState() {
 
     // Refs
     searchRef,
-    rightPanelRef,
   };
 }
 

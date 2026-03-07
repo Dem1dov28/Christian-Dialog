@@ -11,30 +11,20 @@ export function useChatHeaderHandlers({
   continueGroupDialogue,
   checkMessageLimit,
   setShowUpgradeModal,
-  onToggleRightPanel,
   onShowAgentProfile,
   onOpenChatSearch,
   showError,
   showSuccess,
   t,
 }) {
-  // Обработчик клика по заголовку чата (при клике на аватар/имя — открывает карточку агента или правую панель)
+  // Обработчик клика по заголовку чата (при клике на аватар/имя — открывает карточку агента)
   const handleHeaderClick = useCallback(
     (e) => {
       if (!e.target.closest("button")) {
-        (onShowAgentProfile || onToggleRightPanel)?.();
+        onShowAgentProfile?.();
       }
     },
-    [onShowAgentProfile, onToggleRightPanel]
-  );
-
-  // Обработчик клика по кнопке меню (книга)
-  const handleMenuBookClick = useCallback(
-    (e) => {
-      e.stopPropagation(); // Предотвращаем всплытие события
-      onToggleRightPanel?.();
-    },
-    [onToggleRightPanel]
+    [onShowAgentProfile]
   );
 
   // Обработчик клика по кнопке поиска
@@ -110,7 +100,6 @@ export function useChatHeaderHandlers({
 
   return {
     handleHeaderClick,
-    handleMenuBookClick,
     handleSearchClick,
     handlePlayClick,
   };

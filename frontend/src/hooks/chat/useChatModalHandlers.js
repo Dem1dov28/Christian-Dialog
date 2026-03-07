@@ -6,7 +6,6 @@ import { useAgents } from "../../contexts/AgentsContext";
  * Хук для обработчиков модальных окон чата
  */
 export function useChatModalHandlers({
-  onToggleRightPanel,
   onShowAgentProfile,
   setIsReportModalOpen,
   setIsAgentRulesModalOpen,
@@ -28,15 +27,11 @@ export function useChatModalHandlers({
   const { getAgent } = useAgents();
 
   /**
-   * Обработчик показа профиля: открывает карточку агента (если передан onShowAgentProfile) или правую панель
+   * Обработчик показа профиля: открывает карточку агента
    */
   const handleShowProfile = useCallback(() => {
-    if (onShowAgentProfile) {
-      onShowAgentProfile();
-    } else if (onToggleRightPanel) {
-      onToggleRightPanel();
-    }
-  }, [onShowAgentProfile, onToggleRightPanel]);
+    onShowAgentProfile?.();
+  }, [onShowAgentProfile]);
 
   /**
    * Обработчик открытия модалки правил агента
