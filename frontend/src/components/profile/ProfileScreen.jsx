@@ -33,18 +33,12 @@ import { useTelegramWebApp } from "../../hooks/useTelegramWebApp";
 const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect }) => {
   const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData, deleteUserAccount, logoutAllDevices, linkGoogle, unlinkGoogle, unlinkTelegram } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const { isTelegram, isIOS, initData, webApp } = useTelegramWebApp();
+  const { isTelegram, isIOS, initData } = useTelegramWebApp();
   const [telegramWidgetConfig, setTelegramWidgetConfig] = useState(null);
-  const [googleOAuthConfig, setGoogleOAuthConfig] = useState(null);
 
   useEffect(() => {
     apiClient.getTelegramWidgetConfig().then(setTelegramWidgetConfig).catch(() => setTelegramWidgetConfig({}));
   }, []);
-  useEffect(() => {
-    if (isTelegram) {
-      apiClient.getGoogleOAuthConfig().then(setGoogleOAuthConfig).catch(() => setGoogleOAuthConfig({ enabled: false }));
-    }
-  }, [isTelegram]);
   const { showSuccess, showError } = useNotification();
   const { clearAllConversations } = useChats();
   const { loadFolders } = useFolders();
@@ -62,23 +56,6 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
   const isNarrowViewport = useMaxWidth(549);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-  const handleGoogleRedirectLink = () => {
-    const clientId = googleOAuthConfig?.client_id || googleClientId;
-    const redirectUri = googleOAuthConfig?.redirect_uri || `${window.location.origin}/auth/google-callback`;
-    if (!clientId) return;
-    const scope = encodeURIComponent("openid email profile");
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
-    try {
-      if (webApp?.openLink) {
-        webApp.openLink(url, { try_instant_view: false });
-      } else {
-        window.location.href = url;
-      }
-    } catch (_) {
-      window.location.href = url;
-    }
-  };
 
   // Управление рендерингом и анимацией
   useEffect(() => {
@@ -438,7 +415,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           </div>
 
           {/* Привязанные аккаунты — Google и Telegram */}
-          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId) || !user?.telegram_id) && (
+          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId && !isTelegram) || !user?.telegram_id) && (
             <div className="text-left w-full border-t border-[var(--border-color)] pt-4 space-y-3">
               <span className="text-sm font-medium text-[var(--text-dim)] block mb-3">
                 {language === "ru" ? "Привязанные аккаунты" : "Linked accounts"}
@@ -479,7 +456,8 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   </div>
                 </div>
               )}
-              {!user?.google_id && googleClientId && (
+              {/* Привязать Google — только в веб (в Telegram Mini App не показываем) */}
+              {!user?.google_id && googleClientId && !isTelegram && (
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <div className="flex items-start gap-3">
                     <svg className="w-5 h-5 text-[var(--text-dim)] flex-shrink-0 mt-0.5" viewBox="0 0 24 24">
@@ -491,41 +469,30 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                     <div className="min-w-0 flex-1">
                       <span className="text-[var(--text-white)] font-medium block mb-1">{language === "ru" ? "Привязать Google" : "Link Google"}</span>
                       <p className="text-sm text-[var(--text-dim)] mb-3">{language === "ru" ? "Войдите через Google, чтобы привязать аккаунт и использовать его для входа." : "Sign in with Google to link your account and use it for login."}</p>
-                      {isTelegram && googleOAuthConfig?.enabled ? (
-                        <button
-                          type="button"
-                          onClick={handleGoogleRedirectLink}
-                          disabled={isLoading}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--text-dim)] hover:text-[var(--text-white)] rounded-lg bg-white/10 hover:bg-white/15 transition-colors disabled:opacity-50 border border-white/20"
-                        >
-                          {language === "ru" ? "Привязать Google" : "Link Google"}
-                        </button>
-                      ) : (
-                        <div className="google-login-override">
-                          <GoogleLogin
-                            onSuccess={async (credentialResponse) => {
-                              try {
-                                setIsLoading(true);
-                                await linkGoogle(credentialResponse.credential, credentialResponse.clientId || googleClientId);
-                                await refreshUserData();
-                                showSuccess(language === "ru" ? "Google привязан" : "Google linked");
-                              } catch (err) {
-                                showError(err?.message || (language === "ru" ? "Ошибка привязки Google" : "Failed to link Google"));
-                              } finally {
-                                setIsLoading(false);
-                              }
-                            }}
-                            onError={() => showError(language === "ru" ? "Ошибка входа через Google" : "Google sign-in failed")}
-                            useOneTap={false}
-                            size="medium"
-                            text="signin_with"
-                            shape="pill"
-                            theme="outline"
-                            locale={language === "ru" ? "ru" : "en"}
-                            width="240"
-                          />
-                        </div>
-                      )}
+                      <div className="google-login-override">
+                        <GoogleLogin
+                          onSuccess={async (credentialResponse) => {
+                            try {
+                              setIsLoading(true);
+                              await linkGoogle(credentialResponse.credential, credentialResponse.clientId || googleClientId);
+                              await refreshUserData();
+                              showSuccess(language === "ru" ? "Google привязан" : "Google linked");
+                            } catch (err) {
+                              showError(err?.message || (language === "ru" ? "Ошибка привязки Google" : "Failed to link Google"));
+                            } finally {
+                              setIsLoading(false);
+                            }
+                          }}
+                          onError={() => showError(language === "ru" ? "Ошибка входа через Google" : "Google sign-in failed")}
+                          useOneTap={false}
+                          size="medium"
+                          text="signin_with"
+                          shape="pill"
+                          theme="outline"
+                          locale={language === "ru" ? "ru" : "en"}
+                          width="240"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
