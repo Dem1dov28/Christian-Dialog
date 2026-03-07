@@ -348,6 +348,7 @@
     "mainCategories": "Main",
     "characterTypes": "Character Types",
     "searchPlaceholder": "Search characters...",
+    "searchByName": "Search by name",
     "added": "Added",
     "add": "Add",
     "noCharactersFound": "Characters not found",

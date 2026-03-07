@@ -23,7 +23,7 @@ const UsageStatistics = ({ usageStats, user }) => {
   const tierLimits = {
     free: 50,
     plus: 250,
-    pro: 500,
+    pro: 250,
     api: 500
   };
   

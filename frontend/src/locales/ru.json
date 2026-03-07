@@ -351,6 +351,7 @@
     "mainCategories": "Основные",
     "characterTypes": "Типы персонажей",
     "searchPlaceholder": "Поиск персонажей...",
+    "searchByName": "Поиск по имени",
     "added": "Добавлено",
     "add": "Добавить",
     "noCharactersFound": "Персонажи не найдены",
