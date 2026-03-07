@@ -1258,7 +1258,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
         ref={headerRef}
         role="banner"
         aria-label={isGroupCreationMode ? t("library.createGroupChat") : t("library.title")}
-        className={`sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-xl border-b border-tg-border transition-all duration-300 ${isScrolled ? 'shadow-lg shadow-black/5' : ''
+        className={`bg-[var(--bg-primary)]/95 backdrop-blur-xl border-b border-tg-border transition-all duration-300 ${isScrolled ? 'shadow-lg shadow-black/5' : ''
           }`}
       >
         <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6">
@@ -1712,7 +1712,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 )}
                               </h3>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCreated.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -1733,7 +1733,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -1753,14 +1753,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       </div>
                                     )}
 
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {/* Контейнер для аватара с относительным позиционированием для наложения слоев */}
                                       <div className="relative w-16 h-16 sm:w-20 sm:h-20">
                                         {/* Fallback - всегда рендерится как базовый слой */}
                                         <div
-                                          className={`absolute inset-0 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 overflow-hidden`}
+                                          className={`absolute inset-0 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -1768,14 +1768,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                         {/* Изображение - рендерится поверх fallback */}
                                         {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages && (
                                           <img
                                             src={persona.imageSrc}
                                             alt={persona.name}
-                                            className="absolute inset-0 w-full h-full rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 z-10"
+                                            className="absolute inset-0 w-full h-full rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 z-10"
                                             onError={(e) => {
                                               // Если изображение не загрузилось, скрываем его (fallback останется видимым)
                                               console.warn("Failed to load avatar image:", persona.imageSrc, "for agent:", persona.name);
@@ -1785,13 +1785,13 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         )}
                                         {/* Градиент поверх изображения */}
                                         {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" && shouldLoadImages && (
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none" />
                                         )}
                                       </div>
                                     </div>
 
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -1801,7 +1801,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Кнопки редактирования и удаления для созданных агентов */}
                                     {!isGroupCreationMode && persona.user_id && (
-                                      <div className="absolute top-2 left-2 right-2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                      <div className="absolute top-2 left-2 right-2 flex justify-between opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-200 z-20">
                                         {/* Кнопка редактирования — слева */}
                                         <button
                                           onClick={(e) => handleEditAgent(e, persona)}
@@ -1821,7 +1821,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       </div>
                                     )}
 
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -1845,7 +1845,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.characters')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCharacters.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -1866,7 +1866,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -1888,7 +1888,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     )}
 
                                     {/* Градиентный фон при hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
@@ -1897,14 +1897,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                           <img
                                             src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       ) : null}
                                       {(persona.imageSrc && shouldLoadImages) ? null : (
                                         <div
-                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -1912,14 +1912,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       )}
                                     </div>
 
                                     {/* Информация о персонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -1963,7 +1963,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     </div>
 
                                     {/* Градиент при hover */}
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -1987,7 +1987,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.tools')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleTools.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2008,7 +2008,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2030,7 +2030,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     )}
 
                                     {/* Градиентный фон при hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
@@ -2039,14 +2039,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                           <img
                                             src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       ) : (
                                         <div
                                           className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
-                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                            } flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -2054,14 +2054,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       )}
                                     </div>
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -2103,7 +2103,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     </div>
 
                                     {/* Градиент при hover */}
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -2127,7 +2127,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.aiModels')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleModels.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2148,7 +2148,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2170,7 +2170,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     )}
 
                                     {/* Градиентный фон при hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
@@ -2179,14 +2179,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                           <img
                                             src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       ) : (
                                         <div
                                           className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
-                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                            } flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -2194,14 +2194,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       )}
                                     </div>
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -2243,7 +2243,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     </div>
 
                                     {/* Градиент при hover */}
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -2273,7 +2273,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
                               </h3>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCreated.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2294,7 +2294,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2314,7 +2314,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       </div>
                                     )}
 
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
                                       {persona.imageSrc && persona.imageSrc !== "null" && persona.imageSrc !== "undefined" ? (
@@ -2322,13 +2322,13 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                           <img
                                             src={persona.imageSrc}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       ) : (
                                         <div
-                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"} flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -2336,13 +2336,13 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       )}
                                     </div>
 
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -2362,7 +2362,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                     {/* Кнопки редактирования и удаления для созданных агентов */}
                                     {!isGroupCreationMode && persona.user_id && (
-                                      <div className="absolute top-2 left-2 right-2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                      <div className="absolute top-2 left-2 right-2 flex justify-between opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-200 z-20">
                                         {/* Кнопка редактирования — слева */}
                                         <button
                                           onClick={(e) => handleEditAgent(e, persona)}
@@ -2383,7 +2383,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     )}
 
                                     {/* Градиент при hover */}
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -2407,7 +2407,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.characters')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCharacters.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2428,7 +2428,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2450,7 +2450,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     )}
 
                                     {/* Градиентный фон при hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
@@ -2459,14 +2459,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                           <img
                                             src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       ) : null}
                                       {(persona.imageSrc && shouldLoadImages) ? null : (
                                         <div
-                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass} flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -2474,14 +2474,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       )}
                                     </div>
 
                                     {/* Информация о персонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -2517,7 +2517,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     </div>
 
                                     {/* Эффект свечения при hover */}
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -2541,7 +2541,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.tools')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleTools.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2562,7 +2562,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2584,7 +2584,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     )}
 
                                     {/* Градиентный фон при hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
@@ -2593,14 +2593,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                           <img
                                             src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       ) : (
                                         <div
                                           className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
-                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                            } flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -2608,14 +2608,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       )}
                                     </div>
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -2655,7 +2655,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     </div>
 
                                     {/* Градиент при hover */}
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -2679,7 +2679,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.aiModels')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleModels.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2700,7 +2700,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-tg-hover transition-all duration-300 hover:scale-105 hover:shadow-lg border border-tg-border hover:border-tg-accent hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2722,7 +2722,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     )}
 
                                     {/* Градиентный фон при hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-tg-accent/5 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
 
                                     {/* Аватар с анимацией */}
                                     <div className="flex justify-center mb-3 sm:mb-4 relative z-10">
@@ -2731,14 +2731,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                           <img
                                             src={shouldLoadImages ? persona.imageSrc : ''}
                                             alt={persona.name}
-                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
                                           />
-                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       ) : (
                                         <div
                                           className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full ${persona.colorClass || "bg-tg-accent"
-                                            } flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                            } flex items-center justify-center text-white shadow-lg can-hover:group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                         >
                                           {IconComponent && (
                                             <IconComponent
@@ -2746,14 +2746,14 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                               style={{ transform: "scale(0.8)" }}
                                             />
                                           )}
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                         </div>
                                       )}
                                     </div>
 
                                     {/* Информация о персоонаже */}
                                     <div className="text-center relative z-10">
-                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg group-hover:text-tg-accent transition-colors duration-300">
+                                      <h3 className="font-semibold text-tg-text text-base sm:text-lg can-hover:group-hover:text-tg-accent transition-colors duration-300">
                                         {persona.name}
                                       </h3>
                                       {persona.years && (
@@ -2793,7 +2793,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     </div>
 
                                     {/* Градиент при hover */}
-                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-tg-accent/0 via-tg-accent/5 to-tg-accent/0 opacity-0 can-hover:group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                 );
                               })}
@@ -2864,7 +2864,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 onChatSelect(channel.id);
                               }
                             }}
-                            className="relative group bg-tg-bg border border-tg-border rounded-xl sm:rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-tg-accent hover:bg-tg-hover cursor-pointer"
+                            className="relative group bg-tg-bg border border-tg-border rounded-xl sm:rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 can-hover:hover:-translate-y-1 can-hover:hover:shadow-lg can-hover:hover:border-tg-accent can-hover:hover:bg-tg-hover cursor-pointer"
                           >
                             <div
                               className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-tg-accent transition-colors duration-300 pointer-events-none"
