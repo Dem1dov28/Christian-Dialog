@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select, func, or_, and_
 from sqlalchemy import text
@@ -724,6 +724,84 @@ def get_google_oauth_config():
         "redirect_uri": GOOGLE_OAUTH_REDIRECT_URI,
         "bot_username": TELEGRAM_BOT_USERNAME or "",
     }
+
+
+@router.get("/google-callback", response_class=HTMLResponse)
+def google_callback_fallback(request: Request):
+    """
+    Fallback: если nginx направил /auth/google-callback на бэкенд вместо SPA,
+    возвращаем HTML-страницу, которая обменивает code и редиректит в Telegram.
+    """
+    code = request.query_params.get("code")
+    error = request.query_params.get("error")
+    base = str(request.base_url).rstrip("/")
+    redirect_uri_clean = GOOGLE_OAUTH_REDIRECT_URI or f"{base}/auth/google-callback"
+
+    if error:
+        return _google_callback_html_error(error, request.query_params.get("error_description", ""))
+
+    if not code:
+        return _google_callback_html_error("missing_code", "Отсутствует код авторизации")
+
+    html = f"""<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Вход через Google...</title>
+<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2d283e;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:20px}}a{{color:#54a9eb;text-decoration:none}}.btn{{display:inline-flex;align-items:center;gap:8px;padding:16px 24px;background:#0088cc;color:#fff!important;border-radius:16px;font-weight:600;font-size:18px;margin-top:20px}}</style>
+</head>
+<body>
+<div>
+<p style="margin-bottom:16px;opacity:.9">Обмениваем код и возвращаемся в Telegram...</p>
+<div id="msg"></div>
+<a id="openBtn" href="#" class="btn" style="display:none">Открыть в Telegram</a>
+</div>
+<script>
+(function(){{
+  var code = {json.dumps(code)};
+  var redirectUri = {json.dumps(redirect_uri_clean)};
+  var base = {json.dumps(str(request.base_url).rstrip("/"))};
+  fetch(base + "/auth/google/exchange-code", {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify({{ code: code, redirect_uri: redirectUri }})
+  }})
+  .then(function(r) {{ return r.json().then(function(d) {{ return {{ ok: r.ok, data: d }}; }}); }})
+  .then(function(res) {{
+    if (!res.ok) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Ошибка: " + (res.data.detail || "Не удалось обменять код") + "</p>"; return; }}
+    var tok = res.data.return_token;
+    if (!tok) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Нет return_token</p>"; return; }}
+    fetch(base + "/auth/google-oauth/config")
+      .then(function(r) {{ return r.json(); }})
+      .then(function(cfg) {{
+        var bot = (cfg.bot_username || "").replace(/^@/, "");
+        if (!bot) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Бот не настроен</p>"; return; }}
+        var link = "https://t.me/" + bot + "/app?startapp=google_" + tok;
+        document.getElementById("msg").innerHTML = "<p>Вход выполнен. Нажмите кнопку, чтобы вернуться в приложение.</p>";
+        var btn = document.getElementById("openBtn");
+        btn.href = link;
+        btn.style.display = "inline-flex";
+        btn.textContent = "Открыть в Telegram";
+        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        if (!isIOS) {{ window.location.replace(link); }}
+      }});
+  }})
+  .catch(function(e) {{ document.getElementById("msg").innerHTML = "<p style=color:#f87171>Ошибка: " + e.message + "</p>"; }});
+}})();
+</script>
+</body>
+</html>"""
+    return HTMLResponse(html)
+
+
+def _google_callback_html_error(err_code: str, err_desc: str) -> HTMLResponse:
+    return HTMLResponse(
+        f"""<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ошибка входа</title>
+<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2d283e;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:20px}}</style>
+</head>
+<body><div><p style="color:#f87171">{err_desc or err_code}</p><a href="/login" style="color:#54a9eb">Вернуться к входу</a></div></body>
+</html>"""
+    )
 
 
 # --- Telegram Mini App auth ---

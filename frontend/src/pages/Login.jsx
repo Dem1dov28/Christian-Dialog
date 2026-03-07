@@ -388,7 +388,7 @@ const Login = () => {
                           type="button"
                           variant="outline"
                           size="lg"
-                          className="w-full max-w-[320px] rounded-full border-white/10 bg-white/90 hover:bg-white text-foreground"
+                          className="w-full max-w-[320px] rounded-full border-[#dadce0] bg-[#fff] hover:bg-[#f8f9fa] text-[#3c4043] shadow-sm"
                           onClick={handleGoogleRedirectLogin}
                           disabled={isLoading}
                         >
@@ -609,7 +609,7 @@ const Login = () => {
                         type="button"
                         variant="outline"
                         size="lg"
-                        className="w-full max-w-[320px] rounded-full border-white/10 bg-white/90 hover:bg-white hover:border-primary/20 text-foreground"
+                        className="w-full max-w-[320px] rounded-full border-[#dadce0] bg-[#fff] hover:bg-[#f8f9fa] hover:border-[#dadce0] text-[#3c4043] shadow-sm"
                         onClick={handleGoogleRedirectLogin}
                         disabled={isLoading}
                       >
