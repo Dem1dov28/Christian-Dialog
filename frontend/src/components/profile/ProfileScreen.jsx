@@ -27,8 +27,7 @@ import EditProfileModal from "./EditProfileModal";
 import { useMaxWidth } from "../../hooks/common/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useTelegramWebApp } from "../../hooks/useTelegramWebApp";
-
-// i18n function stub for localization - теперь используем LanguageContext
+import { isPlaceholderEmail } from "../../utils/formatters";
 
 const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect }) => {
   const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData, deleteUserAccount, logoutAllDevices, linkGoogle, unlinkGoogle, unlinkTelegram } = useAuth();
@@ -152,7 +151,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const handleResetPassword = () => {
     navigate("/forgot-password", {
       state: {
-        email: user?.email || "",
+        email: (user?.email && !isPlaceholderEmail(user.email)) ? user.email : "",
         fromProfile: true
       }
     });
@@ -390,9 +389,9 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
             {user?.full_name || user?.username || "User"}
           </h2>
 
-          {/* Email */}
+          {/* Email — скрываем placeholder (tg_*, *+g*@*, *@telegram.placeholder) */}
           <p className="text-[var(--text-dim)] text-sm mb-4">
-            {user?.email || "user@epochaldialog.com"}
+            {user?.email && !isPlaceholderEmail(user.email) ? user.email : t("profile.noEmail")}
           </p>
 
           {/* Subscription Status */}
@@ -432,7 +431,9 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                       </svg>
                       <div className="min-w-0">
                         <span className="text-[var(--text-white)] font-medium block">{language === "ru" ? "Google привязан" : "Google linked"}</span>
-                        <span className="text-sm text-[var(--text-dim)] truncate block">{user?.email}</span>
+                        <span className="text-sm text-[var(--text-dim)] truncate block">
+                          {user?.email && !isPlaceholderEmail(user.email) ? user.email : (user?.telegram_username ? `@${user.telegram_username}` : t("profile.noEmail"))}
+                        </span>
                       </div>
                     </div>
                     <button

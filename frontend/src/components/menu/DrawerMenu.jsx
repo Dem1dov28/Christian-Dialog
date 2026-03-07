@@ -22,6 +22,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useModal } from "../../contexts/ModalContext.jsx";
 import apiClient from "../../services/api";
 import logo from "../../assets/images/logo.webp";
+import { isPlaceholderEmail } from "../../utils/formatters";
 
 // Утилитарная функция для объединения классов (аналог cn)
 const cn = (...classes) => {
@@ -172,7 +173,7 @@ export function DrawerMenu({
                   {user?.full_name || user?.username || "User"}
                 </span>
                 <span className="text-[var(--text-gray)] text-[14px] font-normal">
-                  {user?.email || "user@epochaldialog.com"}
+                  {(user?.email && !isPlaceholderEmail(user.email)) ? user.email : (user?.telegram_username ? `@${user.telegram_username}` : (t("profile.noEmail") || "—"))}
                 </span>
                 <button
                   type="button"

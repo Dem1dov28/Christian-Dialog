@@ -397,9 +397,12 @@ def login_with_google(
     found_by_email = False
     if not user:
         user = get_user_by_email(db, email)
-        found_by_email = user is not None
+        if user:
+            db.refresh(user)
+            if getattr(user, "google_id", None) is None:
+                found_by_email = True
 
-    # Аккаунт найден по email, но Google отвязан — создаём новый аккаунт (plus-адресация для уникальности)
+    # Аккаунт найден по email с google_id=None (отвязан) — создаём новый аккаунт
     if found_by_email:
         user = None
         local, _, domain = email.rpartition("@")
@@ -627,7 +630,10 @@ def google_exchange_code(
     found_by_email = False
     if not user:
         user = get_user_by_email(db, email)
-        found_by_email = user is not None
+        if user:
+            db.refresh(user)
+            if getattr(user, "google_id", None) is None:
+                found_by_email = True
 
     if found_by_email:
         local, _, domain = email.rpartition("@")
@@ -828,7 +834,10 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
         found_by_email = False
         if not user:
             user = get_user_by_email(db, email)
-            found_by_email = user is not None
+            if user:
+                db.refresh(user)
+                if getattr(user, "google_id", None) is None:
+                    found_by_email = True
         if found_by_email:
             local, _, domain = email.rpartition("@")
             if not domain:

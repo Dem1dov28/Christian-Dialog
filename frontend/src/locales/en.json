@@ -486,6 +486,7 @@
     "avatar": {
       "edit": "Edit Avatar"
     },
+    "noEmail": "No email",
     "sections": {
       "account": "Account & Characters",
       "settings": "App & Settings",

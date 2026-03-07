@@ -3,6 +3,21 @@
  */
 
 /**
+ * Проверяет, является ли email служебным/placeholder (Telegram, созданный после отвязки Google и т.п.)
+ * Такие email не показываем пользователю.
+ */
+export const isPlaceholderEmail = (email) =>
+  !email || /@telegram\.placeholder$|@google\.placeholder$|\+g[a-z0-9]+@/i.test(email);
+
+/**
+ * Возвращает отображаемый email для профиля: реальный email или fallback.
+ * @param {string} email
+ * @param {string} fallback — например @username или t("profile.noEmail")
+ */
+export const getDisplayEmail = (email, fallback = "") =>
+  (email && !isPlaceholderEmail(email)) ? email : fallback;
+
+/**
  * Форматирует время из строки даты в формат HH:MM
  * Универсальная функция, которая правильно обрабатывает UTC и локальное время
  * @param {string} dateString - Строка с датой
