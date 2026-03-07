@@ -737,22 +737,25 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
     redirect_uri_clean = GOOGLE_OAUTH_REDIRECT_URI or ""
 
     if error:
-        return _google_callback_html_error(error, request.query_params.get("error_description", ""))
+        return _google_callback_html_error(error, request.query_params.get("error_description", ""), telegram_app_url)
 
     if not code:
-        return _google_callback_html_error("missing_code", "Отсутствует код авторизации")
+        return _google_callback_html_error("missing_code", "Отсутствует код авторизации", telegram_app_url)
 
     if not redirect_uri_clean:
-        return _google_callback_html_error("config", "GOOGLE_OAUTH_REDIRECT_URI не настроен")
+        return _google_callback_html_error("config", "GOOGLE_OAUTH_REDIRECT_URI не настроен", telegram_app_url)
 
     return_token = None
     bot_username = (TELEGRAM_BOT_USERNAME or "").strip().replace("@", "")
+    telegram_app_url = f"https://t.me/{bot_username}/app" if bot_username else None
     try:
         from google_auth_oauthlib.flow import Flow
         client_config = {
             "web": {
                 "client_id": GOOGLE_CLIENT_ID,
                 "client_secret": GOOGLE_CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
                 "redirect_uris": [redirect_uri_clean],
             }
         }
@@ -764,7 +767,7 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
             tok = getattr(flow.oauth2session, "token", None)
             id_token_raw = tok.get("id_token") if isinstance(tok, dict) else None
         if not id_token_raw:
-            return _google_callback_html_error("token", "Google не вернул id_token")
+            return _google_callback_html_error("token", "Google не вернул id_token", telegram_app_url)
         id_info = id_token.verify_oauth2_token(id_token_raw, google_request_adapter, audience=GOOGLE_CLIENT_ID, clock_skew_in_seconds=60)
         google_sub = id_info.get("sub")
         email = id_info.get("email")
@@ -774,7 +777,7 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
         if isinstance(avatar_url, str):
             avatar_url = avatar_url.strip() or None
         if not google_sub or not email or not email_verified:
-            return _google_callback_html_error("profile", "Google не вернул нужные данные")
+            return _google_callback_html_error("profile", "Google не вернул нужные данные", telegram_app_url)
         user = db.exec(select(User).where(User.google_id == google_sub)).first()
         if not user:
             user = get_user_by_email(db, email)
@@ -819,10 +822,10 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
             _google_return_tokens[return_token] = str(user.id)
     except Exception as e:
         logger.exception("Google callback exchange failed")
-        return _google_callback_html_error("exchange", str(e)[:200])
+        return _google_callback_html_error("exchange", str(e)[:200], telegram_app_url)
 
     if not return_token or not bot_username:
-        return _google_callback_html_error("config", "Бот не настроен")
+        return _google_callback_html_error("config", "Бот не настроен", telegram_app_url)
 
     deep_link = f"https://t.me/{bot_username}/app?startapp=google_{return_token}"
     html = f"""<!DOCTYPE html>
@@ -849,14 +852,16 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
     return HTMLResponse(html)
 
 
-def _google_callback_html_error(err_code: str, err_desc: str) -> HTMLResponse:
+def _google_callback_html_error(err_code: str, err_desc: str, telegram_app_url: Optional[str] = None) -> HTMLResponse:
+    back_link = telegram_app_url or "/login"
+    back_text = "Открыть в Telegram" if telegram_app_url else "Вернуться к входу"
     return HTMLResponse(
         f"""<!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ошибка входа</title>
-<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2d283e;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:20px}}</style>
+<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2d283e;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:20px}}a{{color:#54a9eb}}.btn{{display:inline-block;margin-top:16px;padding:12px 20px;background:#0088cc;color:#fff!important;border-radius:12px;text-decoration:none}}</style>
 </head>
-<body><div><p style="color:#f87171">{err_desc or err_code}</p><a href="/login" style="color:#54a9eb">Вернуться к входу</a></div></body>
+<body><div><p style="color:#f87171">{err_desc or err_code}</p><a href="{back_link}" class="btn">{back_text}</a></div></body>
 </html>"""
     )
 
