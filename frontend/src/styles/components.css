@@ -370,10 +370,9 @@ main.tools-bar-main-transparent > *:not(.tools-bar-container) {
   left: 100%;
 }
 
-/* Touch feedback: то же выделение, что при hover на ПК (фон, масштаб, тень, рамка) */
+/* Touch feedback: то же выделение, что при hover на ПК (масштаб, обводка, тень) — без смены фона на прозрачный */
 @media (hover: none) {
   .persona-card:active {
-    background-color: var(--tg-hover);
     transform: scale(1.05);
     border-color: var(--tg-accent);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1), 0 0 20px color-mix(in srgb, var(--accent) 20%, transparent);

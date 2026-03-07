@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { MdClose, MdAddAPhoto, MdPerson } from "react-icons/md";
 import { IoSparkles } from "react-icons/io5";
 import { useAgents } from "../../contexts/AgentsContext";
@@ -19,7 +19,15 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [isExpandingPrompt, setIsExpandingPrompt] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const check = () => setIsMobileView(typeof window !== "undefined" && window.innerWidth <= 480);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const isEditMode = !!agentToEdit;
 
@@ -278,7 +286,7 @@ const CreateAgentModal = ({ isOpen, onClose, onSuccess, agentToEdit = null }) =>
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               placeholder={t("library.createModal.promptPlaceholder")}
-              rows={6}
+              rows={isMobileView ? 4 : 6}
               required
               disabled={isExpandingPrompt}
             />

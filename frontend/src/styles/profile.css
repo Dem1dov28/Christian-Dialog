@@ -122,6 +122,31 @@
 .copy-button {
   transition: all 0.2s ease;
 }
+
+/* Ячейки привязанных аккаунтов */
+.profile-linked-account-cell {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-linked-account-cell::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(135, 116, 225, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
 /* Ховер-анимации только для устройств с мышью (ПК/ноутбуки) */
 @media (hover: hover) and (pointer: fine) {
   .profile-avatar:hover {
@@ -161,6 +186,16 @@
   .copy-button:hover {
     background: var(--hover-bg);
     transform: scale(1.1);
+  }
+
+  .profile-linked-account-cell:hover::before {
+    left: 100%;
+  }
+
+  .profile-linked-account-cell:hover {
+    background: var(--hover-bg) !important;
+    border-color: var(--border-color) !important;
+    transform: translateX(4px);
   }
 }
 

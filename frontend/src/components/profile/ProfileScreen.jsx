@@ -33,7 +33,18 @@ import { useTelegramWebApp } from "../../hooks/useTelegramWebApp";
 const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect }) => {
   const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData, deleteUserAccount, logoutAllDevices, linkGoogle, unlinkGoogle, unlinkTelegram } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const { isTelegram } = useTelegramWebApp();
+  const { isTelegram, isIOS, initData, webApp } = useTelegramWebApp();
+  const [telegramWidgetConfig, setTelegramWidgetConfig] = useState(null);
+  const [googleOAuthConfig, setGoogleOAuthConfig] = useState(null);
+
+  useEffect(() => {
+    apiClient.getTelegramWidgetConfig().then(setTelegramWidgetConfig).catch(() => setTelegramWidgetConfig({}));
+  }, []);
+  useEffect(() => {
+    if (isTelegram) {
+      apiClient.getGoogleOAuthConfig().then(setGoogleOAuthConfig).catch(() => setGoogleOAuthConfig({ enabled: false }));
+    }
+  }, [isTelegram]);
   const { showSuccess, showError } = useNotification();
   const { clearAllConversations } = useChats();
   const { loadFolders } = useFolders();
@@ -51,6 +62,17 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
   const isNarrowViewport = useMaxWidth(549);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  const handleGoogleRedirectLink = () => {
+    if (!googleOAuthConfig?.enabled || !googleOAuthConfig?.client_id || !googleOAuthConfig?.redirect_uri) return;
+    const scope = encodeURIComponent("openid email profile");
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleOAuthConfig.client_id)}&redirect_uri=${encodeURIComponent(googleOAuthConfig.redirect_uri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
+    if (webApp?.openLink) {
+      webApp.openLink(url);
+    } else {
+      window.location.href = url;
+    }
+  };
 
   // Управление рендерингом и анимацией
   useEffect(() => {
@@ -410,13 +432,13 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           </div>
 
           {/* Привязанные аккаунты — Google и Telegram */}
-          {(user?.google_id || user?.telegram_id || (!user?.telegram_id && !isTelegram) || (!user?.google_id && googleClientId)) && (
+          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId) || !user?.telegram_id) && (
             <div className="text-left w-full border-t border-[var(--border-color)] pt-4 space-y-3">
               <span className="text-sm font-medium text-[var(--text-dim)] block mb-3">
                 {language === "ru" ? "Привязанные аккаунты" : "Linked accounts"}
               </span>
               {user?.google_id && (
-                <div className="p-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]/50">
+                <div className="profile-linked-account-cell p-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]/50">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <svg className="w-5 h-5 text-[var(--text-dim)] flex-shrink-0" viewBox="0 0 24 24">
@@ -463,35 +485,47 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                     <div className="min-w-0 flex-1">
                       <span className="text-[var(--text-white)] font-medium block mb-1">{language === "ru" ? "Привязать Google" : "Link Google"}</span>
                       <p className="text-sm text-[var(--text-dim)] mb-3">{language === "ru" ? "Войдите через Google, чтобы привязать аккаунт и использовать его для входа." : "Sign in with Google to link your account and use it for login."}</p>
-                      <div className="google-login-override">
-                        <GoogleLogin
-                          onSuccess={async (credentialResponse) => {
-                            try {
-                              setIsLoading(true);
-                              await linkGoogle(credentialResponse.credential, credentialResponse.clientId || googleClientId);
-                              showSuccess(language === "ru" ? "Google привязан" : "Google linked");
-                            } catch (err) {
-                              showError(err?.message || (language === "ru" ? "Ошибка привязки Google" : "Failed to link Google"));
-                            } finally {
-                              setIsLoading(false);
-                            }
-                          }}
-                          onError={() => showError(language === "ru" ? "Ошибка входа через Google" : "Google sign-in failed")}
-                          useOneTap={false}
-                          size="medium"
-                          text="signin_with"
-                          shape="pill"
-                          theme="outline"
-                          locale={language === "ru" ? "ru" : "en"}
-                          width="240"
-                        />
-                      </div>
+                      {isTelegram && isIOS && googleOAuthConfig?.enabled ? (
+                        <button
+                          type="button"
+                          onClick={handleGoogleRedirectLink}
+                          disabled={isLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--text-dim)] hover:text-[var(--text-white)] rounded-lg bg-white/10 hover:bg-white/15 transition-colors disabled:opacity-50 border border-white/20"
+                        >
+                          {language === "ru" ? "Привязать Google" : "Link Google"}
+                        </button>
+                      ) : (
+                        <div className="google-login-override">
+                          <GoogleLogin
+                            onSuccess={async (credentialResponse) => {
+                              try {
+                                setIsLoading(true);
+                                await linkGoogle(credentialResponse.credential, credentialResponse.clientId || googleClientId);
+                                await refreshUserData();
+                                showSuccess(language === "ru" ? "Google привязан" : "Google linked");
+                              } catch (err) {
+                                showError(err?.message || (language === "ru" ? "Ошибка привязки Google" : "Failed to link Google"));
+                              } finally {
+                                setIsLoading(false);
+                              }
+                            }}
+                            onError={() => showError(language === "ru" ? "Ошибка входа через Google" : "Google sign-in failed")}
+                            useOneTap={false}
+                            size="medium"
+                            text="signin_with"
+                            shape="pill"
+                            theme="outline"
+                            locale={language === "ru" ? "ru" : "en"}
+                            width="240"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
               {user?.telegram_id && (
-                <div className="p-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]/50">
+                <div className="profile-linked-account-cell p-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]/50">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <svg className="w-5 h-5 text-[#0088cc] flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -523,7 +557,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   </div>
                 </div>
               )}
-              {!user?.telegram_id && !isTelegram && (
+              {!user?.telegram_id && (
                 <div className="p-3 rounded-lg bg-[#0088cc]/10 border border-[#0088cc]/20">
                   <div className="flex items-start gap-3">
                     <svg className="w-5 h-5 text-[#0088cc] flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
@@ -532,22 +566,45 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                     <div className="min-w-0 flex-1">
                       <span className="text-[var(--text-white)] font-medium block mb-1">{t("profile.privacy.linkTelegram.title")}</span>
                       <p className="text-sm text-[var(--text-dim)] mb-3">{t("profile.privacy.linkTelegram.description")}</p>
-                      {(() => {
-                        const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME;
-                        return botUsername ? (
-                          <a
-                            href={`https://t.me/${botUsername.replace(/^@/, "")}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#0088cc] hover:text-[#54a9eb] rounded-lg bg-[#0088cc]/20 hover:bg-[#0088cc]/30 transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {t("profile.privacy.linkTelegram.cta")}
-                          </a>
-                        ) : (
-                          <span className="text-sm text-[var(--text-dim)]">{t("profile.privacy.linkTelegram.cta")}</span>
-                        );
-                      })()}
+                      {isTelegram && initData ? (
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              setIsLoading(true);
+                              await apiClient.linkTelegram(initData);
+                              await refreshUserData();
+                              showSuccess(language === "ru" ? "Telegram привязан" : "Telegram linked");
+                            } catch (err) {
+                              showError(err?.message || (language === "ru" ? "Ошибка привязки" : "Failed to link"));
+                            } finally {
+                              setIsLoading(false);
+                            }
+                          }}
+                          disabled={isLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#0088cc] hover:text-[#54a9eb] rounded-lg bg-[#0088cc]/20 hover:bg-[#0088cc]/30 transition-colors disabled:opacity-50"
+                        >
+                          {language === "ru" ? "Привязать" : "Link"}
+                        </button>
+                      ) : (
+                        (() => {
+                          const botUsername = telegramWidgetConfig?.bot_username || import.meta.env.VITE_TELEGRAM_BOT_USERNAME;
+                          return botUsername ? (
+                            <a
+                              href={`https://t.me/${String(botUsername).replace(/^@/, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#0088cc] hover:text-[#54a9eb] rounded-lg bg-[#0088cc]/20 hover:bg-[#0088cc]/30 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {t("profile.privacy.linkTelegram.cta")}
+                            </a>
+                          ) : (
+                            <span className="text-sm text-[var(--text-dim)]">{t("profile.privacy.linkTelegram.cta")}</span>
+                          );
+                        })()
+                      )}
                     </div>
                   </div>
                 </div>

@@ -158,6 +158,19 @@ export class AuthAPI {
     return this.client.post("/auth/unlink-google");
   }
 
+  // Google OAuth redirect flow (для Telegram iOS): конфиг, обмен code, возврат в Mini App
+  async getGoogleOAuthConfig() {
+    return this.client.get("/auth/google-oauth/config");
+  }
+
+  async exchangeGoogleCode(code, redirectUri) {
+    return this.client.post("/auth/google/exchange-code", { code, redirect_uri: redirectUri });
+  }
+
+  async googleTelegramReturn(token) {
+    return this.client.post("/auth/google/telegram-return", { token });
+  }
+
   // Вход через Google OAuth
   async loginWithGoogle(credential, clientId = null) {
     const payload = {

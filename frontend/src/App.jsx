@@ -25,6 +25,7 @@ const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess.jsx")
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess.jsx"));
 const PaymentFailed = lazy(() => import("./pages/PaymentFailed.jsx"));
 const TelegramCallback = lazy(() => import("./pages/TelegramCallback.jsx"));
+const GoogleCallback = lazy(() => import("./pages/GoogleCallback.jsx"));
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
@@ -887,6 +888,10 @@ export default function App() {
                                         element={<TelegramCallback />}
                                       />
                                       <Route
+                                        path="/auth/google-callback"
+                                        element={<GoogleCallback />}
+                                      />
+                                      <Route
                                         path="/subscription-success"
                                         element={
                                           <ProtectedRoute>
@@ -956,6 +961,7 @@ export default function App() {
                                     <Route path="/forgot-password" element={<PublicRoute allowAuthenticated={true}><ForgotPassword /></PublicRoute>} />
                                     <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
                                     <Route path="/auth/telegram-callback" element={<TelegramCallback />} />
+                                    <Route path="/auth/google-callback" element={<GoogleCallback />} />
                                     <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
                                     <Route path="/successful-payment" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
                                     <Route path="/failed-payment" element={<ProtectedRoute><PaymentFailed /></ProtectedRoute>} />

@@ -68,6 +68,9 @@ class UnifiedAPI {
     this.getTelegramWidgetConfig = () => auth.getTelegramWidgetConfig();
     this.loginWithTelegramWidget = (data) => auth.loginWithTelegramWidget(data);
     this.loginWithGoogle = (credential, clientId) => auth.loginWithGoogle(credential, clientId);
+    this.getGoogleOAuthConfig = () => auth.getGoogleOAuthConfig();
+    this.exchangeGoogleCode = (code, redirectUri) => auth.exchangeGoogleCode(code, redirectUri);
+    this.googleTelegramReturn = (token) => auth.googleTelegramReturn(token);
     this.logout = () => auth.logout();
     this.getCurrentUser = () => auth.getCurrentUser();
     this.checkMessageLimit = () => auth.checkMessageLimit();

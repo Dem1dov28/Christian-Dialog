@@ -50,6 +50,9 @@ if not DATABASE_URL:
 
 # Google OAuth
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+# Redirect URI для OAuth redirect flow (Telegram iOS) — должен быть в Google Cloud Console
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "")
 GOOGLE_ADDITIONAL_CLIENT_IDS = os.getenv("GOOGLE_ADDITIONAL_CLIENT_IDS", "")
 GOOGLE_ALLOWED_CLIENT_IDS = [
     client_id.strip()

@@ -65,6 +65,8 @@ from pydantic import BaseModel, Field
 from config import (
     GOOGLE_ALLOWED_CLIENT_IDS,
     GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_OAUTH_REDIRECT_URI,
     EMAIL_VERIFICATION_REQUIRED,
     COOKIE_SECURE,
     COOKIE_SAMESITE,
@@ -87,6 +89,17 @@ logger = logging.getLogger(__name__)
 class GoogleAuthRequest(BaseModel):
     credential: str
     client_id: Optional[str] = None
+
+
+class GoogleOAuthExchangeCodeRequest(BaseModel):
+    """OAuth redirect flow: обмен authorization code на return_token для возврата в Telegram Mini App."""
+    code: str
+    redirect_uri: str
+
+
+class GoogleOAuthTelegramReturnRequest(BaseModel):
+    """Одноразовый return_token, выданный после exchange-code."""
+    token: str
 
 
 class TelegramAuthRequest(BaseModel):
@@ -481,6 +494,236 @@ def login_with_google(
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         user=user_response
     )
+
+
+# --- Google OAuth redirect flow (для Telegram iOS, где popup не работает) ---
+
+def _get_google_oauth_redis():
+    """Redis для хранения одноразовых return_token. Fallback на in-memory dict при недоступности Redis."""
+    try:
+        import redis
+        REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        r = redis.from_url(REDIS_URL, decode_responses=True, socket_connect_timeout=3)
+        r.ping()
+        return r
+    except Exception:
+        return None
+
+
+_google_return_tokens: dict = {}  # in-memory fallback: token -> user_id
+
+
+@router.post("/google/exchange-code")
+def google_exchange_code(
+    payload: GoogleOAuthExchangeCodeRequest,
+    db: Session = Depends(get_session),
+):
+    """
+    OAuth redirect flow: обменивает authorization code от Google на return_token.
+    Фронтенд (страница /auth/google-callback) вызывает этот эндпоинт после редиректа от Google.
+    return_token используется для deep link обратно в Telegram Mini App.
+    """
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google OAuth redirect flow is not configured",
+        )
+
+    redirect_uri = payload.redirect_uri.strip()
+    if GOOGLE_OAUTH_REDIRECT_URI and redirect_uri != GOOGLE_OAUTH_REDIRECT_URI:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid redirect_uri",
+        )
+
+    try:
+        from google_auth_oauthlib.flow import Flow
+
+        client_config = {
+            "web": {
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uris": [redirect_uri],
+            }
+        }
+        flow = Flow.from_client_config(
+            client_config,
+            scopes=["openid", "email", "profile"],
+            redirect_uri=redirect_uri,
+        )
+        flow.fetch_token(code=payload.code)
+    except Exception as e:
+        logger.error(f"Google OAuth code exchange failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired authorization code",
+        )
+
+    creds = flow.credentials
+    id_token_raw = getattr(creds, "id_token", None)
+    if not id_token_raw and hasattr(flow, "oauth2session") and flow.oauth2session and hasattr(flow.oauth2session, "token"):
+        id_token_raw = flow.oauth2session.token.get("id_token") if isinstance(flow.oauth2session.token, dict) else None
+    if not id_token_raw:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google did not return id_token",
+        )
+
+    try:
+        id_info = id_token.verify_oauth2_token(
+            id_token_raw,
+            google_request_adapter,
+            audience=GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=60,
+        )
+    except ValueError as exc:
+        logger.error(f"Invalid Google id_token: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Google token",
+        )
+
+    google_sub = id_info.get("sub")
+    email = id_info.get("email")
+    email_verified = id_info.get("email_verified", False)
+    full_name = id_info.get("name")
+    avatar_url = id_info.get("picture") or id_info.get("image") or id_info.get("avatar")
+    if isinstance(avatar_url, str):
+        avatar_url = avatar_url.strip() or None
+
+    if not google_sub or not email or not email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google response missing required fields",
+        )
+
+    user = db.exec(select(User).where(User.google_id == google_sub)).first()
+    if not user:
+        user = get_user_by_email(db, email)
+
+    if user:
+        updated = False
+        if getattr(user, "google_id", None) != google_sub:
+            user.google_id = google_sub
+            updated = True
+        if getattr(user, "auth_provider", "local") != "google":
+            user.auth_provider = "google"
+            updated = True
+        has_local_avatar = _is_local_avatar(getattr(user, "avatar_url", None))
+        if avatar_url and not has_local_avatar and user.avatar_url != avatar_url:
+            user.avatar_url = avatar_url
+            updated = True
+        if full_name and not user.full_name:
+            user.full_name = full_name
+            updated = True
+        if not user.email_verified:
+            user.email_verified = True
+            updated = True
+        if updated:
+            user.updated_at = datetime.utcnow()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+    else:
+        random_password = token_urlsafe(16)
+        user_create = UserCreate(
+            email=email,
+            password=random_password,
+            full_name=full_name,
+            avatar_url=avatar_url,
+        )
+        user = create_user(db, user_create)
+        user.google_id = google_sub
+        user.email_verified = True
+        user.auth_provider = "google"
+        if avatar_url:
+            user.avatar_url = avatar_url
+        user.updated_at = datetime.utcnow()
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    update_user_last_login(db, user)
+    try:
+        from services.folder_service import FolderService
+        folder_service = FolderService()
+        folder_service.ensure_system_folders_exist(user.id)
+    except Exception as e:
+        logger.error(f"Error ensuring system folders for user {user.id}: {e}", exc_info=True)
+
+    return_token = token_urlsafe(32)
+    redis_client = _get_google_oauth_redis()
+    if redis_client:
+        key = f"google:return:{return_token}"
+        redis_client.setex(key, 300, str(user.id))
+    else:
+        _google_return_tokens[return_token] = str(user.id)
+
+    return {"return_token": return_token}
+
+
+@router.post("/google/telegram-return", response_model=Token)
+def google_telegram_return(
+    payload: GoogleOAuthTelegramReturnRequest,
+    response: Response,
+    db: Session = Depends(get_session),
+):
+    """
+    Обменивает одноразовый return_token на JWT и устанавливает cookie.
+    Вызывается из Telegram Mini App после возврата из внешнего браузера (deep link).
+    """
+    token = payload.token.strip()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token is required",
+        )
+
+    user_id_str = None
+    redis_client = _get_google_oauth_redis()
+    if redis_client:
+        key = f"google:return:{token}"
+        user_id_str = redis_client.get(key)
+        if user_id_str:
+            redis_client.delete(key)
+    else:
+        user_id_str = _google_return_tokens.pop(token, None)
+
+    if not user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired token",
+        )
+
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token",
+        )
+
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    return _do_telegram_login(response, user, db, "google_telegram_return")
+
+
+@router.get("/google-oauth/config")
+def get_google_oauth_config():
+    """Публичная конфигурация для redirect flow (redirect_uri, client_id, bot_username для deep link)."""
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET or not GOOGLE_OAUTH_REDIRECT_URI:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_OAUTH_REDIRECT_URI,
+        "bot_username": TELEGRAM_BOT_USERNAME or "",
+    }
 
 
 # --- Telegram Mini App auth ---

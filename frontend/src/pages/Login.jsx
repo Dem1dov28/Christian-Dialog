@@ -14,7 +14,7 @@ import { buildTelegramAuthUrl } from "@/utils/telegramOIDC";
 const Login = () => {
   const navigate = useNavigate();
   const { login, loginWithGoogle, loginWithTelegram, loginWithTelegramWidget, sendTelegramLinkCode, verifyAndLinkTelegram, refreshUserData, isLoading } = useAuth();
-  const { isTelegram, initData } = useTelegramWebApp();
+  const { isTelegram, isIOS, initData, webApp } = useTelegramWebApp();
   const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
     email: "",
@@ -29,6 +29,7 @@ const Login = () => {
   const [linkCode, setLinkCode] = useState("");
   const [telegramOIDCConfig, setTelegramOIDCConfig] = useState(null);
   const [telegramWidgetConfig, setTelegramWidgetConfig] = useState(null);
+  const [googleOAuthConfig, setGoogleOAuthConfig] = useState(null);
   const telegramLoginTried = useRef(false);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const googleLocale = language === "ru" ? "ru" : "en";
@@ -37,6 +38,8 @@ const Login = () => {
     if (!isTelegram) {
       apiClient.getTelegramWidgetConfig().then(setTelegramWidgetConfig).catch(() => setTelegramWidgetConfig({ enabled: false }));
       apiClient.getTelegramOIDCConfig().then(setTelegramOIDCConfig).catch(() => setTelegramOIDCConfig({ enabled: false }));
+    } else {
+      apiClient.getGoogleOAuthConfig().then(setGoogleOAuthConfig).catch(() => setGoogleOAuthConfig({ enabled: false }));
     }
   }, [isTelegram]);
 
@@ -225,6 +228,18 @@ const Login = () => {
     }
   };
 
+  const handleGoogleRedirectLogin = () => {
+    if (!googleOAuthConfig?.enabled || !googleOAuthConfig?.client_id || !googleOAuthConfig?.redirect_uri) return;
+    const redirectUri = googleOAuthConfig.redirect_uri;
+    const scope = encodeURIComponent("openid email profile");
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleOAuthConfig.client_id)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
+    if (webApp?.openLink) {
+      webApp.openLink(url);
+    } else {
+      window.location.href = url;
+    }
+  };
+
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
       setError(t("auth.login.googleError") || "Google authentication failed");
@@ -363,33 +378,46 @@ const Login = () => {
                   </p>
                   {googleClientId && (
                     <div className="w-full flex justify-center">
-                      <div className="google-login-override w-full max-w-[320px] rounded-full">
-                        <GoogleLogin
-                          onSuccess={async (credentialResponse) => {
-                            try {
-                              setError("");
-                              await loginWithGoogle({
-                                credential: credentialResponse.credential,
-                                clientId: credentialResponse.clientId || googleClientId,
-                              });
-                              if (initData) {
-                                await apiClient.linkTelegram(initData);
-                                await refreshUserData();
+                      {isTelegram && isIOS && googleOAuthConfig?.enabled ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          className="w-full max-w-[320px] rounded-full border-white/10 bg-white/90 hover:bg-white text-foreground"
+                          onClick={handleGoogleRedirectLogin}
+                          disabled={isLoading}
+                        >
+                          {t("auth.login.googleCta") || "Продолжить через Google"}
+                        </Button>
+                      ) : (
+                        <div className="google-login-override w-full max-w-[320px] rounded-full">
+                          <GoogleLogin
+                            onSuccess={async (credentialResponse) => {
+                              try {
+                                setError("");
+                                await loginWithGoogle({
+                                  credential: credentialResponse.credential,
+                                  clientId: credentialResponse.clientId || googleClientId,
+                                });
+                                if (initData) {
+                                  await apiClient.linkTelegram(initData);
+                                  await refreshUserData();
+                                }
+                              } catch (err) {
+                                setError(err?.message || (language === "ru" ? "Ошибка привязки" : "Link failed"));
                               }
-                            } catch (err) {
-                              setError(err?.message || (language === "ru" ? "Ошибка привязки" : "Link failed"));
-                            }
-                          }}
-                          onError={() => setError(language === "ru" ? "Ошибка входа через Google" : "Google sign-in failed")}
-                          useOneTap={false}
-                          size="medium"
-                          text="signin_with"
-                          shape="pill"
-                          theme="outline"
-                          locale={googleLocale}
-                          width="280"
-                        />
-                      </div>
+                            }}
+                            onError={() => setError(language === "ru" ? "Ошибка входа через Google" : "Google sign-in failed")}
+                            useOneTap={false}
+                            size="medium"
+                            text="signin_with"
+                            shape="pill"
+                            theme="outline"
+                            locale={googleLocale}
+                            width="280"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                   <p className="text-center">
@@ -568,26 +596,45 @@ const Login = () => {
                   </div>
                 )}
 
-                {/* Google Login Button */}
+                {/* Google Login Button — в Telegram iOS используем redirect flow (popup не работает) */}
                 {googleClientId && (
                   <div className="w-full flex justify-center mb-4 [@media(max-height:629px)]:mb-2">
-                    <div className="google-login-override w-full max-w-[360px] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 bg-white/90 backdrop-blur-sm hover:bg-white hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.35),0_0_0_1px_rgba(var(--primary),0.1)] active:scale-[0.98] px-2 py-1 before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-r before:from-white/20 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 relative">
-                      <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={() => {
-                          const errorMsg = "Ошибка входа через Google. Убедитесь, что ваш домен добавлен в Google Cloud Console.";
-                          setError(errorMsg);
-                        }}
-                        useOneTap={false}
-                        size="large"
-                        text="signin_with"
-                        shape="pill"
-                        theme="outline"
-                        locale={googleLocale}
-                        logo_alignment="left"
-                        width="320"
-                      />
-                    </div>
+                    {isTelegram && isIOS && googleOAuthConfig?.enabled ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        className="w-full max-w-[360px] rounded-full border-white/10 bg-white/90 hover:bg-white hover:border-primary/20 text-foreground"
+                        onClick={handleGoogleRedirectLogin}
+                        disabled={isLoading}
+                      >
+                        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        {t("auth.login.googleCta") || "Продолжить через Google"}
+                      </Button>
+                    ) : (
+                      <div className="google-login-override w-full max-w-[360px] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 bg-white/90 backdrop-blur-sm hover:bg-white hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.35),0_0_0_1px_rgba(var(--primary),0.1)] active:scale-[0.98] px-2 py-1 before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-r before:from-white/20 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 relative">
+                        <GoogleLogin
+                          onSuccess={handleGoogleSuccess}
+                          onError={() => {
+                            const errorMsg = "Ошибка входа через Google. Убедитесь, что ваш домен добавлен в Google Cloud Console.";
+                            setError(errorMsg);
+                          }}
+                          useOneTap={false}
+                          size="large"
+                          text="signin_with"
+                          shape="pill"
+                          theme="outline"
+                          locale={googleLocale}
+                          logo_alignment="left"
+                          width="320"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </>

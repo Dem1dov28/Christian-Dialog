@@ -23,6 +23,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 google-auth==2.37.0
+google-auth-oauthlib>=1.2.0
 
 # Валидация и формы
 python-dotenv==1.0.0

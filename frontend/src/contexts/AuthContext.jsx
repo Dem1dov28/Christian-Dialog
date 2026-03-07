@@ -28,6 +28,41 @@ export const AuthProvider = ({ children }) => {
 
     const initAuth = async () => {
       try {
+        // Google OAuth redirect flow: возврат из внешнего браузера с return_token
+        const startParam = typeof window !== "undefined" && window.Telegram?.WebApp?.startParam;
+        if (startParam && typeof startParam === "string" && startParam.startsWith("google_")) {
+          const token = startParam.slice(7);
+          if (token) {
+            try {
+              const tgResponse = await apiClient.googleTelegramReturn(token);
+              const fullUser = tgResponse?.user || await apiClient.getCurrentUser();
+              setUser(fullUser);
+              localStorage.setItem("user_data", JSON.stringify(fullUser));
+              setIsAuthenticated(true);
+              const tgInitData = window.Telegram?.WebApp?.initData;
+              if (tgInitData) {
+                try {
+                  await apiClient.linkTelegram(tgInitData);
+                  const updated = await apiClient.getCurrentUser();
+                  setUser(updated);
+                  localStorage.setItem("user_data", JSON.stringify(updated));
+                } catch (_) {}
+              }
+              try {
+                const stats = await apiClient.getUsageStats();
+                setUsageStats(stats);
+              } catch (e) {
+                console.error("Failed to load usage stats:", e);
+              }
+              setIsInitializing(false);
+              setIsInitialized(true);
+              return;
+            } catch (err) {
+              console.warn("[AuthContext] Google telegram-return failed:", err?.message);
+            }
+          }
+        }
+
         // В Telegram Mini App: пробуем войти по initData (если пользователь не вышел явно)
         const tgInitData = typeof window !== "undefined" && window.Telegram?.WebApp?.initData;
         if (tgInitData && !localStorage.getItem("telegram_skip_auto_login")) {
