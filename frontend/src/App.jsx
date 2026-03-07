@@ -546,6 +546,14 @@ function MainApp() {
     }
   }, [location.pathname, activeChatId, setActiveChatId, isPricingPageVisible, setIsPricingPageVisible, isMediumScreen, isInlineLibraryOpen, setIsInlineLibraryOpen, isLibraryWithSidebar, setIsLibraryWithSidebar, setIsMediumScreenSidebarVisible, isUltraCompact, setIsCompactChatOpen]);
 
+  // SEO title - must be before early return to obey Rules of Hooks
+  const seoTitle = React.useMemo(() => {
+    if (!activeConversation) return t("library.title");
+    const raw = activeConversation.title || activeConversation.agent_name || t("library.title");
+    const isDefaultPrefix = raw.startsWith("Чат с ") || raw.startsWith("Chat with ");
+    return isDefaultPrefix ? (activeConversation.agent_name || raw) : raw;
+  }, [activeConversation, t]);
+
   // Показываем 3D лоадер до полной загрузки главной страницы
   if (!isInitialLoadComplete) {
     return <LoadingScreen isVisible={true} />;
@@ -566,13 +574,6 @@ function MainApp() {
   // Определяем, должен ли Chat быть на всю ширину в среднем режиме
   // Chat на всю ширину, когда: есть активный чат ИЛИ открыта библиотека (без sidebar)
   const isMediumScreenChatFullWidth = isMediumScreen && !isUltraCompact && (activeChatId || isInlineLibraryOpen) && !isMediumScreenSidebarVisible && !isLibraryWithSidebar;
-
-  const seoTitle = React.useMemo(() => {
-    if (!activeConversation) return t("library.title");
-    const raw = activeConversation.title || activeConversation.agent_name || t("library.title");
-    const isDefaultPrefix = raw.startsWith("Чат с ") || raw.startsWith("Chat with ");
-    return isDefaultPrefix ? (activeConversation.agent_name || raw) : raw;
-  }, [activeConversation, t]);
 
   return (
     <div className="flex h-full overflow-hidden w-full">
