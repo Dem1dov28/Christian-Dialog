@@ -93,6 +93,11 @@
   color: var(--text-gray);
 }
 
+.stars {
+  font-size: 24px;
+  margin-right: 4px;
+}
+
 .description {
   font-size: 13px;
   color: var(--text-gray);

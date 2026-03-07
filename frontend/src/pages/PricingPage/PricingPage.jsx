@@ -19,6 +19,8 @@ const PricingPage = ({ isVisible, onClose }) => {
   const [cryptocloudEnabled, setCryptocloudEnabled] = useState(false);
   const [bepaidEnabled, setBepaidEnabled] = useState(false);
   const [telegramStarsEnabled, setTelegramStarsEnabled] = useState(false);
+  const [starsPricePlus, setStarsPricePlus] = useState(250);
+  const [starsPricePro, setStarsPricePro] = useState(500);
   const { isTelegram } = useTelegramWebApp();
 
   useEffect(() => {
@@ -31,6 +33,8 @@ const PricingPage = ({ isVisible, onClose }) => {
           setCryptocloudEnabled(r.cryptocloud_enabled === true);
           setBepaidEnabled(r.bepaid_enabled === true);
           setTelegramStarsEnabled(r.telegram_stars_enabled === true);
+          if (r.telegram_stars_price_plus != null) setStarsPricePlus(r.telegram_stars_price_plus);
+          if (r.telegram_stars_price_pro != null) setStarsPricePro(r.telegram_stars_price_pro);
         })
         .catch(() => {
           setCryptocloudEnabled(false);
@@ -212,6 +216,7 @@ const PricingPage = ({ isVisible, onClose }) => {
             <PricingCard
               title={pricingData.plus.title}
               price={pricingData.plus.price}
+              priceStars={telegramStarsEnabled ? starsPricePlus : undefined}
               description={pricingData.plus.description}
               features={pricingData.plus.features}
               buttonText={
@@ -236,6 +241,7 @@ const PricingPage = ({ isVisible, onClose }) => {
             <PricingCard
               title={pricingData.pro.title}
               price={pricingData.pro.price}
+              priceStars={telegramStarsEnabled ? starsPricePro : undefined}
               description={pricingData.pro.description}
               features={pricingData.pro.features}
               buttonText={

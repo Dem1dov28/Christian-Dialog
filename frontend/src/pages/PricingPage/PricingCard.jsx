@@ -13,6 +13,7 @@ const PricingCard = ({
   isActive = false,
   isCurrentPlan = false,
   isDisabled = false,
+  priceStars,
 }) => {
   const { t } = useLanguage();
   return (
@@ -20,9 +21,19 @@ const PricingCard = ({
       <header className={styles.cardHeader}>
         <h3 className={styles.title}>{title}</h3>
         <div className={styles.price}>
-          <span className={styles.currency}>$</span>
-          <span className={styles.amount}>{price}</span>
-          <span className={styles.period}>{t("pricing.perMonth")}</span>
+          {priceStars != null ? (
+            <>
+              <span className={styles.amount}>{priceStars}</span>
+              <span className={styles.stars}> ⭐</span>
+              <span className={styles.period}>{t("pricing.perMonth")}</span>
+            </>
+          ) : (
+            <>
+              <span className={styles.currency}>$</span>
+              <span className={styles.amount}>{price}</span>
+              <span className={styles.period}>{t("pricing.perMonth")}</span>
+            </>
+          )}
         </div>
         <p className={styles.description}>{description}</p>
       </header>

@@ -54,9 +54,9 @@ TELEGRAM_OIDC_REDIRECT_URI=https://epochaldialog.com/auth/telegram-callback
 
 ## Оплата Telegram Stars (Mini App)
 
-В Mini App доступна оплата Stars по вашим тарифам (Plus, Pro). Цены задаются в Stars:
-- Plus: 160 Stars (≈$2)
-- Pro: 400 Stars (≈$5)
+В Mini App доступна оплата Stars по вашим тарифам (Plus, Pro). Цены задаются в Stars (по умолчанию):
+- Plus: 250 Stars
+- Pro: 500 Stars
 
 Настройте `TELEGRAM_STARS_PRICE_PLUS` и `TELEGRAM_STARS_PRICE_PRO` в .env при необходимости.
 

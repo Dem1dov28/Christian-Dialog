@@ -151,9 +151,9 @@ BEPAID_ENABLED = bool(BEPAID_SHOP_ID and BEPAID_SECRET_KEY and BEPAID_PLAN_PLUS_
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "").replace("@", "").strip()
 TELEGRAM_ENABLED = bool(TELEGRAM_BOT_TOKEN)
-# Цены в Stars: Plus ~160, Pro ~400 (примерно $2 и $5 при курсе ~$0.013/Star)
-TELEGRAM_STARS_PRICE_PLUS = int(os.getenv("TELEGRAM_STARS_PRICE_PLUS", "160"))
-TELEGRAM_STARS_PRICE_PRO = int(os.getenv("TELEGRAM_STARS_PRICE_PRO", "400"))
+# Цены в Stars: Plus 250, Pro 500
+TELEGRAM_STARS_PRICE_PLUS = int(os.getenv("TELEGRAM_STARS_PRICE_PLUS", "250"))
+TELEGRAM_STARS_PRICE_PRO = int(os.getenv("TELEGRAM_STARS_PRICE_PRO", "500"))
 
 # Telegram OIDC Login (Log In With Telegram — для обычного сайта, не Mini App)
 # Получить в @BotFather → Bot Settings → Web Login (Client ID и Client Secret)

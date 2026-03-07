@@ -110,11 +110,9 @@ DATABASE_URL=postgresql://timetalk_user:mypassword@localhost:5432/timetalk
 ### TELEGRAM_STARS_PRICE_PLUS и TELEGRAM_STARS_PRICE_PRO
 **Назначение:** Цены тарифов в Telegram Stars (оплата в Mini App).
 
-**Где взять:** Задаёте сами. Курс ~$0.013 за 1 Star:
-- Plus $2 ≈ 154 Stars → округлённо **160**
-- Pro $5 ≈ 385 Stars → округлённо **400**
+**Где взять:** Задаёте сами. По умолчанию: Plus 250 Stars, Pro 500 Stars.
 
-**Пример:** `TELEGRAM_STARS_PRICE_PLUS=160`, `TELEGRAM_STARS_PRICE_PRO=400`
+**Пример:** `TELEGRAM_STARS_PRICE_PLUS=250`, `TELEGRAM_STARS_PRICE_PRO=500`
 
 ---
 

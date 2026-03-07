@@ -399,13 +399,38 @@ def login_with_google(
         user = get_user_by_email(db, email)
         found_by_email = user is not None
 
-    if user:
+    # Аккаунт найден по email, но Google отвязан — создаём новый аккаунт (plus-адресация для уникальности)
+    if found_by_email:
+        user = None
+        local, _, domain = email.rpartition("@")
+        if not domain:
+            domain = "email.local"
+        unique_email = f"{local}+g{google_sub[:12]}@{domain}"
+        random_password = token_urlsafe(16)
+        user_create = UserCreate(
+            email=unique_email,
+            password=random_password,
+            full_name=full_name,
+            avatar_url=avatar_url,
+        )
+        user = create_user(db, user_create)
+        user.google_id = google_sub
+        user.email_verified = True
+        user.auth_provider = "google"
+        if avatar_url:
+            user.avatar_url = avatar_url
+        user.updated_at = datetime.utcnow()
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info(f"Created new account (unlinked): id={user.id}, email={user.email}, google_sub={google_sub}")
+
+    if user and not found_by_email:
         updated = False
-        # Не перепривязываем Google, если пользователь найден по email (напр. после отвязки).
-        if not found_by_email and getattr(user, "google_id", None) != google_sub:
+        if getattr(user, "google_id", None) != google_sub:
             user.google_id = google_sub
             updated = True
-        if not found_by_email and getattr(user, "auth_provider", "local") != "google":
+        if getattr(user, "auth_provider", "local") != "google":
             user.auth_provider = "google"
             updated = True
         # Обновляем аватар из Google только если пользователь не загрузил свой локально
@@ -439,8 +464,8 @@ def login_with_google(
             db.add(user)
             db.commit()
             db.refresh(user)
-    else:
-        # Создаем нового пользователя через Google
+    elif not user:
+        # Первый вход через Google — создаём нового пользователя
         random_password = token_urlsafe(16)
         user_create = UserCreate(
             email=email,
@@ -452,15 +477,13 @@ def login_with_google(
         user.google_id = google_sub
         user.email_verified = True
         user.auth_provider = "google"
-        # Всегда подтягиваем фото из Google при регистрации
         if avatar_url:
             user.avatar_url = avatar_url
-            logger.info(f"Setting avatar_url for new Google user: '{avatar_url}'")
         user.updated_at = datetime.utcnow()
         db.add(user)
         db.commit()
         db.refresh(user)
-        logger.info(f"Created/updated user: id={user.id}, email={user.email}, avatar_url={user.avatar_url}")
+        logger.info(f"Created new Google user: id={user.id}, email={user.email}")
 
     # Обновляем время последнего входа
     update_user_last_login(db, user)
@@ -606,12 +629,30 @@ def google_exchange_code(
         user = get_user_by_email(db, email)
         found_by_email = user is not None
 
-    if user:
+    if found_by_email:
+        local, _, domain = email.rpartition("@")
+        if not domain:
+            domain = "email.local"
+        unique_email = f"{local}+g{google_sub[:12]}@{domain}"
+        random_password = token_urlsafe(16)
+        user_create = UserCreate(email=unique_email, password=random_password, full_name=full_name, avatar_url=avatar_url)
+        user = create_user(db, user_create)
+        user.google_id = google_sub
+        user.email_verified = True
+        user.auth_provider = "google"
+        if avatar_url:
+            user.avatar_url = avatar_url
+        user.updated_at = datetime.utcnow()
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info(f"Created new account (unlinked, exchange): id={user.id}, email={user.email}")
+    elif user:
         updated = False
-        if not found_by_email and getattr(user, "google_id", None) != google_sub:
+        if getattr(user, "google_id", None) != google_sub:
             user.google_id = google_sub
             updated = True
-        if not found_by_email and getattr(user, "auth_provider", "local") != "google":
+        if getattr(user, "auth_provider", "local") != "google":
             user.auth_provider = "google"
             updated = True
         has_local_avatar = _is_local_avatar(getattr(user, "avatar_url", None))
@@ -788,10 +829,26 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
         if not user:
             user = get_user_by_email(db, email)
             found_by_email = user is not None
-        if user:
-            if not found_by_email and getattr(user, "google_id", None) != google_sub:
+        if found_by_email:
+            local, _, domain = email.rpartition("@")
+            if not domain:
+                domain = "email.local"
+            unique_email = f"{local}+g{google_sub[:12]}@{domain}"
+            user_create = UserCreate(email=unique_email, password=token_urlsafe(16), full_name=full_name, avatar_url=avatar_url)
+            user = create_user(db, user_create)
+            user.google_id = google_sub
+            user.email_verified = True
+            user.auth_provider = "google"
+            if avatar_url:
+                user.avatar_url = avatar_url
+            user.updated_at = datetime.utcnow()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        elif user:
+            if getattr(user, "google_id", None) != google_sub:
                 user.google_id = google_sub
-            if not found_by_email and getattr(user, "auth_provider", "local") != "google":
+            if getattr(user, "auth_provider", "local") != "google":
                 user.auth_provider = "google"
             if avatar_url and not _is_local_avatar(getattr(user, "avatar_url", None)) and user.avatar_url != avatar_url:
                 user.avatar_url = avatar_url

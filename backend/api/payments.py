@@ -10,7 +10,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from sqlmodel import Session
 
-from config import BEPAID_SHOP_ID, BEPAID_SECRET_KEY
+from config import BEPAID_SHOP_ID, BEPAID_SECRET_KEY, TELEGRAM_STARS_PRICE_PLUS, TELEGRAM_STARS_PRICE_PRO
 from core.database import get_session
 from core.dependencies import get_current_active_user
 from models.user import User
@@ -41,11 +41,13 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 
 @router.get("/config")
 def get_payments_config():
-    """Возвращает, какие платёжные провайдеры активны."""
+    """Возвращает, какие платёжные провайдеры активны и цены в Stars."""
     return {
         "cryptocloud_enabled": is_cryptocloud_enabled(),
         "bepaid_enabled": is_bepaid_enabled(),
         "telegram_stars_enabled": is_telegram_stars_enabled(),
+        "telegram_stars_price_plus": TELEGRAM_STARS_PRICE_PLUS,
+        "telegram_stars_price_pro": TELEGRAM_STARS_PRICE_PRO,
     }
 
 
