@@ -394,15 +394,18 @@ def login_with_google(
         )
 
     user = db.exec(select(User).where(User.google_id == google_sub)).first()
+    found_by_email = False
     if not user:
         user = get_user_by_email(db, email)
+        found_by_email = user is not None
 
     if user:
         updated = False
-        if getattr(user, "google_id", None) != google_sub:
+        # Не перепривязываем Google, если пользователь найден по email (напр. после отвязки).
+        if not found_by_email and getattr(user, "google_id", None) != google_sub:
             user.google_id = google_sub
             updated = True
-        if getattr(user, "auth_provider", "local") != "google":
+        if not found_by_email and getattr(user, "auth_provider", "local") != "google":
             user.auth_provider = "google"
             updated = True
         # Обновляем аватар из Google только если пользователь не загрузил свой локально
@@ -598,15 +601,17 @@ def google_exchange_code(
         )
 
     user = db.exec(select(User).where(User.google_id == google_sub)).first()
+    found_by_email = False
     if not user:
         user = get_user_by_email(db, email)
+        found_by_email = user is not None
 
     if user:
         updated = False
-        if getattr(user, "google_id", None) != google_sub:
+        if not found_by_email and getattr(user, "google_id", None) != google_sub:
             user.google_id = google_sub
             updated = True
-        if getattr(user, "auth_provider", "local") != "google":
+        if not found_by_email and getattr(user, "auth_provider", "local") != "google":
             user.auth_provider = "google"
             updated = True
         has_local_avatar = _is_local_avatar(getattr(user, "avatar_url", None))
@@ -779,12 +784,14 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
         if not google_sub or not email or not email_verified:
             return _google_callback_html_error("profile", "Google не вернул нужные данные", telegram_app_url)
         user = db.exec(select(User).where(User.google_id == google_sub)).first()
+        found_by_email = False
         if not user:
             user = get_user_by_email(db, email)
+            found_by_email = user is not None
         if user:
-            if getattr(user, "google_id", None) != google_sub:
+            if not found_by_email and getattr(user, "google_id", None) != google_sub:
                 user.google_id = google_sub
-            if getattr(user, "auth_provider", "local") != "google":
+            if not found_by_email and getattr(user, "auth_provider", "local") != "google":
                 user.auth_provider = "google"
             if avatar_url and not _is_local_avatar(getattr(user, "avatar_url", None)) and user.avatar_url != avatar_url:
                 user.avatar_url = avatar_url
