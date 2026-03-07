@@ -1709,7 +1709,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 )}
                               </h3>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCreated.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -1730,7 +1730,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -1843,7 +1843,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.characters')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCharacters.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -1864,7 +1864,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -1927,8 +1927,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
 
                                       {/* Описание - всегда видимое */}
                                       {persona.description && (
-                                        <div>
-                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-4 sm:line-clamp-5 text-center leading-relaxed mb-2">
+                                        <div className="hidden sm:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-5 text-center leading-relaxed mb-2">
                                             {persona.description.length > 250
                                               ? persona.description.substring(0, 250) + "..."
                                               : persona.description}
@@ -1986,7 +1986,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.tools')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleTools.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2007,7 +2007,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2068,8 +2068,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
                                       )}
                                       {persona.description && (
-                                        <div>
-                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-4 sm:line-clamp-5 text-center leading-relaxed mb-2">
+                                        <div className="hidden sm:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-5 text-center leading-relaxed mb-2">
                                             {persona.description.length > 250
                                               ? persona.description.substring(0, 250) + "..."
                                               : persona.description}
@@ -2127,7 +2127,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.aiModels')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleModels.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2148,7 +2148,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2209,8 +2209,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                         <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
                                       )}
                                       {persona.description && (
-                                        <div>
-                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-4 sm:line-clamp-5 text-center leading-relaxed mb-2">
+                                        <div className="hidden sm:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-5 text-center leading-relaxed mb-2">
                                             {persona.description.length > 250
                                               ? persona.description.substring(0, 250) + "..."
                                               : persona.description}
@@ -2274,7 +2274,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 <span className="text-sm text-tg-text-secondary">({createdPersonas.length})</span>
                               </h3>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCreated.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2295,7 +2295,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2352,8 +2352,8 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       )}
                                       {/* Описание - всегда видимое */}
                                       {persona.description && (
-                                        <div>
-                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-4 sm:line-clamp-5 text-center leading-relaxed mt-1">
+                                        <div className="hidden sm:block">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-5 text-center leading-relaxed mt-1">
                                             {persona.description.length > 250
                                               ? persona.description.substring(0, 250) + "..."
                                               : persona.description}
@@ -2409,7 +2409,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.characters')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleCharacters.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2430,7 +2430,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2490,7 +2490,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       {persona.years && (
                                         <p className="text-xs text-[var(--accent)] font-medium mt-0.5 mb-1">{persona.years}</p>
                                       )}
-                                      <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-4 sm:line-clamp-5 group-hover:text-tg-text transition-colors duration-300">
+                                      <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-5 group-hover:text-tg-text transition-colors duration-300">
                                         {persona.description || "AI персонаж"}
                                       </p>
 
@@ -2544,7 +2544,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.tools')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleTools.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2565,7 +2565,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2627,7 +2627,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       )}
                                       {persona.description && (
                                         <div className="hidden md:block">
-                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-4 sm:line-clamp-5 group-hover:text-tg-text transition-colors duration-300">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-5 group-hover:text-tg-text transition-colors duration-300">
                                             {persona.description}
                                           </p>
                                         </div>
@@ -2683,7 +2683,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                             <h3 className="text-lg sm:text-xl font-semibold text-tg-text mb-3 flex items-center gap-2">
                               <span>{t('common.aiModels')}</span>
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 relative">
                               {visibleModels.map((persona) => {
                                 const IconComponent = persona.iconName
                                   ? getIconComponent(persona.iconName)
@@ -2704,7 +2704,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                     onClick={() =>
                                       handlePersonaCardClickWithLimit(persona)
                                     }
-                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 min-h-[200px] sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
+                                    className={`group cursor-pointer bg-tg-bg rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:min-h-[240px] can-hover:hover:bg-tg-hover transition-all duration-300 can-hover:hover:scale-105 can-hover:hover:shadow-lg border border-tg-border can-hover:hover:border-tg-accent can-hover:hover:shadow-tg-accent/20 relative overflow-hidden${!canSelect ? " opacity-60 grayscale cursor-not-allowed" : ""
                                       }${isSelected ? " ring-2 ring-[var(--accent)] bg-[var(--accent)]/10" : ""}${animationIndex >= 0 ? " persona-card persona-card-enter" : " persona-card"
                                       }`}
                                     style={animationIndex >= 0 ? { animationDelay } : undefined}
@@ -2766,7 +2766,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                       )}
                                       {persona.description && (
                                         <div className="hidden md:block">
-                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-4 sm:line-clamp-5 group-hover:text-tg-text transition-colors duration-300">
+                                          <p className="text-xs sm:text-sm text-tg-text-secondary line-clamp-2 sm:line-clamp-5 group-hover:text-tg-text transition-colors duration-300">
                                             {persona.description}
                                           </p>
                                         </div>
@@ -2853,7 +2853,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                       </div>
                     )}
                     {availableChannels.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
                         {availableChannels.map((channel) => (
                           <div
                             key={channel.id}
@@ -2869,7 +2869,7 @@ const ChatLibraryInline = ({ onChatSelect, onCloseInlineLibrary, onLibraryBackBu
                                 onChatSelect(channel.id);
                               }
                             }}
-                            className="relative group bg-tg-bg border border-tg-border rounded-xl sm:rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-tg-accent hover:bg-tg-hover cursor-pointer"
+                            className="relative group bg-tg-bg border border-tg-border rounded-xl sm:rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-tg-accent hover:bg-tg-hover cursor-pointer active:bg-tg-hover active:scale-[0.98]"
                           >
                             <div
                               className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-tg-accent transition-colors duration-300 pointer-events-none"

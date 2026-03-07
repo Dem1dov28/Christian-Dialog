@@ -23,6 +23,7 @@ export function useChatMessages({
   const [topVisibleDate, setTopVisibleDate] = useState(null);
   const [datePosition, setDatePosition] = useState({ top: 0, left: 0, width: 0 });
   const [isDateVisible, setIsDateVisible] = useState(false);
+  const [daySeparatorsInMergeZone, setDaySeparatorsInMergeZone] = useState(new Set());
   const [scrollButtonPosition, setScrollButtonPosition] = useState({ top: 0, right: 0 });
 
   // Refs для управления скроллом
@@ -321,6 +322,8 @@ export function useChatMessages({
     setDatePosition,
     isDateVisible,
     setIsDateVisible,
+    daySeparatorsInMergeZone,
+    setDaySeparatorsInMergeZone,
     scrollButtonPosition,
     setScrollButtonPosition,
     windowedMessages,

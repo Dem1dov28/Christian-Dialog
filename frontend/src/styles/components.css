@@ -370,6 +370,14 @@ main.tools-bar-main-transparent > *:not(.tools-bar-container) {
   left: 100%;
 }
 
+/* Touch feedback: выделение карточки при нажатии на мобильных */
+@media (hover: none) {
+  .persona-card:active {
+    background-color: var(--tg-hover);
+    transform: scale(0.98);
+  }
+}
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, #ffffff, var(--accent));

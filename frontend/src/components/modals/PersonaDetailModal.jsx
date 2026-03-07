@@ -74,25 +74,25 @@ const PersonaDetailModal = ({ isOpen, onClose, persona, onStartChat, hasExisting
             onClick={handleOverlayClick}
           >
             <div
-              className="bg-[var(--bg-primary)] rounded-2xl max-w-md w-full overflow-hidden flex flex-col shadow-2xl border border-[var(--border-color)]"
+              className="relative bg-[var(--bg-primary)] rounded-2xl max-w-md w-full overflow-hidden flex flex-col shadow-2xl border border-[var(--border-color)]"
               style={{
                 maxHeight: 'min(85dvh, calc(100dvh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px) - 3rem))',
               }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Крестик — снаружи прокрутки, с отступом от краёв */}
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200"
+                aria-label={t("common.close", { defaultValue: "Закрыть" })}
+              >
+                <MdClose className="text-xl" />
+              </button>
+
               {/* Scrollable content: Image + Text */}
               <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {/* Header with close button */}
+                {/* Header with image */}
                 <div className="relative overflow-hidden bg-gradient-to-b from-gray-800 to-gray-900">
-                  {/* Close button — справа вверху */}
-                  <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200"
-                    aria-label={t("common.close", { defaultValue: "Закрыть" })}
-                  >
-                    <MdClose className="text-xl" />
-                  </button>
-
                   {/* Portrait Image - full height */}
                   {persona.imageSrc ? (
                     <div className="relative">

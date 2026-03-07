@@ -91,6 +91,17 @@ html.tg-webapp.tg-desktop #root {
   background-color: var(--bg-primary);
 }
 
+/* Мятно-персиковая тема: верхний safe-area в тёмно-мятном (#8dd4b8), а не белом */
+html.tg-webapp.theme-pastel #root,
+html.tg-webapp.tg-desktop.theme-pastel #root {
+  background: linear-gradient(
+    to bottom,
+    #8dd4b8 0,
+    #8dd4b8 var(--safe-area-inset-top),
+    var(--bg-primary) var(--safe-area-inset-top)
+  );
+}
+
 /* Класс для применения фонового изображения темы — используется только в авторизованной части приложения */
 body.app-with-theme-bg {
   background-image: var(--bg-image);

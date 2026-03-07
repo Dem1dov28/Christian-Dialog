@@ -17,6 +17,7 @@ export function useChatScrollHandlers({
   topVisibleDate,
   setTopVisibleDate,
   setIsDateVisible,
+  setDaySeparatorsInMergeZone,
   dateHideTimeoutRef,
   setShowScrollButton,
   getScrollPosition,
@@ -189,10 +190,12 @@ export function useChatScrollHandlers({
             const containerRect = el.getBoundingClientRect();
             const viewportTop = containerRect.top;
             const viewportTopOffset = 150; // Отступ от верха для определения "верхнего" сообщения
+            const mergeZoneBottom = containerRect.top + 70; // Зона слияния — где плавающая дата
 
             // Ищем первое сообщение, которое видно в верхней части экрана
             let topVisibleMessage = null;
             let minDistance = Infinity;
+            const inMergeZone = new Set();
 
             // Проходим по сообщениям в обратном порядке (так как они в flex-col-reverse)
             const reversedMessages = [...windowedMessages].reverse();
@@ -201,6 +204,13 @@ export function useChatScrollHandlers({
               if (!messageEl) continue;
 
               const messageRect = messageEl.getBoundingClientRect();
+
+              // Day-separator в зоне слияния — скрываем (плавающая дата показывает то же)
+              if (message.type === "day-separator") {
+                if (messageRect.bottom > viewportTop && messageRect.top < mergeZoneBottom) {
+                  inMergeZone.add(message.id);
+                }
+              }
 
               // Проверяем, пересекается ли сообщение с верхней частью viewport
               const messageTop = messageRect.top;
@@ -217,6 +227,10 @@ export function useChatScrollHandlers({
                   topVisibleMessage = message;
                 }
               }
+            }
+
+            if (setDaySeparatorsInMergeZone) {
+              setDaySeparatorsInMergeZone(inMergeZone);
             }
 
             // Если нашли видимое сообщение, обновляем дату
@@ -287,6 +301,7 @@ export function useChatScrollHandlers({
     topVisibleDate,
     setTopVisibleDate,
     setIsDateVisible,
+    setDaySeparatorsInMergeZone,
     dateHideTimeoutRef,
     setShowScrollButton,
     getScrollPosition,

@@ -590,6 +590,8 @@ export default function Chat({
     setDatePosition,
     isDateVisible,
     setIsDateVisible,
+    daySeparatorsInMergeZone,
+    setDaySeparatorsInMergeZone,
     scrollButtonPosition,
     setScrollButtonPosition,
     windowedMessages,
@@ -969,6 +971,7 @@ export default function Chat({
     topVisibleDate,
     setTopVisibleDate,
     setIsDateVisible,
+    setDaySeparatorsInMergeZone,
     dateHideTimeoutRef,
     setShowScrollButton,
     getScrollPosition,
@@ -1282,6 +1285,8 @@ export default function Chat({
                   handleMessageMouseUp={handleMessageMouseUp}
                   handleContentMouseDown={handleContentMouseDown}
                   handleOriginalChatClick={handleOriginalChatClick}
+                  daySeparatorsInMergeZone={daySeparatorsInMergeZone}
+                  dateTheme={theme === "pastel" ? "light" : theme === "dark" ? "dark" : "light"}
                 />
               </>
             ) : (

@@ -29,6 +29,8 @@ const ChatMessagesList = ({
   handleMessageMouseUp,
   handleContentMouseDown,
   handleOriginalChatClick,
+  daySeparatorsInMergeZone = new Set(),
+  dateTheme = "dark",
 }) => {
   // Функция для рендеринга отдельного сообщения
   const renderMessage = (message) => {
@@ -109,14 +111,34 @@ const ChatMessagesList = ({
             reply={reply}
           />
         );
-      case "day-separator":
+      case "day-separator": {
+        const isInMergeZone = daySeparatorsInMergeZone && daySeparatorsInMergeZone.has(id);
         return (
-          <div key={id} className="flex justify-center my-4">
-            <span className="bg-[var(--accent)] text-sm text-white rounded-full px-3 py-1 select-none">
+          <div
+            key={id}
+            className={`flex justify-center my-4 transition-opacity duration-200 ${isInMergeZone ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+            aria-hidden={isInMergeZone}
+          >
+            <span
+              className="px-3 py-1 rounded-full text-xs font-medium select-none"
+              style={{
+                backgroundColor: dateTheme === "light" || dateTheme === "pastel"
+                  ? "rgba(255, 255, 255, 0.15)"
+                  : "rgba(0, 0, 0, 0.15)",
+                color: dateTheme === "light" || dateTheme === "pastel"
+                  ? "rgba(0, 0, 0, 0.7)"
+                  : "rgba(255, 255, 255, 0.8)",
+                backdropFilter: "blur(12px) saturate(180%)",
+                WebkitBackdropFilter: "blur(12px) saturate(180%)",
+                boxShadow: "0 2px 15px rgba(0, 0, 0, 0.15)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
               {text}
             </span>
           </div>
         );
+      }
       default:
         return null;
     }
