@@ -17,7 +17,6 @@ const PricingPage = ({ isVisible, onClose }) => {
   const [upgradeError, setUpgradeError] = useState(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState(null);
   const [cryptocloudEnabled, setCryptocloudEnabled] = useState(false);
-  const [bepaidEnabled, setBepaidEnabled] = useState(false);
   const [telegramStarsEnabled, setTelegramStarsEnabled] = useState(false);
   const [starsPricePlus, setStarsPricePlus] = useState(250);
   const [starsPricePro, setStarsPricePro] = useState(500);
@@ -28,20 +27,31 @@ const PricingPage = ({ isVisible, onClose }) => {
       setIsClosing(false);
       setUpgradeError(null);
       setUpgradeSuccess(null);
+      refreshUserData?.();
       apiClient.getPaymentsConfig()
         .then((r) => {
           setCryptocloudEnabled(r.cryptocloud_enabled === true);
-          setBepaidEnabled(r.bepaid_enabled === true);
           setTelegramStarsEnabled(r.telegram_stars_enabled === true);
           if (r.telegram_stars_price_plus != null) setStarsPricePlus(r.telegram_stars_price_plus);
           if (r.telegram_stars_price_pro != null) setStarsPricePro(r.telegram_stars_price_pro);
         })
         .catch(() => {
           setCryptocloudEnabled(false);
-          setBepaidEnabled(false);
         });
     }
-  }, [isVisible]);
+  }, [isVisible, refreshUserData]);
+
+  // Обновить данные при возврате на вкладку (после оплаты в другом окне/Telegram)
+  useEffect(() => {
+    if (!isVisible || !refreshUserData) return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshUserData();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [isVisible, refreshUserData]);
 
   if (!isVisible) return null;
 
@@ -72,25 +82,6 @@ const PricingPage = ({ isVisible, onClose }) => {
       }
     } catch (error) {
       console.error("Upgrade error:", error);
-      setUpgradeError(error.message || t("pricing.upgradeError"));
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
-
-  const handlePayWithCard = async (tier) => {
-    try {
-      setIsUpgrading(true);
-      setUpgradeError(null);
-      const returnUrl = `${window.location.origin}/successful-payment`;
-      const response = await apiClient.createCheckout(tier, returnUrl);
-      if (response.redirect_url) {
-        window.location.href = response.redirect_url;
-        return;
-      }
-      setUpgradeError(response.error || t("pricing.upgradeError"));
-    } catch (error) {
-      console.error("Checkout error:", error);
       setUpgradeError(error.message || t("pricing.upgradeError"));
     } finally {
       setIsUpgrading(false);
@@ -161,7 +152,7 @@ const PricingPage = ({ isVisible, onClose }) => {
   const isCurrentPlan = (tier) => user?.subscription_tier === tier;
 
   // Telegram Stars работает и в вебе: ссылка на инвойс откроется в Telegram
-  const hasPaymentMethod = cryptocloudEnabled || bepaidEnabled || telegramStarsEnabled;
+  const hasPaymentMethod = cryptocloudEnabled || telegramStarsEnabled;
 
   // Pro — выше Plus и Free. Переход на них не показываем (бессмысленно).
   const isProUser = user?.subscription_tier === "pro";
@@ -225,14 +216,13 @@ const PricingPage = ({ isVisible, onClose }) => {
                   : isProUser
                     ? t("pricing.yourPlanHigher")
                     : hasPaymentMethod
-                      ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
+                      ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : t("pricing.payWithCrypto"))
                       : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus") && !isProUser && hasPaymentMethod) {
                   if (telegramStarsEnabled) handlePayWithStars("plus");
                   else if (cryptocloudEnabled) handlePayWithCrypto("plus");
-                  else if (bepaidEnabled) handlePayWithCard("plus");
                 }
               }}
               isCurrentPlan={isCurrentPlan("plus") || isProUser}
@@ -247,15 +237,14 @@ const PricingPage = ({ isVisible, onClose }) => {
               buttonText={
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
-                  : hasPaymentMethod
-                    ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : cryptocloudEnabled ? t("pricing.payWithCrypto") : t("pricing.payWithCard"))
+                    : hasPaymentMethod
+                    ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : t("pricing.payWithCrypto"))
                     : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro") && hasPaymentMethod) {
                   if (telegramStarsEnabled) handlePayWithStars("pro");
                   else if (cryptocloudEnabled) handlePayWithCrypto("pro");
-                  else if (bepaidEnabled) handlePayWithCard("pro");
                 }
               }}
               isCurrentPlan={isCurrentPlan("pro")}

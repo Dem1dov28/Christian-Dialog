@@ -138,14 +138,6 @@ DATABASE_URL=postgresql://timetalk_user:mypassword@localhost:5432/timetalk
 
 Notification URL: `https://ваш-api.com/payments/cryptocloud/callback`
 
-### BePaid
-**Где взять:** https://bepaid.by  
-Создайте магазин и планы подписки:
-- `BEPAID_SHOP_ID`
-- `BEPAID_SECRET_KEY`
-- `BEPAID_PLAN_PLUS_ID`, `BEPAID_PLAN_PRO_ID`
-- `BEPAID_BACKEND_BASE` — URL вашего API
-
 ---
 
 ## Production

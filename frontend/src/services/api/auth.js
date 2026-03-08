@@ -446,7 +446,7 @@ export class AuthAPI {
 
   // --- Платежи ---
 
-  // Узнать, какие провайдеры включены: { cryptocloud_enabled, bepaid_enabled, telegram_stars_enabled }
+  // Узнать, какие провайдеры включены: { cryptocloud_enabled, telegram_stars_enabled }
   async getPaymentsConfig() {
     return this.client.get("/payments/config");
   }
@@ -461,12 +461,5 @@ export class AuthAPI {
     return this.client.post("/payments/cryptocloud/create-invoice", { tier });
   }
 
-  // BePaid: создать подписку → получить redirect_url на страницу оплаты картой
-  async createCheckout(tier, returnUrl) {
-    return this.client.post("/payments/bepaid/create-checkout", {
-      tier,
-      return_url: returnUrl,
-    });
-  }
 }
 

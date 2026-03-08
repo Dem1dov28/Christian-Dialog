@@ -133,27 +133,13 @@ CRYPTOCLOUD_PRICE_PRO = float(os.getenv("CRYPTOCLOUD_PRICE_PRO", "5"))
 # Интеграция включается автоматически, если все три поля заданы
 CRYPTOCLOUD_ENABLED = bool(CRYPTOCLOUD_API_KEY and CRYPTOCLOUD_SHOP_ID and CRYPTOCLOUD_SECRET_KEY)
 
-# ---------------------------------------------------------------------------
-# BEPAID (платежи и подписки)
-# ---------------------------------------------------------------------------
-BEPAID_SHOP_ID = os.getenv("BEPAID_SHOP_ID", "")
-BEPAID_SECRET_KEY = os.getenv("BEPAID_SECRET_KEY", "")
-BEPAID_API_URL = os.getenv("BEPAID_API_URL", "https://api.bepaid.by").rstrip("/")
-# ID планов подписки в BePaid (создаются в личном кабинете BePaid)
-BEPAID_PLAN_PLUS_ID = os.getenv("BEPAID_PLAN_PLUS_ID", "")
-BEPAID_PLAN_PRO_ID = os.getenv("BEPAID_PLAN_PRO_ID", "")
-# Базовый URL бэкенда для notification_url (куда BePaid шлёт webhook), например https://api.yourapp.com
-BEPAID_BACKEND_BASE = os.getenv("BEPAID_BACKEND_BASE", "http://localhost:8000")
-# Включить интеграцию с BePaid (если False, кнопки оплаты не ведут в BePaid)
-BEPAID_ENABLED = bool(BEPAID_SHOP_ID and BEPAID_SECRET_KEY and BEPAID_PLAN_PLUS_ID and BEPAID_PLAN_PRO_ID)
-
 # Telegram Mini App (бот для Mini App — верификация initData и Stars)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "").replace("@", "").strip()
 TELEGRAM_ENABLED = bool(TELEGRAM_BOT_TOKEN)
-# Цены в Stars: Plus 250, Pro 500
-TELEGRAM_STARS_PRICE_PLUS = int(os.getenv("TELEGRAM_STARS_PRICE_PLUS", "250"))
-TELEGRAM_STARS_PRICE_PRO = int(os.getenv("TELEGRAM_STARS_PRICE_PRO", "500"))
+# Цены в Stars (для теста: 1 и 2; для прод: 250, 500)
+TELEGRAM_STARS_PRICE_PLUS = int(os.getenv("TELEGRAM_STARS_PRICE_PLUS", "1"))
+TELEGRAM_STARS_PRICE_PRO = int(os.getenv("TELEGRAM_STARS_PRICE_PRO", "2"))
 
 # Telegram OIDC Login (Log In With Telegram — для обычного сайта, не Mini App)
 # Получить в @BotFather → Bot Settings → Web Login (Client ID и Client Secret)

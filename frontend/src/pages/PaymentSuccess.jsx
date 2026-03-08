@@ -11,9 +11,18 @@ export default function PaymentSuccess() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    refreshUserData?.();
-    const timer = setTimeout(() => navigate("/", { replace: true }), 5000);
-    return () => clearTimeout(timer);
+    let timer;
+    let cancelled = false;
+    (async () => {
+      if (refreshUserData) await refreshUserData();
+      if (!cancelled) {
+        timer = setTimeout(() => navigate("/", { replace: true }), 5000);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [navigate, refreshUserData]);
 
   return (

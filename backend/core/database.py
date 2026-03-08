@@ -141,9 +141,6 @@ def create_db_and_tables():
             # Проверяем столбцы для авторизации через соцсети
             ensure_user_social_columns(conn)
 
-            # BePaid: привязка подписки к платёжной системе
-            ensure_user_bepaid_columns(conn)
-
             # Проверяем существование таблицы fileattachment
             ensure_file_attachment_table(conn)
             
@@ -221,33 +218,6 @@ def ensure_user_social_columns(connection=None):
                 conn.close()
     except Exception as e:
         logger.debug(f"Ошибка при проверке колонок соцавторизации: {e}")
-
-
-def ensure_user_bepaid_columns(connection=None):
-    """Гарантировать существование колонок user.bepaid_subscription_id и user.bepaid_customer_id."""
-    try:
-        if connection is not None:
-            conn = connection
-            should_close = False
-        else:
-            conn = engine.connect()
-            should_close = True
-
-        try:
-            columns = get_column_names(conn, "user")
-            if "bepaid_subscription_id" not in columns:
-                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN bepaid_subscription_id VARCHAR"))
-                logger.info("Добавлена колонка bepaid_subscription_id в таблицу user")
-            if "bepaid_customer_id" not in columns:
-                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN bepaid_customer_id VARCHAR"))
-                logger.info("Добавлена колонка bepaid_customer_id в таблицу user")
-            if should_close:
-                conn.commit()
-        finally:
-            if should_close:
-                conn.close()
-    except Exception as e:
-        logger.debug(f"Ошибка при проверке колонок BePaid: {e}")
 
 
 def ensure_conversation_system_chat_column():

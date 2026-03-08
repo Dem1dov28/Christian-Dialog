@@ -12,9 +12,18 @@ export default function SubscriptionSuccess() {
   const id = searchParams.get("id");
 
   useEffect(() => {
-    refreshUserData?.();
-    const timer = setTimeout(() => navigate("/", { replace: true }), 4000);
-    return () => clearTimeout(timer);
+    let timer;
+    let cancelled = false;
+    (async () => {
+      if (refreshUserData) await refreshUserData();
+      if (!cancelled) {
+        timer = setTimeout(() => navigate("/", { replace: true }), 4000);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [navigate, refreshUserData]);
 
   return (

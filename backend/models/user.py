@@ -78,9 +78,6 @@ class User(UserBase, table=True):
     api_access: bool = Field(default=False)
     api_key: Optional[str] = Field(default=None)
     expires_at: Optional[datetime] = Field(default=None)
-    # BePaid: привязка к подписке и клиенту в платёжной системе
-    bepaid_subscription_id: Optional[str] = Field(default=None)
-    bepaid_customer_id: Optional[str] = Field(default=None)
     
     google_id: Optional[str] = Field(
         default=None,
