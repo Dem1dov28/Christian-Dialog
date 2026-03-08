@@ -11,15 +11,17 @@ import apiClient from "../../services/api";
 
 const PricingPage = ({ isVisible, onClose }) => {
   const { user, upgradeSubscription, refreshUserData } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isClosing, setIsClosing] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState(null);
   const [cryptocloudEnabled, setCryptocloudEnabled] = useState(false);
   const [telegramStarsEnabled, setTelegramStarsEnabled] = useState(false);
+  const [paymentsConfigLoaded, setPaymentsConfigLoaded] = useState(false);
   const [starsPricePlus, setStarsPricePlus] = useState(250);
   const [starsPricePro, setStarsPricePro] = useState(500);
+  const [downgradeConfirm, setDowngradeConfirm] = useState(null);
   const { isTelegram } = useTelegramWebApp();
 
   useEffect(() => {
@@ -27,6 +29,8 @@ const PricingPage = ({ isVisible, onClose }) => {
       setIsClosing(false);
       setUpgradeError(null);
       setUpgradeSuccess(null);
+      setDowngradeConfirm(null);
+      setPaymentsConfigLoaded(false);
       refreshUserData?.();
       apiClient.getPaymentsConfig()
         .then((r) => {
@@ -37,7 +41,8 @@ const PricingPage = ({ isVisible, onClose }) => {
         })
         .catch(() => {
           setCryptocloudEnabled(false);
-        });
+        })
+        .finally(() => setPaymentsConfigLoaded(true));
     }
   }, [isVisible, refreshUserData]);
 
@@ -64,16 +69,23 @@ const PricingPage = ({ isVisible, onClose }) => {
   };
 
 
-  const handleUpgrade = async (subscriptionTier, apiKey = null) => {
+  const handleUpgrade = async (subscriptionTier, apiKey = null, skipConfirm = false) => {
+    const isDowngradeToFree = subscriptionTier === "free" && (user?.subscription_tier === "plus" || user?.subscription_tier === "pro");
+    if (isDowngradeToFree && !skipConfirm) {
+      setDowngradeConfirm(subscriptionTier);
+      return;
+    }
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
       setUpgradeSuccess(null);
+      setDowngradeConfirm(null);
 
       const response = await upgradeSubscription(subscriptionTier, apiKey);
 
       if (response.success) {
         setUpgradeSuccess(response.message);
+        if (refreshUserData) await refreshUserData();
         setTimeout(() => {
           handleClose();
         }, 2000);
@@ -89,6 +101,7 @@ const PricingPage = ({ isVisible, onClose }) => {
   };
 
   const handlePayWithStars = async (tier) => {
+    setDowngradeConfirm(null);
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
@@ -99,10 +112,17 @@ const PricingPage = ({ isVisible, onClose }) => {
         const version = parseFloat(webApp?.version || "0") || 0;
         let opened = false;
 
+        const onPaymentSuccess = async () => {
+          if (refreshUserData) {
+            await refreshUserData();
+            setTimeout(() => refreshUserData(), 1500);
+          }
+        };
+
         if (webApp?.openInvoice && version >= 6.1) {
           try {
-            webApp.openInvoice(response.invoice_url, (status) => {
-              if (status === "paid" && refreshUserData) refreshUserData();
+            webApp.openInvoice(response.invoice_url, async (status) => {
+              if (status === "paid") await onPaymentSuccess();
             });
             opened = true;
           } catch (_) {
@@ -132,6 +152,7 @@ const PricingPage = ({ isVisible, onClose }) => {
   };
 
   const handlePayWithCrypto = async (tier) => {
+    setDowngradeConfirm(null);
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
@@ -152,7 +173,8 @@ const PricingPage = ({ isVisible, onClose }) => {
   const isCurrentPlan = (tier) => user?.subscription_tier === tier;
 
   // Telegram Stars работает и в вебе: ссылка на инвойс откроется в Telegram
-  const hasPaymentMethod = cryptocloudEnabled || telegramStarsEnabled;
+  const hasPaymentMethod = paymentsConfigLoaded && (cryptocloudEnabled || telegramStarsEnabled);
+  const showPaymentLoading = !paymentsConfigLoaded;
 
   // Pro — выше Plus и Free. Переход на них не показываем (бессмысленно).
   const isProUser = user?.subscription_tier === "pro";
@@ -196,10 +218,15 @@ const PricingPage = ({ isVisible, onClose }) => {
                   ? t("pricing.currentPlan")
                   : isProUser
                     ? t("pricing.yourPlanHigher")
-                    : t("pricing.switchToFree")
+                    : downgradeConfirm === "free"
+                      ? (language === "ru" ? "Подтвердить переход на Free?" : "Confirm switch to Free?")
+                      : t("pricing.switchToFree")
               }
               buttonAction={() => {
-                if (!isCurrentPlan("free") && !isProUser) handleUpgrade("free");
+                if (!isCurrentPlan("free") && !isProUser) {
+                  if (downgradeConfirm === "free") handleUpgrade("free", null, true);
+                  else handleUpgrade("free");
+                }
               }}
               isCurrentPlan={isCurrentPlan("free") || isProUser}
               isDisabled={isUpgrading}
@@ -207,7 +234,7 @@ const PricingPage = ({ isVisible, onClose }) => {
             <PricingCard
               title={pricingData.plus.title}
               price={pricingData.plus.price}
-              priceStars={telegramStarsEnabled ? starsPricePlus : undefined}
+              priceStars={(telegramStarsEnabled || (isTelegram && !paymentsConfigLoaded)) ? starsPricePlus : undefined}
               description={pricingData.plus.description}
               features={pricingData.plus.features}
               buttonText={
@@ -215,40 +242,46 @@ const PricingPage = ({ isVisible, onClose }) => {
                   ? t("pricing.currentPlan")
                   : isProUser
                     ? t("pricing.yourPlanHigher")
-                    : hasPaymentMethod
-                      ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : t("pricing.payWithCrypto"))
-                      : t("pricing.paymentUnavailable")
+                    : showPaymentLoading
+                      ? "..."
+                      : hasPaymentMethod
+                        ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : t("pricing.payWithCrypto"))
+                        : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus") && !isProUser && hasPaymentMethod) {
+                  setDowngradeConfirm(null);
                   if (telegramStarsEnabled) handlePayWithStars("plus");
                   else if (cryptocloudEnabled) handlePayWithCrypto("plus");
                 }
               }}
               isCurrentPlan={isCurrentPlan("plus") || isProUser}
-              isDisabled={isUpgrading || isProUser || (!hasPaymentMethod && !isCurrentPlan("plus"))}
+              isDisabled={isUpgrading || isProUser || (showPaymentLoading || (!hasPaymentMethod && !isCurrentPlan("plus")))}
             />
             <PricingCard
               title={pricingData.pro.title}
               price={pricingData.pro.price}
-              priceStars={telegramStarsEnabled ? starsPricePro : undefined}
+              priceStars={(telegramStarsEnabled || (isTelegram && !paymentsConfigLoaded)) ? starsPricePro : undefined}
               description={pricingData.pro.description}
               features={pricingData.pro.features}
               buttonText={
                 isCurrentPlan("pro")
                   ? t("pricing.currentPlan")
+                  : showPaymentLoading
+                    ? "..."
                     : hasPaymentMethod
-                    ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : t("pricing.payWithCrypto"))
-                    : t("pricing.paymentUnavailable")
+                      ? (telegramStarsEnabled ? (isTelegram ? t("pricing.payWithStars") : t("pricing.payInTelegram")) : t("pricing.payWithCrypto"))
+                      : t("pricing.paymentUnavailable")
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro") && hasPaymentMethod) {
+                  setDowngradeConfirm(null);
                   if (telegramStarsEnabled) handlePayWithStars("pro");
                   else if (cryptocloudEnabled) handlePayWithCrypto("pro");
                 }
               }}
               isCurrentPlan={isCurrentPlan("pro")}
-              isDisabled={isUpgrading || !hasPaymentMethod}
+              isDisabled={isUpgrading || showPaymentLoading || !hasPaymentMethod}
             />
           </main>
 
