@@ -1216,6 +1216,81 @@ class LinkGoogleRequest(BaseModel):
     client_id: Optional[str] = None
 
 
+class SendAddEmailCodeRequest(BaseModel):
+    email: str
+
+
+class VerifyAndAddEmailRequest(BaseModel):
+    email: str
+    code: str
+    password: Optional[str] = None
+
+
+@router.post("/send-add-email-code")
+def send_add_email_code(
+    request: SendAddEmailCodeRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session),
+):
+    """Отправить код на email для привязки почты к аккаунту (для пользователей с placeholder email)."""
+    email = (request.email or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Введите корректный email")
+    existing = get_user_by_email(db, email)
+    if existing and existing.id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот Email уже привязан к другому аккаунту. Чтобы использовать его здесь, сначала отвяжите его от того аккаунта.",
+        )
+    from services.verification_code_service import verification_code_service
+    success = verification_code_service.send_add_email_code(email)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Не удалось отправить код. Попробуйте позже.",
+        )
+    return {"success": True, "message": "Код отправлен на email"}
+
+
+@router.post("/verify-and-add-email", response_model=UserResponse)
+def verify_and_add_email(
+    payload: VerifyAndAddEmailRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_session),
+):
+    """Проверить код и привязать почту (и опционально пароль) к текущему аккаунту."""
+    email = (payload.email or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Введите корректный email")
+    from services.verification_code_service import verification_code_service
+    verify_result = verification_code_service.verify_code(email, payload.code)
+    if not verify_result.success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=verify_result.message or "Неверный или просроченный код")
+    existing = get_user_by_email(db, email)
+    if existing and existing.id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот Email уже привязан к другому аккаунту.",
+        )
+    user = db.get(User, current_user.id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
+    user.email = email
+    user.email_verified = True
+    if payload.password:
+        from core.security import validate_password_strength
+        is_valid, err = validate_password_strength(payload.password)
+        if not is_valid:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err or "Пароль не соответствует требованиям")
+        user.hashed_password = get_password_hash(payload.password)
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    logger.info(f"Added email to user id={user.id}: {email}")
+    return create_user_response(user)
+
+
 @router.post("/link-google", response_model=UserResponse)
 def link_google(
     payload: LinkGoogleRequest,

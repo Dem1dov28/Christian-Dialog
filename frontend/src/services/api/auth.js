@@ -150,6 +150,17 @@ export class AuthAPI {
     return this.client.post("/auth/unlink-telegram");
   }
 
+  // Привязать почту к аккаунту (для пользователей с placeholder email)
+  async sendAddEmailCode(email) {
+    return this.client.post("/auth/send-add-email-code", { email });
+  }
+
+  async verifyAndAddEmail(email, code, password = null) {
+    const payload = { email, code };
+    if (password) payload.password = password;
+    return this.client.post("/auth/verify-and-add-email", payload);
+  }
+
   // Привязать Google к аккаунту (при уже авторизованном пользователе)
   async linkGoogle(credential, clientId = null) {
     const payload = { credential };

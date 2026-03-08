@@ -30,7 +30,7 @@ import { useTelegramWebApp } from "../../hooks/useTelegramWebApp";
 import { isPlaceholderEmail } from "../../utils/formatters";
 
 const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect }) => {
-  const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData, deleteUserAccount, logoutAllDevices, linkGoogle, unlinkGoogle, unlinkTelegram } = useAuth();
+  const { user, logout, usageStats, upgradeToAPI, fetchUsageStats, updateUser, refreshUserData, deleteUserAccount, logoutAllDevices, linkGoogle, unlinkGoogle, unlinkTelegram, sendAddEmailCode, verifyAndAddEmail } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { isTelegram, isIOS, initData } = useTelegramWebApp();
   const [telegramWidgetConfig, setTelegramWidgetConfig] = useState(null);
@@ -53,6 +53,11 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const [showDeleteDataModal, setShowDeleteDataModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
+  const [linkEmailStep, setLinkEmailStep] = useState("email");
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkEmailCode, setLinkEmailCode] = useState("");
+  const [linkEmailPassword, setLinkEmailPassword] = useState("");
+  const [linkEmailError, setLinkEmailError] = useState("");
   const isNarrowViewport = useMaxWidth(549);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -414,7 +419,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           </div>
 
           {/* Привязанные аккаунты — Google и Telegram */}
-          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId) || !user?.telegram_id) && (
+          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId) || !user?.telegram_id || isPlaceholderEmail(user?.email)) && (
             <div className="text-left w-full border-t border-[var(--border-color)] pt-4 space-y-3">
               <span className="text-sm font-medium text-[var(--text-dim)] block mb-3">
                 {language === "ru" ? "Привязанные аккаунты" : "Linked accounts"}
@@ -458,7 +463,42 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                   </div>
                 </div>
               )}
-              {/* Привязать Google — только в веб (в Telegram Mini App не показываем) */}
+              {/* Привязать почту — для пользователей с placeholder email (Telegram-only и т.п.) */}
+              {isPlaceholderEmail(user?.email) && (
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-[var(--text-dim)] flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                      </svg>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[var(--text-white)] font-medium block mb-1">{language === "ru" ? "Привязать почту" : "Link email"}</span>
+                        <p className="text-sm text-[var(--text-dim)] mb-3">{language === "ru" ? "Добавьте почту для входа по email и паролю. Код подтверждения придёт на указанный адрес." : "Add email to sign in with email and password. A verification code will be sent."}</p>
+                        {linkEmailStep === "email" ? (
+                          <form onSubmit={async (e) => { e.preventDefault(); setLinkEmailError(""); try { await sendAddEmailCode(linkEmail.trim()); setLinkEmailStep("code"); } catch (err) { setLinkEmailError(err?.message || (language === "ru" ? "Не удалось отправить код" : "Failed to send code")); } }} className="flex flex-col gap-2">
+                            <input type="email" value={linkEmail} onChange={(e) => { setLinkEmail(e.target.value.trim()); setLinkEmailError(""); }} placeholder={language === "ru" ? "Ваш email" : "Your email"} className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm" autoComplete="off" />
+                            {linkEmailError && <p className="text-red-500 text-sm">{linkEmailError}</p>}
+                            <button type="submit" disabled={isLoading || !linkEmail.trim()} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">{language === "ru" ? "Отправить код" : "Send code"}</button>
+                          </form>
+                        ) : (
+                          <form onSubmit={async (e) => { e.preventDefault(); setLinkEmailError(""); try { await verifyAndAddEmail(linkEmail.trim(), linkEmailCode.trim(), linkEmailPassword.trim() || undefined); await refreshUserData(); showSuccess(language === "ru" ? "Почта привязана" : "Email linked"); setLinkEmailStep("email"); setLinkEmail(""); setLinkEmailCode(""); setLinkEmailPassword(""); } catch (err) { setLinkEmailError(err?.message || (language === "ru" ? "Ошибка привязки" : "Link failed")); } }} className="flex flex-col gap-2">
+                            <p className="text-xs text-[var(--text-dim)]">{language === "ru" ? `Код отправлен на ${linkEmail}` : `Code sent to ${linkEmail}`}</p>
+                            <input type="text" inputMode="numeric" maxLength={6} value={linkEmailCode} onChange={(e) => setLinkEmailCode(e.target.value.replace(/\D/g, ""))} placeholder={language === "ru" ? "Код из письма" : "Code from email"} className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm" autoComplete="one-time-code" />
+                            <input type="password" value={linkEmailPassword} onChange={(e) => setLinkEmailPassword(e.target.value)} placeholder={language === "ru" ? "Пароль (необязательно)" : "Password (optional)"} className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm" />
+                            {linkEmailError && <p className="text-red-500 text-sm">{linkEmailError}</p>}
+                            <div className="flex gap-2">
+                              <button type="submit" disabled={isLoading || linkEmailCode.length !== 6} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">{language === "ru" ? "Привязать" : "Link"}</button>
+                              <button type="button" onClick={() => { setLinkEmailStep("email"); setLinkEmailCode(""); setLinkEmailError(""); }} className="px-4 py-2 text-[var(--text-dim)] rounded-lg text-sm hover:bg-white/5">{language === "ru" ? "← Назад" : "← Back"}</button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Привязать Google */}
               {!user?.google_id && googleClientId && (
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <div className="flex items-start gap-3">

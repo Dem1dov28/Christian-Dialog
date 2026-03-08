@@ -61,6 +61,8 @@ class UnifiedAPI {
     this.sendTelegramLinkCode = (email) => auth.sendTelegramLinkCode(email);
     this.verifyAndLinkTelegram = (email, code, initData) => auth.verifyAndLinkTelegram(email, code, initData);
     this.linkTelegram = (initData) => auth.linkTelegram(initData);
+    this.sendAddEmailCode = (email) => auth.sendAddEmailCode(email);
+    this.verifyAndAddEmail = (email, code, password) => auth.verifyAndAddEmail(email, code, password);
     this.linkGoogle = (credential, clientId) => auth.linkGoogle(credential, clientId);
     this.unlinkTelegram = () => auth.unlinkTelegram();
     this.unlinkGoogle = () => auth.unlinkGoogle();

@@ -100,6 +100,34 @@ class VerificationCodeService(BaseService):
             logger.error(f"Error sending registration verification code to {email}: {str(e)}")
             return False
 
+    def send_add_email_code(self, email: str) -> bool:
+        """Отправить код для привязки почты к аккаунту (для пользователей с placeholder email)."""
+        try:
+            code = self.generate_verification_code()
+            self.cleanup_old_codes(email)
+            expires_at = datetime.utcnow() + timedelta(minutes=15)
+            verification_code = VerificationCode(email=email, code=code, expires_at=expires_at)
+            with self.get_session() as session:
+                session.add(verification_code)
+                session.commit()
+                session.refresh(verification_code)
+            subject = "Код для привязки почты к аккаунту Epochal Dialog"
+            body = f"""Ваш код подтверждения: {code}
+
+Введите этот код для привязки почты к вашему аккаунту.
+Код действителен в течение 15 минут.
+
+Если вы не запрашивали привязку, проигнорируйте это сообщение."""
+            success = email_service.send_email(subject, body, email)
+            if success:
+                logger.info(f"Add-email code sent to {email}")
+            else:
+                logger.error(f"Failed to send add-email code to {email}")
+            return success
+        except Exception as e:
+            logger.error(f"Error sending add-email code to {email}: {str(e)}")
+            return False
+
     def send_telegram_link_code(self, email: str) -> bool:
         """Отправить код для привязки аккаунта Telegram к существующему аккаунту."""
         try:

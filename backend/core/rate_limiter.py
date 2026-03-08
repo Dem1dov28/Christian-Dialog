@@ -166,6 +166,8 @@ RATE_LIMITS = {
     "/auth/send-telegram-link-code": (20, 60),  # 20 кодов в минуту (опечатки, повторы)
     "/auth/verify-and-link-telegram": (30, 300),  # 30 попыток за 5 минут
     "/auth/telegram/create-account": (20, 60),  # 20 новых аккаунтов в минуту
+    "/auth/send-add-email-code": (20, 60),  # 20 кодов в минуту
+    "/auth/verify-and-add-email": (30, 300),  # 30 попыток за 5 минут
     "/auth/telegram-oidc": (50, 300),  # Log In With Telegram (OIDC)
     
     # Основные действия в чате — повышаем порог, чтобы UX не страдал

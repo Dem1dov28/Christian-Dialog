@@ -672,6 +672,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sendAddEmailCode = (email) => apiClient.sendAddEmailCode(email);
+
+  const verifyAndAddEmail = async (email, code, password) => {
+    try {
+      setIsLoading(true);
+      const updated = await apiClient.verifyAndAddEmail(email, code, password);
+      if (updated) {
+        const fullUser = await apiClient.getCurrentUser();
+        setUser(fullUser);
+        localStorage.setItem("user_data", JSON.stringify(fullUser));
+      }
+      return updated;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Выйти со всех устройств
   const logoutAllDevices = async () => {
     try {
@@ -714,6 +733,8 @@ export const AuthProvider = ({ children }) => {
     linkGoogle,
     unlinkGoogle,
     unlinkTelegram,
+    sendAddEmailCode,
+    verifyAndAddEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
