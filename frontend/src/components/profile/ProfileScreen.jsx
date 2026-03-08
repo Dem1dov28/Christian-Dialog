@@ -188,7 +188,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   };
 
   const handleDeleteAccount = async () => {
-    if (user?.auth_provider !== "google" && !deleteAccountPassword.trim()) {
+    if (user?.has_password && !deleteAccountPassword.trim()) {
       showError(t("profile.privacy.passwordRequired"));
       return;
     }
@@ -845,7 +845,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                 </p>
               </div>
 
-              {user?.auth_provider !== "google" && (
+              {user?.has_password && (
                 <div>
                   <label className="block text-sm text-[var(--text-dim)] mb-1">
                     {t("profile.privacy.enterPassword")}
@@ -871,7 +871,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={isLoading || (user?.auth_provider !== "google" && !deleteAccountPassword.trim())}
+                  disabled={isLoading || (user?.has_password && !deleteAccountPassword.trim())}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   {isLoading ? t("common.loading") : t("profile.privacy.deleteAccount")}

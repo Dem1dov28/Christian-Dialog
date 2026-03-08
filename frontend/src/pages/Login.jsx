@@ -276,92 +276,89 @@ const Login = () => {
               </div>
             )}
 
-            {/* Telegram: форма привязки аккаунта */}
+            {/* Telegram: новый пользователь — создать аккаунт или привязать к существующему */}
             {showTelegramLinkForm && isTelegram && initData && (
               <div className="space-y-5">
-                <p className="text-sm text-muted-foreground text-center">
-                  {language === "ru"
-                    ? "У вас уже есть аккаунт? Введите email, чтобы привязать Telegram."
-                    : "Already have an account? Enter your email to link Telegram."}
+                {/* Повторная попытка входа (показывается при ошибке первой попытки) */}
+                <Button
+                  type="button"
+                  variant="neomorphic"
+                  size="lg"
+                  className="w-full"
+                  disabled={isLoading}
+                  onClick={async () => {
+                    setError("");
+                    try {
+                      await loginWithTelegram(initData);
+                    } catch (err) {
+                      setError(err?.message || (language === "ru" ? "Ошибка входа" : "Login failed"));
+                    }
+                  }}
+                >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                  </svg>
+                  {isLoading ? "..." : (language === "ru" ? "Повторить вход через Telegram" : "Retry with Telegram")}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {language === "ru" ? "Или привяжите к существующему аккаунту:" : "Or link to existing account:"}
                 </p>
-                {linkStep === "email" ? (
-                  <form onSubmit={handleSendLinkCode} className="space-y-4">
-                    <Input
-                      type="email"
-                      name="telegram_link_email"
-                      placeholder={language === "ru" ? "Email аккаунта для привязки" : "Account email to link"}
-                      value={linkEmail}
-                      onChange={(e) => { setLinkEmail(e.target.value.trim()); setError(""); }}
-                      disabled={isLoading}
-                      className="w-full"
-                      autoComplete="off"
-                      style={{ WebkitUserSelect: "text", userSelect: "text" }}
-                    />
-                    <Button type="submit" variant="neomorphic" size="lg" className="w-full" disabled={isLoading}>
-                      {isLoading ? "..." : (language === "ru" ? "Отправить код" : "Send code")}
-                    </Button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyAndLink} className="space-y-4">
-                    <p className="text-xs text-muted-foreground text-center">
-                      {language === "ru" ? `Привязка к аккаунту: ${linkEmail}` : `Linking to account: ${linkEmail}`}
-                    </p>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      placeholder={language === "ru" ? "Код из письма" : "Code from email"}
-                      value={linkCode}
-                      onChange={(e) => { setLinkCode(e.target.value.replace(/\D/g, "")); setError(""); }}
-                      disabled={isLoading}
-                      className="w-full"
-                      autoComplete="one-time-code"
-                      style={{ WebkitUserSelect: "text", userSelect: "text" }}
-                    />
-                    <Button type="submit" variant="neomorphic" size="lg" className="w-full" disabled={isLoading}>
-                      {isLoading ? "..." : (language === "ru" ? "Привязать аккаунт" : "Link account")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => { setLinkStep("email"); setLinkCode(""); setError(""); }}
-                    >
-                      {language === "ru" ? "← Другой email" : "← Different email"}
-                    </Button>
-                  </form>
-                )}
-                <div className="border-t border-white/10 pt-4 mt-4 space-y-3">
+
+                {/* Привязка к существующему аккаунту */}
+                <div className="border-t border-white/10 pt-4 space-y-3">
                   <p className="text-xs text-muted-foreground text-center">
-                    {language === "ru"
-                      ? "Аккаунт с таким email должен существовать на сайте."
-                      : "Account with this email must exist on the website."}
+                    {language === "ru" ? "Уже есть аккаунт на сайте? Привяжите его:" : "Already have an account? Link it:"}
                   </p>
-                  <div className="text-center space-y-2 flex flex-col items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setError("");
-                        try {
-                          await telegramCreateAccount(initData);
-                        } catch (err) {
-                          setError(err?.message || (language === "ru" ? "Ошибка создания аккаунта" : "Error creating account"));
-                        }
-                      }}
-                      disabled={isLoading}
-                      className="text-primary hover:underline text-sm font-medium disabled:opacity-50"
-                    >
-                      {language === "ru" ? "Создать новый аккаунт" : "Create new account"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/register")}
-                      className="text-muted-foreground hover:text-foreground hover:underline text-sm"
-                    >
-                      {language === "ru" ? "Или зарегистрироваться с email" : "Or register with email"}
-                    </button>
-                  </div>
+                  {linkStep === "email" ? (
+                    <form onSubmit={handleSendLinkCode} className="space-y-3">
+                      <Input
+                        type="email"
+                        name="telegram_link_email"
+                        placeholder={language === "ru" ? "Email аккаунта" : "Account email"}
+                        value={linkEmail}
+                        onChange={(e) => { setLinkEmail(e.target.value.trim()); setError(""); }}
+                        disabled={isLoading}
+                        className="w-full"
+                        autoComplete="off"
+                        style={{ WebkitUserSelect: "text", userSelect: "text" }}
+                      />
+                      <Button type="submit" variant="outline" size="sm" className="w-full" disabled={isLoading}>
+                        {isLoading ? "..." : (language === "ru" ? "Отправить код" : "Send code")}
+                      </Button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleVerifyAndLink} className="space-y-3">
+                      <p className="text-xs text-muted-foreground text-center truncate">
+                        {linkEmail}
+                      </p>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder={language === "ru" ? "Код из письма" : "Code from email"}
+                        value={linkCode}
+                        onChange={(e) => { setLinkCode(e.target.value.replace(/\D/g, "")); setError(""); }}
+                        disabled={isLoading}
+                        className="w-full"
+                        autoComplete="one-time-code"
+                        style={{ WebkitUserSelect: "text", userSelect: "text" }}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => { setLinkStep("email"); setLinkCode(""); setError(""); }}
+                        >
+                          {language === "ru" ? "← Назад" : "← Back"}
+                        </Button>
+                        <Button type="submit" variant="outline" size="sm" className="flex-1" disabled={isLoading}>
+                          {isLoading ? "..." : (language === "ru" ? "Привязать" : "Link")}
+                        </Button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </div>
             )}

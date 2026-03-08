@@ -1008,11 +1008,29 @@ def login_with_telegram(
             db.refresh(user)
         return _do_telegram_login(response, user, db, "login_with_telegram")
 
-    # Пользователь не найден по telegram_id — возвращаем needs_link (привязка или новый аккаунт)
-    return JSONResponse(
-        status_code=200,
-        content={"needs_link": True, "message": "Привяжите существующий аккаунт"},
-    )
+    # Пользователь не найден — сразу создаём новый аккаунт (мгновенный вход, без needs_link)
+    username_base = (telegram_username or f"tg_{telegram_id}").replace(" ", "_")[:30]
+    if not re.match(r"^[a-zA-Z0-9._-]+$", username_base):
+        username_base = f"tg_{telegram_id}"
+    username = username_base
+    n = 0
+    while db.exec(select(User).where(User.username == username)).first():
+        n += 1
+        username = f"{username_base}_{n}"[:50]
+    email = f"tg_{telegram_id}@telegram.placeholder"
+    random_password = token_urlsafe(16)
+    user_create = UserCreate(email=email, password=random_password, full_name=full_name, username=username)
+    user = create_user(db, user_create, password_explicitly_set=False)
+    user.telegram_id = telegram_id
+    user.telegram_username = telegram_username
+    user.auth_provider = "telegram"
+    user.email_verified = False
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    logger.info(f"Created new Telegram account on first login: id={user.id}, telegram_id={telegram_id}")
+    return _do_telegram_login(response, user, db, "login_with_telegram")
 
 
 @router.post("/telegram/create-account", response_model=Token)
@@ -2523,8 +2541,8 @@ async def delete_account(
     try:
         logger.info(f"Starting account deletion for user id: {current_user.id}")
         
-        # Проверяем пароль только для обычных пользователей
-        if current_user.auth_provider != "google":
+        # Проверяем пароль только для пользователей с явно заданным паролем (local или привязанная почта)
+        if getattr(current_user, "password_explicitly_set", False):
             if not request.password or not verify_password(request.password, current_user.hashed_password):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
