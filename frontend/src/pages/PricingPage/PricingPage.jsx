@@ -21,7 +21,6 @@ const PricingPage = ({ isVisible, onClose }) => {
   const [paymentsConfigLoaded, setPaymentsConfigLoaded] = useState(false);
   const [starsPricePlus, setStarsPricePlus] = useState(250);
   const [starsPricePro, setStarsPricePro] = useState(500);
-  const [downgradeConfirm, setDowngradeConfirm] = useState(null);
   const { isTelegram } = useTelegramWebApp();
 
   useEffect(() => {
@@ -29,7 +28,6 @@ const PricingPage = ({ isVisible, onClose }) => {
       setIsClosing(false);
       setUpgradeError(null);
       setUpgradeSuccess(null);
-      setDowngradeConfirm(null);
       setPaymentsConfigLoaded(false);
       refreshUserData?.();
       apiClient.getPaymentsConfig()
@@ -49,10 +47,14 @@ const PricingPage = ({ isVisible, onClose }) => {
   // Обновить данные при возврате на вкладку (после оплаты в другом окне/Telegram)
   useEffect(() => {
     if (!isVisible || !refreshUserData) return;
+    let lastRefresh = 0;
+    const throttleMs = 2000;
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        refreshUserData();
-      }
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - lastRefresh < throttleMs) return;
+      lastRefresh = now;
+      refreshUserData();
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
@@ -69,17 +71,11 @@ const PricingPage = ({ isVisible, onClose }) => {
   };
 
 
-  const handleUpgrade = async (subscriptionTier, apiKey = null, skipConfirm = false) => {
-    const isDowngradeToFree = subscriptionTier === "free" && (user?.subscription_tier === "plus" || user?.subscription_tier === "pro");
-    if (isDowngradeToFree && !skipConfirm) {
-      setDowngradeConfirm(subscriptionTier);
-      return;
-    }
+  const handleUpgrade = async (subscriptionTier, apiKey = null) => {
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
       setUpgradeSuccess(null);
-      setDowngradeConfirm(null);
 
       const response = await upgradeSubscription(subscriptionTier, apiKey);
 
@@ -101,7 +97,6 @@ const PricingPage = ({ isVisible, onClose }) => {
   };
 
   const handlePayWithStars = async (tier) => {
-    setDowngradeConfirm(null);
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
@@ -113,10 +108,7 @@ const PricingPage = ({ isVisible, onClose }) => {
         let opened = false;
 
         const onPaymentSuccess = async () => {
-          if (refreshUserData) {
-            await refreshUserData();
-            setTimeout(() => refreshUserData(), 1500);
-          }
+          if (refreshUserData) await refreshUserData();
         };
 
         if (webApp?.openInvoice && version >= 6.1) {
@@ -152,7 +144,6 @@ const PricingPage = ({ isVisible, onClose }) => {
   };
 
   const handlePayWithCrypto = async (tier) => {
-    setDowngradeConfirm(null);
     try {
       setIsUpgrading(true);
       setUpgradeError(null);
@@ -176,8 +167,9 @@ const PricingPage = ({ isVisible, onClose }) => {
   const hasPaymentMethod = paymentsConfigLoaded && (cryptocloudEnabled || telegramStarsEnabled);
   const showPaymentLoading = !paymentsConfigLoaded;
 
-  // Pro — выше Plus и Free. Переход на них не показываем (бессмысленно).
   const isProUser = user?.subscription_tier === "pro";
+  const isPlusUser = user?.subscription_tier === "plus";
+  const canDowngradeToFree = !isPlusUser && !isProUser;
 
   const pricingData = getPricingData(t);
 
@@ -218,18 +210,15 @@ const PricingPage = ({ isVisible, onClose }) => {
                   ? t("pricing.currentPlan")
                   : isProUser
                     ? t("pricing.yourPlanHigher")
-                    : downgradeConfirm === "free"
-                      ? (language === "ru" ? "Подтвердить переход на Free?" : "Confirm switch to Free?")
+                    : isPlusUser
+                      ? (language === "ru" ? "Активна подписка Plus" : "Plus subscription active")
                       : t("pricing.switchToFree")
               }
               buttonAction={() => {
-                if (!isCurrentPlan("free") && !isProUser) {
-                  if (downgradeConfirm === "free") handleUpgrade("free", null, true);
-                  else handleUpgrade("free");
-                }
+                if (!isCurrentPlan("free") && canDowngradeToFree) handleUpgrade("free");
               }}
-              isCurrentPlan={isCurrentPlan("free") || isProUser}
-              isDisabled={isUpgrading}
+              isCurrentPlan={isCurrentPlan("free") || isProUser || isPlusUser}
+              isDisabled={isUpgrading || isPlusUser || isProUser}
             />
             <PricingCard
               title={pricingData.plus.title}
@@ -250,7 +239,6 @@ const PricingPage = ({ isVisible, onClose }) => {
               }
               buttonAction={() => {
                 if (!isCurrentPlan("plus") && !isProUser && hasPaymentMethod) {
-                  setDowngradeConfirm(null);
                   if (telegramStarsEnabled) handlePayWithStars("plus");
                   else if (cryptocloudEnabled) handlePayWithCrypto("plus");
                 }
@@ -275,7 +263,6 @@ const PricingPage = ({ isVisible, onClose }) => {
               }
               buttonAction={() => {
                 if (!isCurrentPlan("pro") && hasPaymentMethod) {
-                  setDowngradeConfirm(null);
                   if (telegramStarsEnabled) handlePayWithStars("pro");
                   else if (cryptocloudEnabled) handlePayWithCrypto("pro");
                 }
