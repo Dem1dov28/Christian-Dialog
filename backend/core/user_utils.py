@@ -28,5 +28,5 @@ def create_user_response(user: User) -> UserResponse:
         google_id=getattr(user, "google_id", None),
         telegram_id=getattr(user, "telegram_id", None),
         telegram_username=getattr(user, "telegram_username", None),
-        has_password=bool(getattr(user, "hashed_password", None)),
+        has_password=bool(getattr(user, "password_explicitly_set", False)),
     )

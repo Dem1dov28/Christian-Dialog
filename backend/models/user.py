@@ -96,6 +96,7 @@ class User(UserBase, table=True):
     )
     telegram_username: Optional[str] = Field(default=None, description="Telegram @username")
     pinned_chats: str = Field(default="[]", description="JSON список ID закрепленных чатов")
+    password_explicitly_set: bool = Field(default=False, description="Пароль задан пользователем (не случайный при создании через Google/Telegram)")
     
 
     

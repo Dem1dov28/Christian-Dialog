@@ -466,7 +466,7 @@ def login_with_google(
             full_name=full_name,
             avatar_url=avatar_url,
         )
-        user = create_user(db, user_create)
+        user = create_user(db, user_create, password_explicitly_set=False)
         user.google_id = google_sub
         user.email_verified = True
         user.auth_provider = "google"
@@ -670,7 +670,7 @@ def google_exchange_code(
             full_name=full_name,
             avatar_url=avatar_url,
         )
-        user = create_user(db, user_create)
+        user = create_user(db, user_create, password_explicitly_set=False)
         user.google_id = google_sub
         user.email_verified = True
         user.auth_provider = "google"
@@ -853,7 +853,7 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
             db.refresh(user)
         else:
             user_create = UserCreate(email=email, password=token_urlsafe(16), full_name=full_name, avatar_url=avatar_url)
-            user = create_user(db, user_create)
+            user = create_user(db, user_create, password_explicitly_set=False)
             user.google_id = google_sub
             user.email_verified = True
             user.auth_provider = "google"
@@ -1063,7 +1063,7 @@ def telegram_create_account(
     email = f"tg_{telegram_id}@telegram.placeholder"
     random_password = token_urlsafe(16)
     user_create = UserCreate(email=email, password=random_password, full_name=full_name, username=username)
-    user = create_user(db, user_create)
+    user = create_user(db, user_create, password_explicitly_set=False)
     user.telegram_id = telegram_id
     user.telegram_username = telegram_username
     user.auth_provider = "telegram"
@@ -1283,6 +1283,7 @@ def verify_and_add_email(
         if not is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err or "Пароль не соответствует требованиям")
         user.hashed_password = get_password_hash(payload.password)
+        user.password_explicitly_set = True
     user.updated_at = datetime.utcnow()
     db.add(user)
     db.commit()
@@ -1374,8 +1375,8 @@ def unlink_google(
     if not user or not getattr(user, "google_id", None):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google is not linked")
     has_telegram = bool(getattr(user, "telegram_id", None))
-    has_password = bool(getattr(user, "hashed_password", None))
-    if not has_telegram and not has_password:
+    has_explicit_password = bool(getattr(user, "password_explicitly_set", False))
+    if not has_telegram and not has_explicit_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Нельзя отвязать единственный способ входа. Добавьте другой способ перед отвязкой этого."
@@ -1399,8 +1400,8 @@ def unlink_telegram(
     if not user or not getattr(user, "telegram_id", None):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram is not linked")
     has_google = bool(getattr(user, "google_id", None))
-    has_password = bool(getattr(user, "hashed_password", None))
-    if not has_google and not has_password:
+    has_explicit_password = bool(getattr(user, "password_explicitly_set", False))
+    if not has_google and not has_explicit_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Нельзя отвязать единственный способ входа. Добавьте другой способ перед отвязкой этого.",
@@ -1496,7 +1497,7 @@ def _process_telegram_oidc_user(db: Session, payload: dict) -> User:
         avatar_url=avatar_url,
         username=username,
     )
-    user = create_user(db, user_create)
+    user = create_user(db, user_create, password_explicitly_set=False)
     user.telegram_id = telegram_id
     user.telegram_username = telegram_username
     user.auth_provider = "telegram"
@@ -1633,7 +1634,7 @@ def _process_telegram_widget_user(db: Session, data: dict) -> User:
         avatar_url=avatar_url,
         username=username,
     )
-    user = create_user(db, user_create)
+    user = create_user(db, user_create, password_explicitly_set=False)
     user.telegram_id = telegram_id
     user.telegram_username = telegram_username
     user.auth_provider = "telegram"
@@ -1742,6 +1743,7 @@ def update_current_user(
                 detail=error_message or "Пароль не соответствует требованиям безопасности"
             )
         current_user.hashed_password = get_password_hash(user_update.password)
+        current_user.password_explicitly_set = True
     
     if user_update.username is not None:
         # Проверяем, что username не занят другим пользователем
@@ -2308,6 +2310,7 @@ async def reset_password(
         
         # Хэшируем новый пароль
         user.hashed_password = get_password_hash(request.new_password)
+        user.password_explicitly_set = True
         user.reset_token = None
         user.reset_token_expires = None
         

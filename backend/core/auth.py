@@ -128,8 +128,8 @@ def _generate_username_from_email(email: str) -> str:
     return base
 
 
-def create_user(db: Session, user_create) -> User:
-    """Создание нового пользователя"""
+def create_user(db: Session, user_create, password_explicitly_set: bool = True) -> User:
+    """Создание нового пользователя. password_explicitly_set=False для случайного пароля (Google/Telegram)."""
     ensure_user_messages_cycle_column()
     
     # Валидация пароля
@@ -181,6 +181,7 @@ def create_user(db: Session, user_create) -> User:
         is_active=True,
         is_admin=False,
         auth_provider=getattr(user_create, "auth_provider", "local"),
+        password_explicitly_set=password_explicitly_set,
     )
     
     # Инициализируем подписку для нового пользователя

@@ -210,7 +210,10 @@ def ensure_user_social_columns(connection=None):
             if "telegram_username" not in columns:
                 conn.execute(text("ALTER TABLE \"user\" ADD COLUMN telegram_username VARCHAR"))
                 logger.info("Добавлена колонка telegram_username в таблицу user")
-            
+            if "password_explicitly_set" not in columns:
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN password_explicitly_set BOOLEAN DEFAULT FALSE"))
+                conn.execute(text("UPDATE \"user\" SET password_explicitly_set = TRUE WHERE auth_provider = 'local'"))
+                logger.info("Добавлена колонка password_explicitly_set в таблицу user")
             if should_close:
                 conn.commit()
         finally:
