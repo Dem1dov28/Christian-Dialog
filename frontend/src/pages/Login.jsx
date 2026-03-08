@@ -8,10 +8,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTelegramWebApp } from "@/hooks/useTelegramWebApp";
 import { GoogleLogin } from "@react-oauth/google";
 import { SEO } from "@/components/common/SEO";
+import apiClient from "@/services/api";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, loginWithGoogle, loginWithTelegram, sendTelegramLinkCode, verifyAndLinkTelegram, refreshUserData, isLoading } = useAuth();
+  const { login, loginWithGoogle, loginWithTelegram, loginWithTelegramWidget, telegramCreateAccount, sendTelegramLinkCode, verifyAndLinkTelegram, refreshUserData, isLoading } = useAuth();
   const { isTelegram, initData } = useTelegramWebApp();
   const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
@@ -32,6 +33,40 @@ const Login = () => {
   // В Telegram: при монтировании пробуем войти; если needs_link — показываем форму привязки
   // Не вызывать автоматически после явного выхода (telegram_skip_auto_login)
   const [skipAutoTelegram, setSkipAutoTelegram] = useState(() => !!localStorage.getItem('telegram_skip_auto_login'));
+  const [telegramWidgetConfig, setTelegramWidgetConfig] = useState({ enabled: false });
+  const telegramWidgetRef = useRef(null);
+
+  useEffect(() => {
+    if (!isTelegram) {
+      apiClient.getTelegramWidgetConfig().then(setTelegramWidgetConfig).catch(() => setTelegramWidgetConfig({ enabled: false }));
+    }
+  }, [isTelegram]);
+
+  useEffect(() => {
+    if (isTelegram || !telegramWidgetConfig?.enabled || !telegramWidgetConfig?.bot_username || !telegramWidgetRef.current) return;
+    const botUsername = String(telegramWidgetConfig.bot_username).replace(/^@/, "");
+    window.onTelegramAuth = async (user) => {
+      try {
+        setError("");
+        await loginWithTelegramWidget(user);
+      } catch (err) {
+        setError(err?.message || (language === "ru" ? "Ошибка входа через Telegram" : "Telegram login failed"));
+      }
+    };
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js?22";
+    script.async = true;
+    script.setAttribute("data-telegram-login", botUsername);
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-onauth", "onTelegramAuth(user)");
+    script.setAttribute("data-request-access", "write");
+    telegramWidgetRef.current.innerHTML = "";
+    telegramWidgetRef.current.appendChild(script);
+    return () => {
+      delete window.onTelegramAuth;
+    };
+  }, [isTelegram, telegramWidgetConfig?.enabled, telegramWidgetConfig?.bot_username, loginWithTelegramWidget]);
+
   useEffect(() => {
     if (!isTelegram || !initData || telegramLoginTried.current) return;
     if (localStorage.getItem('telegram_skip_auto_login')) {
@@ -43,9 +78,19 @@ const Login = () => {
     const tryTg = async () => {
       try {
         const res = await loginWithTelegram(initData);
-        if (!cancelled && res?.needs_link) setShowTelegramLinkForm(true);
+        if (!cancelled && res?.needs_link) {
+          setLinkEmail("");
+          setLinkCode("");
+          setLinkStep("email");
+          setShowTelegramLinkForm(true);
+        }
       } catch {
-        if (!cancelled) setShowTelegramLinkForm(true);
+        if (!cancelled) {
+          setLinkEmail("");
+          setLinkCode("");
+          setLinkStep("email");
+          setShowTelegramLinkForm(true);
+        }
       }
     };
     tryTg();
@@ -243,12 +288,13 @@ const Login = () => {
                   <form onSubmit={handleSendLinkCode} className="space-y-4">
                     <Input
                       type="email"
-                      placeholder={language === "ru" ? "Email аккаунта" : "Account email"}
+                      name="telegram_link_email"
+                      placeholder={language === "ru" ? "Email аккаунта для привязки" : "Account email to link"}
                       value={linkEmail}
-                      onChange={(e) => { setLinkEmail(e.target.value); setError(""); }}
+                      onChange={(e) => { setLinkEmail(e.target.value.trim()); setError(""); }}
                       disabled={isLoading}
                       className="w-full"
-                      autoComplete="email"
+                      autoComplete="off"
                       style={{ WebkitUserSelect: "text", userSelect: "text" }}
                     />
                     <Button type="submit" variant="neomorphic" size="lg" className="w-full" disabled={isLoading}>
@@ -257,6 +303,9 @@ const Login = () => {
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyAndLink} className="space-y-4">
+                    <p className="text-xs text-muted-foreground text-center">
+                      {language === "ru" ? `Привязка к аккаунту: ${linkEmail}` : `Linking to account: ${linkEmail}`}
+                    </p>
                     <Input
                       type="text"
                       inputMode="numeric"
@@ -289,15 +338,30 @@ const Login = () => {
                       ? "Аккаунт с таким email должен существовать на сайте."
                       : "Account with this email must exist on the website."}
                   </p>
-                  <p className="text-center">
+                  <div className="text-center space-y-2 flex flex-col items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setError("");
+                        try {
+                          await telegramCreateAccount(initData);
+                        } catch (err) {
+                          setError(err?.message || (language === "ru" ? "Ошибка создания аккаунта" : "Error creating account"));
+                        }
+                      }}
+                      disabled={isLoading}
+                      className="text-primary hover:underline text-sm font-medium disabled:opacity-50"
+                    >
+                      {language === "ru" ? "Создать новый аккаунт" : "Create new account"}
+                    </button>
                     <button
                       type="button"
                       onClick={() => navigate("/register")}
-                      className="text-primary hover:underline text-sm font-medium"
+                      className="text-muted-foreground hover:text-foreground hover:underline text-sm"
                     >
-                      {language === "ru" ? "Нет аккаунта? Зарегистрироваться" : "No account? Register"}
+                      {language === "ru" ? "Или зарегистрироваться с email" : "Or register with email"}
                     </button>
-                  </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -312,6 +376,9 @@ const Login = () => {
                   className="w-full rounded-full border-[#0088cc]/40 bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc]"
                   onClick={async () => {
                     setSkipAutoTelegram(false);
+                    setLinkEmail("");
+                    setLinkCode("");
+                    setLinkStep("email");
                     try {
                       const res = await loginWithTelegram(initData);
                       if (res?.needs_link) setShowTelegramLinkForm(true);
@@ -431,8 +498,8 @@ const Login = () => {
               </form>
             )}
 
-            {/* Divider + Google — только в веб (в Telegram app не показываем) */}
-            {!showTelegramLinkForm && !isTelegram && googleClientId && (
+            {/* Веб: Telegram Login Widget + Google */}
+            {!showTelegramLinkForm && !isTelegram && (telegramWidgetConfig?.enabled || googleClientId) && (
               <>
                 <div className="relative my-4 [@media(max-height:629px)]:my-3">
                   <div className="absolute inset-0 flex items-center">
@@ -443,7 +510,11 @@ const Login = () => {
                   </div>
                 </div>
 
-                <div className="w-full flex justify-center mb-3 [@media(max-height:629px)]:mb-2">
+                <div className="w-full flex flex-col items-center gap-3 mb-3 [@media(max-height:629px)]:mb-2">
+                  {telegramWidgetConfig?.enabled && (
+                    <div ref={telegramWidgetRef} className="flex justify-center min-h-[44px]" />
+                  )}
+                  {googleClientId && (
                 <div className="google-login-override w-full max-w-[320px] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 bg-white/90 backdrop-blur-sm hover:bg-white hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.35),0_0_0_1px_rgba(var(--primary),0.1)] active:scale-[0.98] px-2 py-1 before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-r before:from-white/20 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 relative">
                   <GoogleLogin
                         onSuccess={handleGoogleSuccess}
@@ -461,7 +532,8 @@ const Login = () => {
                         width="320"
                       />
                 </div>
-              </div>
+                  )}
+                </div>
               </>
             )}
 

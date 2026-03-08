@@ -253,6 +253,37 @@ export const AuthProvider = ({ children }) => {
     return apiClient.sendTelegramLinkCode(email);
   };
 
+  const telegramCreateAccount = async (initData) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.telegramCreateAccount(initData);
+      if (response?.user) {
+        try {
+          const fullUser = await apiClient.getCurrentUser();
+          setUser(fullUser);
+          localStorage.setItem("user_data", JSON.stringify(fullUser));
+        } catch (e) {
+          setUser(response.user);
+          localStorage.setItem("user_data", JSON.stringify(response.user));
+        }
+        setIsAuthenticated(true);
+        try { localStorage.removeItem("telegram_skip_auto_login"); } catch (_) {}
+        try {
+          const stats = await apiClient.getUsageStats();
+          setUsageStats(stats);
+        } catch (error) {
+          console.error("Failed to load usage stats:", error);
+        }
+        return response;
+      }
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const verifyAndLinkTelegram = async (email, code, initData) => {
     try {
       setIsLoading(true);
@@ -663,6 +694,7 @@ export const AuthProvider = ({ children }) => {
     login,
     loginWithTelegram,
     loginWithTelegramWidget,
+    telegramCreateAccount,
     sendTelegramLinkCode,
     verifyAndLinkTelegram,
     loginWithGoogle,

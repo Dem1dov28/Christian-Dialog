@@ -552,7 +552,8 @@
         "title": "Привязать Telegram",
         "description": "Откройте приложение в Telegram и введите ваш email, чтобы войти в тот же аккаунт.",
         "cta": "Открыть в Telegram"
-      }
+      },
+      "cannotUnlinkOnlyMethod": "Нельзя отвязать единственный способ входа"
     },
     "current_language": "Русский",
     "language_ru": "Русский",

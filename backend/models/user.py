@@ -207,6 +207,7 @@ class UserResponse(UserBase):
     google_id: Optional[str] = None
     telegram_id: Optional[str] = None
     telegram_username: Optional[str] = None
+    has_password: bool = False  # Может ли войти по email+паролю
 
 
 

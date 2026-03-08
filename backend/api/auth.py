@@ -402,31 +402,21 @@ def login_with_google(
             if getattr(user, "google_id", None) is None:
                 found_by_email = True
 
-    # Аккаунт найден по email с google_id=None (отвязан) — создаём новый аккаунт
-    if found_by_email:
-        user = None
-        local, _, domain = email.rpartition("@")
-        if not domain:
-            domain = "email.local"
-        unique_email = f"{local}+g{google_sub[:12]}@{domain}"
-        random_password = token_urlsafe(16)
-        user_create = UserCreate(
-            email=unique_email,
-            password=random_password,
-            full_name=full_name,
-            avatar_url=avatar_url,
-        )
-        user = create_user(db, user_create)
+    # Аккаунт найден по email с google_id=None (отвязан) — перепривязываем Google к существующему
+    if found_by_email and user:
         user.google_id = google_sub
-        user.email_verified = True
         user.auth_provider = "google"
-        if avatar_url:
+        user.email_verified = True
+        has_local_avatar = _is_local_avatar(getattr(user, "avatar_url", None))
+        if avatar_url and not has_local_avatar:
             user.avatar_url = avatar_url
+        if full_name and not user.full_name:
+            user.full_name = full_name
         user.updated_at = datetime.utcnow()
         db.add(user)
         db.commit()
         db.refresh(user)
-        logger.info(f"Created new account (unlinked): id={user.id}, email={user.email}, google_sub={google_sub}")
+        logger.info(f"Re-linked Google to existing account: id={user.id}, email={user.email}")
 
     if user and not found_by_email:
         updated = False
@@ -635,24 +625,20 @@ def google_exchange_code(
             if getattr(user, "google_id", None) is None:
                 found_by_email = True
 
-    if found_by_email:
-        local, _, domain = email.rpartition("@")
-        if not domain:
-            domain = "email.local"
-        unique_email = f"{local}+g{google_sub[:12]}@{domain}"
-        random_password = token_urlsafe(16)
-        user_create = UserCreate(email=unique_email, password=random_password, full_name=full_name, avatar_url=avatar_url)
-        user = create_user(db, user_create)
+    if found_by_email and user:
+        # Перепривязываем Google к существующему аккаунту (отвязан ранее)
         user.google_id = google_sub
-        user.email_verified = True
         user.auth_provider = "google"
-        if avatar_url:
+        user.email_verified = True
+        if avatar_url and not _is_local_avatar(getattr(user, "avatar_url", None)):
             user.avatar_url = avatar_url
+        if full_name and not user.full_name:
+            user.full_name = full_name
         user.updated_at = datetime.utcnow()
         db.add(user)
         db.commit()
         db.refresh(user)
-        logger.info(f"Created new account (unlinked, exchange): id={user.id}, email={user.email}")
+        logger.info(f"Re-linked Google (exchange): id={user.id}, email={user.email}")
     elif user:
         updated = False
         if getattr(user, "google_id", None) != google_sub:
@@ -838,18 +824,14 @@ def google_callback_fallback(request: Request, db: Session = Depends(get_session
                 db.refresh(user)
                 if getattr(user, "google_id", None) is None:
                     found_by_email = True
-        if found_by_email:
-            local, _, domain = email.rpartition("@")
-            if not domain:
-                domain = "email.local"
-            unique_email = f"{local}+g{google_sub[:12]}@{domain}"
-            user_create = UserCreate(email=unique_email, password=token_urlsafe(16), full_name=full_name, avatar_url=avatar_url)
-            user = create_user(db, user_create)
+        if found_by_email and user:
             user.google_id = google_sub
-            user.email_verified = True
             user.auth_provider = "google"
-            if avatar_url:
+            user.email_verified = True
+            if avatar_url and not _is_local_avatar(getattr(user, "avatar_url", None)):
                 user.avatar_url = avatar_url
+            if full_name and not user.full_name:
+                user.full_name = full_name
             user.updated_at = datetime.utcnow()
             db.add(user)
             db.commit()
@@ -1026,11 +1008,73 @@ def login_with_telegram(
             db.refresh(user)
         return _do_telegram_login(response, user, db, "login_with_telegram")
 
-    # Пользователь не найден по telegram_id — возвращаем needs_link для привязки
+    # Пользователь не найден по telegram_id — возвращаем needs_link (привязка или новый аккаунт)
     return JSONResponse(
         status_code=200,
         content={"needs_link": True, "message": "Привяжите существующий аккаунт"},
     )
+
+
+@router.post("/telegram/create-account", response_model=Token)
+def telegram_create_account(
+    payload: TelegramAuthRequest,
+    response: Response,
+    db: Session = Depends(get_session),
+):
+    """
+    Создать новый аккаунт с привязкой Telegram (когда пользователь отвязал и хочет новый аккаунт).
+    Вызывается только если telegram_id никому не привязан.
+    """
+    if not TELEGRAM_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Telegram authentication is not configured",
+        )
+    parsed = validate_telegram_init_data(payload.init_data, TELEGRAM_BOT_TOKEN)
+    if not parsed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Telegram initData")
+    tg_user = parse_telegram_user(parsed)
+    if not tg_user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram user data not found")
+    telegram_id = str(tg_user.get("id", ""))
+    if not telegram_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram user id is required")
+
+    existing = db.exec(select(User).where(User.telegram_id == telegram_id)).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот Telegram уже привязан к аккаунту. Используйте вход через Telegram.",
+        )
+
+    first_name = tg_user.get("first_name", "")
+    last_name = tg_user.get("last_name", "")
+    full_name = " ".join(filter(None, [first_name, last_name])).strip() or None
+    telegram_username = tg_user.get("username") or None
+    username_base = (telegram_username or f"tg_{telegram_id}").replace(" ", "_")[:30]
+    if not re.match(r"^[a-zA-Z0-9._-]+$", username_base):
+        username_base = f"tg_{telegram_id}"
+    username = username_base
+    n = 0
+    while db.exec(select(User).where(User.username == username)).first():
+        n += 1
+        username = f"{username_base}_{n}"[:50]
+
+    email = f"tg_{telegram_id}@telegram.placeholder"
+    random_password = token_urlsafe(16)
+    user_create = UserCreate(email=email, password=random_password, full_name=full_name, username=username)
+    user = create_user(db, user_create)
+    user.telegram_id = telegram_id
+    user.telegram_username = telegram_username
+    user.auth_provider = "telegram"
+    user.email_verified = False
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    logger.info(f"Created new Telegram account: id={user.id}, telegram_id={telegram_id}")
+
+    return _do_telegram_login(response, user, db, "telegram_create_account")
 
 
 @router.post("/send-telegram-link-code")
@@ -1111,7 +1155,7 @@ def verify_and_link_telegram(
     if existing_tg and existing_tg.id != user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Этот Telegram уже привязан к другому аккаунту"
+            detail="Этот Telegram уже привязан к другому аккаунту. Чтобы использовать его здесь, сначала отвяжите его от того аккаунта (войдите в него и удалите этот способ входа, оставив хотя бы один альтернативный способ)."
         )
 
     user.telegram_id = telegram_id
@@ -1151,7 +1195,10 @@ def link_telegram(
     telegram_username = tg_user.get("username") or None
     existing = db.exec(select(User).where(User.telegram_id == telegram_id)).first()
     if existing and existing.id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This Telegram is linked to another account")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот Telegram уже привязан к другому аккаунту. Чтобы использовать его здесь, сначала отвяжите его от того аккаунта (войдите в него и удалите этот способ входа, оставив хотя бы один альтернативный способ)."
+        )
     user = db.get(User, current_user.id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -1207,7 +1254,16 @@ def link_google(
 
     existing_google = db.exec(select(User).where(User.google_id == google_sub)).first()
     if existing_google and existing_google.id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This Google account is linked to another user")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот Google уже привязан к другому аккаунту. Чтобы использовать его здесь, сначала отвяжите его от того аккаунта (войдите в него и удалите этот способ входа, оставив хотя бы один альтернативный способ)."
+        )
+    existing_email = get_user_by_email(db, email)
+    if existing_email and existing_email.id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот Email уже привязан к другому аккаунту. Чтобы использовать его здесь, сначала отвяжите его от того аккаунта (войдите в него и удалите этот способ входа, оставив хотя бы один альтернативный способ)."
+        )
 
     user = db.get(User, current_user.id)
     if not user:
@@ -1247,7 +1303,7 @@ def unlink_google(
     if not has_telegram and not has_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Set a password or link Telegram first before unlinking Google"
+            detail="Нельзя отвязать единственный способ входа. Добавьте другой способ перед отвязкой этого."
         )
     user.google_id = None
     user.auth_provider = "telegram" if has_telegram else "local"
@@ -1272,7 +1328,7 @@ def unlink_telegram(
     if not has_google and not has_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Set a password or link Google first before unlinking Telegram",
+            detail="Нельзя отвязать единственный способ входа. Добавьте другой способ перед отвязкой этого.",
         )
     user.telegram_id = None
     user.telegram_username = None
@@ -1591,7 +1647,7 @@ def update_current_user(
         if existing_user and existing_user.id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Пользователь с таким email уже существует"
+                detail="Этот Email уже привязан к другому аккаунту. Чтобы использовать его здесь, сначала отвяжите его от того аккаунта (войдите в него и удалите этот способ входа, оставив хотя бы один альтернативный способ)."
             )
         current_user.email = user_update.email
     

@@ -102,6 +102,10 @@ export class AuthAPI {
     return response;
   }
 
+  async telegramCreateAccount(initData) {
+    return this.client.post("/auth/telegram/create-account", { init_data: initData });
+  }
+
   // Отправить код на email для привязки Telegram
   async sendTelegramLinkCode(email) {
     return this.client.post("/auth/send-telegram-link-code", { email });

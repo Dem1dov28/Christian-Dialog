@@ -414,7 +414,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           </div>
 
           {/* Привязанные аккаунты — Google и Telegram */}
-          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId && !isTelegram) || !user?.telegram_id) && (
+          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId) || !user?.telegram_id) && (
             <div className="text-left w-full border-t border-[var(--border-color)] pt-4 space-y-3">
               <span className="text-sm font-medium text-[var(--text-dim)] block mb-3">
                 {language === "ru" ? "Привязанные аккаунты" : "Linked accounts"}
@@ -449,8 +449,9 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                           setIsLoading(false);
                         }
                       }}
-                      disabled={isLoading}
-                      className="px-3 py-1.5 text-sm text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors disabled:opacity-50"
+                      disabled={isLoading || !(user?.telegram_id || user?.has_password)}
+                      title={!(user?.telegram_id || user?.has_password) ? t("profile.privacy.cannotUnlinkOnlyMethod") : ""}
+                      className="px-3 py-1.5 text-sm text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {language === "ru" ? "Отвязать" : "Unlink"}
                     </button>
@@ -458,7 +459,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                 </div>
               )}
               {/* Привязать Google — только в веб (в Telegram Mini App не показываем) */}
-              {!user?.google_id && googleClientId && !isTelegram && (
+              {!user?.google_id && googleClientId && (
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <div className="flex items-start gap-3">
                     <svg className="w-5 h-5 text-[var(--text-dim)] flex-shrink-0 mt-0.5" viewBox="0 0 24 24">
@@ -523,8 +524,9 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                           setIsLoading(false);
                         }
                       }}
-                      disabled={isLoading}
-                      className="px-3 py-1.5 text-sm text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors disabled:opacity-50"
+                      disabled={isLoading || !(user?.google_id || user?.has_password)}
+                      title={!(user?.google_id || user?.has_password) ? t("profile.privacy.cannotUnlinkOnlyMethod") : ""}
+                      className="px-3 py-1.5 text-sm text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {language === "ru" ? "Отвязать" : "Unlink"}
                     </button>

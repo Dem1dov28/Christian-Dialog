@@ -38,6 +38,7 @@ CSRF_EXEMPT_PATHS: Iterable[str] = (
     "/auth/telegram",               # вход через Telegram initData
     "/auth/send-telegram-link-code",   # отправить код для привязки
     "/auth/verify-and-link-telegram",  # привязка Telegram к существующему аккаунту
+    "/auth/telegram/create-account",   # создание нового аккаунта с привязкой Telegram
     "/auth/telegram-oidc",             # Log In With Telegram (OIDC)
     "/webhook/telegram",               # Telegram Bot webhook (Stars payments)
 )

@@ -549,7 +549,8 @@
         "title": "Link Telegram",
         "description": "Open the app in Telegram and enter your email to sign in with the same account.",
         "cta": "Open in Telegram"
-      }
+      },
+      "cannotUnlinkOnlyMethod": "Cannot unlink the only login method"
     },
     "current_language": "English",
     "language_ru": "Русский",
