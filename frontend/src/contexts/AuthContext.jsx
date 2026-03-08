@@ -606,14 +606,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Обновить данные пользователя (для обновления счетчика сообщений)
-  const refreshUserData = async () => {
+  // useCallback обязателен: иначе при каждом ре-рендере AuthContext создаётся новая функция,
+  // и useEffect в PricingPage/SubscriptionSuccess и др. перезапускаются → бесконечный цикл 429
+  const refreshUserData = useCallback(async () => {
     try {
-      console.log("AuthContext: Refreshing user data...");
       const updatedUser = await apiClient.getCurrentUser();
-      console.log("AuthContext: Updated user data:", updatedUser);
       setUser({ ...updatedUser });
 
-      // Также обновляем статистику использования
       try {
         const stats = await apiClient.getUsageStats();
         setUsageStats(stats);
@@ -626,7 +625,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Failed to refresh user data:", error);
       throw error;
     }
-  };
+  }, []);
 
   // Удалить аккаунт пользователя
   const deleteUserAccount = async (password) => {

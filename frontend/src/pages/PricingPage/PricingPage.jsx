@@ -44,20 +44,24 @@ const PricingPage = ({ isVisible, onClose }) => {
     }
   }, [isVisible, refreshUserData]);
 
-  // Обновить данные при возврате на вкладку (после оплаты в другом окне/Telegram)
+  // Обновить данные при возврате в приложение (после оплаты в другом окне/Telegram)
   useEffect(() => {
     if (!isVisible || !refreshUserData) return;
     let lastRefresh = 0;
     const throttleMs = 2000;
-    const onVisibilityChange = () => {
+    const maybeRefresh = () => {
       if (document.visibilityState !== "visible") return;
       const now = Date.now();
       if (now - lastRefresh < throttleMs) return;
       lastRefresh = now;
       refreshUserData();
     };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+    document.addEventListener("visibilitychange", maybeRefresh);
+    window.addEventListener("focus", maybeRefresh);
+    return () => {
+      document.removeEventListener("visibilitychange", maybeRefresh);
+      window.removeEventListener("focus", maybeRefresh);
+    };
   }, [isVisible, refreshUserData]);
 
   if (!isVisible) return null;
