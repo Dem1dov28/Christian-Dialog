@@ -58,6 +58,11 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
   const [linkEmailCode, setLinkEmailCode] = useState("");
   const [linkEmailPassword, setLinkEmailPassword] = useState("");
   const [linkEmailError, setLinkEmailError] = useState("");
+  const [setPasswordStep, setSetPasswordStep] = useState("send");
+  const [setPasswordCode, setSetPasswordCode] = useState("");
+  const [setPasswordNew, setSetPasswordNew] = useState("");
+  const [setPasswordConfirm, setSetPasswordConfirm] = useState("");
+  const [setPasswordError, setSetPasswordError] = useState("");
   const isNarrowViewport = useMaxWidth(549);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -419,7 +424,7 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
           </div>
 
           {/* Привязанные аккаунты — Google и Telegram */}
-          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId) || !user?.telegram_id || isPlaceholderEmail(user?.email)) && (
+          {(user?.google_id || user?.telegram_id || (!user?.google_id && googleClientId) || !user?.telegram_id || isPlaceholderEmail(user?.email) || (!user?.has_password && user?.email && !isPlaceholderEmail(user?.email))) && (
             <div className="text-left w-full border-t border-[var(--border-color)] pt-4 space-y-3">
               <span className="text-sm font-medium text-[var(--text-dim)] block mb-3">
                 {language === "ru" ? "Привязанные аккаунты" : "Linked accounts"}
@@ -490,6 +495,42 @@ const ProfileScreen = ({ isOpen = false, onClose, onOpenPricing, onChatSelect })
                             <div className="flex gap-2">
                               <button type="submit" disabled={isLoading || linkEmailCode.length !== 6} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">{language === "ru" ? "Привязать" : "Link"}</button>
                               <button type="button" onClick={() => { setLinkEmailStep("email"); setLinkEmailCode(""); setLinkEmailError(""); }} className="px-4 py-2 text-[var(--text-dim)] rounded-lg text-sm hover:bg-white/5">{language === "ru" ? "← Назад" : "← Back"}</button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Установить пароль для входа по почте — для пользователей с email (например Google) но без пароля */}
+              {!user?.has_password && user?.email && !isPlaceholderEmail(user?.email) && (
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-[var(--text-dim)] flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[var(--text-white)] font-medium block mb-1">{language === "ru" ? "Установить пароль для входа по почте" : "Set password for email login"}</span>
+                        <p className="text-sm text-[var(--text-dim)] mb-3">{language === "ru" ? "Подтвердите почту и задайте пароль, чтобы входить по email и паролю (без Google)." : "Verify your email and set a password to sign in with email and password (without Google)."}</p>
+                        {setPasswordStep === "send" ? (
+                          <form onSubmit={async (e) => { e.preventDefault(); setSetPasswordError(""); try { setIsLoading(true); await apiClient.sendResetCode(user.email); setSetPasswordStep("verify"); } catch (err) { setSetPasswordError(err?.message || (language === "ru" ? "Не удалось отправить код" : "Failed to send code")); } finally { setIsLoading(false); } }} className="flex flex-col gap-2">
+                            <p className="text-xs text-[var(--text-dim)]">{language === "ru" ? `Код придёт на ${user?.email}` : `Code will be sent to ${user?.email}`}</p>
+                            {setPasswordError && <p className="text-red-500 text-sm">{setPasswordError}</p>}
+                            <button type="submit" disabled={isLoading} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">{language === "ru" ? "Отправить код" : "Send code"}</button>
+                          </form>
+                        ) : (
+                          <form onSubmit={async (e) => { e.preventDefault(); setSetPasswordError(""); if (setPasswordNew !== setPasswordConfirm) { setSetPasswordError(language === "ru" ? "Пароли не совпадают" : "Passwords do not match"); return; } if (setPasswordNew.length < 6) { setSetPasswordError(language === "ru" ? "Пароль минимум 6 символов" : "Password must be at least 6 characters"); return; } try { setIsLoading(true); const verifyRes = await apiClient.verifyResetCode(user.email, setPasswordCode.trim()); if (!verifyRes?.success) { setSetPasswordError(verifyRes?.message || (language === "ru" ? "Неверный код" : "Invalid code")); return; } await apiClient.resetPassword(user.email, verifyRes.token || "temp", setPasswordNew); await refreshUserData(); showSuccess(language === "ru" ? "Пароль установлен" : "Password set"); setSetPasswordStep("send"); setSetPasswordCode(""); setSetPasswordNew(""); setSetPasswordConfirm(""); } catch (err) { setSetPasswordError(err?.message || (language === "ru" ? "Ошибка" : "Error")); } finally { setIsLoading(false); } }} className="flex flex-col gap-2">
+                            <p className="text-xs text-[var(--text-dim)]">{language === "ru" ? `Введите код из письма на ${user?.email}` : `Enter code from email sent to ${user?.email}`}</p>
+                            <input type="text" inputMode="numeric" maxLength={6} value={setPasswordCode} onChange={(e) => setSetPasswordCode(e.target.value.replace(/\D/g, ""))} placeholder={language === "ru" ? "Код" : "Code"} className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm" autoComplete="one-time-code" />
+                            <input type="password" value={setPasswordNew} onChange={(e) => setSetPasswordNew(e.target.value)} placeholder={language === "ru" ? "Новый пароль" : "New password"} className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm" />
+                            <input type="password" value={setPasswordConfirm} onChange={(e) => setSetPasswordConfirm(e.target.value)} placeholder={language === "ru" ? "Повторите пароль" : "Confirm password"} className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-white)] text-sm" />
+                            {setPasswordError && <p className="text-red-500 text-sm">{setPasswordError}</p>}
+                            <div className="flex gap-2">
+                              <button type="submit" disabled={isLoading || setPasswordCode.length !== 6} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">{language === "ru" ? "Установить пароль" : "Set password"}</button>
+                              <button type="button" onClick={() => { setSetPasswordStep("send"); setSetPasswordCode(""); setSetPasswordNew(""); setSetPasswordConfirm(""); setSetPasswordError(""); }} className="px-4 py-2 text-[var(--text-dim)] rounded-lg text-sm hover:bg-white/5">{language === "ru" ? "← Назад" : "← Back"}</button>
                             </div>
                           </form>
                         )}
