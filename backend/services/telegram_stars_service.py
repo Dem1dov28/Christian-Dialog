@@ -18,9 +18,12 @@ from sqlmodel import Session, select
 
 from config import (
     TELEGRAM_BOT_TOKEN,
+    TELEGRAM_BOT_USERNAME,
     TELEGRAM_ENABLED,
     TELEGRAM_STARS_PRICE_PLUS,
     TELEGRAM_STARS_PRICE_PRO,
+    TELEGRAM_CHANNEL_URL,
+    BASE_URL,
 )
 from models.user import User
 from services.subscription_service import SubscriptionService
@@ -87,6 +90,24 @@ def _parse_payload(payload: str) -> tuple[Optional[int], Optional[str]]:
         return int(parts[0]), parts[1].strip().lower()
     except (ValueError, AttributeError):
         return None, None
+
+
+def send_bot_start_response(chat_id: int) -> bool:
+    """
+    Отправить приветственное сообщение с картинкой и кнопками при /start.
+    """
+    if not TELEGRAM_BOT_TOKEN:
+        return False
+    app_url = f"https://t.me/{TELEGRAM_BOT_USERNAME}/app" if TELEGRAM_BOT_USERNAME else ""
+    photo_url = f"{BASE_URL.rstrip('/')}/static/telegram/start_image.png"
+    rows = []
+    if app_url:
+        rows.append([{"text": "Открыть приложение", "url": app_url}])
+    rows.append([{"text": "Наш канал", "url": TELEGRAM_CHANNEL_URL}])
+    keyboard = {"inline_keyboard": rows}
+    data = {"chat_id": chat_id, "photo": photo_url, "reply_markup": keyboard}
+    result = _bot_request("sendPhoto", data)
+    return bool(result and result.get("ok"))
 
 
 def process_successful_payment(db: Session, user_id: int, tier: str, telegram_payment_charge_id: str) -> bool:

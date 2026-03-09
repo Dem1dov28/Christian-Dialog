@@ -184,12 +184,11 @@ def create_user(db: Session, user_create, password_explicitly_set: bool = True) 
         password_explicitly_set=password_explicitly_set,
     )
     
-    # Инициализируем подписку для нового пользователя
-    # SubscriptionService.initialize_user_subscription(db_user)  # Временно отключено
-    # Простая инициализация подписки
-    db_user.subscription_tier = "free"
-    db_user.messages_limit = 50
-    db_user.api_access = False
+    # Инициализируем подписку: Pro на 24 часа для новых пользователей
+    db_user.subscription_tier = "pro"
+    db_user.messages_limit = 250
+    db_user.api_access = True
+    db_user.expires_at = datetime.utcnow() + timedelta(hours=24)
     db_user.messages_used = 0
     # Зафиксировать старт цикла сообщений на дату регистрации (00:00 UTC)
     try:

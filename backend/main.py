@@ -138,6 +138,7 @@ async def lifespan(app: FastAPI):
     Path("uploads/files").mkdir(parents=True, exist_ok=True)
     Path("exports").mkdir(parents=True, exist_ok=True)
     Path("static/user_agents").mkdir(parents=True, exist_ok=True)
+    Path("static/telegram").mkdir(parents=True, exist_ok=True)
     
     
     yield

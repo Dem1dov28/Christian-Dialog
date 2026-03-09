@@ -79,3 +79,10 @@ def get_group_chat_avatar(filename: str):
     """Получение аватара группового чата (static/group_chats/)."""
     base = os.path.abspath("static/group_chats")
     return _serve_safe_file(base, filename, "group_chat_avatar")
+
+
+@router.get("/static/telegram/{filename:path}")
+def get_telegram_static(filename: str):
+    """Статика для Telegram-бота (start-картинка и т.п.)."""
+    base = os.path.abspath("static/telegram")
+    return _serve_safe_file(base, filename, "telegram_static")

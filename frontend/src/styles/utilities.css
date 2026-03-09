@@ -136,24 +136,36 @@ html:not(.dark) [class*="px-3"][class*="py-2"]:not([class*="flex"]) {
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
-/* Google login button — явные цвета для видимости в Telegram WebView и тёмной теме */
+/* Google login button — ровный дизайн, явные цвета */
 .google-login-override .nsm7Bb-HzV7m-LgbsSe,
 .google-login-override .nsm7Bb-HzV7m-LgbsSe-MJoBVe {
   width: 100% !important;
   max-width: 100% !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
   background: #fff !important;
   color: #3c4043 !important;
-  border-color: #dadce0 !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: none !important;
 }
 
 .google-login-override .nsm7Bb-HzV7m-LgbsSe {
   display: flex !important;
-  justify-content: center;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .google-login-override .nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c,
 .google-login-override [role="button"] {
   color: #3c4043 !important;
+}
+
+/* iframe внутри кнопки — убрать лишние отступы */
+.google-login-override iframe {
+  margin: 0 !important;
+  vertical-align: middle !important;
 }
 
 /* Test Analytics Styles */

@@ -1,5 +1,5 @@
 """
-Webhook для Telegram Bot API — обработка pre_checkout_query и successful_payment (Telegram Stars).
+Webhook для Telegram Bot API — /start (картинка + кнопки), pre_checkout_query и successful_payment (Telegram Stars).
 Установить webhook: POST https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://your-domain.com/webhook/telegram
 """
 import logging
@@ -11,6 +11,7 @@ from core.database import get_session
 from services.telegram_stars_service import (
     answer_pre_checkout_query,
     process_successful_payment,
+    send_bot_start_response,
     _parse_payload,
     is_telegram_stars_enabled,
 )
@@ -23,18 +24,25 @@ router = APIRouter(prefix="/webhook", tags=["telegram-webhook"])
 @router.post("/telegram")
 async def telegram_bot_webhook(request: Request, db: Session = Depends(get_session)):
     """
-    Webhook для Telegram Bot. Обрабатывает только pre_checkout_query и successful_payment.
+    Webhook для Telegram Bot. Обрабатывает /start, pre_checkout_query и successful_payment.
     """
-    if not is_telegram_stars_enabled():
-        return Response(status_code=200)
-
     try:
         body = await request.json()
     except Exception as e:
         logger.warning("Telegram webhook: invalid JSON %s", e)
         return Response(status_code=200)
 
-    update_id = body.get("update_id")
+    # /start — приветствие с картинкой и кнопками (работает при наличии TELEGRAM_BOT_TOKEN)
+    msg = body.get("message")
+    if msg:
+        text = (msg.get("text") or "").strip()
+        chat_id = msg.get("chat", {}).get("id")
+        if text == "/start" and chat_id:
+            send_bot_start_response(chat_id)
+            return Response(status_code=200)
+
+    if not is_telegram_stars_enabled():
+        return Response(status_code=200)
 
     # pre_checkout_query — пользователь нажал Pay
     pre = body.get("pre_checkout_query")
@@ -49,7 +57,6 @@ async def telegram_bot_webhook(request: Request, db: Session = Depends(get_sessi
         return Response(status_code=200)
 
     # successful_payment — оплата прошла
-    msg = body.get("message")
     if msg:
         success = msg.get("successful_payment")
         if success:

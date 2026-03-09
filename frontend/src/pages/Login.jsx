@@ -512,7 +512,7 @@ const Login = () => {
                     <div ref={telegramWidgetRef} className="flex justify-center min-h-[44px]" />
                   )}
                   {googleClientId && (
-                <div className="google-login-override w-full max-w-[320px] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 bg-white/90 backdrop-blur-sm hover:bg-white hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.35),0_0_0_1px_rgba(var(--primary),0.1)] active:scale-[0.98] px-2 py-1 before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-r before:from-white/20 before:via-transparent before:to-transparent before:pointer-events-none before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 relative">
+                <div className="google-login-override w-full max-w-[320px] min-h-[44px] flex items-center justify-center overflow-hidden rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 bg-white/90 backdrop-blur-sm hover:bg-white hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.35),0_0_0_1px_rgba(var(--primary),0.1)] active:scale-[0.98] relative">
                   <GoogleLogin
                         onSuccess={handleGoogleSuccess}
                         onError={() => {
