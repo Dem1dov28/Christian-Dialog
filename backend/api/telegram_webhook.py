@@ -37,8 +37,10 @@ async def telegram_bot_webhook(request: Request, db: Session = Depends(get_sessi
     if msg:
         text = (msg.get("text") or "").strip()
         chat_id = msg.get("chat", {}).get("id")
-        if text == "/start" and chat_id:
-            send_bot_start_response(chat_id)
+        if text.startswith("/start") and chat_id:
+            logger.info("Telegram webhook: received /start from chat_id=%s", chat_id)
+            ok = send_bot_start_response(chat_id)
+            logger.info("Telegram webhook: send_bot_start_response(chat_id=%s) -> %s", chat_id, ok)
             return Response(status_code=200)
 
     if not is_telegram_stars_enabled():

@@ -94,19 +94,34 @@ def _parse_payload(payload: str) -> tuple[Optional[int], Optional[str]]:
 
 def send_bot_start_response(chat_id: int) -> bool:
     """
-    Отправить приветственное сообщение с кнопками при /start.
-    sendPhoto по URL часто даёт 400 (Telegram не фетчит картинку) — используем sendMessage.
+    Отправить приветственное сообщение с картинкой BotStart.png и кнопками при /start.
+    1) Пытаемся отправить фото по публичному URL https://epochaldialog.com/images/BotStart.png
+    2) В любом случае отправляем текстовое сообщение с кнопками (fallback, если фото не загрузилось)
     """
     if not TELEGRAM_BOT_TOKEN:
         logger.warning("send_bot_start_response: TELEGRAM_BOT_TOKEN не задан")
         return False
+    
     app_url = f"https://t.me/{TELEGRAM_BOT_USERNAME}/app" if TELEGRAM_BOT_USERNAME else ""
     rows = []
     if app_url:
         rows.append([{"text": "Открыть приложение", "url": app_url}])
     rows.append([{"text": "Наш канал", "url": TELEGRAM_CHANNEL_URL}])
     keyboard = {"inline_keyboard": rows}
-    text = "Добро пожаловать в Epochal Dialog!\n\nВыберите действие:"
+    
+    # 1. Пытаемся отправить фото (BotStart.png лежит во frontend/public/images/BotStart.png)
+    photo_url = f"{BASE_URL.rstrip('/')}/images/BotStart.png"
+    _bot_request("sendPhoto", {
+        "chat_id": chat_id,
+        "photo": photo_url,
+        "reply_markup": keyboard,
+    })
+    
+    # 2. Гарантированно отправляем текст + кнопки (даже если sendPhoto вернул ошибку)
+    text = (
+        "Мы оживили более 100 исторических личностей с помощью ИИ, "
+        "общайся с кем хочешь, а так же создавай групповые чаты и своих собственных персонажей!  👇"
+    )
     result = _bot_request("sendMessage", {
         "chat_id": chat_id,
         "text": text,
