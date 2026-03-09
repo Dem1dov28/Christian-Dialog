@@ -94,19 +94,24 @@ def _parse_payload(payload: str) -> tuple[Optional[int], Optional[str]]:
 
 def send_bot_start_response(chat_id: int) -> bool:
     """
-    Отправить приветственное сообщение с картинкой и кнопками при /start.
+    Отправить приветственное сообщение с кнопками при /start.
+    sendPhoto по URL часто даёт 400 (Telegram не фетчит картинку) — используем sendMessage.
     """
     if not TELEGRAM_BOT_TOKEN:
+        logger.warning("send_bot_start_response: TELEGRAM_BOT_TOKEN не задан")
         return False
     app_url = f"https://t.me/{TELEGRAM_BOT_USERNAME}/app" if TELEGRAM_BOT_USERNAME else ""
-    photo_url = f"{BASE_URL.rstrip('/')}/static/telegram/start_image.png"
     rows = []
     if app_url:
         rows.append([{"text": "Открыть приложение", "url": app_url}])
     rows.append([{"text": "Наш канал", "url": TELEGRAM_CHANNEL_URL}])
     keyboard = {"inline_keyboard": rows}
-    data = {"chat_id": chat_id, "photo": photo_url, "reply_markup": keyboard}
-    result = _bot_request("sendPhoto", data)
+    text = "Добро пожаловать в Epochal Dialog!\n\nВыберите действие:"
+    result = _bot_request("sendMessage", {
+        "chat_id": chat_id,
+        "text": text,
+        "reply_markup": keyboard,
+    })
     return bool(result and result.get("ok"))
 
 
