@@ -94,9 +94,8 @@ def _parse_payload(payload: str) -> tuple[Optional[int], Optional[str]]:
 
 def send_bot_start_response(chat_id: int) -> bool:
     """
-    Отправить приветственное сообщение с картинкой BotStart.png и кнопками при /start.
-    1) Пытаемся отправить фото по публичному URL https://epochaldialog.com/images/BotStart.png
-    2) В любом случае отправляем текстовое сообщение с кнопками (fallback, если фото не загрузилось)
+    Отправить приветственное сообщение с картинкой BotStart.png, текстом и кнопками при /start.
+    Всё уходит ОДНИМ сообщением: BotStart.png + подпись + inline‑клавиатура.
     """
     if not TELEGRAM_BOT_TOKEN:
         logger.warning("send_bot_start_response: TELEGRAM_BOT_TOKEN не задан")
@@ -104,27 +103,27 @@ def send_bot_start_response(chat_id: int) -> bool:
     
     app_url = f"https://t.me/{TELEGRAM_BOT_USERNAME}/app" if TELEGRAM_BOT_USERNAME else ""
     rows = []
-    if app_url:
-        rows.append([{"text": "Открыть приложение", "url": app_url}])
+    # Кнопка открытия Mini App — используем web_app, чтобы гарантированно открыть мини‑приложение
+    rows.append([{
+        "text": "Открыть приложение",
+        "web_app": {"url": BASE_URL.rstrip("/")}
+    }])
+    # Кнопка на канал
     rows.append([{"text": "Наш канал", "url": TELEGRAM_CHANNEL_URL}])
     keyboard = {"inline_keyboard": rows}
-    
-    # 1. Пытаемся отправить фото (BotStart.png лежит во frontend/public/images/BotStart.png)
+
+    # Картинка BotStart.png (лежит во frontend/public/images/BotStart.png)
     photo_url = f"{BASE_URL.rstrip('/')}/images/BotStart.png"
-    _bot_request("sendPhoto", {
-        "chat_id": chat_id,
-        "photo": photo_url,
-        "reply_markup": keyboard,
-    })
-    
-    # 2. Гарантированно отправляем текст + кнопки (даже если sendPhoto вернул ошибку)
     text = (
         "Мы оживили более 100 исторических личностей с помощью ИИ, "
         "общайся с кем хочешь, а так же создавай групповые чаты и своих собственных персонажей!  👇"
     )
-    result = _bot_request("sendMessage", {
+
+    # Отправляем ОДНО сообщение: фото + подпись + inline‑кнопки
+    result = _bot_request("sendPhoto", {
         "chat_id": chat_id,
-        "text": text,
+        "photo": photo_url,
+        "caption": text,
         "reply_markup": keyboard,
     })
     return bool(result and result.get("ok"))
