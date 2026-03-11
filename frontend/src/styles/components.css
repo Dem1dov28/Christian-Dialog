@@ -224,25 +224,15 @@ button[data-id]:hover .badge {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: hsla(var(--accent-hsl) / 0.5) transparent;
-  background-color: var(--bg-primary);
-  /* Используем PNG-фон из текущей темы */
-  background-image: var(--bg-image);
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  /* Привязываем фон к контейнеру, чтобы не ломать DnD */
-  background-attachment: scroll;
+  /* Используем CSS-градиенты вместо изображений */
+  background-color: transparent;
+  background-image: none;
 }
 
 .dark .chat-bg {
   scrollbar-color: hsla(var(--accent-hsl) / 0.4) transparent;
-  background-color: var(--bg-primary);
-  /* В тёмных темах тоже используем PNG-фон из переменной темы */
-  background-image: var(--bg-image);
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: scroll;
+  background-color: transparent;
+  background-image: none;
 }
 
 .chat-bg > * {

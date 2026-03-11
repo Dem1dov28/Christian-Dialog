@@ -176,7 +176,7 @@ export default function Chat({
   const { updateMainWidth } = usePanelWidth();
   const isShowBackButton = useMaxWidth(750);
   const mainContainerClassName = [
-    "flex flex-col bg-tg-panel relative h-full overflow-hidden",
+    "flex flex-col relative h-full overflow-hidden",
     showBackButton ? "flex-1 w-full min-w-0" : "flex-1 min-w-0 sm:min-w-[500px]"
   ].join(" ");
 

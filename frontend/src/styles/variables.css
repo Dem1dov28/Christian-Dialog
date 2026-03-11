@@ -93,8 +93,8 @@
   );
   --shape-glow: 64 224 208 / 0.3;
 
-  /* Фоновое изображение по умолчанию (светлая бирюзово-белая тема) */
-  --bg-image: url("/compressed/turquoisewhitetheme.webp");
+  /* Фоновое изображение отключено - используется CSS-градиент из chat-background.css */
+  --bg-image: none;
 
   /* Панель ввода сообщения */
   --chat-input-bg: rgba(255, 255, 255, 0.72);
@@ -194,8 +194,8 @@
   );
   --shape-glow: 277 36% 50% / 0.35;
 
-  /* Фоновое изображение для базовой тёмной темы (фиолетовый дарк) */
-  --bg-image: url("/compressed/purpledarktheme.webp");
+  /* Фоновое изображение отключено - используется CSS-градиент из chat-background.css */
+  --bg-image: none;
 
   /* Панель ввода сообщения */
   --chat-input-bg: rgba(45, 40, 62, 0.65);
@@ -303,8 +303,8 @@
   );
   --shape-glow: 342 57% 65% / 0.35;
 
-  /* Фоновое изображение для blue-темы (тёмный розовый фон) */
-  --bg-image: url("/compressed/pinkdarktheme.webp");
+  /* Фоновое изображение отключено - используется CSS-градиент из chat-background.css */
+  --bg-image: none;
 
   /* Панель ввода сообщения */
   --chat-input-bg: rgba(28, 51, 52, 0.65);
@@ -413,8 +413,8 @@
   );
   --shape-glow: 4 100% 82% / 0.4;
 
-  /* Фоновое изображение для пастельной темы (mint + peach) */
-  --bg-image: url("/compressed/mintpeachtheme.webp");
+  /* Фоновое изображение отключено - используется CSS-градиент из chat-background.css */
+  --bg-image: none;
 
   /* Панель ввода сообщения */
   --chat-input-bg: rgba(250, 250, 250, 0.78);

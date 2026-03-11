@@ -29,6 +29,7 @@
 @import "./styles/animations.css";
 @import "./styles/scrollbars.css";
 @import "./styles/components.css";
+@import "./styles/chat-background.css";
 @import "./styles/profile.css";
 @import "./styles/news.css";
 @import "./styles/utilities.css";

@@ -43,6 +43,7 @@ import { PanelWidthProvider } from "./contexts/PanelWidthContext.jsx";
 import { ModalProvider } from "./contexts/ModalContext.jsx";
 import MainLayout from "./components/layout/MainLayout.jsx";
 import LoadingScreen from "./components/loading/LoadingScreen.jsx";
+import FloatingIcons from "./components/common/FloatingIcons.jsx";
 import { useGlobalLongPress } from "./hooks/common/useGlobalLongPress.js";
 import { useAppState } from "./hooks/common/useAppState.js";
 import { usePanelHandlers } from "./hooks/common/usePanelHandlers.js";
@@ -567,6 +568,17 @@ function MainApp() {
 
   return (
     <div className="flex h-full overflow-hidden w-full">
+      {/* Анимированный фон — Историческая тема EpochalDialog (8 слоёв) */}
+      <div className="chat-bg-animated" aria-hidden="true" />  {/* L1: base parchment gradient */}
+      <div className="chat-bg-glyphs" aria-hidden="true" />  {/* L3: hex+compass SVG tile   */}
+      <div className="chat-bg-orbs" aria-hidden="true" />  {/* L4: primary ambient orbs   */}
+      <div className="chat-bg-accent-orbs" aria-hidden="true" />  {/* L5: accent orbs             */}
+      <div className="chat-bg-waves" aria-hidden="true" />  {/* L6: parallax wave lines     */}
+      <div className="chat-bg-noise" aria-hidden="true" />  {/* L7: film grain / parchment  */}
+      <div className="chat-bg-particles" aria-hidden="true" />  {/* sparkle particles           */}
+      <div className="chat-bg-vignette" aria-hidden="true" />  {/* L8: edge vignette           */}
+      <FloatingIcons />
+
       <SEO
         title={seoTitle}
         description={activeConversation?.agent_description || t("library.subtitle")}

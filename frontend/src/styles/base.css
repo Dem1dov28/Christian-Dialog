@@ -41,10 +41,8 @@ body {
   overflow: hidden;
   font-family: "Roboto", sans-serif;
   color: var(--text-white);
-  background-color: var(--bg-primary);
-  /* Фоновое изображение не применяется к body по умолчанию —
-     это предотвращает загрузку theme images до проверки авторизации.
-     Изображение применяется через класс .app-with-theme-bg только для авторизованных пользователей */
+  /* Фон управляется через chat-background.css - здесь прозрачный */
+  background-color: transparent;
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -71,7 +69,7 @@ html.tg-webapp {
 html.tg-webapp #root {
   padding-top: var(--safe-area-inset-top);
   padding-bottom: 0;
-  background-color: var(--bg-primary);
+  background-color: transparent;
 }
 
 /* Pricing overlay (рендерится в body): в Telegram нужен верхний отступ для safe-area */
@@ -88,7 +86,7 @@ html.tg-webapp .drawer-sheet {
 /* ПК-версия Telegram: верхний отступ в цвет темы, чтобы хедер чата не перекрывался кнопками окна */
 html.tg-webapp.tg-desktop #root {
   padding-top: var(--safe-area-inset-top);
-  background-color: var(--bg-primary);
+  background-color: transparent;
 }
 
 /* Мятно-персиковая тема: верхний safe-area в тёмно-мятном (#8dd4b8), а не белом */
@@ -102,14 +100,16 @@ html.tg-webapp.tg-desktop.theme-pastel #root {
   );
 }
 
-/* Класс для применения фонового изображения темы — используется только в авторизованной части приложения */
+/* Класс для применения фона темы — используется только в авторизованной части приложения */
+/* Фоновое изображение заменено на CSS-анимацию в chat-background.css */
 body.app-with-theme-bg {
-  background-image: var(--bg-image);
+  background-image: none;
+  background-color: transparent;
 }
 
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: var(--bg-primary);
+    background-color: transparent;
   }
 }
 
