@@ -76,7 +76,7 @@ const EditProfileModal = ({
         className={`chat-input-frosted rounded-xl shadow-xl w-full max-w-md mx-4 overflow-y-auto ${
           isShown ? "ai-panel-modal-fade-in" : "ai-panel-modal-fade-out"
         }`}
-        style={{ maxHeight: "calc(100vh - 120px)", maxHeight: "calc(100dvh - 120px)" }}
+        style={{ maxHeight: "calc(100dvh - 120px)" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">

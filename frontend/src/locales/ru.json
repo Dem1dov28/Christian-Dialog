@@ -929,5 +929,18 @@
         "description": "Любые другие вопросы"
       }
     }
+  },
+  "aboutUs": {
+    "menuItem": "О нас",
+    "title": "О нас",
+    "subtitle": "Подписывайтесь на нас в соцсетях",
+    "footer": "Сделано с любовью командой Epochal Dialog",
+    "social": {
+      "telegram": "Telegram",
+      "instagram": "Instagram",
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "twitter": "X (Twitter)"
+    }
   }
 }

@@ -23,6 +23,7 @@ import { useModal } from "../../contexts/ModalContext.jsx";
 import apiClient from "../../services/api";
 import logo from "../../assets/images/logo.webp";
 import { isPlaceholderEmail } from "../../utils/formatters";
+import { FiHeart } from "react-icons/fi";
 
 // Утилитарная функция для объединения классов (аналог cn)
 const cn = (...classes) => {
@@ -78,7 +79,7 @@ export function DrawerMenu({
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { t, language, setLanguage } = useLanguage();
-  const { openSupportModal, openReportModal } = useModal(); // Добавлено
+  const { openSupportModal, openReportModal, openAboutUsModal } = useModal();
   const [isThemeExpanded, setIsThemeExpanded] = useState(false);
   const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
 
@@ -117,6 +118,7 @@ export function DrawerMenu({
 
   const bottomItems = [
     { id: "support", label: t("profile.menu.help"), icon: FiAlertTriangle, onClick: openSupportModal },
+    { id: "aboutUs", label: t("aboutUs.menuItem"), icon: FiHeart, onClick: openAboutUsModal },
   ];
 
   const handleMenuItemClick = useCallback(

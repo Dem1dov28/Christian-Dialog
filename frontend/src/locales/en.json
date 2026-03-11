@@ -928,5 +928,18 @@
         "description": "Any other questions"
       }
     }
+  },
+  "aboutUs": {
+    "menuItem": "About Us",
+    "title": "About Us",
+    "subtitle": "Follow us on social media",
+    "footer": "Made with love by Epochal Dialog team",
+    "social": {
+      "telegram": "Telegram",
+      "instagram": "Instagram",
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "twitter": "X (Twitter)"
+    }
   }
 }

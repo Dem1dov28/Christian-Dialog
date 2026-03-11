@@ -61,6 +61,7 @@ const UpgradeModal = lazy(() => import("./components/modals/UpgradeModal.jsx"));
 const FolderManager = lazy(() => import("./components/chat/FolderManager.jsx"));
 const ReportModalNew = lazy(() => import("./components/modals/ReportModalNew.jsx"));
 const SupportModalNew = lazy(() => import("./components/modals/SupportModalNew.jsx"));
+const AboutUsModal = lazy(() => import("./components/modals/AboutUsModal.jsx"));
 
 // Компонент для основного приложения
 function MainApp() {
@@ -177,7 +178,7 @@ function MainApp() {
     addAgentToFolder,
   } = useFolders();
   const { t } = useLanguage();
-  const { isReportModalOpen, closeReportModal, isSupportModalOpen, closeSupportModal } = useModal();
+  const { isReportModalOpen, closeReportModal, isSupportModalOpen, closeSupportModal, isAboutUsModalOpen, closeAboutUsModal } = useModal();
   const { showSuccess, showError } = useNotification();
 
   // Используем хуки для обработчиков
@@ -651,6 +652,12 @@ function MainApp() {
           isOpen={isSupportModalOpen}
           onClose={closeSupportModal}
           onSubmit={handleSupportSubmit}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AboutUsModal
+          isOpen={isAboutUsModalOpen}
+          onClose={closeAboutUsModal}
         />
       </Suspense>
 

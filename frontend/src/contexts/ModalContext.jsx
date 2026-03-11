@@ -5,6 +5,7 @@ const ModalContext = createContext(undefined);
 export function ModalProvider({ children }) {
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isAboutUsModalOpen, setIsAboutUsModalOpen] = useState(false);
 
   const openSupportModal = () => {
     setIsSupportModalOpen(true);
@@ -22,6 +23,14 @@ export function ModalProvider({ children }) {
     setIsReportModalOpen(false);
   };
 
+  const openAboutUsModal = () => {
+    setIsAboutUsModalOpen(true);
+  };
+
+  const closeAboutUsModal = () => {
+    setIsAboutUsModalOpen(false);
+  };
+
   const value = {
     isSupportModalOpen,
     setIsSupportModalOpen,
@@ -31,6 +40,10 @@ export function ModalProvider({ children }) {
     setIsReportModalOpen,
     openReportModal,
     closeReportModal,
+    isAboutUsModalOpen,
+    setIsAboutUsModalOpen,
+    openAboutUsModal,
+    closeAboutUsModal,
   };
 
   return (
