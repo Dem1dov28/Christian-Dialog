@@ -231,6 +231,9 @@ class UsageStatsResponse(SQLModel):
     agents_used: int = 0  # Количество уникальных агентов (deprecated, для обратной совместимости)
     conversations_count: int = 0  # Общее количество чатов (включая групповые)
     max_chats: int = 10  # Лимит чатов по тарифу
+    files_uploaded_today: int = 0  # Файлов загружено за текущий день
+    max_files_per_day: int = 0  # Дневной лимит файлов по тарифу (0 = нельзя)
+    max_files_per_message: int = 0  # Максимум файлов в одном сообщении
 
 
 class ChatExportRequest(SQLModel):

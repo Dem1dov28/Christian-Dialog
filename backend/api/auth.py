@@ -1789,83 +1789,19 @@ def update_current_user(
 
 
 @router.post("/me/avatar", response_model=UserResponse)
-async def upload_avatar(
+async def upload_avatar_disabled(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
-    """Загрузка аватара пользователя"""
-    # Проверяем тип файла
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Файл должен быть изображением"
-        )
-    
-    # Проверяем размер файла (максимум 5MB)
-    file_content = await file.read()
-    if len(file_content) > 5 * 1024 * 1024:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Размер файла не должен превышать 5MB"
-        )
-    
-    try:
-        # Проверяем, что это действительно изображение
-        image = Image.open(io.BytesIO(file_content))
-        # Конвертируем в RGB если нужно (для PNG с прозрачностью)
-        if image.mode in ("RGBA", "LA", "P"):
-            rgb_image = Image.new("RGB", image.size, (255, 255, 255))
-            if image.mode == "P":
-                image = image.convert("RGBA")
-            rgb_image.paste(image, mask=image.split()[-1] if image.mode in ("RGBA", "LA") else None)
-            image = rgb_image
-        
-        # Изменяем размер до максимум 512x512, сохраняя пропорции
-        image.thumbnail((512, 512), Image.Resampling.LANCZOS)
-        
-        # Создаем директорию для аватаров
-        # Путь относительно корня проекта (где запускается main.py)
-        avatars_dir = Path("uploads/avatars")
-        avatars_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Генерируем уникальное имя файла
-        file_ext = os.path.splitext(file.filename or "avatar.jpg")[1] or ".jpg"
-        filename = f"{current_user.id}_{uuid.uuid4().hex[:8]}{file_ext}"
-        filepath = avatars_dir / filename
-        
-        # Сохраняем изображение
-        image.save(filepath, "JPEG", quality=85, optimize=True)
-        
-        # Удаляем старый аватар, если он был локальным файлом
-        if current_user.avatar_url and current_user.avatar_url.startswith("/api/avatars/"):
-            old_filename = current_user.avatar_url.split("/")[-1]
-            old_filepath = avatars_dir / old_filename
-            if old_filepath.exists() and old_filepath.is_file():
-                try:
-                    old_filepath.unlink()
-                except Exception as e:
-                    logger.warning(f"Failed to delete old avatar: {e}")
-        
-        # Обновляем avatar_url в базе данных
-        avatar_url = f"/api/avatars/{filename}"
-        current_user.avatar_url = avatar_url
-        current_user.updated_at = datetime.utcnow()
-        
-        db.add(current_user)
-        db.commit()
-        db.refresh(current_user)
-        
-        logger.info(f"Avatar uploaded for user {current_user.id}: {avatar_url}")
-        
-        return create_user_response(current_user)
-        
-    except Exception as e:
-        logger.error(f"Error uploading avatar: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при загрузке аватара: {str(e)}"
-        )
+    """
+    Загрузка аватара пользователем отключена.
+    Аватар берётся автоматически из Google / Telegram, локальные загрузки запрещены.
+    """
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Загрузка аватара отключена. Фото профиля задаётся автоматически из Google или Telegram.",
+    )
 
 
 @router.post("/logout")
@@ -1947,13 +1883,20 @@ def get_usage_stats(
         )
     ).first() or 0
 
+    files_uploaded_today = SubscriptionService.count_files_uploaded_in_current_cycle(db, current_user)
+    max_files_per_day = SubscriptionService.get_max_files_per_day(tier)
+    max_files_per_message = SubscriptionService.get_max_files_per_message(tier)
+
     return UsageStatsResponse(
         messages_this_month=messages_this_period,
         messages_total=messages_total,
         messages_limit=current_user.messages_limit,
         agents_used=agents_used,
         conversations_count=conversations_count,
-        max_chats=max_chats
+        max_chats=max_chats,
+        files_uploaded_today=files_uploaded_today,
+        max_files_per_day=max_files_per_day,
+        max_files_per_message=max_files_per_message,
     )
 
 

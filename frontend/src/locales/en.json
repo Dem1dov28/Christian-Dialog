@@ -237,6 +237,8 @@
     "waitForSending": "Wait for message sending to complete",
     "dialogueContinued": "Dialogue between agents continued",
     "continueDialogueError": "Error continuing dialogue",
+    "cannotContinueEmptyGroup": "Cannot continue dialogue: this group chat has no messages yet",
+    "fileDailyLimitReached": "Daily file upload limit reached. The limit resets every 24 hours.",
     "noChatToDelete": "No active chat to delete",
     "chatNotFound": "Chat \"{{name}}\" not found",
     "goToChatError": "Failed to go to original chat",
@@ -484,7 +486,8 @@
     "title": "Profile",
     "editProfile": "Edit Profile",
     "avatar": {
-      "edit": "Edit Avatar"
+      "edit": "Profile photo is set automatically",
+      "readonly": "Profile photo is set automatically from Google or Telegram and cannot be uploaded manually"
     },
     "noEmail": "No email",
     "sections": {

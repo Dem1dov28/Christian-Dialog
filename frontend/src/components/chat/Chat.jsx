@@ -306,7 +306,7 @@ export default function Chat({
     getMessagesByConversationId,
     updateMessagesForConversation,
   } = useChats();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, usageStats } = useAuth();
   const { showSuccess, showError, showCopySuccess } = useNotification();
   const { theme } = useTheme();
 
@@ -357,6 +357,13 @@ export default function Chat({
   const isReadOnlyChannel = isChannelChat && !canWriteChannel;
 
   // Прикрепление файлов/фото доступно на тарифах Plus, Pro, API
+  const fileDailyLimitReached = useMemo(() => {
+    if (!usageStats) return false;
+    const maxPerDay = usageStats.max_files_per_day ?? 0;
+    const uploadedToday = usageStats.files_uploaded_today ?? 0;
+    return maxPerDay > 0 && uploadedToday >= maxPerDay;
+  }, [usageStats]);
+
   const canAttachFiles = useMemo(() => {
     if (!user) return false;
     const tier = user.subscription_tier || "free";
@@ -365,8 +372,21 @@ export default function Chat({
       const expiresAt = new Date(user.expires_at);
       if (expiresAt < new Date()) return false;
     }
+    if (fileDailyLimitReached) return false;
     return true;
-  }, [user]);
+  }, [user, fileDailyLimitReached]);
+
+  // Колбэк при попытке прикрепить файл без прав: показываем тост при дневном лимите
+  // или модалку апгрейда при отсутствии подписки
+  const handleAttachFilesBlocked = useCallback(() => {
+    if (fileDailyLimitReached) {
+      showError(t("chat.fileDailyLimitReached", {
+        defaultValue: "Дневной лимит файлов исчерпан. Лимит сбрасывается каждые сутки."
+      }));
+    } else {
+      setShowUpgradeModal(true, "feature");
+    }
+  }, [fileDailyLimitReached, showError, t, setShowUpgradeModal]);
 
   // Интеграция хука useContainerRef для управления ref контейнера
   const { containerRefCallback, chatContainerRect } = useContainerRef({
@@ -656,7 +676,7 @@ export default function Chat({
     // УДАЛЕНО - переменные для удаленных инструментов
     isDialogueLoading,
     canAttachFiles,
-    onShowUpgradeModal: () => setShowUpgradeModal(true, "feature"),
+    onShowUpgradeModal: handleAttachFilesBlocked,
     sendMessage,
     sendGroupMessage,
     loadMessages,
@@ -725,7 +745,7 @@ export default function Chat({
     showError,
     t,
     canAttachFiles,
-    onShowUpgradeModal: () => setShowUpgradeModal(true, "feature"),
+    onShowUpgradeModal: handleAttachFilesBlocked,
   });
 
   // Интеграция хука useChatActions для управления действиями с сообщениями
@@ -899,6 +919,7 @@ export default function Chat({
     handlePlayClick,
   } = useChatHeaderHandlers({
     activeConversation,
+    hasMessages: Array.isArray(messages) && messages.length > 0,
     isLoading,
     setIsDialogueLoading,
     continueGroupDialogue,
@@ -1388,7 +1409,7 @@ export default function Chat({
         isInlineLibraryOpen={isInlineLibraryOpen}
         isChannelChat={isChannelChat}
         canAttachFiles={canAttachFiles}
-        onShowUpgradeModal={() => setShowUpgradeModal(true, "feature")}
+        onShowUpgradeModal={handleAttachFilesBlocked}
         // УДАЛЕНО - onCreateNewNote (инструмент удален)
         // УДАЛЕНО - isSubscribedChannel, isChannelChatAndNotSubscribed, subscribeToChannel (каналы удалены)
         isLoading={isLoading}
