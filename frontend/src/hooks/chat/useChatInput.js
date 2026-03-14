@@ -441,7 +441,7 @@ export function useChatInput({
 
   // Отправка сообщения
   const handleSendMessage = useCallback(async () => {
-    if (inputValue.trim() === "" || !activeConversation?.id) {
+    if ((inputValue.trim() === "" && attachedFiles.length === 0) || !activeConversation?.id) {
       return;
     }
 

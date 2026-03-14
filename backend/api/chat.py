@@ -359,10 +359,10 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                 agent_id_str = form.get("agent_id")
                 conversation_id_str = form.get("conversation_id")
                 
-                if message is None or agent_id_str is None:
+                if agent_id_str is None:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="message and agent_id are required in multipart form"
+                        detail="agent_id is required in multipart form"
                     )
                 
                 try:
@@ -375,7 +375,11 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                 
                 conversation_id = int(conversation_id_str) if conversation_id_str else None
                 
-                message_content = validate_message_content(message)
+                # message может быть пустым, если приложены файлы — валидируем только непустые
+                if message and message.strip():
+                    message_content = validate_message_content(message)
+                else:
+                    message_content = ""
                 agent_id = validate_agent_id(agent_id)
                 
                 # Получаем файлы из form
@@ -390,6 +394,13 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
                             if hasattr(file_item, 'filename') and file_item.filename:
                                 if file_item not in files:
                                     files.append(file_item)
+                
+                # Сообщение без текста допускается только если приложены файлы
+                if not message_content and not files:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Message text or at least one file is required"
+                    )
             else:
                 # Формат JSON (обратная совместимость) - парсим вручную
                 try:
