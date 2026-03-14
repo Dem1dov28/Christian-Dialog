@@ -1,8 +1,97 @@
-  import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { getActionIcon } from "../../utils/actionIcons";
 import ReplyMessage from "./ReplyMessage";
-import { MdSend, MdAttachFile, MdStop, MdSettings } from "react-icons/md";
+import { MdSend, MdAttachFile, MdStop, MdSettings, MdInsertDriveFile, MdCode, MdTableChart, MdPictureAsPdf } from "react-icons/md";
+
+/** Превью одного прикреплённого файла — картинка или файловая карточка */
+function FilePreviewItem({ fileObj, onRemove, t }) {
+  const isImage = fileObj.type?.startsWith("image/");
+  const [objectUrl, setObjectUrl] = useState(null);
+
+  useEffect(() => {
+    if (!isImage || !fileObj.file) return;
+    const url = URL.createObjectURL(fileObj.file);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getFileIcon = (type) => {
+    if (!type) return <MdInsertDriveFile className="w-5 h-5" />;
+    if (type.includes("pdf")) return <MdPictureAsPdf className="w-5 h-5 text-red-400" />;
+    if (type.includes("spreadsheet") || type.includes("xlsx") || type.includes("csv"))
+      return <MdTableChart className="w-5 h-5 text-green-400" />;
+    if (
+      type.includes("javascript") || type.includes("typescript") || type.includes("python") ||
+      type.includes("java") || type.includes("x-c") || type.includes("html") ||
+      type.includes("css") || type.includes("json") || type.includes("xml") ||
+      type.includes("yaml") || type.includes("text/x-")
+    )
+      return <MdCode className="w-5 h-5 text-blue-400" />;
+    return <MdInsertDriveFile className="w-5 h-5 text-[var(--text-gray)]" />;
+  };
+
+  const removeBtn = (extraClass = "") => (
+    <button
+      onClick={() => onRemove(fileObj.id)}
+      aria-label={t ? t("chat.removeFile", { defaultValue: "Удалить" }) : "Удалить"}
+      className={`flex items-center justify-center w-5 h-5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors text-xs font-bold leading-none ${extraClass}`}
+    >
+      ×
+    </button>
+  );
+
+  if (isImage && objectUrl) {
+    return (
+      <div className="relative flex-shrink-0 group">
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{ width: 72, height: 72, border: "1px solid rgba(255,255,255,0.15)" }}
+        >
+          <img
+            src={objectUrl}
+            alt={fileObj.name}
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
+        </div>
+        <div className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {removeBtn()}
+        </div>
+        <p
+          className="text-[10px] text-[var(--text-gray)] truncate mt-1 text-center"
+          style={{ maxWidth: 72 }}
+        >
+          {fileObj.name}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="flex items-center gap-2 px-2.5 py-2 rounded-xl flex-shrink-0"
+      style={{
+        background: "rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        maxWidth: 180,
+        minWidth: 140,
+      }}
+    >
+      <span className="flex-shrink-0 text-[var(--text-gray)]">{getFileIcon(fileObj.type)}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-[var(--text-white)] truncate font-medium">{fileObj.name}</p>
+        <p className="text-[10px] text-[var(--text-gray)]">
+          {fileObj.size < 1024 * 1024
+            ? `${(fileObj.size / 1024).toFixed(0)} KB`
+            : `${(fileObj.size / (1024 * 1024)).toFixed(1)} MB`}
+        </p>
+      </div>
+      {removeBtn("flex-shrink-0")}
+    </div>
+  );
+}
 
 /**
  * Компонент поля ввода сообщений в чате
@@ -51,39 +140,15 @@ function ChatInput({
     <div className="chat-input-transparent" style={{ padding: 0, margin: 0 }}>
       {/* File Preview - показываем когда есть прикрепленные файлы */}
       {!isChannelChat && attachedFiles.length > 0 && (
-        <div className="px-2 sm:px-3 pt-2 pb-1 bg-transparent border-transparent" style={{ backgroundColor: 'transparent', padding: '0.5rem 0.75rem 0.25rem' }}>
-          <div className="flex flex-wrap gap-2">
-            {attachedFiles.map((fileObj) => (
-              <div
-                key={fileObj.id}
-                className="flex items-center gap-2 px-3 py-2 bg-transparent rounded-lg border-transparent"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.15)',
-                  backdropFilter: 'blur(12px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  boxShadow: '0 2px 15px rgba(0, 0, 0, 0.15)',
-                  width: '200px',
-                  maxWidth: '200px',
-                  minWidth: '200px'
-                }}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[var(--text-white)] truncate">{fileObj.name}</p>
-                  <p className="text-xs text-[var(--text-gray)]">
-                    {(fileObj.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-                <button
-                  onClick={() => onRemoveFile(fileObj.id)}
-                  className="text-[var(--text-gray)] hover:text-[var(--text-white)] transition-colors"
-                  aria-label={t("chat.removeFile", { defaultValue: "Удалить файл" })}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
+        <div className="px-3 pt-2.5 pb-1 flex flex-wrap gap-2 items-end">
+          {attachedFiles.map((fileObj) => (
+            <FilePreviewItem
+              key={fileObj.id}
+              fileObj={fileObj}
+              onRemove={onRemoveFile}
+              t={t}
+            />
+          ))}
         </div>
       )}
 

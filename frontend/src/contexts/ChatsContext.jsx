@@ -1662,14 +1662,15 @@ export const ChatsProvider = ({ children }) => {
 
       if (!isSystemChat) {
 
-        // Удаляем временное сообщение пользователя ПЕРЕД загрузкой с сервера
-        // Это предотвращает дублирование сообщений
+        // Загружаем сообщения с сервера, чтобы получить ответ агента.
+        // loadMessages сам вытесняет temp-сообщение серверными данными — удалять его ДО
+        // загрузки не нужно, иначе возникает пробел ("мигание") пока ответ ещё в пути.
+        await loadMessages(targetConversationId);
+
+        // Убираем temp-сообщение после загрузки (на случай если loadMessages не вытеснил его)
         updateMessagesForConversation(targetConversationId, (prev) =>
           prev.filter((m) => m.id !== tempMessageId)
         );
-
-        // Загружаем сообщения с сервера, чтобы получить ответ агента
-        await loadMessages(targetConversationId);
 
         // КРИТИЧНО: После загрузки сообщений убеждаемся, что чат удален из списка новых пустых
         // Это важно, так как после loadMessages состояние messagesByConversation обновляется
