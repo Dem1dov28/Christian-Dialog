@@ -1021,15 +1021,10 @@ def create_chat_endpoints(app, agent_service, conversation_service: Conversation
             # Если есть изображение, сохраняем его как файл
             if agent_image_data and agent_message:
                 try:
-                    from services.file_storage_service import FileStorageService
-                    from services.file_extraction_service import FileExtractionService
                     import base64
                     import uuid
                     from pathlib import Path
                     from datetime import datetime
-                    
-                    file_storage_service = FileStorageService()
-                    file_extraction_service = FileExtractionService()
                     
                     # Извлекаем base64 данные
                     image_base64 = agent_image_data.get("base64")
